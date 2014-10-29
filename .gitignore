@@ -1,3 +1,6 @@
+dev_deploy.sh
+prod_deploy.sh
+
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a
@@ -20,5 +23,14 @@ _cgo_export.*
 _testmain.go
 
 *.exe
-*.test
+
+# Sublime text
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+
+# Profiling output
 *.prof
+

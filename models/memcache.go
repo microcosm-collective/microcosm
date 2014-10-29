@@ -1,0 +1,295 @@
+// This file contains setup and helper functions for caching
+// model objects with memcache. It should only contain functions
+// specifically for dealing with models; anything else should go in
+// the cache package.
+package models
+
+import (
+	"fmt"
+
+	"github.com/golang/glog"
+
+	c "github.com/microcosm-cc/microcosm/cache"
+	h "github.com/microcosm-cc/microcosm/helpers"
+)
+
+var (
+	mcAccessTokenKeys = map[int]string{
+		c.CacheDetail: "au_%s",
+	}
+	mcAttendeeKeys = map[int]string{
+		c.CacheDetail: "at_d%d",
+	}
+	mcCommentKeys = map[int]string{
+		c.CacheDetail: "cm_d%d",
+	}
+	mcConversationKeys = map[int]string{
+		c.CacheDetail:  "cv_d%d",
+		c.CacheSummary: "cv_s%d",
+		c.CacheItem:    "cv_i%d",
+	}
+	mcEventKeys = map[int]string{
+		c.CacheDetail:     "ev_d%d",
+		c.CacheSummary:    "ev_s%d",
+		c.CacheItem:       "ev_i%d",
+		c.CacheProfileIds: "ev_l%d",
+	}
+	mcHuddleKeys = map[int]string{
+		c.CacheDetail:  "hd_d%d",
+		c.CacheSummary: "hd_s%d",
+		c.CacheItem:    "hd_i%d",
+		c.CacheTitle:   "hd_t%d",
+	}
+	mcMicrocosmKeys = map[int]string{
+		c.CacheDetail:  "ms_d%d",
+		c.CacheSummary: "ms_s%d",
+		c.CacheTitle:   "ms_t%d",
+	}
+	mcPollKeys = map[int]string{
+		c.CacheDetail:  "po_d%d",
+		c.CacheSummary: "po_s%d",
+		c.CacheItem:    "po_i%d",
+	}
+	mcProfileKeys = map[int]string{
+		c.CacheDetail:  "pr_d%d",
+		c.CacheSummary: "pr_s%d",
+		c.CacheUser:    "us_d%d",
+		c.CacheCounts:  "pr_c%d",
+	}
+	mcRoleKeys = map[int]string{
+		c.CacheDetail: "r_d%d",
+	}
+	mcSiteKeys = map[int]string{
+		c.CacheDetail:    "s_d%d",
+		c.CacheDomain:    "s_do%s",
+		c.CacheSubdomain: "s_sd%s",
+		c.CacheTitle:     "s_t%d",
+		c.CacheCounts:    "s_c%d",
+	}
+	mcUpdateKeys = map[int]string{
+		c.CacheDetail: "u_d%d",
+	}
+	mcUpdateTypeKeys = map[int]string{
+		c.CacheDetail: "ut_d%d",
+	}
+	mcUpdateCountKeys = map[int]string{
+		c.CacheDetail: "uc_d%d",
+	}
+	mcWatcherKeys = map[int]string{
+		c.CacheDetail: "w_d%d",
+	}
+)
+
+const mcTtl int32 = 60 * 60 * 24 * 7 // 1 Week
+
+func PurgeCache(itemTypeId int64, itemId int64) {
+	switch itemTypeId {
+
+	case h.ItemTypes[h.ItemTypeAlbum]:
+
+	case h.ItemTypes[h.ItemTypeArticle]:
+
+	case h.ItemTypes[h.ItemTypeAttendee]:
+		for _, mcKeyFmt := range mcAttendeeKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	case h.ItemTypes[h.ItemTypeClassified]:
+
+	case h.ItemTypes[h.ItemTypeComment]:
+		for _, mcKeyFmt := range mcCommentKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	case h.ItemTypes[h.ItemTypeConversation]:
+		for _, mcKeyFmt := range mcConversationKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	case h.ItemTypes[h.ItemTypeEvent]:
+		for _, mcKeyFmt := range mcEventKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	case h.ItemTypes[h.ItemTypeHuddle]:
+		for _, mcKeyFmt := range mcHuddleKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	case h.ItemTypes[h.ItemTypeMicrocosm]:
+		for _, mcKeyFmt := range mcMicrocosmKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	case h.ItemTypes[h.ItemTypePoll]:
+		for _, mcKeyFmt := range mcPollKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	case h.ItemTypes[h.ItemTypeProfile]:
+		for _, mcKeyFmt := range mcProfileKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	case h.ItemTypes[h.ItemTypeQuestion]:
+
+	case h.ItemTypes[h.ItemTypeRole]:
+
+		// Need to flush the database cache if we're flushing everything to
+		// do with the role
+		tx, err := h.GetTransaction()
+		if err != nil {
+			glog.Errorf("+%v", err)
+			return
+		}
+		defer tx.Rollback()
+
+		_, err = FlushRoleMembersCacheByRoleId(tx, itemId)
+		if err != nil {
+			glog.Errorf("+%v", err)
+			return
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			glog.Errorf("+%v", err)
+			return
+		}
+
+		for _, mcKeyFmt := range mcRoleKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	case h.ItemTypes[h.ItemTypeSite]:
+		for _, mcKeyFmt := range mcSiteKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	case h.ItemTypes[h.ItemTypeUpdate]:
+		for _, mcKeyFmt := range mcUpdateKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	case h.ItemTypes[h.ItemTypeWatcher]:
+		for _, mcKeyFmt := range mcWatcherKeys {
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+		}
+
+	default:
+	}
+}
+
+func PurgeCacheByScope(scope int, itemTypeId int64, itemId int64) {
+	switch itemTypeId {
+
+	case h.ItemTypes[h.ItemTypeAlbum]:
+
+	case h.ItemTypes[h.ItemTypeArticle]:
+
+	case h.ItemTypes[h.ItemTypeAttendee]:
+		for mcKey, mcKeyFmt := range mcAttendeeKeys {
+			if mcKey == scope {
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			}
+		}
+
+	case h.ItemTypes[h.ItemTypeClassified]:
+
+	case h.ItemTypes[h.ItemTypeComment]:
+		for mcKey, mcKeyFmt := range mcCommentKeys {
+			if mcKey == scope {
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			}
+		}
+
+	case h.ItemTypes[h.ItemTypeConversation]:
+		for mcKey, mcKeyFmt := range mcConversationKeys {
+			if mcKey == scope {
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			}
+		}
+
+	case h.ItemTypes[h.ItemTypeEvent]:
+		for mcKey, mcKeyFmt := range mcEventKeys {
+			if mcKey == scope {
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			}
+		}
+
+	case h.ItemTypes[h.ItemTypeHuddle]:
+		for mcKey, mcKeyFmt := range mcHuddleKeys {
+			if mcKey == scope {
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			}
+		}
+
+	case h.ItemTypes[h.ItemTypeMicrocosm]:
+		for mcKey, mcKeyFmt := range mcMicrocosmKeys {
+			if mcKey == scope {
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			}
+		}
+
+	case h.ItemTypes[h.ItemTypePoll]:
+		for mcKey, mcKeyFmt := range mcPollKeys {
+			if mcKey == scope {
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			}
+		}
+
+	case h.ItemTypes[h.ItemTypeProfile]:
+		for mcKey, mcKeyFmt := range mcProfileKeys {
+			if mcKey == scope {
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			}
+		}
+
+	case h.ItemTypes[h.ItemTypeQuestion]:
+
+	case h.ItemTypes[h.ItemTypeRole]:
+		for mcKey, mcKeyFmt := range mcRoleKeys {
+			if mcKey == scope {
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			}
+		}
+
+	case h.ItemTypes[h.ItemTypeSite]:
+		for mcKey, mcKeyFmt := range mcSiteKeys {
+			if mcKey == scope {
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			}
+		}
+
+	default:
+	}
+}
+
+// Used by Items.go as everything else knows what it is
+// Only need to handle commentable types that exist as
+// child items in microcosms
+func GetItemCacheKeys(itemTypeId int64) map[int]string {
+	switch itemTypeId {
+
+	case h.ItemTypes[h.ItemTypeAlbum]:
+
+	case h.ItemTypes[h.ItemTypeArticle]:
+
+	case h.ItemTypes[h.ItemTypeClassified]:
+
+	case h.ItemTypes[h.ItemTypeConversation]:
+		return mcConversationKeys
+
+	case h.ItemTypes[h.ItemTypeEvent]:
+		return mcEventKeys
+
+	case h.ItemTypes[h.ItemTypePoll]:
+		return mcPollKeys
+
+	case h.ItemTypes[h.ItemTypeQuestion]:
+
+	default:
+	}
+
+	// Seriously should not reach here... things are likely to blow up
+	return map[int]string{}
+}

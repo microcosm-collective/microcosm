@@ -1,0 +1,104 @@
+{
+	"ImportPath": "github.com/microcosm-cc/microcosm",
+	"GoVersion": "go1.3.1",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "code.google.com/p/go.image/bmp",
+			"Comment": "null-43",
+			"Rev": "b8a2e401a435f875f70a7a5a9ae14db269f70087"
+		},
+		{
+			"ImportPath": "code.google.com/p/go.image/tiff",
+			"Comment": "null-43",
+			"Rev": "b8a2e401a435f875f70a7a5a9ae14db269f70087"
+		},
+		{
+			"ImportPath": "code.google.com/p/go.net/html",
+			"Comment": "null-168",
+			"Rev": "d63cfeea19280cc3922323b51f228e52ea6be36b"
+		},
+		{
+			"ImportPath": "code.google.com/p/goauth2/oauth",
+			"Comment": "weekly-56",
+			"Rev": "afe77d958c701557ec5dc56f6936fcc194d15520"
+		},
+		{
+			"ImportPath": "github.com/bradfitz/gomemcache/memcache",
+			"Comment": "release.r60-37-gac40937",
+			"Rev": "ac409371199b8d17d0d6614ec959585e41ace7a3"
+		},
+		{
+			"ImportPath": "github.com/cloudflare/ahocorasick",
+			"Rev": "1ce46e42b741851faf33c1bf283eeae6676f70a8"
+		},
+		{
+			"ImportPath": "github.com/disintegration/imaging",
+			"Rev": "9e67388aae65b9dc4e563beff827e19755deae6a"
+		},
+		{
+			"ImportPath": "github.com/golang/glog",
+			"Rev": "d1c4472bf2efd3826f2b5bdcc02d8416798d678c"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "14f550f51af52180c2eefed15e5fd18d63c0a64a"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "e444e69cbd2e2e3e0749a2f3c717cec491552bbf"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Rev": "7175accbed18058468c07811f76440d6e8d7cf19"
+		},
+		{
+			"ImportPath": "github.com/microcosm-cc/bluemonday",
+			"Rev": "88042e4f846847061cda14afc081abe958946689"
+		},
+		{
+			"ImportPath": "github.com/microcosm-cc/exifutil",
+			"Rev": "36de169162e20bbf2ba5763d36acae7d44a9e097"
+		},
+		{
+			"ImportPath": "github.com/microcosm-cc/goconfig",
+			"Rev": "986037a084b19daa8b6386f0dd6fd6d115917d60"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/goamz/aws",
+			"Rev": "73e59b0b090f6dd1bea42e4633651b1a386ec38d"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/goamz/s3",
+			"Rev": "73e59b0b090f6dd1bea42e4633651b1a386ec38d"
+		},
+		{
+			"ImportPath": "github.com/robfig/cron",
+			"Comment": "v1-3-gb024fc5",
+			"Rev": "b024fc5ea0e34bc3f83d9941c8d60b0622bfaca4"
+		},
+		{
+			"ImportPath": "github.com/russross/blackfriday",
+			"Comment": "v1.2-21-g7c8f3c1",
+			"Rev": "7c8f3c1dcc7e0f87c62af34ee193fc3251f6d8a4"
+		},
+		{
+			"ImportPath": "github.com/rwcarlsen/goexif/exif",
+			"Rev": "9fb3b23c1aaada5775178242884b75d4f4a330d3"
+		},
+		{
+			"ImportPath": "github.com/rwcarlsen/goexif/tiff",
+			"Rev": "9fb3b23c1aaada5775178242884b75d4f4a330d3"
+		},
+		{
+			"ImportPath": "github.com/vaughan0/go-ini",
+			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
+		},
+		{
+			"ImportPath": "github.com/xtgo/uuid",
+			"Rev": "a0b114877d4caeffbd7f87e3757c17fce570fea7"
+		}
+	]
+}
