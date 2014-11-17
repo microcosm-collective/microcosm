@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"regexp"
 
-	"code.google.com/p/go.net/html"
 	"github.com/russross/blackfriday"
+	"golang.org/x/net/html"
 
 	h "github.com/microcosm-cc/microcosm/helpers"
 )

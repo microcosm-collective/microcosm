@@ -1,25 +1,10 @@
 {
 	"ImportPath": "github.com/microcosm-cc/microcosm",
-	"GoVersion": "go1.3.1",
+	"GoVersion": "go1.3.3",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
-		{
-			"ImportPath": "code.google.com/p/go.image/bmp",
-			"Comment": "null-43",
-			"Rev": "b8a2e401a435f875f70a7a5a9ae14db269f70087"
-		},
-		{
-			"ImportPath": "code.google.com/p/go.image/tiff",
-			"Comment": "null-43",
-			"Rev": "b8a2e401a435f875f70a7a5a9ae14db269f70087"
-		},
-		{
-			"ImportPath": "code.google.com/p/go.net/html",
-			"Comment": "null-168",
-			"Rev": "d63cfeea19280cc3922323b51f228e52ea6be36b"
-		},
 		{
 			"ImportPath": "code.google.com/p/goauth2/oauth",
 			"Comment": "weekly-56",
@@ -27,8 +12,8 @@
 		},
 		{
 			"ImportPath": "github.com/bradfitz/gomemcache/memcache",
-			"Comment": "release.r60-37-gac40937",
-			"Rev": "ac409371199b8d17d0d6614ec959585e41ace7a3"
+			"Comment": "release.r60-40-g72a6864",
+			"Rev": "72a68649ba712ee7c4b5b4a943a626bcd7d90eb8"
 		},
 		{
 			"ImportPath": "github.com/cloudflare/ahocorasick",
@@ -36,11 +21,11 @@
 		},
 		{
 			"ImportPath": "github.com/disintegration/imaging",
-			"Rev": "9e67388aae65b9dc4e563beff827e19755deae6a"
+			"Rev": "c317ebdc7ab5aadf50ac72c10bf0ec4515c5a561"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
-			"Rev": "d1c4472bf2efd3826f2b5bdcc02d8416798d678c"
+			"Rev": "44145f04b68cf362d9c4df2182967c2275eaefed"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
@@ -56,7 +41,7 @@
 		},
 		{
 			"ImportPath": "github.com/microcosm-cc/bluemonday",
-			"Rev": "88042e4f846847061cda14afc081abe958946689"
+			"Rev": "fcd0f5074e55df204568c7419509fb59ddcad228"
 		},
 		{
 			"ImportPath": "github.com/microcosm-cc/exifutil",
@@ -68,11 +53,11 @@
 		},
 		{
 			"ImportPath": "github.com/mitchellh/goamz/aws",
-			"Rev": "73e59b0b090f6dd1bea42e4633651b1a386ec38d"
+			"Rev": "84d8b2b74375eda9f189283e5f0710e6bcc3fb47"
 		},
 		{
 			"ImportPath": "github.com/mitchellh/goamz/s3",
-			"Rev": "73e59b0b090f6dd1bea42e4633651b1a386ec38d"
+			"Rev": "84d8b2b74375eda9f189283e5f0710e6bcc3fb47"
 		},
 		{
 			"ImportPath": "github.com/robfig/cron",
@@ -99,6 +84,21 @@
 		{
 			"ImportPath": "github.com/xtgo/uuid",
 			"Rev": "a0b114877d4caeffbd7f87e3757c17fce570fea7"
+		},
+		{
+			"ImportPath": "golang.org/x/image/bmp",
+			"Comment": "null-45",
+			"Rev": "ecb55bf6755d151e154a780019bab0a812b3a8da"
+		},
+		{
+			"ImportPath": "golang.org/x/image/tiff",
+			"Comment": "null-45",
+			"Rev": "ecb55bf6755d151e154a780019bab0a812b3a8da"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html",
+			"Comment": "null-215",
+			"Rev": "adc59880b724d564a7f624ef0cf0aa31bf81f7e2"
 		}
 	]
 }

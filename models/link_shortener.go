@@ -12,8 +12,8 @@ import (
 	"regexp"
 	"strings"
 
-	"code.google.com/p/go.net/html"
 	"github.com/golang/glog"
+	"golang.org/x/net/html"
 
 	h "github.com/microcosm-cc/microcosm/helpers"
 )

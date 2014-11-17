@@ -15,7 +15,7 @@
 .PHONY: all fmt build vet lint test clean dep_restore dep_update
 
 # Explicitly listed so that we avoid vetting & linting the GoDeps workspace
-CODE = api audit cache config controller errors helpers models redirector resolver server
+CODE = audit cache config controller errors helpers models redirector resolver server
 
 # The first target is always the default action if `make` is called without args
 all: clean fmt vet test build
@@ -29,10 +29,12 @@ build: clean
 	@go build
 
 vet:
-	@go tool vet $(CODE)
+	@vet main.go
+	@vet $(CODE)
 
 lint:
-	@golint $(CODE) main.go
+	@golint main.go
+	@golint ./...
 
 test:
 	@go test -v ./...
@@ -47,7 +49,6 @@ dep_restore:
 
 dep_update:
 	@rm -rf Godeps/
-	@go get -u code.google.com/p/go.net/html
 	@go get -u code.google.com/p/goauth2/oauth
 	@go get -u github.com/bradfitz/gomemcache/memcache
 	@go get -u github.com/cloudflare/ahocorasick
@@ -65,5 +66,6 @@ dep_update:
 	@go get -u github.com/rwcarlsen/goexif/exif
 	@go get -u github.com/tools/godep
 	@go get -u github.com/xtgo/uuid
+	@go get -u golang.org/x/net/html
 	@godep save ./...
 	@make fmt
