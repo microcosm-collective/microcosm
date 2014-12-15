@@ -80,7 +80,7 @@ var DisallowedSubdomains = []string{
 	"owa",           // Outlook Web Access
 	"pages",         // Google Sites
 	"payment",       // Passing off
-	"policy",        //Legal
+	"policy",        // Legal
 	"pop",           // Email
 	"postmaster",    // Email
 	"press",         // Passing off
