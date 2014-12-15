@@ -31,6 +31,7 @@ type LegalData struct {
 	ServiceAgreementLastModified string
 	TermsOfUseLastModified       string
 
+	LegalEntity      string
 	MicrocosmEmail   string
 	MicrocosmAddress string
 }
@@ -106,8 +107,9 @@ func GetLegalDataForSite(site SiteType) (LegalData, int, error) {
 	data.TermsOfUseLastModified = legalTermsOfUseLastModified.String()
 
 	// Microcosm
+	data.LegalEntity = "Microcosm"
 	data.MicrocosmEmail = "support@microcosm.cc"
-	data.MicrocosmAddress = "145-157 St John Street, London EC1V 4PW"
+	data.MicrocosmAddress = "74 Fraser House, Green Dragon Lane, London TW8 0DQ"
 
 	// Links
 	data.LinkToCookiePolicy = data.CustomerUrl + "/legal/cookies"

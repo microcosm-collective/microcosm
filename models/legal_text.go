@@ -41,7 +41,7 @@ func GetRawTermsOfServiceText() string {
 
 <dl>
 <dt>"<strong>Agreement</strong>"</dt>
-<dd>means the agreement between Microcosm and you on these Terms of Service and the terms in the Paid Plan you choose;</dd>
+<dd>means the agreement between {{.LegalEntity}} and you on these Terms of Service and the terms in the Paid Plan you choose;</dd>
 </dl>
 
 <dl>
@@ -75,10 +75,10 @@ func GetRawTermsOfServiceText() string {
 </dl>
 
 <dl>
-<dt>"<strong>Microcosm</strong>"</dt>
+<dt>"<strong>{{.LegalEntity}}</strong>"</dt>
 <dt>"<strong>We</strong>"</dt>
 <dt>"<strong>Us</strong>"</dt>
-<dd>means Microcosm CC Ltd, a company registered in England and Wales under number 08206192 having its registered office at {{.MicrocosmAddress}};</dd>
+<dd>means {{.LegalEntity}}, having its registered office at {{.MicrocosmAddress}};</dd>
 </dl>
 
 <dl>
@@ -114,7 +114,7 @@ func GetRawTermsOfServiceText() string {
 
 <h3 id="3">3. The forum Service</h3>
 
-<p id="3.1">3.1. Microcosm provides you with an efficient and user friendly way to develop and run a forum. You can use our Service to design and customise your forum to meet the requirements of your forum community.</p>
+<p id="3.1">3.1. {{.LegalEntity}} provides you with an efficient and user friendly way to develop and run a forum. You can use our Service to design and customise your forum to meet the requirements of your forum community.</p>
 
 <p id="3.2">3.2. Our forums are designed to reflect the modern needs and expectations of users.  They support mobile viewing and provide functionality that users have come to expect from online social resources such as event planning, galleries, classifieds, reviews, articles, Q&amp;A and polls.</p>
 
@@ -659,7 +659,7 @@ func GetRawTermsOfUseText() string {
 
 <p>To the extent permitted by the law our total responsibility for any claims under these Terms of Use or related to the use of the forum is limited to the amount you have paid us to provide the forum to you. In every case, we will never be responsible for any loss or damage that is not reasonably foreseeable.</p>
 
-<p>You acknowledge that the forum is hosted by our service provider Microcosm CC Ltd. You agree that this agreement is between you and us and you will not hold Microcosm CC Ltd responsible in any way for the features, services or goods you purchase from us. You will also not hold Microcosm CC Ltd responsbile for any products or services you purchase from any other third party through the forum.</p>
+<p>You acknowledge that the forum is hosted by our service provider {{.LegalEntity}}. You agree that this agreement is between you and us and you will not hold {{.LegalEntity}} responsible in any way for the features, services or goods you purchase from us. You will also not hold {{.LegalEntity}} responsible for any products or services you purchase from any other third party through the forum.</p>
 
 <h3>Resolving disputes</h3>
 
