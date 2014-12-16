@@ -7,6 +7,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/robfig/cron"
+
+	conf "github.com/microcosm-cc/microcosm/config"
 )
 
 // StartServer owns the http process and cron jobs
@@ -21,14 +23,14 @@ func StartServer(port int64) {
 
 	r := mux.NewRouter()
 
-	// Register all handlers for the root site (http://microco.sm)
+	// Register all handlers for the root site (e.g. http://microco.sm)
 	for url, handler := range rootHandlers {
-		r.HandleFunc(url, handler).Host("microco.sm")
+		r.HandleFunc(url, handler).Host(conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN])
 	}
 
-	// Register all handlers for sites (http://{[A-Za-z0-9]+}.microco.sm)
+	// Register all handlers for sites (e.g. http://{[A-Za-z0-9]+}.microco.sm)
 	for url, handler := range siteHandlers {
-		r.HandleFunc(url, handler).Host("{subdomain:[a-z0-9]+}.microco.sm")
+		r.HandleFunc(url, handler).Host("{subdomain:[a-z0-9]+}." + conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN])
 	}
 
 	http.Handle("/", r)
