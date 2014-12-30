@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/microcosm-cc/microcosm",
-	"GoVersion": "go1.3.3",
+	"GoVersion": "go1.4",
 	"Packages": [
 		"./..."
 	],
@@ -21,7 +21,7 @@
 		},
 		{
 			"ImportPath": "github.com/disintegration/imaging",
-			"Rev": "c317ebdc7ab5aadf50ac72c10bf0ec4515c5a561"
+			"Rev": "84b56db342ea12fca9772218ee345bb11fdfe82c"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
@@ -29,7 +29,7 @@
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
-			"Rev": "14f550f51af52180c2eefed15e5fd18d63c0a64a"
+			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
@@ -37,7 +37,8 @@
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
-			"Rev": "7175accbed18058468c07811f76440d6e8d7cf19"
+			"Comment": "go1.0-cutoff-8-g3e3efe5",
+			"Rev": "3e3efe51a0c4b23e817075438703cb15bd58c1a8"
 		},
 		{
 			"ImportPath": "github.com/microcosm-cc/bluemonday",
@@ -53,29 +54,33 @@
 		},
 		{
 			"ImportPath": "github.com/mitchellh/goamz/aws",
-			"Rev": "84d8b2b74375eda9f189283e5f0710e6bcc3fb47"
+			"Rev": "b21af4ddd45220f838fb7ae1c6084c4681fcb683"
 		},
 		{
 			"ImportPath": "github.com/mitchellh/goamz/s3",
-			"Rev": "84d8b2b74375eda9f189283e5f0710e6bcc3fb47"
+			"Rev": "b21af4ddd45220f838fb7ae1c6084c4681fcb683"
 		},
 		{
 			"ImportPath": "github.com/robfig/cron",
-			"Comment": "v1-3-gb024fc5",
-			"Rev": "b024fc5ea0e34bc3f83d9941c8d60b0622bfaca4"
+			"Comment": "v1-2-g67823cd",
+			"Rev": "67823cd24dece1b04cced3a0a0b3ca2bc84d875e"
 		},
 		{
 			"ImportPath": "github.com/russross/blackfriday",
-			"Comment": "v1.2-21-g7c8f3c1",
-			"Rev": "7c8f3c1dcc7e0f87c62af34ee193fc3251f6d8a4"
+			"Comment": "v1.2-34-g8ad7215",
+			"Rev": "8ad7215b24aa5f4ebe22d6995ebf476e3a4a2797"
 		},
 		{
 			"ImportPath": "github.com/rwcarlsen/goexif/exif",
-			"Rev": "9fb3b23c1aaada5775178242884b75d4f4a330d3"
+			"Rev": "41dad3aa083329f3f672b7095a9ea8a0c384bbe8"
 		},
 		{
 			"ImportPath": "github.com/rwcarlsen/goexif/tiff",
-			"Rev": "9fb3b23c1aaada5775178242884b75d4f4a330d3"
+			"Rev": "41dad3aa083329f3f672b7095a9ea8a0c384bbe8"
+		},
+		{
+			"ImportPath": "github.com/shurcooL/go/github_flavored_markdown/sanitized_anchor_name",
+			"Rev": "48293cbc7a43126c44a44340e072e6d1a8e5ae81"
 		},
 		{
 			"ImportPath": "github.com/vaughan0/go-ini",
@@ -87,18 +92,15 @@
 		},
 		{
 			"ImportPath": "golang.org/x/image/bmp",
-			"Comment": "null-45",
-			"Rev": "ecb55bf6755d151e154a780019bab0a812b3a8da"
+			"Rev": "7f6859d3853a76e5c6de50cac970173a9b803517"
 		},
 		{
 			"ImportPath": "golang.org/x/image/tiff",
-			"Comment": "null-45",
-			"Rev": "ecb55bf6755d151e154a780019bab0a812b3a8da"
+			"Rev": "7f6859d3853a76e5c6de50cac970173a9b803517"
 		},
 		{
 			"ImportPath": "golang.org/x/net/html",
-			"Comment": "null-215",
-			"Rev": "adc59880b724d564a7f624ef0cf0aa31bf81f7e2"
+			"Rev": "3053e46bf4d836639f474dd738a58070463890e9"
 		}
 	]
 }
