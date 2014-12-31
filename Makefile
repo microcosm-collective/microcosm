@@ -14,9 +14,6 @@
 
 .PHONY: all fmt build vet lint test clean dep_restore dep_update
 
-# Explicitly listed so that we avoid vetting & linting the GoDeps workspace
-CODE = audit cache config controller errors helpers models redirector resolver server
-
 # The first target is always the default action if `make` is called without args
 all: clean fmt vet test build
 
@@ -29,8 +26,17 @@ build: clean
 	@go build
 
 vet:
-	@vet main.go
-	@vet $(CODE)
+	@go vet main.go
+	@go vet audit/*
+	@go vet cache/*
+	@go vet config/*
+	@go vet controller/*
+	@go vet errors/*
+	@go vet helpers/*
+	@go vet models/*
+	@go vet redirector/*
+	@go vet resolver/*
+	@go vet server/*
 
 lint:
 	@golint main.go
