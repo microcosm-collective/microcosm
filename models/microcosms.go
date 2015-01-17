@@ -757,16 +757,23 @@ func GetMicrocosms(
 
 	rows, err := db.Query(`--GetMicrocosms
 WITH m AS (
-     SELECT m.microcosm_id
-       FROM microcosms m
+SELECT m.microcosm_id
+  FROM microcosms m
+  LEFT JOIN permissions_cache p ON p.site_id = m.site_id
+                               AND p.item_type_id = 2
+                               AND p.item_id = m.microcosm_id
+                               AND p.profile_id = $2
        LEFT JOIN ignores i ON i.profile_id = $2
                           AND i.item_type_id = 2
                           AND i.item_id = m.microcosm_id
-      WHERE m.site_id = $1
-        AND i.profile_id IS NULL
-        AND (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$2)).can_read IS TRUE
-        AND m.is_deleted IS NOT TRUE
-        AND m.is_moderated IS NOT TRUE
+ WHERE m.site_id = $1
+   AND m.is_deleted IS NOT TRUE
+   AND m.is_moderated IS NOT TRUE
+   AND i.profile_id IS NULL
+   AND (
+           (p.can_read IS NOT NULL AND p.can_read IS TRUE)
+        OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$2)).can_read IS TRUE
+       )
 )
 SELECT (SELECT COUNT(*) FROM m) AS total
       ,microcosm_id
