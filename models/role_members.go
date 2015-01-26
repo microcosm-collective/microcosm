@@ -18,8 +18,17 @@ func FlushRoleMembersCacheByProfileId(
 	int,
 	error,
 ) {
-
 	_, err := tx.Exec(
+		`DELETE FROM permissions_cache WHERE profile_id = $1`,
+		profileId,
+	)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New(
+			fmt.Sprintf("Error executing statement: %v", err.Error()),
+		)
+	}
+
+	_, err = tx.Exec(
 		`DELETE FROM role_members_cache WHERE profile_id = $1`,
 		profileId,
 	)
@@ -33,8 +42,14 @@ func FlushRoleMembersCacheByProfileId(
 }
 
 func FlushRoleMembersCacheByRoleId(tx *sql.Tx, roleId int64) (int, error) {
+	_, err := tx.Exec(`TRUNCATE permissions_cache`)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New(
+			fmt.Sprintf("Error executing statement: %v", err.Error()),
+		)
+	}
 
-	_, err := tx.Exec(
+	_, err = tx.Exec(
 		`DELETE FROM role_members_cache WHERE role_id = $1`,
 		roleId,
 	)
@@ -59,7 +74,6 @@ func GetRoleMembers(
 	int,
 	error,
 ) {
-
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {

@@ -390,6 +390,13 @@ func (m *RoleType) Delete() (int, error) {
 	}
 	defer tx.Rollback()
 
+	_, err = tx.Exec(`TRUNCATE permissions_cache`)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New(
+			fmt.Sprintf("Delete failed: %v", err.Error()),
+		)
+	}
+
 	_, err = tx.Exec(`
 DELETE
   FROM role_members_cache
