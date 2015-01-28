@@ -47,6 +47,5 @@ func (ctl *UpdateOptionsController) ReadMany(c *models.Context) {
 		return
 	}
 
-	c.ResponseWriter.Header().Set("Cache-Control", "no-cache, max-age=0")
 	c.RespondWithData(prefs)
 }

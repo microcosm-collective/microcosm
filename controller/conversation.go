@@ -120,8 +120,6 @@ func (ctl *ConversationController) Read(c *models.Context) {
 	}
 	go models.IncrementViewCount(h.ItemTypes[h.ItemTypeConversation], m.Id)
 
-	c.ResponseWriter.Header().Set("Cache-Control", "no-cache, max-age=0")
-
 	c.RespondWithData(m)
 }
 

@@ -388,6 +388,21 @@ func (c *Context) Respond(
 	c.ResponseWriter.Header().Set("Content-Type", "application/json")
 	c.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
 
+	// Cache headers
+	if c.Auth.ProfileId == 0 &&
+		statusCode == http.StatusOK &&
+		c.GetHttpMethod() == "GET" {
+		// Public, cache for a short while
+		c.ResponseWriter.Header().Set(`Cache-Control`, `public, max-age=300`)
+		c.ResponseWriter.Header().Set(`X-ProfileId`, `0`)
+		c.ResponseWriter.Header().Set(`Vary`, `X-ProfileId`)
+	} else {
+		// Potentially private, do not cache
+		c.ResponseWriter.Header().Set(`Cache-Control`, `no-cache, max-age=0`)
+		c.ResponseWriter.Header().Set(`X-ProfileId`, strconv.Itoa(int(c.Auth.ProfileId)))
+		c.ResponseWriter.Header().Set(`Vary`, `X-ProfileId`)
+	}
+
 	// format the output
 	output, err := FormatAsJson(c, obj)
 	if err != nil {

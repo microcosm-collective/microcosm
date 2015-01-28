@@ -49,7 +49,7 @@ func (ctl *ProfileOptionsController) Read(c *models.Context) {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
-	c.ResponseWriter.Header().Set("Cache-Control", "no-cache, max-age=0")
+
 	c.RespondWithData(m)
 }
 

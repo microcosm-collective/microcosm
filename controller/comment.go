@@ -81,8 +81,6 @@ func (ctl *CommentController) Read(c *models.Context) {
 		go models.MarkAsRead(m.ItemTypeId, m.ItemId, c.Auth.ProfileId, m.Meta.Created)
 	}
 
-	c.ResponseWriter.Header().Set("Cache-Control", `no-cache, max-age=0`)
-
 	c.RespondWithData(m)
 
 }

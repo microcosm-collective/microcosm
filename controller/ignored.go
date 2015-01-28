@@ -80,7 +80,6 @@ func (ctl *IgnoredController) ReadMany(c *models.Context) {
 			},
 		}
 
-	c.ResponseWriter.Header().Set("Cache-Control", "no-cache, max-age=0")
 	c.RespondWithData(m)
 }
 

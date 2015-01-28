@@ -119,8 +119,6 @@ func (ctl *EventController) Read(c *models.Context) {
 
 	go models.IncrementViewCount(h.ItemTypes[h.ItemTypeEvent], m.Id)
 
-	c.ResponseWriter.Header().Set("Cache-Control", `no-cache, max-age=0`)
-
 	c.RespondWithData(m)
 }
 

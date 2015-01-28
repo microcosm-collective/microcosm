@@ -83,8 +83,6 @@ func (ctl *ConversationsController) ReadMany(c *models.Context) {
 		}
 	m.Meta.Permissions = perms
 
-	c.ResponseWriter.Header().Set("Cache-Control", "no-cache, max-age=0")
-
 	c.RespondWithData(m)
 }
 

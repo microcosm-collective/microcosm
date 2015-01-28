@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -43,10 +42,6 @@ func (ctl *PermissionController) HandleRequest(c *models.Context) {
 		return
 	}
 	m := models.GetPermission(ac)
-
-	// Add cache duration header
-	// 30 = 30 seconds
-	c.ResponseWriter.Header().Set("Cache-Control", fmt.Sprintf(`max-age=%d, public`, 30))
 
 	c.RespondWithData(m)
 }

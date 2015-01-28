@@ -41,8 +41,6 @@ func SiteHandler(w http.ResponseWriter, r *http.Request) {
 //as handler for both routes.
 func (ctl *SiteController) Read(c *models.Context) {
 
-	c.ResponseWriter.Header().Set("Cache-Control", `no-cache, max-age=0`)
-
 	// Check whether this site is being accessed by ID
 	siteQuery, exists := c.RouteVars["site_id"]
 	if exists {
