@@ -394,13 +394,11 @@ func (c *Context) Respond(
 		c.GetHttpMethod() == "GET" {
 		// Public, cache for a short while
 		c.ResponseWriter.Header().Set(`Cache-Control`, `public, max-age=300`)
-		c.ResponseWriter.Header().Set(`X-ProfileId`, `0`)
-		c.ResponseWriter.Header().Set(`Vary`, `X-ProfileId`)
+		c.ResponseWriter.Header().Set(`Vary`, `Authorization`)
 	} else {
 		// Potentially private, do not cache
 		c.ResponseWriter.Header().Set(`Cache-Control`, `no-cache, max-age=0`)
-		c.ResponseWriter.Header().Set(`X-ProfileId`, strconv.Itoa(int(c.Auth.ProfileId)))
-		c.ResponseWriter.Header().Set(`Vary`, `X-ProfileId`)
+		c.ResponseWriter.Header().Set(`Vary`, `Authorization`)
 	}
 
 	// format the output
