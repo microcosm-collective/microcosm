@@ -62,6 +62,7 @@ var (
 		"/api/v1/{type:events}/{event_id:[0-9]+}":                                 controller.EventHandler,
 		"/api/v1/{type:events}/{event_id:[0-9]+}/attendees":                       controller.AttendeesHandler,
 		"/api/v1/{type:events}/{event_id:[0-9]+}/attendees/{profile_id:[0-9]+}":   controller.AttendeeHandler,
+		"/api/v1/{type:events}/{event_id:[0-9]+}/attendeescsv":                    controller.AttendeesCSVHandler,
 		"/api/v1/{type:events}/{event_id:[0-9]+}/attributes":                      controller.AttributesHandler,
 		"/api/v1/{type:events}/{event_id:[0-9]+}/attributes/{key:[0-9a-zA-Z_-]+}": controller.AttributeHandler,
 		"/api/v1/{type:events}/{event_id:[0-9]+}/lastcomment":                     controller.LastCommentHandler,

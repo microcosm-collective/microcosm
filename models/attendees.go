@@ -614,3 +614,81 @@ OFFSET $3`,
 
 	return ems, total, pages, http.StatusOK, nil
 }
+
+func GetAttendeesCSV(
+	siteId int64,
+	eventId int64,
+	profileId int64,
+) (
+	string,
+	int,
+	error,
+) {
+	_, status, err := GetEvent(siteId, eventId, profileId)
+	if err != nil {
+		return "", status, err
+	}
+
+	// Retrieve resources
+	db, err := h.GetConnection()
+	if err != nil {
+		return "", http.StatusInternalServerError, err
+	}
+
+	rows, err := db.Query(`-- GetAttendeesCSV
+SELECT p.profile_name
+      ,p.profile_id
+      ,u.email
+      ,a.state_date
+  FROM attendees a
+       JOIN profiles p ON p.profile_id = a.profile_id
+       JOIN users u ON u.user_id = p.user_id
+ WHERE event_id = $1
+   AND a.state_id = 1
+ ORDER BY 1;`,
+		eventId,
+	)
+	if err != nil {
+		return "", http.StatusInternalServerError,
+			errors.New(
+				fmt.Sprintf("Database query failed: %v", err.Error()),
+			)
+	}
+	defer rows.Close()
+
+	csv := "name,id,email,date\r\n"
+
+	// Get a list of the identifiers of the items to return
+	for rows.Next() {
+		var (
+			name  string
+			id    int64
+			email string
+			date  time.Time
+		)
+		err = rows.Scan(
+			&name,
+			&id,
+			&email,
+			&date,
+		)
+		if err != nil {
+			return "", http.StatusInternalServerError,
+				errors.New(
+					fmt.Sprintf("Row parsing error: %v", err.Error()),
+				)
+		}
+
+		csv += fmt.Sprintf("\"%s\",%d,\"%s\",\"%s\"\r\n", name, id, email, date.Format(time.RFC3339))
+	}
+	err = rows.Err()
+	if err != nil {
+		return "", http.StatusInternalServerError,
+			errors.New(
+				fmt.Sprintf("Error fetching rows: %v", err.Error()),
+			)
+	}
+	rows.Close()
+
+	return csv, http.StatusOK, nil
+}
