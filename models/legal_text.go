@@ -811,7 +811,7 @@ func GetRawPrivacyPolicyText() string {
 
 <p><strong>Service providers and advisors</strong>: third parties who provide a service to us, for example, we use third party email provider to help us deliver your email notifications to you. These third parties will only be allowed to use your personal information in accordance with our instructions and will be required to keep your information secure.</p>
 
-<p><strong>Other users of the forum</strong>: your comments and opinions, your user name, your profile picture, the description of yourself that you add to your profile and other user generated or supplied content will be available to other users of the forum.</p>
+<p><strong>Other users of the forum</strong>: your comments and opinions, your user name, your profile picture, the description of yourself that you add to your profile and other user generated or supplied content will be available to other users of the forum. Some actions, such as declaring attendance of an event, may also grant other users of the forum access to your contact details.</p>
 
 <p><strong>Purchasers of our business</strong>: personal information may be disclosed or transferred to buyers or perspective buyers of our business or any of our assets as part of the sale.</p>
 
