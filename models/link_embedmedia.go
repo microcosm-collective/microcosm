@@ -240,6 +240,7 @@ func (m *Link) rewriteRuleMayExist() bool {
 		"garmin",
 		"google.com",
 		"gpsies.com",
+		"plotaroute.com",
 		"ridewithgps.com",
 		"strava",
 		"vimeo",
