@@ -55,10 +55,10 @@ func IsSpammer(email string) bool {
 		return false
 	}
 
-	// If a successful API query, and the email has been seen in the last month
+	// If a successful API query, and the email has been seen in the last year
 	// and confidence is now above 0... then we have a spammer.
 	if m.Success > 0 &&
-		m.Email.LastSeen > time.Now().AddDate(0, -1, 0).Unix() &&
+		m.Email.LastSeen > time.Now().AddDate(-1, 0, 0).Unix() &&
 		m.Email.Confidence > 0 {
 		glog.Infof(`IsSpammer = true for %s : %+v `, email, m)
 		return true
