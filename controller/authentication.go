@@ -64,9 +64,9 @@ func (ctl *AuthController) Create(c *models.Context) {
 	if c.Site.Domain != "" {
 		audience = c.Site.Domain
 	} else if c.Site.SubdomainKey == "root" {
-		audience = "microco.sm"
+		audience = conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN]
 	} else {
-		audience = fmt.Sprintf("%s.microco.sm", c.Site.SubdomainKey)
+		audience = fmt.Sprintf("%s.%s", c.Site.SubdomainKey, conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN])
 	}
 
 	// Verify persona assertion
@@ -148,6 +148,13 @@ func (ctl *AuthController) Create(c *models.Context) {
 	// Retrieve user details by email address
 	user, status, err := models.GetUserByEmailAddress(personaResponse.Email)
 	if status == http.StatusNotFound {
+		// Check whether this email is a spammer before we attempt to create
+		// an account
+		if models.IsSpammer(personaResponse.Email) {
+			glog.Errorf("Spammer: %s", personaResponse.Email)
+			c.RespondWithErrorMessage("Spammer", http.StatusInternalServerError)
+			return
+		}
 
 		user, status, err = models.CreateUserByEmailAddress(personaResponse.Email)
 		if err != nil {
