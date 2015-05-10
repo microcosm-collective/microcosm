@@ -6,16 +6,16 @@ import (
 
 var textPolicy = bluemonday.StripTagsPolicy()
 var htmlPolicy = bluemonday.UGCPolicy()
-var initHtmlPolicy bool
+var initHTMLPolicy bool
 
 // SanitiseHTML strips any HTML not on the cleanse whitelist, leaving a safe
 // set of HTML intact that is not going to pose an XSS risk
 func SanitiseHTML(src []byte) []byte {
-	if !initHtmlPolicy {
+	if !initHTMLPolicy {
 		htmlPolicy.RequireNoFollowOnLinks(false)
 		htmlPolicy.RequireNoFollowOnFullyQualifiedLinks(true)
 		htmlPolicy.AddTargetBlankToFullyQualifiedLinks(true)
-		initHtmlPolicy = true
+		initHTMLPolicy = true
 	}
 
 	return htmlPolicy.SanitizeBytes(src)
