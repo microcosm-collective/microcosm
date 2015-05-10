@@ -125,7 +125,7 @@ func (ctl *AttributesController) UpdateMany(c *models.Context) {
 
 	for _, m := range ems {
 		audit.Replace(
-			c.Site.Id,
+			c.Site.ID,
 			h.ItemTypes[h.ItemTypeAttribute],
 			m.Id,
 			c.Auth.ProfileId,
@@ -180,7 +180,7 @@ func (ctl *AttributesController) DeleteMany(c *models.Context) {
 
 	for _, m := range ems {
 		audit.Delete(
-			c.Site.Id,
+			c.Site.ID,
 			h.ItemTypes[h.ItemTypeAttribute],
 			m.Id,
 			c.Auth.ProfileId,

@@ -82,7 +82,7 @@ func (ctl *AttendeeController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Read Event
-	m, status, err := models.GetAttendee(c.Site.Id, attendeeId)
+	m, status, err := models.GetAttendee(c.Site.ID, attendeeId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -137,7 +137,7 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 			return
 		}
 	}
-	_, status, err := models.GetProfileSummary(c.Site.Id, m.ProfileId)
+	_, status, err := models.GetProfileSummary(c.Site.ID, m.ProfileId)
 	if err != nil {
 		c.RespondWithErrorMessage(h.NoAuthMessage, status)
 		return
@@ -152,18 +152,18 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
 	m.Meta.EditedNullable = pq.NullTime{Time: t, Valid: true}
 
-	status, err = m.Update(c.Site.Id)
+	status, err = m.Update(c.Site.ID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	if m.RSVP == "yes" {
-		go models.SendUpdatesForNewAttendeeInAnEvent(c.Site.Id, m)
+		go models.SendUpdatesForNewAttendeeInAnEvent(c.Site.ID, m)
 	}
 
 	audit.Replace(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttendee],
 		m.Id,
 		c.Auth.ProfileId,
@@ -214,21 +214,21 @@ func (ctl *AttendeeController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetAttendee(c.Site.Id, attendeeId)
+	m, status, err := models.GetAttendee(c.Site.ID, attendeeId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Delete resource
-	status, err = m.Delete(c.Site.Id)
+	status, err = m.Delete(c.Site.ID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	audit.Replace(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttendee],
 		attendeeId,
 		c.Auth.ProfileId,

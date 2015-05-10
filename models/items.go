@@ -438,25 +438,25 @@ SELECT item_type_id
 		case ConversationSummaryType:
 			summary := m.Summary.(ConversationSummaryType)
 			summary.Meta.Flags.Unread =
-				unread[strconv.FormatInt(m.ItemTypeId, 10)+`_`+
-					strconv.FormatInt(m.ItemId, 10)]
+				unread[strconv.FormatInt(m.ItemTypeID, 10)+`_`+
+					strconv.FormatInt(m.ItemID, 10)]
 
 			m.Summary = summary
 
 		case EventSummaryType:
 			summary := m.Summary.(EventSummaryType)
-			summary.Meta.Flags.Attending = attending[m.ItemId]
+			summary.Meta.Flags.Attending = attending[m.ItemID]
 			summary.Meta.Flags.Unread =
-				unread[strconv.FormatInt(m.ItemTypeId, 10)+`_`+
-					strconv.FormatInt(m.ItemId, 10)]
+				unread[strconv.FormatInt(m.ItemTypeID, 10)+`_`+
+					strconv.FormatInt(m.ItemID, 10)]
 
 			m.Summary = summary
 
 		case PollSummaryType:
 			summary := m.Summary.(PollSummaryType)
 			summary.Meta.Flags.Unread =
-				unread[strconv.FormatInt(m.ItemTypeId, 10)+`_`+
-					strconv.FormatInt(m.ItemId, 10)]
+				unread[strconv.FormatInt(m.ItemTypeID, 10)+`_`+
+					strconv.FormatInt(m.ItemID, 10)]
 
 			m.Summary = summary
 

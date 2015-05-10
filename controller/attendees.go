@@ -76,7 +76,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 
 	if !perms.CanCreate {
 		c.RespondWithErrorDetail(
-			e.New(c.Site.Id, c.Auth.ProfileId, "attendees.go::UpdateMany", e.NoCreate, "Not authorized to create attendee: CanCreate false"),
+			e.New(c.Site.ID, c.Auth.ProfileId, "attendees.go::UpdateMany", e.NoCreate, "Not authorized to create attendee: CanCreate false"),
 			http.StatusForbidden,
 		)
 		return
@@ -89,7 +89,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 				c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 				return
 			}
-			_, status, err := models.GetProfileSummary(c.Site.Id, m.ProfileId)
+			_, status, err := models.GetProfileSummary(c.Site.ID, m.ProfileId)
 			if err != nil {
 				c.RespondWithErrorMessage(h.NoAuthMessage, status)
 				return
@@ -101,7 +101,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 				c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 				return
 			}
-			_, status, err := models.GetProfileSummary(c.Site.Id, m.ProfileId)
+			_, status, err := models.GetProfileSummary(c.Site.ID, m.ProfileId)
 			if err != nil {
 				c.RespondWithErrorMessage(h.NoAuthMessage, status)
 				return
@@ -120,7 +120,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 		ems[i].Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
 	}
 
-	status, err := models.UpdateManyAttendees(c.Site.Id, ems)
+	status, err := models.UpdateManyAttendees(c.Site.ID, ems)
 	if err != nil {
 		glog.Error(err)
 		c.RespondWithErrorDetail(err, status)
@@ -128,7 +128,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 	}
 	for _, m := range ems {
 		if m.RSVP == "yes" {
-			go models.SendUpdatesForNewAttendeeInAnEvent(c.Site.Id, m)
+			go models.SendUpdatesForNewAttendeeInAnEvent(c.Site.ID, m)
 
 			// The new attendee should be following the event now
 			go models.RegisterWatcher(
@@ -136,12 +136,12 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 				h.UpdateTypes[h.UpdateTypeEventReminder],
 				m.EventId,
 				h.ItemTypes[h.ItemTypeEvent],
-				c.Site.Id,
+				c.Site.ID,
 			)
 		}
 
 		audit.Replace(
-			c.Site.Id,
+			c.Site.ID,
 			h.ItemTypes[h.ItemTypeAttendee],
 			m.Id,
 			c.Auth.ProfileId,
@@ -190,7 +190,7 @@ func (ctl *AttendeesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetAttendees(c.Site.Id, eventId, limit, offset, attending == "attending")
+	ems, total, pages, status, err := models.GetAttendees(c.Site.ID, eventId, limit, offset, attending == "attending")
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

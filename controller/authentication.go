@@ -217,7 +217,7 @@ func (ctl *AuthController) Create(c *models.Context) {
 	}
 
 	audit.Create(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAuth],
 		profile.Id,
 		profile.Id,
@@ -264,7 +264,7 @@ func (ctl *AuthController) Delete(c *models.Context) {
 	}
 
 	audit.Delete(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAuth],
 		m.UserId,
 		c.Auth.ProfileId,

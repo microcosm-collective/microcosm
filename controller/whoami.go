@@ -55,7 +55,7 @@ func (wc *WhoAmIController) Read(c *models.Context) {
 		return
 	}
 
-	m, status, err := models.GetProfileSummary(c.Site.Id, c.Auth.ProfileId)
+	m, status, err := models.GetProfileSummary(c.Site.ID, c.Auth.ProfileId)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithErrorMessage(

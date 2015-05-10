@@ -71,7 +71,7 @@ func (ctl *SiteController) Read(c *models.Context) {
 		// Site already populated in context, so only fetch permissions
 		c.Site.Meta.Permissions = models.GetPermission(
 			models.MakeAuthorisationContext(
-				c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.Id),
+				c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.ID),
 		)
 		c.RespondWithData(c.Site)
 		return
@@ -95,7 +95,7 @@ func (ctl *SiteController) Update(c *models.Context) {
 
 	// Use the user ID to check, since the current context is a different site (the root site)
 	// than the site the owner profile is associated with.
-	owner, status, err := models.GetProfileSummary(m.Id, m.OwnedById)
+	owner, status, err := models.GetProfileSummary(m.ID, m.OwnedByID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -125,19 +125,13 @@ func (ctl *SiteController) Update(c *models.Context) {
 	}
 
 	audit.Replace(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeSite],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
 	)
 
-	c.RespondWithSeeOther(
-		fmt.Sprintf(
-			"%s/%d",
-			h.ApiTypeSite,
-			m.Id,
-		),
-	)
+	c.RespondWithSeeOther(fmt.Sprintf("%s/%d", h.ApiTypeSite, m.ID))
 }

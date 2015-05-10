@@ -49,7 +49,7 @@ func (ctl *SiteCheckController) Read(c *models.Context) {
 
 	// Use the user ID to check, since the current context is a different site (the root site)
 	// than the site the owner profile is associated with.
-	owner, status, err := models.GetProfileSummary(m.Id, m.OwnedById)
+	owner, status, err := models.GetProfileSummary(m.ID, m.OwnedByID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

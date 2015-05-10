@@ -1032,9 +1032,9 @@ func GetOrCreateProfile(
 	error,
 ) {
 
-	profileId, status, err := GetProfileId(site.Id, user.ID)
+	profileId, status, err := GetProfileId(site.ID, user.ID)
 	if status == http.StatusOK {
-		return GetProfile(site.Id, profileId)
+		return GetProfile(site.ID, profileId)
 	}
 	if err != nil && status != http.StatusNotFound {
 		return ProfileType{}, http.StatusInternalServerError, errors.New(
@@ -1044,7 +1044,7 @@ func GetOrCreateProfile(
 
 	// Profile not found, so create one
 	p := ProfileType{}
-	p.SiteId = site.Id
+	p.SiteId = site.ID
 	p.UserId = user.ID
 	// Create randomised username unless the profile is for Site ID 1 (root site)
 	if p.SiteId == 1 {

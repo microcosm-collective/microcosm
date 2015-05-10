@@ -85,9 +85,9 @@ func GetLegalDataForSite(site SiteType) (LegalData, int, error) {
 
 	// Customer info
 	data.CustomerName = site.Title
-	data.CustomerUrl = site.GetUrl()
+	data.CustomerUrl = site.GetURL()
 
-	profile, status, err := GetProfile(site.Id, site.OwnedById)
+	profile, status, err := GetProfile(site.ID, site.OwnedByID)
 	if err != nil {
 		return data, status, err
 	}

@@ -54,7 +54,7 @@ func (ctl *NewCommentController) Read(c *models.Context) {
 		return
 	}
 
-	offset, commentId, _, err := models.GetLatestComments(c.Site.Id, itemType, itemId, c.Auth.ProfileId, limit)
+	offset, commentId, _, err := models.GetLatestComments(c.Site.ID, itemType, itemId, c.Auth.ProfileId, limit)
 	if err != nil {
 		//Go to to the first page
 		parsed, _ := url.Parse(c.Request.URL.String())

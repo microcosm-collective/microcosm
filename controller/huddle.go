@@ -56,14 +56,14 @@ func (ctl *HuddleController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Get Huddle
-	m, status, err := models.GetHuddle(c.Site.Id, c.Auth.ProfileId, itemId)
+	m, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileId, itemId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Get Comments
-	m.Comments, status, err = models.GetComments(c.Site.Id, h.ItemTypeHuddle, m.Id, c.Request.URL, c.Auth.ProfileId, m.Meta.Created)
+	m.Comments, status, err = models.GetComments(c.Site.ID, h.ItemTypeHuddle, m.Id, c.Request.URL, c.Auth.ProfileId, m.Meta.Created)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -129,7 +129,7 @@ func (ctl *HuddleController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetHuddle(c.Site.Id, c.Auth.ProfileId, itemId)
+	m, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileId, itemId)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithOK()
@@ -140,14 +140,14 @@ func (ctl *HuddleController) Delete(c *models.Context) {
 		return
 	}
 
-	status, err = m.Delete(c.Site.Id, c.Auth.ProfileId)
+	status, err = m.Delete(c.Site.ID, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	audit.Delete(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeHuddle],
 		m.Id,
 		c.Auth.ProfileId,

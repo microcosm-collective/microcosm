@@ -13,15 +13,17 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// TrendingItems is an array of TrendingItem
 type TrendingItems struct {
 	Items h.ArrayType    `json:"items"`
 	Meta  h.CoreMetaType `json:"meta"`
 }
 
+// TrendingItem encapsulates a list of items currently trending
 type TrendingItem struct {
 	ItemType   string      `json:"itemType"`
-	ItemTypeId int64       `json:"-"`
-	ItemId     int64       `json:"-"`
+	ItemTypeID int64       `json:"-"`
+	ItemID     int64       `json:"-"`
 	Item       interface{} `json:"item"`
 	Score      int64       `json:"-"`
 }
@@ -29,8 +31,8 @@ type TrendingItem struct {
 // GetTrending returns a paginated list of items on a site ordered by their
 // activity score. Profile ID is used to check read permission on each item.
 func GetTrending(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -107,27 +109,25 @@ SELECT item_id
             ORDER BY score DESC
             FETCH FIRST 25 ROWS ONLY
        ) AS trending`,
-		siteId,
-		profileId,
+		siteID,
+		profileID,
 	)
 	if err != nil {
 		return []TrendingItem{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
 	var rowCount int64
 	trendingItems := []TrendingItem{}
-	// [itemTypeId_itemId] = hasUnread
+	// [itemTypeID_itemID] = hasUnread
 	unread := map[string]bool{}
 	for rows.Next() {
 		var t TrendingItem
 		var hasUnread bool
 		err = rows.Scan(
-			&t.ItemId,
-			&t.ItemTypeId,
+			&t.ItemID,
+			&t.ItemTypeID,
 			&hasUnread,
 		)
 		if err != nil {
@@ -136,14 +136,14 @@ SELECT item_id
 				errors.New("Trending: row parsing error")
 		}
 
-		unread[strconv.FormatInt(t.ItemTypeId, 10)+`_`+
-			strconv.FormatInt(t.ItemId, 10)] = hasUnread
+		unread[strconv.FormatInt(t.ItemTypeID, 10)+`_`+
+			strconv.FormatInt(t.ItemID, 10)] = hasUnread
 
-		itemType, err := h.GetMapStringFromInt(h.ItemTypes, t.ItemTypeId)
+		itemType, err := h.GetMapStringFromInt(h.ItemTypes, t.ItemTypeID)
 		if err != nil {
 			glog.Errorf(
 				"h.GetMapStringFromInt(h.ItemTypes, %d) %+v",
-				t.ItemTypeId,
+				t.ItemTypeID,
 				err,
 			)
 			return []TrendingItem{}, 0, 0, http.StatusInternalServerError, err
@@ -165,10 +165,8 @@ SELECT item_id
 	if offset > maxOffset {
 		glog.Infoln("offset > maxOffset")
 		return []TrendingItem{}, 0, 0, http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf("Not enough records, "+
-					"offset (%d) would return an empty page.", offset),
-			)
+			fmt.Errorf("Not enough records, "+
+				"offset (%d) would return an empty page.", offset)
 	}
 
 	// Fetch summary for each item.
@@ -179,10 +177,10 @@ SELECT item_id
 	seq := 0
 	for i := 0; i < len(trendingItems); i++ {
 		go HandleSummaryContainerRequest(
-			siteId,
-			trendingItems[i].ItemTypeId,
-			trendingItems[i].ItemId,
-			profileId,
+			siteID,
+			trendingItems[i].ItemTypeID,
+			trendingItems[i].ItemID,
+			profileID,
 			seq,
 			req,
 		)
@@ -214,24 +212,24 @@ SELECT item_id
 		case ConversationSummaryType:
 			summary := m.Summary.(ConversationSummaryType)
 			summary.Meta.Flags.Unread =
-				unread[strconv.FormatInt(m.ItemTypeId, 10)+`_`+
-					strconv.FormatInt(m.ItemId, 10)]
+				unread[strconv.FormatInt(m.ItemTypeID, 10)+`_`+
+					strconv.FormatInt(m.ItemID, 10)]
 
 			m.Summary = summary
 
 		case EventSummaryType:
 			summary := m.Summary.(EventSummaryType)
 			summary.Meta.Flags.Unread =
-				unread[strconv.FormatInt(m.ItemTypeId, 10)+`_`+
-					strconv.FormatInt(m.ItemId, 10)]
+				unread[strconv.FormatInt(m.ItemTypeID, 10)+`_`+
+					strconv.FormatInt(m.ItemID, 10)]
 
 			m.Summary = summary
 
 		case PollSummaryType:
 			summary := m.Summary.(PollSummaryType)
 			summary.Meta.Flags.Unread =
-				unread[strconv.FormatInt(m.ItemTypeId, 10)+`_`+
-					strconv.FormatInt(m.ItemId, 10)]
+				unread[strconv.FormatInt(m.ItemTypeID, 10)+`_`+
+					strconv.FormatInt(m.ItemID, 10)]
 
 			m.Summary = summary
 

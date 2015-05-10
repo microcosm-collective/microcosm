@@ -66,14 +66,14 @@ func (ctl *EventsController) Create(c *models.Context) {
 	m.Meta.CreatedById = c.Auth.ProfileId
 	m.Meta.Created = time.Now()
 
-	status, err := m.Insert(c.Site.Id, c.Auth.ProfileId)
+	status, err := m.Insert(c.Site.ID, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	audit.Create(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeEvent],
 		m.Id,
 		c.Auth.ProfileId,
@@ -81,14 +81,14 @@ func (ctl *EventsController) Create(c *models.Context) {
 		c.IP,
 	)
 
-	go models.SendUpdatesForNewItemInAMicrocosm(c.Site.Id, m)
+	go models.SendUpdatesForNewItemInAMicrocosm(c.Site.ID, m)
 
 	go models.RegisterWatcher(
 		c.Auth.ProfileId,
 		h.UpdateTypes[h.UpdateTypeNewComment],
 		m.Id,
 		h.ItemTypes[h.ItemTypeEvent],
-		c.Site.Id,
+		c.Site.ID,
 	)
 
 	c.RespondWithSeeOther(
@@ -128,7 +128,7 @@ func (ctl *EventsController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetEvents(c.Site.Id, c.Auth.ProfileId, attending, limit, offset)
+	ems, total, pages, status, err := models.GetEvents(c.Site.ID, c.Auth.ProfileId, attending, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

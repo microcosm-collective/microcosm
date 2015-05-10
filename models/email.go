@@ -170,7 +170,7 @@ func AnchorRelativeUrls(siteId int64, bodyText string) string {
 		return bodyText
 	}
 
-	siteUrl := site.GetUrl()
+	siteUrl := site.GetURL()
 
 	const (
 		HREF_FIND string = `a href="/`

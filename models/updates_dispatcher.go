@@ -138,7 +138,7 @@ func SendUpdatesForNewCommentInItem(
 			return status, err
 		}
 		mergeData.SiteTitle = site.Title
-		mergeData.ProtoAndHost = site.GetUrl()
+		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/comments/%d/incontext/",
@@ -348,7 +348,7 @@ func SendUpdatesForNewReplyToYourComment(
 			return status, err
 		}
 		mergeData.SiteTitle = site.Title
-		mergeData.ProtoAndHost = site.GetUrl()
+		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/comments/%d/incontext/",
@@ -487,7 +487,7 @@ func SendUpdatesForNewMentionInComment(
 			return status, err
 		}
 		mergeData.SiteTitle = site.Title
-		mergeData.ProtoAndHost = site.GetUrl()
+		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/comments/%d/incontext/",
@@ -674,7 +674,7 @@ func SendUpdatesForNewCommentInHuddle(
 			return status, err
 		}
 		mergeData.SiteTitle = site.Title
-		mergeData.ProtoAndHost = site.GetUrl()
+		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/comments/%d/incontext/",
@@ -899,7 +899,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 			return status, err
 		}
 		mergeData.SiteTitle = site.Title
-		mergeData.ProtoAndHost = site.GetUrl()
+		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/events/%d/",
@@ -1146,7 +1146,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 			return status, err
 		}
 		mergeData.SiteTitle = site.Title
-		mergeData.ProtoAndHost = site.GetUrl()
+		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/%ss/%d/",

@@ -93,7 +93,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			)
 			return
 		}
-		_, status, err := models.GetProfileSummary(c.Site.Id, profileId)
+		_, status, err := models.GetProfileSummary(c.Site.ID, profileId)
 		if err != nil {
 			if status == http.StatusNotFound {
 				c.RespondWithErrorMessage(
@@ -134,7 +134,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			return
 		}
 
-		_, status, err := models.GetCommentSummary(c.Site.Id, commentId)
+		_, status, err := models.GetCommentSummary(c.Site.ID, commentId)
 		if err != nil {
 			if status == http.StatusNotFound {
 				c.RespondWithErrorMessage(
@@ -231,7 +231,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 
 	// If attaching to a profile, update the profile with new avatar URL
 	if attachment.ItemTypeId == h.ItemTypes[h.ItemTypeProfile] {
-		profile, _, err := models.GetProfile(c.Site.Id, attachment.ItemId)
+		profile, _, err := models.GetProfile(c.Site.ID, attachment.ItemId)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
 			return

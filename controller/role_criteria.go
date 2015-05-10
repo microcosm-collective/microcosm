@@ -58,7 +58,7 @@ func (ctl *RoleCriteriaController) ReadMany(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -129,7 +129,7 @@ func (ctl *RoleCriteriaController) Create(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -193,7 +193,7 @@ func (ctl *RoleCriteriaController) DeleteMany(c *models.Context) {
 		return
 	}
 
-	_, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

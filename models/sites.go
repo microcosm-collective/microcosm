@@ -17,12 +17,21 @@ import (
 )
 
 const (
-	DefaultThemeId            int64  = 1
-	DefaultBackgroundColor    string = `#FFFFFF`
+	// DefaultThemeID is hard-coded and matches the theme in the microweb
+	// docroot
+	DefaultThemeID int64 = 1
+
+	// DefaultBackgroundColor in hex
+	DefaultBackgroundColor string = `#FFFFFF`
+
+	// DefaultBackgroundPosition for any background CSS image
 	DefaultBackgroundPosition string = `tile`
-	DefaultLinkColor          string = `#4082C3`
+
+	// DefaultLinkColor in hex
+	DefaultLinkColor string = `#4082C3`
 )
 
+// DisallowedSubdomains is a list of all subdomains that cannot be registered
 var DisallowedSubdomains = []string{
 	"about",         // Passing off
 	"abuse",         // Customer support
@@ -110,29 +119,31 @@ var DisallowedSubdomains = []string{
 	"xmpp",          // Google Chat
 }
 
+// SitesType is an array of sites
 type SitesType struct {
 	Sites h.ArrayType    `json:"sites"`
 	Meta  h.CoreMetaType `json:"meta"`
 }
 
+// SiteType is the grandaddy of all types and describes a site
 type SiteType struct {
-	Id                      int64          `json:"siteId"`
+	ID                      int64          `json:"siteId"`
 	Title                   string         `json:"title"`
 	Description             string         `json:"description"`
 	SubdomainKey            string         `json:"subdomainKey"`
 	Domain                  string         `json:"domain"`
 	DomainNullable          sql.NullString `json:"-"`
-	OwnedById               int64          `json:"-"`
+	OwnedByID               int64          `json:"-"`
 	OwnedBy                 interface{}    `json:"ownedBy"`
-	ThemeId                 int64          `json:"themeId"`
-	LogoUrl                 string         `json:"logoUrl"`
-	FaviconUrl              string         `json:"faviconUrl,omitempty"`
+	ThemeID                 int64          `json:"themeId"`
+	LogoURL                 string         `json:"logoUrl"`
+	FaviconURL              string         `json:"faviconUrl,omitempty"`
 	BackgroundColor         string         `json:"backgroundColor"`
-	BackgroundUrl           string         `json:"backgroundUrl,omitempty"`
+	BackgroundURL           string         `json:"backgroundUrl,omitempty"`
 	BackgroundPosition      string         `json:"backgroundPosition,omitempty"`
 	LinkColor               string         `json:"linkColor"`
-	GaWebPropertyId         string         `json:"gaWebPropertyId,omitempty"`
-	GaWebPropertyIdNullable sql.NullString `json:"-"`
+	GaWebPropertyID         string         `json:"gaWebPropertyId,omitempty"`
+	GaWebPropertyIDNullable sql.NullString `json:"-"`
 	Menu                    []h.LinkType   `json:"menu"`
 
 	Meta struct {
@@ -147,6 +158,7 @@ type SiteType struct {
 	} `json:"meta"`
 }
 
+// SiteStatType encapsulates global stats for the site
 type SiteStatType struct {
 	ActiveProfiles int64
 	OnlineProfiles int64
@@ -156,14 +168,16 @@ type SiteStatType struct {
 	TotalComments  int64
 }
 
+// SiteHealthType encapsulates the state of the site configuration
 type SiteHealthType struct {
 	Site                SiteType            `json:"site"`
 	DomainHealth        SiteHealthAttribute `json:"domainHealth"`
-	BackgroundUrlHealth SiteHealthAttribute `json:"backgroundUrlHealth"`
-	LogoUrlHealth       SiteHealthAttribute `json:"logoUrlHealth"`
+	BackgroundURLHealth SiteHealthAttribute `json:"backgroundUrlHealth"`
+	LogoURLHealth       SiteHealthAttribute `json:"logoUrlHealth"`
 	AnalyticsIDHealth   SiteHealthAttribute `json:"analyticsIDHealth"`
 }
 
+// SiteHealthAttribute encapsulates a state for site configuration
 type SiteHealthAttribute struct {
 	Set   bool        `json:"set"`
 	Valid bool        `json:"valid"`
@@ -173,6 +187,7 @@ type SiteHealthAttribute struct {
 
 var regAlphaNum = regexp.MustCompile(`[A-Za-z0-9]+`)
 
+// Validate returns true if the site data is good
 func (m *SiteType) Validate(exists bool) (int, error) {
 
 	m.Title = SanitiseText(m.Title)
@@ -181,7 +196,7 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 	m.Domain = SanitiseText(m.Domain)
 
 	if exists {
-		if m.Id < 1 {
+		if m.ID < 1 {
 			return http.StatusBadRequest, errors.New("Invalid site ID")
 		}
 	}
@@ -204,12 +219,11 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 	if m.SubdomainKey != "" {
 		for _, subdomain := range DisallowedSubdomains {
 			if m.SubdomainKey == subdomain {
-				return http.StatusBadRequest, errors.New(
-					fmt.Sprintf(
+				return http.StatusBadRequest,
+					fmt.Errorf(
 						"Subdomain '%s' is reserved and cannot be used",
 						m.SubdomainKey,
-					),
-				)
+					)
 			}
 		}
 		if !regAlphaNum.MatchString(m.SubdomainKey) {
@@ -253,16 +267,16 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 		m.BackgroundPosition = DefaultBackgroundPosition
 	}
 
-	if m.GaWebPropertyId != "" {
-		if !strings.HasPrefix(m.GaWebPropertyId, "UA-") {
+	if m.GaWebPropertyID != "" {
+		if !strings.HasPrefix(m.GaWebPropertyID, "UA-") {
 			return http.StatusBadRequest,
 				errors.New(
 					"gaWebPropertyId must be in the form of the UA-XXXX-Y " +
 						"property ID that Google Analytics provided to you",
 				)
 		}
-		m.GaWebPropertyIdNullable = sql.NullString{
-			String: m.GaWebPropertyId,
+		m.GaWebPropertyIDNullable = sql.NullString{
+			String: m.GaWebPropertyID,
 			Valid:  true,
 		}
 	}
@@ -270,15 +284,16 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 	return http.StatusOK, nil
 }
 
+// FetchProfileSummaries populates a partially populated site
 func (m *SiteType) FetchProfileSummaries() (int, error) {
 
-	profile, status, err := GetProfileSummary(m.Id, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(m.ID, m.Meta.CreatedById)
 	if err != nil {
 		return status, err
 	}
 	m.Meta.CreatedBy = profile
 
-	profile, status, err = GetProfileSummary(m.Id, m.OwnedById)
+	profile, status, err = GetProfileSummary(m.ID, m.OwnedByID)
 	if err != nil {
 		return status, err
 	}
@@ -288,11 +303,11 @@ func (m *SiteType) FetchProfileSummaries() (int, error) {
 	// cached for a long time, but the stats can be updated more frequently.
 	// These are updated by eviction from a cron job, so have a long TTL in case
 	// the cron job fails
-	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheCounts], m.Id)
+	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheCounts], m.ID)
 	if val, ok := c.CacheGet(mcKey, []h.StatType{}); ok {
 		m.Meta.Stats = val.([]h.StatType)
 	} else {
-		stats, err := GetSiteStats(m.Id)
+		stats, err := GetSiteStats(m.ID)
 		if err != nil {
 			glog.Error(err)
 		} else {
@@ -320,9 +335,7 @@ func IsReservedSubdomain(query string) (bool, error) {
 	}
 	if err != nil && status != http.StatusNotFound {
 		return false,
-			errors.New(
-				fmt.Sprintf("Error fetching site by subdomain: %+v", err),
-			)
+			fmt.Errorf("Error fetching site by subdomain: %+v", err)
 	}
 
 	return false, nil
@@ -354,9 +367,7 @@ func CreateOwnedSite(
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Could not start transaction: %v", err.Error()),
-			)
+			fmt.Errorf("Could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -371,7 +382,7 @@ SELECT new_ids.new_site_id,
        ) AS new_ids`,
 		site.Title,
 		site.SubdomainKey,
-		site.ThemeId,
+		site.ThemeID,
 		user.ID,
 		profile.ProfileName,
 
@@ -379,97 +390,70 @@ SELECT new_ids.new_site_id,
 		profile.AvatarUrlNullable,
 		site.DomainNullable,
 		site.Description,
-		site.LogoUrl,
+		site.LogoURL,
 
-		site.BackgroundUrl,
+		site.BackgroundURL,
 		site.BackgroundPosition,
 		site.BackgroundColor,
 		site.LinkColor,
 	)
 	if err != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error executing query: %v", err.Error()),
-			)
+			fmt.Errorf("Error executing query: %v", err.Error())
 	}
 	defer rows.Close()
 
-	var siteId int64
-	var profileId int64
+	var siteID int64
+	var profileID int64
 	for rows.Next() {
-		err = rows.Scan(&siteId, &profileId)
+		err = rows.Scan(&siteID, &profileID)
 		if err != nil {
 			return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf(
-						"Error inserting data and returning IDs: %v",
-						err.Error(),
-					),
-				)
+				fmt.Errorf("Error inserting data and returning IDs: %v", err.Error())
 		}
 	}
 	if rows.Err() != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf(
-					"Error inserting data and returning IDs: %v",
-					rows.Err().Error(),
-				),
-			)
+			fmt.Errorf("Error inserting data and returning IDs: %v", rows.Err().Error())
 	}
 	rows.Close()
 
-	site.Id = siteId
-	profile.SiteId = siteId
-	profile.Id = profileId
+	site.ID = siteID
+	profile.SiteId = siteID
+	profile.Id = profileID
 
 	// Create profile_options record for the newly created profile
-	profileOptions, _, err := GetProfileOptionsDefaults(site.Id)
+	profileOptions, _, err := GetProfileOptionsDefaults(site.ID)
 	if err != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf(
-					"Could not load default profile options: %v",
-					err.Error(),
-				),
-			)
+			fmt.Errorf("Could not load default profile options: %v", err.Error())
 	}
 	profileOptions.ProfileId = profile.Id
 
 	status, err = profileOptions.Insert(tx)
 	if err != nil {
-		return SiteType{}, ProfileType{}, status, errors.New(
-			fmt.Sprintf(
-				"Could not insert new profile options: %v",
-				err.Error(),
-			),
-		)
+		return SiteType{}, ProfileType{}, status,
+			fmt.Errorf("Could not insert new profile options: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Transaction failed: %v", err.Error()),
-			)
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	// Create attachment for avatar and attach it to profile
-	gravatarUrl := MakeGravatarUrl(profile.ProfileName)
-	fm, _, err := StoreGravatar(gravatarUrl)
+	fm, _, err := StoreGravatar(MakeGravatarUrl(profile.ProfileName))
 	if err != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Could not store gravatar for profile: %+v", err),
-			)
+			fmt.Errorf("Could not store gravatar for profile: %+v", err)
 	}
 
 	// Attach avatar to profile
 	attachment, status, err := AttachAvatar(profile.Id, fm)
 	if err != nil {
-		return SiteType{}, ProfileType{}, status, errors.New(
-			fmt.Sprintf("Could not attach avatar to profile: %v", err.Error()),
-		)
+		return SiteType{}, ProfileType{}, status,
+			fmt.Errorf("Could not attach avatar to profile: %v", err.Error())
 	}
 
 	// Construct URL to avatar, update profile with Avatar ID and URL
@@ -487,9 +471,8 @@ SELECT new_ids.new_site_id,
 	}
 	status, err = profile.Update()
 	if err != nil {
-		return SiteType{}, ProfileType{}, status, errors.New(
-			fmt.Sprintf("Could not update profile with avatar: %v", err.Error()),
-		)
+		return SiteType{}, ProfileType{}, status,
+			fmt.Errorf("Could not update profile with avatar: %v", err.Error())
 	}
 
 	email := EmailType{}
@@ -511,11 +494,12 @@ Email: %s`, site.Title, site.SubdomainKey, user.Email)
 		site.Description,
 		user.Email,
 	)
-	email.Send(site.Id)
+	email.Send(site.ID)
 
 	return site, profile, http.StatusOK, nil
 }
 
+// Update updates a site
 func (m *SiteType) Update() (int, error) {
 
 	status, err := m.Validate(true)
@@ -525,9 +509,8 @@ func (m *SiteType) Update() (int, error) {
 
 	tx, err := h.GetTransaction()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not start transaction: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -548,41 +531,41 @@ UPDATE sites
 
       ,is_deleted = $13
  WHERE site_id = $1`,
-		m.Id,
+		m.ID,
 
 		m.Title,
 		m.Description,
 		m.DomainNullable,
-		m.ThemeId,
-		m.LogoUrl,
-		m.FaviconUrl,
+		m.ThemeID,
+		m.LogoURL,
+		m.FaviconURL,
 
-		m.BackgroundUrl,
+		m.BackgroundURL,
 		m.BackgroundColor,
 		m.BackgroundPosition,
 		m.LinkColor,
-		m.GaWebPropertyIdNullable,
+		m.GaWebPropertyIDNullable,
 
 		m.Meta.Flags.Deleted,
 	)
 	if err != nil {
 		tx.Rollback()
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update of site failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update of site failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeSite], m.Id)
+	PurgeCache(h.ItemTypes[h.ItemTypeSite], m.ID)
+
 	return http.StatusOK, nil
 }
 
+// Delete will remove a site from the database
 func (m *SiteType) Delete() (int, error) {
 
 	tx, err := h.GetTransaction()
@@ -594,34 +577,35 @@ func (m *SiteType) Delete() (int, error) {
 	_, err = tx.Exec(`
 DELETE FROM sites
  WHERE site_id = $1`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Delete failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeSite], m.Id)
+	PurgeCache(h.ItemTypes[h.ItemTypeSite], m.ID)
 
 	return http.StatusOK, nil
 }
 
-func (m *SiteType) GetUrl() string {
+// GetURL builds a site URL depending on whether or not it is a subdomain or
+// custom domain
+func (m *SiteType) GetURL() string {
 	if m.Domain == "" {
 		return "https://" + m.SubdomainKey + ".microco.sm"
-	} else {
-		return "http://" + m.Domain
 	}
+
+	return "http://" + m.Domain
 }
 
+// GetSiteTitle returns (cheaply) the site title
 func GetSiteTitle(id int64) string {
 
 	// Get from cache if it's available
@@ -655,6 +639,7 @@ SELECT title
 	return title
 }
 
+// GetSite returns a site
 func GetSite(id int64) (SiteType, int, error) {
 
 	// Try cache
@@ -707,53 +692,50 @@ SELECT s.site_id
    AND s.site_id = $1`,
 		id,
 	).Scan(
-		&m.Id,
+		&m.ID,
 		&m.Title,
 		&m.Description,
 		&m.SubdomainKey,
 		&m.DomainNullable,
 		&m.Meta.Created,
 		&m.Meta.CreatedById,
-		&m.OwnedById,
-		&m.ThemeId,
-		&m.LogoUrl,
-		&m.BackgroundUrl,
-		&m.FaviconUrl,
+		&m.OwnedByID,
+		&m.ThemeID,
+		&m.LogoURL,
+		&m.BackgroundURL,
+		&m.FaviconURL,
 		&m.BackgroundColor,
 		&m.BackgroundPosition,
 		&m.LinkColor,
-		&m.GaWebPropertyIdNullable,
+		&m.GaWebPropertyIDNullable,
 		&m.Meta.Flags.Deleted,
 	)
 	if err == sql.ErrNoRows {
-		return SiteType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Resource with site ID %d not found", id),
-		)
+		return SiteType{}, http.StatusNotFound,
+			fmt.Errorf("Resource with site ID %d not found", id)
 	} else if err != nil {
-		return SiteType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return SiteType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	if m.DomainNullable.Valid {
 		m.Domain = m.DomainNullable.String
 	}
-	if m.GaWebPropertyIdNullable.Valid {
-		m.GaWebPropertyId = m.GaWebPropertyIdNullable.String
+	if m.GaWebPropertyIDNullable.Valid {
+		m.GaWebPropertyID = m.GaWebPropertyIDNullable.String
 	}
-	menu, status, err := GetMenu(m.Id)
+	menu, status, err := GetMenu(m.ID)
 	if err != nil {
-		return SiteType{}, status, errors.New(
-			fmt.Sprintf("Error fetching menu: %v", err.Error()),
-		)
+		return SiteType{}, status,
+			fmt.Errorf("Error fetching menu: %v", err.Error())
 	}
 	m.Menu = menu
-	if m.BackgroundUrl == "" {
+	if m.BackgroundURL == "" {
 		m.BackgroundPosition = ""
 	}
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeSite, m.Id),
+			h.GetLink("self", "", h.ItemTypeSite, m.ID),
 			h.GetLink("microcosm", "", h.ItemTypeMicrocosm, 0),
 			h.GetLink("profile", "", h.ItemTypeProfile, 0),
 			h.LinkType{Rel: "legal", Href: "/api/v1/legal"},
@@ -765,10 +747,9 @@ SELECT s.site_id
 	return m, http.StatusOK, nil
 }
 
-// Calculate site statistics. This is expensive and should not
-// be run to synchronously service a request.
-func CalcSiteStats(siteId int64) (SiteStatType, error) {
-
+// CalcSiteStats is expensive and should not be run to synchronously service a
+// request.
+func CalcSiteStats(siteID int64) (SiteStatType, error) {
 	var stats SiteStatType
 	db, err := h.GetConnection()
 	if err != nil {
@@ -781,7 +762,7 @@ SELECT COUNT(*)
   FROM profiles
  WHERE site_id = $1
    AND last_active > current_date - integer '90'`,
-		siteId,
+		siteID,
 	).Scan(
 		&stats.ActiveProfiles,
 	)
@@ -795,7 +776,7 @@ SELECT COUNT(*)
   FROM profiles
  WHERE site_id = $1 
    AND last_active > NOW() - interval '90 minute'`,
-		siteId,
+		siteID,
 	).Scan(
 		&stats.OnlineProfiles,
 	)
@@ -867,7 +848,7 @@ SELECT SUM(profiles) AS profiles
        AND microcosm_is_deleted IS NOT TRUE
        AND microcosm_is_moderated IS NOT TRUE
      ) r`,
-		siteId,
+		siteID,
 	).Scan(
 		&stats.TotalProfiles,
 		&stats.TotalConvs,
@@ -878,9 +859,9 @@ SELECT SUM(profiles) AS profiles
 	return stats, err
 }
 
-func UpdateSiteStats(siteId int64) error {
-
-	stats, err := CalcSiteStats(siteId)
+// UpdateSiteStats updates the stats for a given site
+func UpdateSiteStats(siteID int64) error {
+	stats, err := CalcSiteStats(siteID)
 	if err != nil {
 		return err
 	}
@@ -891,7 +872,10 @@ func UpdateSiteStats(siteId int64) error {
 	}
 
 	var exists bool
-	err = db.QueryRow(`SELECT EXISTS (SELECT * from site_stats WHERE site_id = $1)`, siteId).Scan(&exists)
+	err = db.QueryRow(
+		`SELECT EXISTS (SELECT * from site_stats WHERE site_id = $1)`,
+		siteID,
+	).Scan(&exists)
 	if err != nil {
 		return err
 	}
@@ -907,7 +891,7 @@ func UpdateSiteStats(siteId int64) error {
                total_events = $6,
                total_comments = $7
             WHERE site_id = $1`,
-			siteId,
+			siteID,
 			stats.ActiveProfiles,
 			stats.OnlineProfiles,
 			stats.TotalProfiles,
@@ -938,7 +922,7 @@ func UpdateSiteStats(siteId int64) error {
                $6,
                $7
             )`,
-			siteId,
+			siteID,
 			stats.ActiveProfiles,
 			stats.OnlineProfiles,
 			stats.TotalProfiles,
@@ -951,13 +935,13 @@ func UpdateSiteStats(siteId int64) error {
 		}
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeSite], siteId)
+	go PurgeCache(h.ItemTypes[h.ItemTypeSite], siteID)
 
 	return nil
 }
 
-// Fetch and format statistics for a single site.
-func GetSiteStats(siteId int64) ([]h.StatType, error) {
+// GetSiteStats fetches and formats the statistics for a single site.
+func GetSiteStats(siteID int64) ([]h.StatType, error) {
 
 	// Try database.
 	db, err := h.GetConnection()
@@ -978,7 +962,7 @@ func GetSiteStats(siteId int64) ([]h.StatType, error) {
            site_stats
          WHERE
            site_id = $1`,
-		siteId,
+		siteID,
 	).Scan(
 		&stats.ActiveProfiles,
 		&stats.OnlineProfiles,
@@ -992,7 +976,7 @@ func GetSiteStats(siteId int64) ([]h.StatType, error) {
 		if err == sql.ErrNoRows {
 			// Not in database, calculate synchronously. Should only
 			// happen when site is newly created.
-			stats, err = CalcSiteStats(siteId)
+			stats, err = CalcSiteStats(siteID)
 		} else {
 			return []h.StatType{}, err
 		}
@@ -1009,12 +993,12 @@ func GetSiteStats(siteId int64) ([]h.StatType, error) {
 	return jsonStats, nil
 }
 
+// GetSiteBySubdomain returns a site for a given subdomain key
 func GetSiteBySubdomain(subdomain string) (SiteType, int, error) {
 
 	if strings.Trim(subdomain, " ") == "" {
-		return SiteType{}, http.StatusBadRequest, errors.New(
-			fmt.Sprintf("The domain key ('%s') cannot be empty", subdomain),
-		)
+		return SiteType{}, http.StatusBadRequest,
+			fmt.Errorf("The domain key ('%s') cannot be empty", subdomain)
 	}
 
 	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheSubdomain], subdomain)
@@ -1027,7 +1011,7 @@ func GetSiteBySubdomain(subdomain string) (SiteType, int, error) {
 		return SiteType{}, http.StatusInternalServerError, err
 	}
 
-	var siteId int64
+	var siteID int64
 	// The following query excludes is_deleted to prevent any the request
 	// context from returning any site data, even though the site will still be
 	// accessible via the control panel.
@@ -1038,31 +1022,29 @@ SELECT site_id
    AND is_deleted IS NOT TRUE`,
 		subdomain,
 	).Scan(
-		&siteId,
+		&siteID,
 	)
 	if err == sql.ErrNoRows {
-		return SiteType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Resource with subdomain %s not found", subdomain),
-		)
+		return SiteType{}, http.StatusNotFound,
+			fmt.Errorf("Resource with subdomain %s not found", subdomain)
 
 	} else if err != nil {
-		return SiteType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return SiteType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	// Update cache
-	c.CacheSetInt64(mcKey, siteId, mcTtl)
+	c.CacheSetInt64(mcKey, siteID, mcTtl)
 
-	return GetSite(siteId)
+	return GetSite(siteID)
 }
 
+// GetSiteByDomain returns a site for a given custom domain name
 func GetSiteByDomain(domain string) (SiteType, int, error) {
 
 	if strings.Trim(domain, " ") == "" {
-		return SiteType{}, http.StatusBadRequest, errors.New(
-			fmt.Sprintf("the supplied domain ('%s') cannot be empty.", domain),
-		)
+		return SiteType{}, http.StatusBadRequest,
+			fmt.Errorf("the supplied domain ('%s') cannot be empty", domain)
 	}
 
 	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheDomain], domain)
@@ -1075,7 +1057,7 @@ func GetSiteByDomain(domain string) (SiteType, int, error) {
 		return SiteType{}, http.StatusInternalServerError, err
 	}
 
-	var siteId int64
+	var siteID int64
 	// The following query excludes is_deleted to prevent any the request
 	// context from returning any site data, even though the site will still be
 	// accessible via the control panel.
@@ -1086,28 +1068,25 @@ SELECT site_id
    AND is_deleted IS NOT TRUE`,
 		domain,
 	).Scan(
-		&siteId,
+		&siteID,
 	)
 	if err == sql.ErrNoRows {
 		return SiteType{}, http.StatusNotFound,
-			errors.New(
-				fmt.Sprintf("Resource with domain %s not found", domain),
-			)
+			fmt.Errorf("Resource with domain %s not found", domain)
 	} else if err != nil {
 		return SiteType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	// Update cache
-	c.CacheSetInt64(mcKey, siteId, mcTtl)
+	c.CacheSetInt64(mcKey, siteID, mcTtl)
 
-	return GetSite(siteId)
+	return GetSite(siteID)
 }
 
+// GetSites returns a list of sites owned by a given user
 func GetSites(
-	userId int64,
+	userID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -1124,7 +1103,7 @@ func GetSites(
 	}
 
 	var sqlQuery string
-	if userId > 0 {
+	if userID > 0 {
 		sqlQuery = `
 SELECT COUNT(*) OVER() AS total
       ,s.site_id
@@ -1150,16 +1129,14 @@ OFFSET $2`
 	}
 
 	var rows *sql.Rows
-	if userId > 0 {
-		rows, err = db.Query(sqlQuery, userId, limit, offset)
+	if userID > 0 {
+		rows, err = db.Query(sqlQuery, userID, limit, offset)
 	} else {
 		rows, err = db.Query(sqlQuery, limit, offset)
 	}
 	if err != nil {
 		return []SiteType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Could not query rows: %v", err.Error()),
-			)
+			fmt.Errorf("Could not query rows: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -1174,9 +1151,7 @@ OFFSET $2`
 		)
 		if err != nil {
 			return []SiteType{}, 0, 0, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 		m, status, err := GetSite(id)
 		if err != nil {
@@ -1187,9 +1162,7 @@ OFFSET $2`
 	err = rows.Err()
 	if err != nil {
 		return []SiteType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -1197,9 +1170,8 @@ OFFSET $2`
 	maxOffset := h.GetMaxOffset(total, limit)
 
 	if offset > maxOffset {
-		return []SiteType{}, 0, 0, http.StatusBadRequest, errors.New(
-			fmt.Sprintf("Offset (%d) would return an empty page.", offset),
-		)
+		return []SiteType{}, 0, 0, http.StatusBadRequest,
+			fmt.Errorf("Offset (%d) would return an empty page.", offset)
 	}
 
 	return sites, total, pages, http.StatusOK, nil
@@ -1210,7 +1182,7 @@ OFFSET $2`
 func CheckSiteHealth(site SiteType) (SiteHealthType, int, error) {
 
 	siteHealth := SiteHealthType{}
-	if site.Id == 1 {
+	if site.ID == 1 {
 		return siteHealth, http.StatusBadRequest,
 			errors.New("Cannot fetch status of root site.")
 	}
@@ -1240,50 +1212,50 @@ func CheckSiteHealth(site SiteType) (SiteHealthType, int, error) {
 	}
 
 	// Check the site logo is reachable (if specified).
-	if site.LogoUrl != "" {
-		siteHealth.LogoUrlHealth.Set = true
-		err := CheckSiteResource(site.LogoUrl, site)
+	if site.LogoURL != "" {
+		siteHealth.LogoURLHealth.Set = true
+		err := CheckSiteResource(site.LogoURL, site)
 		if err != nil {
-			siteHealth.LogoUrlHealth.Valid = false
-			siteHealth.LogoUrlHealth.Error = err.Error()
+			siteHealth.LogoURLHealth.Valid = false
+			siteHealth.LogoURLHealth.Error = err.Error()
 		} else {
-			siteHealth.LogoUrlHealth.Valid = true
+			siteHealth.LogoURLHealth.Valid = true
 		}
-		siteHealth.LogoUrlHealth.Value = site.LogoUrl
+		siteHealth.LogoURLHealth.Value = site.LogoURL
 	} else {
-		siteHealth.LogoUrlHealth.Set = false
+		siteHealth.LogoURLHealth.Set = false
 	}
 
 	// Check the header background URL is reachable (if specified).
-	if site.BackgroundUrl != "" {
-		siteHealth.BackgroundUrlHealth.Set = true
-		err := CheckSiteResource(site.BackgroundUrl, site)
+	if site.BackgroundURL != "" {
+		siteHealth.BackgroundURLHealth.Set = true
+		err := CheckSiteResource(site.BackgroundURL, site)
 		if err != nil {
-			siteHealth.BackgroundUrlHealth.Valid = false
-			siteHealth.BackgroundUrlHealth.Error = err.Error()
+			siteHealth.BackgroundURLHealth.Valid = false
+			siteHealth.BackgroundURLHealth.Error = err.Error()
 		} else {
-			siteHealth.BackgroundUrlHealth.Valid = true
+			siteHealth.BackgroundURLHealth.Valid = true
 		}
-		siteHealth.BackgroundUrlHealth.Value = site.BackgroundUrl
+		siteHealth.BackgroundURLHealth.Value = site.BackgroundURL
 	} else {
-		siteHealth.BackgroundUrlHealth.Set = false
+		siteHealth.BackgroundURLHealth.Set = false
 	}
 
 	// Validate Google Analytics property (already done in validator, but
 	// part of site health)
-	if site.GaWebPropertyIdNullable.Valid {
+	if site.GaWebPropertyIDNullable.Valid {
 		siteHealth.AnalyticsIDHealth.Set = true
-		if strings.HasPrefix(site.GaWebPropertyId, "UA-") {
+		if strings.HasPrefix(site.GaWebPropertyID, "UA-") {
 			siteHealth.AnalyticsIDHealth.Valid = true
 		} else {
 			siteHealth.AnalyticsIDHealth.Valid = false
 			siteHealth.AnalyticsIDHealth.Error = fmt.Sprintf(
 				"Invalid GA web property format: %s",
-				site.GaWebPropertyId,
+				site.GaWebPropertyID,
 			)
 		}
 		// We've already checked validity so ignore error.
-		value, _ := site.GaWebPropertyIdNullable.Value()
+		value, _ := site.GaWebPropertyIDNullable.Value()
 		siteHealth.AnalyticsIDHealth.Value = value
 	} else {
 		siteHealth.AnalyticsIDHealth.Set = false

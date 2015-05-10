@@ -84,7 +84,7 @@ func (ctl *RoleController) Read(c *models.Context) {
 	}
 
 	// Get Role
-	m, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	m, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -115,7 +115,7 @@ func (ctl *RoleController) Update(c *models.Context) {
 		return
 	}
 
-	m, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	m, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -152,14 +152,14 @@ func (ctl *RoleController) Update(c *models.Context) {
 	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
 	m.Meta.EditedNullable = pq.NullTime{Time: time.Now(), Valid: true}
 
-	status, err = m.Update(c.Site.Id, c.Auth.ProfileId)
+	status, err = m.Update(c.Site.ID, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	audit.Replace(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeRole],
 		m.Id,
 		c.Auth.ProfileId,
@@ -285,7 +285,7 @@ func (ctl *RoleController) Patch(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	m, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -298,7 +298,7 @@ func (ctl *RoleController) Patch(c *models.Context) {
 	}
 
 	audit.Update(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeRole],
 		m.Id,
 		c.Auth.ProfileId,
@@ -347,7 +347,7 @@ func (ctl *RoleController) Delete(c *models.Context) {
 		}
 	}
 
-	m, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	m, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -360,7 +360,7 @@ func (ctl *RoleController) Delete(c *models.Context) {
 	}
 
 	audit.Delete(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeRole],
 		m.Id,
 		c.Auth.ProfileId,

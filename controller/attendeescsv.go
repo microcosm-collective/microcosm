@@ -59,7 +59,7 @@ func (ctl *AttendeesCSVController) ReadMany(c *models.Context) {
 	}
 	// End Authorisation
 
-	attendees, status, err := models.GetAttendeesCSV(c.Site.Id, eventId, c.Auth.ProfileId)
+	attendees, status, err := models.GetAttendeesCSV(c.Site.ID, eventId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

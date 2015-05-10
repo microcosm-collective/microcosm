@@ -53,7 +53,7 @@ func (ctl *WatchersController) ReadMany(c *models.Context) {
 
 	ems, total, pages, status, err := models.GetProfileWatchers(
 		c.Auth.ProfileId,
-		c.Site.Id,
+		c.Site.ID,
 		limit,
 		offset,
 	)
@@ -127,7 +127,7 @@ func (ctl *WatchersController) Create(c *models.Context) {
 		m.UpdateTypeID,
 		m.ItemID,
 		m.ItemTypeID,
-		c.Site.Id,
+		c.Site.ID,
 	)
 	if err != nil {
 		c.RespondWithErrorMessage(

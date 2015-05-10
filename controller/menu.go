@@ -32,7 +32,7 @@ func MenuHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if siteId == 0 {
-		siteId = c.Site.Id
+		siteId = c.Site.ID
 	}
 
 	ctl := MenuController{}
@@ -80,7 +80,7 @@ func (ctl *MenuController) Update(c *models.Context, siteId int64) {
 
 	// Use the user ID to check, since the current context is a different site (the root site)
 	// than the site the owner profile is associated with.
-	owner, status, err := models.GetProfileSummary(site.Id, site.OwnedById)
+	owner, status, err := models.GetProfileSummary(site.ID, site.OwnedByID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -121,7 +121,7 @@ func (ctl *MenuController) Delete(c *models.Context, siteId int64) {
 
 	// Use the user ID to check, since the current context is a different site (the root site)
 	// than the site the owner profile is associated with.
-	owner, status, err := models.GetProfileSummary(site.Id, site.OwnedById)
+	owner, status, err := models.GetProfileSummary(site.ID, site.OwnedByID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

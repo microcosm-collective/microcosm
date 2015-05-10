@@ -80,7 +80,7 @@ func (ctl *UsersController) Create(c *models.Context) {
 			}
 
 			audit.Create(
-				c.Site.Id,
+				c.Site.ID,
 				h.ItemTypes[h.ItemTypeUser],
 				user.ID,
 				c.Auth.ProfileId,
@@ -107,7 +107,7 @@ func (ctl *UsersController) Create(c *models.Context) {
 		}
 
 		audit.Create(
-			c.Site.Id,
+			c.Site.ID,
 			h.ItemTypes[h.ItemTypeProfile],
 			profile.Id,
 			c.Auth.ProfileId,

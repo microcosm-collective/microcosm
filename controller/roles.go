@@ -76,7 +76,7 @@ func (ctl *RolesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetRoles(c.Site.Id, microcosmId, c.Auth.ProfileId, limit, offset)
+	ems, total, pages, status, err := models.GetRoles(c.Site.ID, microcosmId, c.Auth.ProfileId, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -144,19 +144,19 @@ func (ctl *RolesController) Create(c *models.Context) {
 	// End : Authorisation
 
 	// Populate where applicable from auth and context
-	m.SiteId = c.Site.Id
+	m.SiteId = c.Site.ID
 	m.MicrocosmId = microcosmId
 	m.Meta.CreatedById = c.Auth.ProfileId
 	m.Meta.Created = time.Now()
 
-	status, err := m.Insert(c.Site.Id, c.Auth.ProfileId)
+	status, err := m.Insert(c.Site.ID, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	audit.Create(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeRole],
 		m.Id,
 		c.Auth.ProfileId,

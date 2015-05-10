@@ -41,7 +41,7 @@ func (ctl *UpdateOptionsController) ReadMany(c *models.Context) {
 		return
 	}
 
-	prefs, status, err := models.GetUpdateOptions(c.Site.Id, c.Auth.ProfileId)
+	prefs, status, err := models.GetUpdateOptions(c.Site.ID, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

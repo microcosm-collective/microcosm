@@ -111,7 +111,7 @@ func (ctl *AttributeController) Update(c *models.Context) {
 	}
 
 	audit.Replace(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttribute],
 		m.Id,
 		c.Auth.ProfileId,
@@ -156,7 +156,7 @@ func (ctl *AttributeController) Delete(c *models.Context) {
 	}
 
 	audit.Delete(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttribute],
 		m.Id,
 		c.Auth.ProfileId,

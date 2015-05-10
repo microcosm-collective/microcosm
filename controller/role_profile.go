@@ -57,7 +57,7 @@ func (ctl *RoleProfileController) Read(c *models.Context) {
 		return
 	}
 
-	_, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -87,7 +87,7 @@ func (ctl *RoleProfileController) Read(c *models.Context) {
 		}
 	}
 
-	m, status, err := models.GetRoleProfile(c.Site.Id, roleId, profileId)
+	m, status, err := models.GetRoleProfile(c.Site.ID, roleId, profileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -116,7 +116,7 @@ func (ctl *RoleProfileController) Update(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -149,7 +149,7 @@ func (ctl *RoleProfileController) Update(c *models.Context) {
 		}
 	}
 
-	status, err = m.Update(c.Site.Id, roleId)
+	status, err = m.Update(c.Site.ID, roleId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -180,7 +180,7 @@ func (ctl *RoleProfileController) Delete(c *models.Context) {
 		return
 	}
 
-	_, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

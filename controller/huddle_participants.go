@@ -45,7 +45,7 @@ func (ctl *HuddleParticipantsController) ReadMany(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetHuddle(c.Site.Id, c.Auth.ProfileId, huddleId)
+	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileId, huddleId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -68,7 +68,7 @@ func (ctl *HuddleParticipantsController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetHuddleParticipants(c.Site.Id, huddleId, limit, offset)
+	ems, total, pages, status, err := models.GetHuddleParticipants(c.Site.ID, huddleId, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -98,7 +98,7 @@ func (ctl *HuddleParticipantsController) UpdateMany(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetHuddle(c.Site.Id, c.Auth.ProfileId, huddleId)
+	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileId, huddleId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -131,7 +131,7 @@ func (ctl *HuddleParticipantsController) UpdateMany(c *models.Context) {
 		return
 	}
 
-	status, err = models.UpdateManyHuddleParticipants(c.Site.Id, huddleId, ems)
+	status, err = models.UpdateManyHuddleParticipants(c.Site.ID, huddleId, ems)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

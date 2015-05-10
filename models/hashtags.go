@@ -16,6 +16,6 @@ func ProcessHashtags(siteId int64, src []byte) []byte {
 	s, _, _ := GetSite(siteId)
 	return regHashtags.ReplaceAll(
 		src,
-		[]byte(`$1[#$2](`+s.GetUrl()+`/search/?q=%23$2)`),
+		[]byte(`$1[#$2](`+s.GetURL()+`/search/?q=%23$2)`),
 	)
 }

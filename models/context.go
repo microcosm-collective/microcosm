@@ -238,7 +238,7 @@ func (c *Context) authenticate() (int, error) {
 		if !(c.Request.URL.Path == `/api/v1/site` ||
 			c.Request.URL.Path == `/api/v1/whoami` ||
 			c.Request.URL.Path == fmt.Sprintf(`/api/v1/profiles/%d`, profile.Id)) &&
-			IsBanned(c.Site.Id, storedToken.UserId) {
+			IsBanned(c.Site.ID, storedToken.UserId) {
 
 			c.Auth.IsBanned = true
 			c.Auth.UserId = -1
@@ -260,7 +260,7 @@ func (c *Context) authenticate() (int, error) {
 		}
 
 		// Determine whether user is site owner
-		if c.Site.Id > 0 && c.Site.OwnedById == profile.Id {
+		if c.Site.ID > 0 && c.Site.OwnedByID == profile.Id {
 			c.Auth.IsSiteOwner = true
 		}
 	}
@@ -313,7 +313,7 @@ func (c *Context) getSiteContext() error {
 		// If this is the root site, then we shouldn't be accessed via
 		// root.microco.sm and being accessed via microco.sm was already handled
 		// above. We'll claim we don't exist.
-		if c.Site.Id == rootSiteId {
+		if c.Site.ID == rootSiteId {
 			return errors.New("Unknown site requested")
 		}
 

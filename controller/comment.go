@@ -69,7 +69,7 @@ func (ctl *CommentController) Read(c *models.Context) {
 		return
 	}
 
-	m, status, err := models.GetComment(c.Site.Id, itemId, c.Auth.ProfileId, limit)
+	m, status, err := models.GetComment(c.Site.ID, itemId, c.Auth.ProfileId, limit)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -94,7 +94,7 @@ func (ctl *CommentController) Update(c *models.Context) {
 	}
 
 	// Initialise
-	m, status, err := models.GetCommentSummary(c.Site.Id, itemId)
+	m, status, err := models.GetCommentSummary(c.Site.ID, itemId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -126,14 +126,14 @@ func (ctl *CommentController) Update(c *models.Context) {
 	m.Meta.EditedNullable = pq.NullTime{Time: time.Now(), Valid: true}
 
 	// Update
-	status, err = m.Update(c.Site.Id)
+	status, err = m.Update(c.Site.ID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	audit.Replace(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
 		m.Id,
 		c.Auth.ProfileId,
@@ -216,14 +216,14 @@ func (ctl *CommentController) Patch(c *models.Context) {
 
 	m := models.CommentSummaryType{}
 	m.Id = itemId
-	status, err = m.Patch(c.Site.Id, ac, patches)
+	status, err = m.Patch(c.Site.ID, ac, patches)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	audit.Update(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
 		m.Id,
 		c.Auth.ProfileId,
@@ -254,7 +254,7 @@ func (ctl *CommentController) Delete(c *models.Context) {
 	// End Authorisation
 
 	// Partially instantiated type for Id passing
-	m, status, err := models.GetCommentSummary(c.Site.Id, itemId)
+	m, status, err := models.GetCommentSummary(c.Site.ID, itemId)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithOK()
@@ -266,14 +266,14 @@ func (ctl *CommentController) Delete(c *models.Context) {
 	}
 
 	// Delete resource
-	status, err = m.Delete(c.Site.Id)
+	status, err = m.Delete(c.Site.ID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	audit.Delete(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
 		m.Id,
 		c.Auth.ProfileId,

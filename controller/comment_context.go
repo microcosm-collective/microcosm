@@ -59,7 +59,7 @@ func (ctl *CommentContextController) Read(c *models.Context) {
 		return
 	}
 
-	m, status, err := models.GetCommentSummary(c.Site.Id, itemId)
+	m, status, err := models.GetCommentSummary(c.Site.ID, itemId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

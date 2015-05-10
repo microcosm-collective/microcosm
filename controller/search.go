@@ -35,7 +35,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 func (ctl *SearchController) Read(c *models.Context) {
 
 	results, status, err := models.Search(
-		c.Site.Id,
+		c.Site.ID,
 		*c.Request.URL,
 		c.Auth.ProfileId,
 	)

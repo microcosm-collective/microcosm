@@ -51,7 +51,7 @@ func (ctl *IgnoredController) ReadMany(c *models.Context) {
 	}
 
 	ems, total, pages, status, err := models.GetIgnored(
-		c.Site.Id,
+		c.Site.ID,
 		c.Auth.ProfileId,
 		limit,
 		offset,

@@ -107,7 +107,7 @@ func ParseItemInfo(c *models.Context) (int64, int64, models.PermissionType, int,
 					c.RouteVars["profile_id"],
 				))
 		}
-		_, status, err := models.GetProfileSummary(c.Site.Id, profileId)
+		_, status, err := models.GetProfileSummary(c.Site.ID, profileId)
 		if err != nil {
 			if status == http.StatusNotFound {
 				return 0, 0, models.PermissionType{}, http.StatusBadRequest,
@@ -132,7 +132,7 @@ func ParseItemInfo(c *models.Context) (int64, int64, models.PermissionType, int,
 					c.RouteVars["comment_id"],
 				))
 		}
-		_, status, err := models.GetCommentSummary(c.Site.Id, commentId)
+		_, status, err := models.GetCommentSummary(c.Site.ID, commentId)
 		if err != nil {
 			if status == http.StatusNotFound {
 				return 0, 0, models.PermissionType{}, http.StatusBadRequest,

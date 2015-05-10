@@ -45,7 +45,7 @@ func (ctl *UpdatesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetUpdates(c.Site.Id, c.Auth.ProfileId, limit, offset)
+	ems, total, pages, status, err := models.GetUpdates(c.Site.ID, c.Auth.ProfileId, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

@@ -70,7 +70,7 @@ func (ctl *ProfilesController) Create(c *models.Context) {
 	}
 
 	// Populate site and user ID from goweb context
-	m.SiteId = c.Site.Id
+	m.SiteId = c.Site.ID
 	m.UserId = c.Auth.UserId
 
 	status, err := m.Insert()
@@ -80,7 +80,7 @@ func (ctl *ProfilesController) Create(c *models.Context) {
 	}
 
 	audit.Create(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
 		m.Id,
 		c.Auth.ProfileId,
@@ -121,7 +121,7 @@ func (ctl *ProfilesController) ReadMany(c *models.Context) {
 	so.ProfileId = c.Auth.ProfileId
 
 	ems, total, pages, status, err := models.GetProfiles(
-		c.Site.Id,
+		c.Site.ID,
 		so,
 		limit,
 		offset,

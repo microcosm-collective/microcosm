@@ -51,7 +51,7 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 	}
 
 	// Start : Authorisation
-	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.Id))
+	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.ID))
 	if !perms.CanCreate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
@@ -59,7 +59,7 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 	// End : Authorisation
 
 	// Populate where applicable from auth and context
-	m.SiteId = c.Site.Id
+	m.SiteId = c.Site.ID
 	m.Meta.CreatedById = c.Auth.ProfileId
 	m.Meta.Created = time.Now()
 	m.OwnedById = c.Auth.ProfileId
@@ -71,7 +71,7 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 	}
 
 	audit.Create(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
 		m.Id,
 		c.Auth.ProfileId,
@@ -91,7 +91,7 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 func (ctl *MicrocosmsController) ReadMany(c *models.Context) {
 
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.Id),
+		models.MakeAuthorisationContext(c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.ID),
 	)
 
 	// Fetch query string args if any exist
@@ -102,7 +102,7 @@ func (ctl *MicrocosmsController) ReadMany(c *models.Context) {
 	}
 
 	// Fetch list of microcosms
-	ems, total, pages, status, err := models.GetMicrocosms(c.Site.Id, c.Auth.ProfileId, limit, offset)
+	ems, total, pages, status, err := models.GetMicrocosms(c.Site.ID, c.Auth.ProfileId, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

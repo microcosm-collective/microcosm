@@ -105,7 +105,7 @@ func SendUsage(
 	m.ContentLength = contentLength
 	m.Created = time.Now().Format(time.RFC3339)
 	m.TimeSpent = dur.Nanoseconds()
-	m.SiteID = c.Site.Id
+	m.SiteID = c.Site.ID
 	m.UserID = c.Auth.UserId
 	m.ProfileID = c.Auth.ProfileId
 

@@ -58,7 +58,7 @@ func (ctl *RoleProfilesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -88,7 +88,7 @@ func (ctl *RoleProfilesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetRoleProfiles(c.Site.Id, roleId, limit, offset)
+	ems, total, pages, status, err := models.GetRoleProfiles(c.Site.ID, roleId, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -129,7 +129,7 @@ func (ctl *RoleProfilesController) UpdateMany(c *models.Context) {
 		return
 	}
 
-	_, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -164,7 +164,7 @@ func (ctl *RoleProfilesController) UpdateMany(c *models.Context) {
 		}
 	}
 
-	status, err = models.UpdateManyRoleProfiles(c.Site.Id, roleId, ems)
+	status, err = models.UpdateManyRoleProfiles(c.Site.ID, roleId, ems)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -193,7 +193,7 @@ func (ctl *RoleProfilesController) DeleteMany(c *models.Context) {
 		return
 	}
 
-	_, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

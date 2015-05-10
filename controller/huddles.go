@@ -50,7 +50,7 @@ func (ctl *HuddlesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetHuddles(c.Site.Id, c.Auth.ProfileId, limit, offset)
+	ems, total, pages, status, err := models.GetHuddles(c.Site.ID, c.Auth.ProfileId, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -107,14 +107,14 @@ func (ctl *HuddlesController) Create(c *models.Context) {
 	m.Meta.CreatedById = c.Auth.ProfileId
 	m.Meta.Created = time.Now()
 
-	status, err := m.Insert(c.Site.Id)
+	status, err := m.Insert(c.Site.ID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	audit.Create(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeHuddle],
 		m.Id,
 		c.Auth.ProfileId,

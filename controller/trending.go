@@ -38,7 +38,7 @@ func (ctl *TrendingController) ReadMany(c *models.Context) {
 		return
 	}
 
-	trending, total, pages, status, err := models.GetTrending(c.Site.Id, c.Auth.ProfileId, limit, offset)
+	trending, total, pages, status, err := models.GetTrending(c.Site.ID, c.Auth.ProfileId, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

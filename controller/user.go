@@ -63,7 +63,7 @@ func (ctl *UserController) Read(c *models.Context) {
 		return
 	}
 
-	if !models.UserIsOnSite(m.ID, c.Site.Id) {
+	if !models.UserIsOnSite(m.ID, c.Site.ID) {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
@@ -84,7 +84,7 @@ func (ctl *UserController) Update(c *models.Context) {
 		return
 	}
 
-	if !models.UserIsOnSite(m.ID, c.Site.Id) {
+	if !models.UserIsOnSite(m.ID, c.Site.ID) {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
@@ -116,7 +116,7 @@ func (ctl *UserController) Update(c *models.Context) {
 	}
 
 	audit.Replace(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
 		itemId,
 		c.Auth.ProfileId,
@@ -146,7 +146,7 @@ func (ctl *UserController) Delete(c *models.Context) {
 		return
 	}
 
-	if !models.UserIsOnSite(m.ID, c.Site.Id) {
+	if !models.UserIsOnSite(m.ID, c.Site.ID) {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
@@ -158,7 +158,7 @@ func (ctl *UserController) Delete(c *models.Context) {
 	}
 
 	audit.Delete(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeUser],
 		itemId,
 		c.Auth.ProfileId,

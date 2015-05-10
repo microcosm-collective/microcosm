@@ -54,7 +54,7 @@ func (ctl *CommentsController) Create(c *models.Context) {
 	m.Meta.CreatedById = c.Auth.ProfileId
 	m.Meta.Created = time.Now()
 
-	status, err := m.Validate(c.Site.Id, false)
+	status, err := m.Validate(c.Site.ID, false)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -67,7 +67,7 @@ func (ctl *CommentsController) Create(c *models.Context) {
 	)
 	if !perms.CanCreate {
 		c.RespondWithErrorDetail(
-			e.New(c.Site.Id, c.Auth.ProfileId, "comments.go::Create", e.NoCreate, "Not authorized to create comment: CanCreate false"),
+			e.New(c.Site.ID, c.Auth.ProfileId, "comments.go::Create", e.NoCreate, "Not authorized to create comment: CanCreate false"),
 			http.StatusForbidden,
 		)
 		return
@@ -75,14 +75,14 @@ func (ctl *CommentsController) Create(c *models.Context) {
 	// End : Authorisation
 
 	// Create
-	status, err = m.Insert(c.Site.Id)
+	status, err = m.Insert(c.Site.ID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	go audit.Create(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
 		m.Id,
 		c.Auth.ProfileId,
@@ -97,10 +97,10 @@ func (ctl *CommentsController) Create(c *models.Context) {
 			h.UpdateTypes[h.UpdateTypeNewCommentInHuddle],
 			m.ItemId,
 			m.ItemTypeId,
-			c.Site.Id,
+			c.Site.ID,
 		)
 
-		go models.SendUpdatesForNewCommentInHuddle(c.Site.Id, m)
+		go models.SendUpdatesForNewCommentInHuddle(c.Site.ID, m)
 		models.MarkAsRead(h.ItemTypes[h.ItemTypeHuddle], m.ItemId, c.Auth.ProfileId, time.Now())
 		models.UpdateUnreadHuddleCount(c.Auth.ProfileId)
 	} else {
@@ -109,14 +109,14 @@ func (ctl *CommentsController) Create(c *models.Context) {
 			h.UpdateTypes[h.UpdateTypeNewComment],
 			m.ItemId,
 			m.ItemTypeId,
-			c.Site.Id,
+			c.Site.ID,
 		)
 
-		go models.SendUpdatesForNewCommentInItem(c.Site.Id, m)
+		go models.SendUpdatesForNewCommentInItem(c.Site.ID, m)
 	}
 
 	if m.InReplyTo > 0 {
-		go models.SendUpdatesForNewReplyToYourComment(c.Site.Id, m)
+		go models.SendUpdatesForNewReplyToYourComment(c.Site.ID, m)
 	}
 
 	// Respond

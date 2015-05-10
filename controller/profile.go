@@ -72,7 +72,7 @@ func (ctl *ProfileController) Create(c *models.Context) {
 	}
 
 	// Populate site and user ID from goweb context
-	m.SiteId = c.Site.Id
+	m.SiteId = c.Site.ID
 	m.UserId = c.Auth.UserId
 
 	status, err := m.Insert()
@@ -82,7 +82,7 @@ func (ctl *ProfileController) Create(c *models.Context) {
 	}
 
 	audit.Create(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
 		m.Id,
 		c.Auth.ProfileId,
@@ -111,7 +111,7 @@ func (ctl *ProfileController) Read(c *models.Context) {
 		models.MakeAuthorisationContext(
 			c, 0, itemTypeId, itemId),
 	)
-	if c.Site.Id == 1 {
+	if c.Site.ID == 1 {
 		if c.Auth.ProfileId != itemId {
 			perms.CanRead = false
 		}
@@ -122,7 +122,7 @@ func (ctl *ProfileController) Read(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetProfile(c.Site.Id, itemId)
+	m, status, err := models.GetProfile(c.Site.ID, itemId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -174,7 +174,7 @@ func (ctl *ProfileController) Update(c *models.Context) {
 		return
 	}
 
-	m, status, err := models.GetProfile(c.Site.Id, itemId)
+	m, status, err := models.GetProfile(c.Site.ID, itemId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -201,7 +201,7 @@ func (ctl *ProfileController) Update(c *models.Context) {
 	// End Authorisation
 
 	// Populate site and user ID from goweb context
-	m.SiteId = c.Site.Id
+	m.SiteId = c.Site.ID
 
 	status, err = m.Update()
 	if err != nil {
@@ -210,7 +210,7 @@ func (ctl *ProfileController) Update(c *models.Context) {
 	}
 
 	audit.Replace(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
 		m.Id,
 		c.Auth.ProfileId,
@@ -250,7 +250,7 @@ func (ctl *ProfileController) Delete(c *models.Context) {
 		}
 
 		audit.Replace(
-			c.Site.Id,
+			c.Site.ID,
 			h.ItemTypes[h.ItemTypeProfile],
 			m.Id,
 			c.Auth.ProfileId,

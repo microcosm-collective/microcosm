@@ -97,7 +97,7 @@ func (ctl *SitesController) Create(c *models.Context) {
 		return
 	}
 
-	if c.Site.Id != 1 {
+	if c.Site.ID != 1 {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("Sites can only be created from the root site"),
 			http.StatusBadRequest,
@@ -110,7 +110,7 @@ func (ctl *SitesController) Create(c *models.Context) {
 
 	m := models.SiteType{}
 	// Default theme
-	m.ThemeId = 1
+	m.ThemeID = 1
 	err := c.Fill(&m)
 	if err != nil {
 		c.RespondWithErrorMessage(
@@ -140,19 +140,13 @@ func (ctl *SitesController) Create(c *models.Context) {
 	}
 
 	audit.Create(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeSite],
-		site.Id,
+		site.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
 	)
 
-	c.RespondWithSeeOther(
-		fmt.Sprintf(
-			"%s/%d",
-			h.ApiTypeSite,
-			site.Id,
-		),
-	)
+	c.RespondWithSeeOther(fmt.Sprintf("%s/%d", h.ApiTypeSite, site.ID))
 }

@@ -65,14 +65,14 @@ func (ctl *ConversationController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Get Conversation
-	m, status, err := models.GetConversation(c.Site.Id, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Get Comments
-	m.Comments, status, err = models.GetComments(c.Site.Id, h.ItemTypeConversation, m.Id, c.Request.URL, c.Auth.ProfileId, m.Meta.Created)
+	m.Comments, status, err = models.GetComments(c.Site.ID, h.ItemTypeConversation, m.Id, c.Request.URL, c.Auth.ProfileId, m.Meta.Created)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -132,7 +132,7 @@ func (ctl *ConversationController) Update(c *models.Context) {
 	}
 
 	// Validate inputs
-	m, status, err := models.GetConversation(c.Site.Id, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -162,14 +162,14 @@ func (ctl *ConversationController) Update(c *models.Context) {
 	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
 	m.Meta.EditedNullable = pq.NullTime{Time: time.Now(), Valid: true}
 
-	status, err = m.Update(c.Site.Id, c.Auth.ProfileId)
+	status, err = m.Update(c.Site.ID, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	audit.Replace(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeConversation],
 		m.Id,
 		c.Auth.ProfileId,
@@ -270,7 +270,7 @@ func (ctl *ConversationController) Patch(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetConversation(c.Site.Id, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -283,7 +283,7 @@ func (ctl *ConversationController) Patch(c *models.Context) {
 	}
 
 	audit.Update(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeConversation],
 		m.Id,
 		c.Auth.ProfileId,
@@ -313,7 +313,7 @@ func (ctl *ConversationController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetConversation(c.Site.Id, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileId)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithOK()
@@ -331,7 +331,7 @@ func (ctl *ConversationController) Delete(c *models.Context) {
 	}
 
 	audit.Delete(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeConversation],
 		m.Id,
 		c.Auth.ProfileId,

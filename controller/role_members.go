@@ -56,7 +56,7 @@ func (ctl *RoleMembersController) ReadMany(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetRole(c.Site.Id, microcosmId, roleId, c.Auth.ProfileId)
+	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -86,7 +86,7 @@ func (ctl *RoleMembersController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetRoleProfiles(c.Site.Id, roleId, limit, offset)
+	ems, total, pages, status, err := models.GetRoleProfiles(c.Site.ID, roleId, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

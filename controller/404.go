@@ -53,5 +53,5 @@ func (ctl *Redirect404Controller) Read(c *models.Context) {
 		return
 	}
 
-	c.RespondWithData(resolver.Resolve(c.Site.Id, inUrl, c.Auth.ProfileId))
+	c.RespondWithData(resolver.Resolve(c.Site.ID, inUrl, c.Auth.ProfileId))
 }

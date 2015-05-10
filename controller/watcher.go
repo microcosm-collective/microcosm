@@ -40,7 +40,7 @@ func (ctl *WatcherController) Delete(c *models.Context) {
 
 	_, _, itemId, status, err := c.GetItemTypeAndItemId()
 	if itemId != 0 {
-		m, status, err := models.GetWatcher(itemId, c.Site.Id)
+		m, status, err := models.GetWatcher(itemId, c.Site.ID)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
 			return
@@ -88,7 +88,7 @@ func (ctl *WatcherController) Delete(c *models.Context) {
 	}
 
 	// Get watcher item to delete it
-	m, status, err = models.GetWatcher(m.ID, c.Site.Id)
+	m, status, err = models.GetWatcher(m.ID, c.Site.ID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

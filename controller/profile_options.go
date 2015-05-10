@@ -75,7 +75,7 @@ func (ctl *ProfileOptionsController) Update(c *models.Context) {
 	}
 
 	audit.Update(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
 		m.ProfileId,
 		c.Auth.ProfileId,

@@ -63,14 +63,14 @@ func (ctl *MicrocosmController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Get Microcosm
-	m, status, err := models.GetMicrocosm(c.Site.Id, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Get Items
-	m.Items, status, err = models.GetItems(c.Site.Id, m.Id, c.Auth.ProfileId, c.Request.URL)
+	m.Items, status, err = models.GetItems(c.Site.ID, m.Id, c.Auth.ProfileId, c.Request.URL)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -109,7 +109,7 @@ func (ctl *MicrocosmController) Update(c *models.Context) {
 	}
 
 	// Validate inputs
-	m, status, err := models.GetMicrocosm(c.Site.Id, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -136,7 +136,7 @@ func (ctl *MicrocosmController) Update(c *models.Context) {
 	// End Authorisation
 
 	// Populate where applicable from auth and context
-	m.SiteId = c.Site.Id
+	m.SiteId = c.Site.ID
 	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
 	m.Meta.EditedNullable = pq.NullTime{Time: time.Now(), Valid: true}
 
@@ -147,7 +147,7 @@ func (ctl *MicrocosmController) Update(c *models.Context) {
 	}
 
 	audit.Replace(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
 		m.Id,
 		c.Auth.ProfileId,
@@ -247,7 +247,7 @@ func (ctl *MicrocosmController) Patch(c *models.Context) {
 	// End Authorisation
 
 	// Populate where applicable from auth and context
-	m, status, err := models.GetMicrocosm(c.Site.Id, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -260,7 +260,7 @@ func (ctl *MicrocosmController) Patch(c *models.Context) {
 	}
 
 	audit.Update(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
 		m.Id,
 		c.Auth.ProfileId,
@@ -289,7 +289,7 @@ func (ctl *MicrocosmController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetMicrocosm(c.Site.Id, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -302,7 +302,7 @@ func (ctl *MicrocosmController) Delete(c *models.Context) {
 	}
 
 	audit.Delete(
-		c.Site.Id,
+		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
 		m.Id,
 		c.Auth.ProfileId,
