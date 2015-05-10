@@ -10,21 +10,23 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// SearchQuery encapsulates all of the meta parts of a search over the
+// microcosm content
 type SearchQuery struct {
-	Url       url.URL    `json:"-"`
-	UrlValues url.Values `json:"-"`
+	URL       url.URL    `json:"-"`
+	URLValues url.Values `json:"-"`
 
 	// Implemented in search
 	Query             string    `json:"q,omitempty"`
 	InTitle           bool      `json:"inTitle,omitempty"`
 	Hashtags          []string  `json:"hashtags,omitempty"`
-	MicrocosmIdsQuery []int64   `json:"forumId,omitempty"`
-	MicrocosmIds      []int64   `json:"-"`
+	MicrocosmIDsQuery []int64   `json:"forumId,omitempty"`
+	MicrocosmIDs      []int64   `json:"-"`
 	ItemTypesQuery    []string  `json:"type,omitempty"`
-	ItemTypeIds       []int64   `json:"-"`
-	ItemIdsQuery      []int64   `json:"id,omitempty"`
-	ItemIds           []int64   `json:"-"`
-	ProfileId         int64     `json:"authorId,omitempty"`
+	ItemTypeIDs       []int64   `json:"-"`
+	ItemIDsQuery      []int64   `json:"id,omitempty"`
+	ItemIDs           []int64   `json:"-"`
+	ProfileID         int64     `json:"authorId,omitempty"`
 	Following         bool      `json:"following,omitempty"`
 	Since             string    `json:"since,omitempty"`
 	SinceTime         time.Time `json:"-"`
@@ -56,11 +58,12 @@ type SearchQuery struct {
 	Valid bool `json:"-"`
 }
 
-func GetSearchQueryFromUrl(requestUrl url.URL) SearchQuery {
+// GetSearchQueryFromURL fetches and parses a query and returns a SearchQuery
+func GetSearchQueryFromURL(requestURL url.URL) SearchQuery {
 
 	sq := SearchQuery{
-		Url:       requestUrl,
-		UrlValues: requestUrl.Query(),
+		URL:       requestURL,
+		URLValues: requestURL.Query(),
 	}
 
 	sq.ParseFullQueryString()
@@ -70,7 +73,7 @@ func GetSearchQueryFromUrl(requestUrl url.URL) SearchQuery {
 	return sq
 }
 
-// Takes ?q=term&type=conversation
+// ParseFullQueryString takes ?q=term&type=conversation
 // And makes it
 // 	q = term
 // 	type = conversation
@@ -78,9 +81,9 @@ func GetSearchQueryFromUrl(requestUrl url.URL) SearchQuery {
 func (sq *SearchQuery) ParseFullQueryString() {
 
 	// Get the named values first
-	sq.Query = sq.UrlValues.Get("q")
+	sq.Query = sq.URLValues.Get("q")
 
-	for k, v := range sq.UrlValues {
+	for k, v := range sq.URLValues {
 		if k == "id" {
 			for _, t := range v {
 				i, err := strconv.ParseInt(t, 10, 64)
@@ -91,14 +94,14 @@ func (sq *SearchQuery) ParseFullQueryString() {
 					)
 				} else {
 					var found bool
-					for _, it := range sq.ItemIds {
+					for _, it := range sq.ItemIDs {
 						if it == i {
 							found = true
 							break
 						}
 					}
 					if !found {
-						sq.ItemIds = append(sq.ItemIds, i)
+						sq.ItemIDs = append(sq.ItemIDs, i)
 					}
 				}
 			}
@@ -114,14 +117,14 @@ func (sq *SearchQuery) ParseFullQueryString() {
 					)
 				} else {
 					var found bool
-					for _, it := range sq.MicrocosmIds {
+					for _, it := range sq.MicrocosmIDs {
 						if it == i {
 							found = true
 							break
 						}
 					}
 					if !found {
-						sq.MicrocosmIds = append(sq.MicrocosmIds, i)
+						sq.MicrocosmIDs = append(sq.MicrocosmIDs, i)
 					}
 				}
 			}
@@ -129,9 +132,9 @@ func (sq *SearchQuery) ParseFullQueryString() {
 
 		if k == "type" {
 			for _, t := range v {
-				itemTypeId := h.ItemTypes[t]
+				itemTypeID := h.ItemTypes[t]
 
-				if itemTypeId == 0 {
+				if itemTypeID == 0 {
 					sq.IgnoredArr = append(
 						sq.IgnoredArr,
 						fmt.Sprintf("type=%s", t),
@@ -139,15 +142,15 @@ func (sq *SearchQuery) ParseFullQueryString() {
 				} else {
 					// Prevent duplicates
 					var found bool
-					for _, it := range sq.ItemTypeIds {
-						if it == itemTypeId {
+					for _, it := range sq.ItemTypeIDs {
+						if it == itemTypeID {
 							found = true
 							break
 						}
 					}
 
 					if !found {
-						sq.ItemTypeIds = append(sq.ItemTypeIds, itemTypeId)
+						sq.ItemTypeIDs = append(sq.ItemTypeIDs, itemTypeID)
 					}
 				}
 			}
@@ -156,32 +159,32 @@ func (sq *SearchQuery) ParseFullQueryString() {
 
 	dateTimes := []string{"since", "until", "eventAfter", "eventBefore"}
 	for _, key := range dateTimes {
-		sq.ParseDateTime(key, sq.UrlValues.Get(key), "")
+		sq.ParseDateTime(key, sq.URLValues.Get(key), "")
 	}
 
 	ints := []string{"radius", "authorId"}
 	for _, key := range ints {
-		sq.ParseInt(key, sq.UrlValues.Get(key), "")
+		sq.ParseInt(key, sq.URLValues.Get(key), "")
 	}
 
 	floats := []string{"lat", "lon", "north", "east", "south", "west"}
 	for _, key := range floats {
-		sq.ParseFloat(key, sq.UrlValues.Get(key), "")
+		sq.ParseFloat(key, sq.URLValues.Get(key), "")
 	}
 
 	bools := []string{"attendee", "following", "inTitle"}
 	for _, key := range bools {
-		sq.ParseBool(key, sq.UrlValues.Get(key), "")
+		sq.ParseBool(key, sq.URLValues.Get(key), "")
 	}
 
-	sq.Sort = strings.ToLower(sq.UrlValues.Get("sort"))
+	sq.Sort = strings.ToLower(sq.URLValues.Get("sort"))
 
-	sq.ProfileName = sq.UrlValues.Get("author")
+	sq.ProfileName = sq.URLValues.Get("author")
 }
 
-// Takes the value of sq.Query which came from the querystring 'q' and sees
-// whether there are things like type:conversation and if so will populate
-// sq.* accordingly
+// ParseSingleQueryValue takes the value of sq.Query which came from the
+// querystring 'q' and sees whether there are things like type:conversation
+// and if so will populate sq.* accordingly
 func (sq *SearchQuery) ParseSingleQueryValue() {
 
 	if sq.Query == "" {
@@ -212,14 +215,14 @@ func (sq *SearchQuery) ParseSingleQueryValue() {
 					sq.IgnoredArr = append(sq.IgnoredArr, frag)
 				} else {
 					var found bool
-					for _, t := range sq.ItemIds {
+					for _, t := range sq.ItemIDs {
 						if t == i {
 							found = true
 							break
 						}
 					}
 					if !found {
-						sq.ItemIds = append(sq.ItemIds, i)
+						sq.ItemIDs = append(sq.ItemIDs, i)
 					}
 				}
 			case "forumid":
@@ -228,34 +231,34 @@ func (sq *SearchQuery) ParseSingleQueryValue() {
 					sq.IgnoredArr = append(sq.IgnoredArr, frag)
 				} else {
 					var found bool
-					for _, t := range sq.MicrocosmIds {
+					for _, t := range sq.MicrocosmIDs {
 						if t == i {
 							found = true
 							break
 						}
 					}
 					if !found {
-						sq.MicrocosmIds = append(sq.MicrocosmIds, i)
+						sq.MicrocosmIDs = append(sq.MicrocosmIDs, i)
 					}
 				}
 			case "type":
 				// itemTypes
 				itemType := value
-				itemTypeId := h.ItemTypes[itemType]
+				itemTypeID := h.ItemTypes[itemType]
 
-				if itemTypeId == 0 {
+				if itemTypeID == 0 {
 					sq.IgnoredArr = append(sq.IgnoredArr, frag)
 				} else {
 					var found bool
-					for _, t := range sq.ItemTypeIds {
-						if t == itemTypeId {
+					for _, t := range sq.ItemTypeIDs {
+						if t == itemTypeID {
 							found = true
 							break
 						}
 					}
 
 					if !found {
-						sq.ItemTypeIds = append(sq.ItemTypeIds, itemTypeId)
+						sq.ItemTypeIDs = append(sq.ItemTypeIDs, itemTypeID)
 					}
 				}
 
@@ -289,6 +292,7 @@ func (sq *SearchQuery) ParseSingleQueryValue() {
 	sq.Hashtags = regHashtags.FindAllString(sq.Query, -1)
 }
 
+// ParseDateTime parses a string containing a potential datetime arg
 func (sq *SearchQuery) ParseDateTime(key string, value string, frag string) {
 	if key == "" || value == "" {
 		return
@@ -363,6 +367,7 @@ func (sq *SearchQuery) ParseDateTime(key string, value string, frag string) {
 	}
 }
 
+// ParseFloat parses a float arg
 func (sq *SearchQuery) ParseFloat(key string, value string, frag string) {
 	if key == "" || value == "" {
 		return
@@ -396,6 +401,7 @@ func (sq *SearchQuery) ParseFloat(key string, value string, frag string) {
 	}
 }
 
+// ParseInt parses an integer arg
 func (sq *SearchQuery) ParseInt(key string, value string, frag string) {
 	if key == "" || value == "" {
 		return
@@ -415,14 +421,15 @@ func (sq *SearchQuery) ParseInt(key string, value string, frag string) {
 	case "radius":
 		sq.Radius = i
 	case "forumid":
-		sq.MicrocosmIds = append(sq.MicrocosmIds, i)
+		sq.MicrocosmIDs = append(sq.MicrocosmIDs, i)
 	case "authorid":
-		sq.ProfileId = i
+		sq.ProfileID = i
 	default:
 		sq.IgnoredArr = append(sq.IgnoredArr, frag)
 	}
 }
 
+// ParseBool parses a boolean arg
 func (sq *SearchQuery) ParseBool(key string, value string, frag string) {
 	if key == "" || value == "" {
 		return
@@ -450,6 +457,7 @@ func (sq *SearchQuery) ParseBool(key string, value string, frag string) {
 	}
 }
 
+// Validate returns true if the query is valid
 func (sq *SearchQuery) Validate() {
 
 	var valid bool
@@ -580,13 +588,13 @@ func (sq *SearchQuery) Validate() {
 	// 	searched = append(searched, fmt.Sprintf("west:%f", sq.West))
 	// }
 
-	if len(sq.ItemTypeIds) > 0 {
+	if len(sq.ItemTypeIDs) > 0 {
 		valid = true
 	}
 
 	if !sq.EventAfterTime.IsZero() {
-		if len(sq.ItemTypeIds) != 1 ||
-			sq.ItemTypeIds[0] != h.ItemTypes[h.ItemTypeEvent] {
+		if len(sq.ItemTypeIDs) != 1 ||
+			sq.ItemTypeIDs[0] != h.ItemTypes[h.ItemTypeEvent] {
 
 			sq.IgnoredArr = append(
 				sq.IgnoredArr,
@@ -597,8 +605,8 @@ func (sq *SearchQuery) Validate() {
 	}
 
 	if !sq.EventBeforeTime.IsZero() {
-		if len(sq.ItemTypeIds) != 1 ||
-			sq.ItemTypeIds[0] != h.ItemTypes[h.ItemTypeEvent] {
+		if len(sq.ItemTypeIDs) != 1 ||
+			sq.ItemTypeIDs[0] != h.ItemTypes[h.ItemTypeEvent] {
 
 			sq.IgnoredArr = append(
 				sq.IgnoredArr,
@@ -609,10 +617,10 @@ func (sq *SearchQuery) Validate() {
 	}
 
 	if strings.TrimSpace(sq.ProfileName) != "" {
-		if sq.ProfileId == 0 {
+		if sq.ProfileID == 0 {
 			// TODO: get profile ID by search for profiles that exact match a username
 
-			if sq.ProfileId > 0 {
+			if sq.ProfileID > 0 {
 				// valid = true
 			} else {
 				sq.IgnoredArr = append(
@@ -624,21 +632,21 @@ func (sq *SearchQuery) Validate() {
 		}
 	}
 
-	if sq.ProfileId > 0 {
+	if sq.ProfileID > 0 {
 		valid = true
 	}
 
 	if sq.Attendee {
 		// Events can be sorted by the date of the event
-		if !(len(sq.ItemTypeIds) == 1 &&
-			sq.ItemTypeIds[0] == h.ItemTypes[h.ItemTypeEvent]) {
+		if !(len(sq.ItemTypeIDs) == 1 &&
+			sq.ItemTypeIDs[0] == h.ItemTypes[h.ItemTypeEvent]) {
 
 			sq.IgnoredArr = append(sq.IgnoredArr, "attendee:true")
 			sq.Attendee = false
 		}
 	}
 
-	if len(sq.MicrocosmIds) > 0 {
+	if len(sq.MicrocosmIDs) > 0 {
 		// Implement Microcosm search, which means havign a really cheap way of looking
 		// up a Microcosm Id even when given a comment ID
 		valid = true
@@ -652,17 +660,17 @@ func (sq *SearchQuery) Validate() {
 		searched = append(searched, sq.Query)
 	}
 
-	if len(sq.ItemTypeIds) > 0 {
-		for _, v := range sq.ItemTypeIds {
+	if len(sq.ItemTypeIDs) > 0 {
+		for _, v := range sq.ItemTypeIDs {
 			itemType, _ := h.GetMapStringFromInt(h.ItemTypes, v)
 			sq.ItemTypesQuery = append(sq.ItemTypesQuery, itemType)
 			searched = append(searched, fmt.Sprintf("type:%s", itemType))
 		}
 	}
 
-	if len(sq.ItemIds) > 0 {
-		for _, v := range sq.ItemIds {
-			sq.ItemIdsQuery = append(sq.ItemIdsQuery, v)
+	if len(sq.ItemIDs) > 0 {
+		for _, v := range sq.ItemIDs {
+			sq.ItemIDsQuery = append(sq.ItemIDsQuery, v)
 			searched = append(searched, fmt.Sprintf("id:%d", v))
 		}
 	}
@@ -695,15 +703,15 @@ func (sq *SearchQuery) Validate() {
 		searched = append(searched, fmt.Sprintf("attendee:%t", sq.Attendee))
 	}
 
-	if len(sq.MicrocosmIds) > 0 {
-		for _, v := range sq.MicrocosmIds {
-			sq.MicrocosmIdsQuery = append(sq.MicrocosmIdsQuery, v)
+	if len(sq.MicrocosmIDs) > 0 {
+		for _, v := range sq.MicrocosmIDs {
+			sq.MicrocosmIDsQuery = append(sq.MicrocosmIDsQuery, v)
 			searched = append(searched, fmt.Sprintf("forumId:%d", v))
 		}
 	}
 
-	if sq.ProfileId > 0 {
-		searched = append(searched, fmt.Sprintf("authorId:%d", sq.ProfileId))
+	if sq.ProfileID > 0 {
+		searched = append(searched, fmt.Sprintf("authorId:%d", sq.ProfileID))
 	}
 
 	if sq.Sort != "" {

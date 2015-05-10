@@ -83,12 +83,12 @@ func searchFullText(
 		includeComments = true
 	}
 
-	if len(m.Query.ItemTypeIds) > 0 {
+	if len(m.Query.ItemTypeIDs) > 0 {
 		var itemTypeInList []string
 		var itemTypeSansCommentsInList []string
 
 		// Take care of the item types
-		for _, v := range m.Query.ItemTypeIds {
+		for _, v := range m.Query.ItemTypeIDs {
 			switch v {
 			case h.ItemTypes[h.ItemTypeComment]:
 				includeComments = true
@@ -99,11 +99,11 @@ func searchFullText(
 			}
 		}
 
-		if len(m.Query.ItemIds) == 0 {
-			if len(m.Query.ItemTypeIds) == 1 {
+		if len(m.Query.ItemIDs) == 0 {
+			if len(m.Query.ItemTypeIDs) == 1 {
 				filterItemTypes = fmt.Sprintf(`
               AND f.item_type_id = %d`,
-					m.Query.ItemTypeIds[0],
+					m.Query.ItemTypeIDs[0],
 				)
 			} else {
 				if includeComments {
@@ -120,25 +120,25 @@ func searchFullText(
 
 		// Take care of the item ids, which are only valid when we have item
 		// types
-		if len(m.Query.ItemIds) > 0 {
+		if len(m.Query.ItemIDs) > 0 {
 			var itemIdsInList []string
-			for _, v := range m.Query.ItemIds {
+			for _, v := range m.Query.ItemIDs {
 				itemIdsInList = append(itemIdsInList, strconv.FormatInt(v, 10))
 			}
 
-			if len(m.Query.ItemIds) == 1 {
+			if len(m.Query.ItemIDs) == 1 {
 				if includeComments {
 					filterItems = fmt.Sprintf(`
               AND (   (si.item_type_id IN (`+strings.Join(itemTypeSansCommentsInList, `,`)+`) AND si.item_id = %d)
                    OR (si.item_type_id = 4 AND si.parent_item_id = %d AND si.parent_item_type_id IN (`+strings.Join(itemTypeSansCommentsInList, `,`)+`))
                   )`,
-						m.Query.ItemIds[0],
-						m.Query.ItemIds[0],
+						m.Query.ItemIDs[0],
+						m.Query.ItemIDs[0],
 					)
 				} else {
 					filterItems = fmt.Sprintf(`
               AND si.item_id = %d`,
-						m.Query.ItemIds[0],
+						m.Query.ItemIDs[0],
 					)
 				}
 			} else {
@@ -169,22 +169,22 @@ func searchFullText(
 	}
 
 	var filterProfileId string
-	if m.Query.ProfileId > 0 {
+	if m.Query.ProfileID > 0 {
 		filterProfileId = fmt.Sprintf(`
-              AND si.profile_id = %d`, m.Query.ProfileId)
+              AND si.profile_id = %d`, m.Query.ProfileID)
 	}
 
 	var filterMicrocosmIds string
-	if len(m.Query.MicrocosmIds) > 0 {
-		if len(m.Query.MicrocosmIds) == 1 {
+	if len(m.Query.MicrocosmIDs) > 0 {
+		if len(m.Query.MicrocosmIDs) == 1 {
 			filterMicrocosmIds = fmt.Sprintf(`
-   AND f.microcosm_id = %d`, m.Query.MicrocosmIds[0])
+   AND f.microcosm_id = %d`, m.Query.MicrocosmIDs[0])
 		} else {
 			var inList = ``
 
-			for i, v := range m.Query.MicrocosmIds {
+			for i, v := range m.Query.MicrocosmIDs {
 				inList += strconv.FormatInt(v, 10)
-				if i < len(m.Query.MicrocosmIds)-1 {
+				if i < len(m.Query.MicrocosmIDs)-1 {
 					inList += `,`
 				}
 			}

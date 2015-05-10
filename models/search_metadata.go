@@ -119,11 +119,11 @@ func searchMetaData(
                       AND w.profile_id = $2`
 	}
 
-	if len(m.Query.ItemTypeIds) > 0 {
+	if len(m.Query.ItemTypeIDs) > 0 {
 		var inList string
 
 		// Take care of the item types
-		for i, v := range m.Query.ItemTypeIds {
+		for i, v := range m.Query.ItemTypeIDs {
 
 			switch v {
 			case h.ItemTypes[h.ItemTypeComment]:
@@ -133,15 +133,15 @@ func searchMetaData(
 			}
 
 			inList += strconv.FormatInt(v, 10)
-			if i < len(m.Query.ItemTypeIds)-1 {
+			if i < len(m.Query.ItemTypeIDs)-1 {
 				inList += `,`
 			}
 		}
 
-		if len(m.Query.ItemTypeIds) == 1 {
+		if len(m.Query.ItemTypeIDs) == 1 {
 			filterItemTypes = fmt.Sprintf(`
    AND f.item_type_id = %d`,
-				m.Query.ItemTypeIds[0],
+				m.Query.ItemTypeIDs[0],
 			)
 		} else {
 			if includeComments {
@@ -157,28 +157,28 @@ func searchMetaData(
 
 		// Take care of the item ids, which are only valid when we have item
 		// types
-		if len(m.Query.ItemIds) > 0 {
+		if len(m.Query.ItemIDs) > 0 {
 
-			if len(m.Query.ItemIds) == 1 {
+			if len(m.Query.ItemIDs) == 1 {
 				if includeComments {
 					filterItems = fmt.Sprintf(`
    AND (   (f.item_type_id <> 4 AND f.item_id = %d)
         OR (f.item_type_id = 4 AND f.parent_item_id = %d)
        )`,
-						m.Query.ItemIds[0],
-						m.Query.ItemIds[0],
+						m.Query.ItemIDs[0],
+						m.Query.ItemIDs[0],
 					)
 				} else {
 					filterItems = fmt.Sprintf(`
    AND f.item_id = %d`,
-						m.Query.ItemIds[0],
+						m.Query.ItemIDs[0],
 					)
 				}
 			} else {
 				var inList = ``
-				for i, v := range m.Query.ItemIds {
+				for i, v := range m.Query.ItemIDs {
 					inList += strconv.FormatInt(v, 10)
-					if i < len(m.Query.ItemIds)-1 {
+					if i < len(m.Query.ItemIDs)-1 {
 						inList += `,`
 					}
 				}
@@ -197,23 +197,23 @@ func searchMetaData(
 	}
 
 	var filterProfileId string
-	if m.Query.ProfileId > 0 {
+	if m.Query.ProfileID > 0 {
 		filterProfileId = fmt.Sprintf(`
-   AND f.created_by = %d`, m.Query.ProfileId)
+   AND f.created_by = %d`, m.Query.ProfileID)
 	}
 
 	var filterMicrocosmIds string
-	if len(m.Query.MicrocosmIds) > 0 {
-		if len(m.Query.MicrocosmIds) == 1 {
+	if len(m.Query.MicrocosmIDs) > 0 {
+		if len(m.Query.MicrocosmIDs) == 1 {
 			filterMicrocosmIds = fmt.Sprintf(`
-   AND f.microcosm_id = %d`, m.Query.MicrocosmIds[0])
+   AND f.microcosm_id = %d`, m.Query.MicrocosmIDs[0])
 			includeHuddles = false
 		} else {
 			var inList = ``
 
-			for i, v := range m.Query.MicrocosmIds {
+			for i, v := range m.Query.MicrocosmIDs {
 				inList += strconv.FormatInt(v, 10)
-				if i < len(m.Query.MicrocosmIds)-1 {
+				if i < len(m.Query.MicrocosmIDs)-1 {
 					inList += `,`
 				}
 			}

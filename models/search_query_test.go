@@ -10,7 +10,7 @@ func TestSearchQueryParsing(t *testing.T) {
 	// Simple query
 	u, _ := url.Parse("https://test.microco.sm/api/v1/search?q=searchTerm&type=event&type=conversation")
 
-	sq := GetSearchQueryFromUrl(*u)
+	sq := GetSearchQueryFromURL(*u)
 
 	if len(sq.ItemTypesQuery) != 2 {
 		t.Errorf("Expected 2 itemTypes found %d", len(sq.ItemTypesQuery))
@@ -43,7 +43,7 @@ func TestSearchQueryParsing(t *testing.T) {
 	// Parse Q
 	u, _ = url.Parse("https://test.microco.sm/api/v1/search?q=searchTerm+type:event+type:conversation")
 
-	sq = GetSearchQueryFromUrl(*u)
+	sq = GetSearchQueryFromURL(*u)
 
 	if len(sq.ItemTypesQuery) != 2 {
 		t.Errorf("Expected 2 itemTypes found %d", len(sq.ItemTypesQuery))
@@ -76,7 +76,7 @@ func TestSearchQueryParsing(t *testing.T) {
 	// Mix of Q and Query
 	u, _ = url.Parse("https://test.microco.sm/api/v1/search?q=searchTerm+type:event+type:conversation&type=poll")
 
-	sq = GetSearchQueryFromUrl(*u)
+	sq = GetSearchQueryFromURL(*u)
 
 	if len(sq.ItemTypesQuery) != 3 {
 		t.Errorf("Expected 3 itemTypes found %d", len(sq.ItemTypesQuery))
@@ -115,7 +115,7 @@ func TestSearchQueryParsing(t *testing.T) {
 	// Mix of Q and Query
 	u, _ = url.Parse("https://test.microco.sm/api/v1/search?q=searchTerm&eventAfter=2012-06-07&type=event")
 
-	sq = GetSearchQueryFromUrl(*u)
+	sq = GetSearchQueryFromURL(*u)
 
 	control, _ := time.Parse("2006-01-02", "2012-06-07")
 	if sq.EventAfterTime.Unix() != control.Unix() {

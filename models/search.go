@@ -44,7 +44,7 @@ func Search(
 	// Parse the search options and determine what kind of search that we will
 	// be performing.
 	m := SearchResults{
-		Query: GetSearchQueryFromUrl(searchUrl),
+		Query: GetSearchQueryFromURL(searchUrl),
 	}
 
 	if !m.Query.Valid {
