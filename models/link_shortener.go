@@ -15,6 +15,8 @@ import (
 	"github.com/golang/glog"
 	"golang.org/x/net/html"
 
+	conf "github.com/microcosm-cc/microcosm/config"
+
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
@@ -193,7 +195,7 @@ func ShortenLink(
 	if site.Domain == "" {
 		// If site.Domain were not blank this would cause issues as it would
 		// break /api/v1/files/* links.
-		prefix := "https://" + site.SubdomainKey + ".microco.sm"
+		prefix := "https://" + site.SubdomainKey + conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN]
 		if strings.HasPrefix(fullUrl, prefix) {
 			if len(fullUrl) > len(prefix) {
 				fullUrl = fullUrl[len(prefix):]
@@ -208,7 +210,7 @@ func ShortenLink(
 	} else {
 		// We should not shortern this... it's a link to a file we know about,
 		// an attachment or something.
-		prefix := "https://" + site.SubdomainKey + ".microco.sm"
+		prefix := "https://" + site.SubdomainKey + conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN]
 		if strings.HasPrefix(fullUrl, prefix) {
 			return fullUrl, text, "", nil
 		}
