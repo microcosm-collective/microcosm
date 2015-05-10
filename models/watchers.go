@@ -55,12 +55,14 @@ func (m *WatcherType) validate(exists bool) (int, error) {
 	return http.StatusOK, nil
 }
 
+// Insert stores the WatcherType in the database
 func (m *WatcherType) Insert() (int, error) {
 	return m.insert(false)
 }
 
+// Import stores the watcher type without performing validation
 func (m *WatcherType) Import() (int, error) {
-	return m.insert(false)
+	return m.insert(true)
 }
 
 // Insert creates the watcher
@@ -231,7 +233,7 @@ SELECT watcher_id
 	return http.StatusOK, nil
 }
 
-// GetWatcherFlagsByItemAndProfile will return the communication preferences
+// GetWatcherAndIgnoreStatus will return the communication preferences
 // for a given item and profile
 func GetWatcherAndIgnoreStatus(
 	itemTypeID int64,

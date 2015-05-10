@@ -11,6 +11,8 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// EmailMergeData encapsulates the merge object that will be used by the
+// template merge to make values available to the template
 type EmailMergeData struct {
 	SiteTitle    string
 	ProtoAndHost string
@@ -29,9 +31,10 @@ type EmailMergeData struct {
 // These methods then work out who should be notified of the update and how
 // and will then call the notification methods
 
-// Update Type #1 : New comment in an item you're watching
+// SendUpdatesForNewCommentInItem is Update Type #1 : New comment in an item
+// you're watching
 func SendUpdatesForNewCommentInItem(
-	siteId int64,
+	siteID int64,
 	comment CommentSummaryType,
 ) (
 	int,
@@ -51,10 +54,10 @@ func SendUpdatesForNewCommentInItem(
 	// Nobody watchers a comment, so we need to get the recipients for the item
 	// the comment is attached to
 	recipients, status, err := GetUpdateRecipients(
-		siteId,
+		siteID,
 		comment.ItemTypeId,
 		comment.ItemId,
-		updateType.Id,
+		updateType.ID,
 		comment.Meta.CreatedById,
 	)
 	if err != nil {
@@ -80,9 +83,8 @@ func SendUpdatesForNewCommentInItem(
 	tx, err := h.GetTransaction()
 	if err != nil {
 		glog.Errorf("%s %+v", "h.GetTransaction()", err)
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not start transaction: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -99,11 +101,11 @@ func SendUpdatesForNewCommentInItem(
 
 		// Everyone gets an update
 		var update = UpdateType{}
-		update.SiteId = siteId
-		update.UpdateTypeId = updateType.Id
-		update.ForProfileId = recipient.ForProfile.Id
-		update.ItemTypeId = h.ItemTypes[h.ItemTypeComment]
-		update.ItemId = comment.Id
+		update.SiteID = siteID
+		update.UpdateTypeID = updateType.ID
+		update.ForProfileID = recipient.ForProfile.Id
+		update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
+		update.ItemID = comment.Id
 		update.Meta.CreatedById = comment.Meta.CreatedById
 		status, err := update.insert(tx)
 		if err != nil {
@@ -114,12 +116,10 @@ func SendUpdatesForNewCommentInItem(
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("%s %+v", "tx.Commit()", err)
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
-	} else {
-		//glog.Info("Updates sent")
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
+	//glog.Info("Updates sent")
 
 	///////////////////
 	// EMAIL UPDATES //
@@ -132,7 +132,7 @@ func SendUpdatesForNewCommentInItem(
 		//glog.Info("Building email merge data")
 		mergeData := EmailMergeData{}
 
-		site, status, err := GetSite(siteId)
+		site, status, err := GetSite(siteID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetSite()", err)
 			return status, err
@@ -147,7 +147,7 @@ func SendUpdatesForNewCommentInItem(
 		)
 
 		itemTitle, status, err := GetTitle(
-			siteId,
+			siteID,
 			comment.ItemTypeId,
 			comment.ItemId,
 			0,
@@ -159,7 +159,7 @@ func SendUpdatesForNewCommentInItem(
 		mergeData.ContextText = itemTitle
 
 		byProfile, status, err := GetProfileSummary(
-			siteId,
+			siteID,
 			comment.Meta.CreatedById,
 		)
 		if err != nil {
@@ -194,25 +194,25 @@ func SendUpdatesForNewCommentInItem(
 				return status, err
 			}
 
-			var parentCommentCreatedById int64
+			var parentCommentCreatedByID int64
 			if comment.InReplyTo > 0 {
 
 				parentComment, status, err := GetCommentSummary(
-					siteId,
+					siteID,
 					comment.InReplyTo,
 				)
 				if err != nil {
 					glog.Errorf("%s %+v", "GetComment()", err)
 					return status, err
 				}
-				parentCommentCreatedById = parentComment.Meta.CreatedById
+				parentCommentCreatedByID = parentComment.Meta.CreatedById
 			}
 
 			if recipient.SendEmail &&
 				recipient.ForProfile.Id != comment.Meta.CreatedById &&
 				(lastRead.After(recipient.LastNotified) ||
 					recipient.LastNotified.IsZero()) &&
-				recipient.ForProfile.Id != parentCommentCreatedById {
+				recipient.ForProfile.Id != parentCommentCreatedByID {
 
 				// Personalisation of email
 				mergeData.ForProfile = recipient.ForProfile
@@ -225,8 +225,8 @@ func SendUpdatesForNewCommentInItem(
 				mergeData.ForEmail = user.Email
 
 				status, err = MergeAndSendEmail(
-					siteId,
-					fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteId)),
+					siteID,
+					fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteID)),
 					mergeData.ForEmail,
 					subjectTemplate,
 					textTemplate,
@@ -255,9 +255,10 @@ func SendUpdatesForNewCommentInItem(
 	return http.StatusOK, nil
 }
 
-// Update Type #2 : New reply to a comment that you made
+// SendUpdatesForNewReplyToYourComment is Update Type #2 : New reply to a
+// comment that you made
 func SendUpdatesForNewReplyToYourComment(
-	siteId int64,
+	siteID int64,
 	comment CommentSummaryType,
 ) (
 	int,
@@ -272,14 +273,14 @@ func SendUpdatesForNewReplyToYourComment(
 		return status, err
 	}
 
-	parentComment, status, err := GetCommentSummary(siteId, comment.InReplyTo)
+	parentComment, status, err := GetCommentSummary(siteID, comment.InReplyTo)
 	if err != nil {
 		glog.Errorf("%s %+v", "GetComment()", err)
 		return status, err
 	}
-	profileId := parentComment.Meta.CreatedById
+	profileID := parentComment.Meta.CreatedById
 
-	forProfile, status, err := GetProfileSummary(siteId, profileId)
+	forProfile, status, err := GetProfileSummary(siteID, profileID)
 	if err != nil {
 		glog.Errorf("%s %+v", "GetProfileSummary()", err)
 		return http.StatusInternalServerError, err
@@ -291,9 +292,8 @@ func SendUpdatesForNewReplyToYourComment(
 	tx, err := h.GetTransaction()
 	if err != nil {
 		glog.Errorf("%s %+v", "h.GetTransaction()", err)
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not start transaction: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -301,11 +301,11 @@ func SendUpdatesForNewReplyToYourComment(
 
 	// Everyone gets an update
 	var update = UpdateType{}
-	update.SiteId = siteId
-	update.UpdateTypeId = updateType.Id
-	update.ForProfileId = forProfile.Id
-	update.ItemTypeId = h.ItemTypes[h.ItemTypeComment]
-	update.ItemId = comment.Id
+	update.SiteID = siteID
+	update.UpdateTypeID = updateType.ID
+	update.ForProfileID = forProfile.Id
+	update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
+	update.ItemID = comment.Id
 	update.Meta.CreatedById = comment.Meta.CreatedById
 	status, err = update.insert(tx)
 	if err != nil {
@@ -316,20 +316,19 @@ func SendUpdatesForNewReplyToYourComment(
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("%s %+v", "tx.Commit()", err)
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
-	} else {
-		//glog.Info("Update sent")
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
+
+	//glog.Info("Update sent")
 
 	///////////////////
 	// EMAIL UPDATES //
 	///////////////////
 	updateOptions, status, err := GetCommunicationOptions(
-		siteId,
-		profileId,
-		updateType.Id,
+		siteID,
+		profileID,
+		updateType.ID,
 		h.ItemTypes[h.ItemTypeComment],
 		comment.Id,
 	)
@@ -343,7 +342,7 @@ func SendUpdatesForNewReplyToYourComment(
 		glog.Info("Building email merge data")
 		mergeData := EmailMergeData{}
 
-		site, status, err := GetSite(siteId)
+		site, status, err := GetSite(siteID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetSite()", err)
 			return status, err
@@ -358,7 +357,7 @@ func SendUpdatesForNewReplyToYourComment(
 		)
 
 		itemTitle, status, err := GetTitle(
-			siteId,
+			siteID,
 			comment.ItemTypeId,
 			comment.ItemId,
 			0,
@@ -370,7 +369,7 @@ func SendUpdatesForNewReplyToYourComment(
 		mergeData.ContextText = itemTitle
 
 		byProfile, status, err := GetProfileSummary(
-			siteId,
+			siteID,
 			comment.Meta.CreatedById,
 		)
 		if err != nil {
@@ -400,8 +399,8 @@ func SendUpdatesForNewReplyToYourComment(
 		mergeData.ForEmail = user.Email
 
 		status, err = MergeAndSendEmail(
-			siteId,
-			fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteId)),
+			siteID,
+			fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteID)),
 			mergeData.ForEmail,
 			subjectTemplate,
 			textTemplate,
@@ -422,11 +421,11 @@ func SendUpdatesForNewReplyToYourComment(
 	return http.StatusOK, nil
 }
 
-// Update Type #3 : New mention in a comment
+// SendUpdatesForNewMentionInComment is Update Type #3 : New mention in a comment
 func SendUpdatesForNewMentionInComment(
-	siteId int64,
-	forProfileId int64,
-	commentId int64,
+	siteID int64,
+	forProfileID int64,
+	commentID int64,
 ) (
 	int,
 	error,
@@ -452,11 +451,11 @@ func SendUpdatesForNewMentionInComment(
 	time.Sleep(5 * time.Second)
 
 	updateOptions, status, err := GetCommunicationOptions(
-		siteId,
-		forProfileId,
-		updateType.Id,
+		siteID,
+		forProfileID,
+		updateType.ID,
 		h.ItemTypes[h.ItemTypeComment],
-		commentId,
+		commentID,
 	)
 	if err != nil {
 		glog.Errorf("%s %+v", "GetUpdateOptionForUpdateType()", err)
@@ -467,13 +466,13 @@ func SendUpdatesForNewMentionInComment(
 	// EMAIL UPDATES //
 	///////////////////
 	if updateOptions.SendEmail {
-		comment, status, err := GetCommentSummary(siteId, commentId)
+		comment, status, err := GetCommentSummary(siteID, commentID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetComment()", err)
 			return status, err
 		}
 
-		forProfile, status, err := GetProfileSummary(siteId, forProfileId)
+		forProfile, status, err := GetProfileSummary(siteID, forProfileID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetProfileSummary()", err)
 			return http.StatusInternalServerError, err
@@ -482,7 +481,7 @@ func SendUpdatesForNewMentionInComment(
 		glog.Info("Building email merge data")
 		mergeData := EmailMergeData{}
 
-		site, status, err := GetSite(siteId)
+		site, status, err := GetSite(siteID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetSite()", err)
 			return status, err
@@ -497,7 +496,7 @@ func SendUpdatesForNewMentionInComment(
 		)
 
 		itemTitle, status, err := GetTitle(
-			siteId,
+			siteID,
 			comment.ItemTypeId,
 			comment.ItemId,
 			0,
@@ -509,7 +508,7 @@ func SendUpdatesForNewMentionInComment(
 		mergeData.ContextText = itemTitle
 
 		byProfile, status, err := GetProfileSummary(
-			siteId,
+			siteID,
 			comment.Meta.CreatedById,
 		)
 		if err != nil {
@@ -539,8 +538,8 @@ func SendUpdatesForNewMentionInComment(
 		mergeData.ForEmail = user.Email
 
 		status, err = MergeAndSendEmail(
-			siteId,
-			fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteId)),
+			siteID,
+			fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteID)),
 			mergeData.ForEmail,
 			subjectTemplate,
 			textTemplate,
@@ -563,13 +562,14 @@ func SendUpdatesForNewMentionInComment(
 	return http.StatusOK, nil
 }
 
-// Update Type #4 : New comment in a huddle you are participating in
+// SendUpdatesForNewCommentInHuddle is Update Type #4 : New comment in a huddle
+// you are participating in
 //
 // TODO(buro9): This is still based on the same code as new comment, but are
 // there some special rules because it's a huddle? If so, they're not yet
 // implemented.
 func SendUpdatesForNewCommentInHuddle(
-	siteId int64,
+	siteID int64,
 	comment CommentSummaryType,
 ) (
 	int,
@@ -589,10 +589,10 @@ func SendUpdatesForNewCommentInHuddle(
 	// Nobody watchers a comment, so we need to get the recipients for the item
 	// the comment is attached to
 	recipients, status, err := GetUpdateRecipients(
-		siteId,
+		siteID,
 		comment.ItemTypeId,
 		comment.ItemId,
-		updateType.Id,
+		updateType.ID,
 		comment.Meta.CreatedById,
 	)
 	if err != nil {
@@ -618,9 +618,8 @@ func SendUpdatesForNewCommentInHuddle(
 	tx, err := h.GetTransaction()
 	if err != nil {
 		glog.Errorf("%s %+v", "h.GetTransaction()", err)
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not start transaction: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -637,11 +636,11 @@ func SendUpdatesForNewCommentInHuddle(
 
 		// Everyone gets an update
 		var update = UpdateType{}
-		update.SiteId = siteId
-		update.UpdateTypeId = updateType.Id
-		update.ForProfileId = recipient.ForProfile.Id
-		update.ItemTypeId = h.ItemTypes[h.ItemTypeComment]
-		update.ItemId = comment.Id
+		update.SiteID = siteID
+		update.UpdateTypeID = updateType.ID
+		update.ForProfileID = recipient.ForProfile.Id
+		update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
+		update.ItemID = comment.Id
 		update.Meta.CreatedById = comment.Meta.CreatedById
 		status, err := update.insert(tx)
 		if err != nil {
@@ -652,12 +651,11 @@ func SendUpdatesForNewCommentInHuddle(
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("%s %+v", "tx.Commit()", err)
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
-	} else {
-		//glog.Info("Updates sent")
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
+
+	//glog.Info("Updates sent")
 
 	///////////////////
 	// EMAIL UPDATES //
@@ -670,7 +668,7 @@ func SendUpdatesForNewCommentInHuddle(
 		glog.Info("Building email merge data")
 		mergeData := EmailMergeData{}
 
-		site, status, err := GetSite(siteId)
+		site, status, err := GetSite(siteID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetSite()", err)
 			return status, err
@@ -685,7 +683,7 @@ func SendUpdatesForNewCommentInHuddle(
 		)
 
 		itemTitle, status, err := GetTitle(
-			siteId,
+			siteID,
 			comment.ItemTypeId,
 			comment.ItemId,
 			0,
@@ -697,7 +695,7 @@ func SendUpdatesForNewCommentInHuddle(
 		mergeData.ContextText = itemTitle
 
 		byProfile, status, err := GetProfileSummary(
-			siteId,
+			siteID,
 			comment.Meta.CreatedById,
 		)
 		if err != nil {
@@ -732,25 +730,25 @@ func SendUpdatesForNewCommentInHuddle(
 				return status, err
 			}
 
-			var parentCommentCreatedById int64
+			var parentCommentCreatedByID int64
 			if comment.InReplyTo > 0 {
 
 				parentComment, status, err := GetCommentSummary(
-					siteId,
+					siteID,
 					comment.InReplyTo,
 				)
 				if err != nil {
 					glog.Errorf("%s %+v", "GetComment()", err)
 					return status, err
 				}
-				parentCommentCreatedById = parentComment.Meta.CreatedById
+				parentCommentCreatedByID = parentComment.Meta.CreatedById
 			}
 
 			if recipient.SendEmail &&
 				recipient.ForProfile.Id != comment.Meta.CreatedById &&
 				(lastRead.After(recipient.LastNotified) ||
 					recipient.LastNotified.IsZero()) &&
-				recipient.ForProfile.Id != parentCommentCreatedById {
+				recipient.ForProfile.Id != parentCommentCreatedByID {
 
 				// Personalisation of email
 				mergeData.ForProfile = recipient.ForProfile
@@ -763,8 +761,8 @@ func SendUpdatesForNewCommentInHuddle(
 				mergeData.ForEmail = user.Email
 
 				status, err = MergeAndSendEmail(
-					siteId,
-					fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteId)),
+					siteID,
+					fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteID)),
 					mergeData.ForEmail,
 					subjectTemplate,
 					textTemplate,
@@ -793,9 +791,10 @@ func SendUpdatesForNewCommentInHuddle(
 	return http.StatusOK, nil
 }
 
-// Update Type #5 : New attendee in an event
+// SendUpdatesForNewAttendeeInAnEvent is Update Type #5 : New attendee in an
+// event
 func SendUpdatesForNewAttendeeInAnEvent(
-	siteId int64,
+	siteID int64,
 	attendee AttendeeType,
 ) (
 	int,
@@ -815,10 +814,10 @@ func SendUpdatesForNewAttendeeInAnEvent(
 	// Nobody watchers a comment, so we need to get the recipients for the item
 	// the comment is attached to
 	recipients, status, err := GetUpdateRecipients(
-		siteId,
+		siteID,
 		h.ItemTypes[h.ItemTypeEvent],
 		attendee.EventId,
-		updateType.Id,
+		updateType.ID,
 		attendee.ProfileId,
 	)
 	if err != nil {
@@ -844,9 +843,8 @@ func SendUpdatesForNewAttendeeInAnEvent(
 	tx, err := h.GetTransaction()
 	if err != nil {
 		glog.Errorf("%s %+v", "h.GetTransaction()", err)
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not start transaction: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -863,11 +861,11 @@ func SendUpdatesForNewAttendeeInAnEvent(
 
 		// Everyone gets an update
 		var update = UpdateType{}
-		update.SiteId = siteId
-		update.UpdateTypeId = updateType.Id
-		update.ForProfileId = recipient.ForProfile.Id
-		update.ItemTypeId = h.ItemTypes[h.ItemTypeEvent]
-		update.ItemId = attendee.EventId
+		update.SiteID = siteID
+		update.UpdateTypeID = updateType.ID
+		update.ForProfileID = recipient.ForProfile.Id
+		update.ItemTypeID = h.ItemTypes[h.ItemTypeEvent]
+		update.ItemID = attendee.EventId
 		update.Meta.CreatedById = attendee.ProfileId
 		status, err := update.insert(tx)
 		if err != nil {
@@ -878,12 +876,11 @@ func SendUpdatesForNewAttendeeInAnEvent(
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("%s %+v", "tx.Commit()", err)
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
-	} else {
-		glog.Info("Updates sent")
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
+
+	//	glog.Info("Updates sent")
 
 	///////////////////
 	// EMAIL UPDATES //
@@ -896,7 +893,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 		glog.Info("Building email merge data")
 		mergeData := EmailMergeData{}
 
-		site, status, err := GetSite(siteId)
+		site, status, err := GetSite(siteID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetSite()", err)
 			return status, err
@@ -911,7 +908,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 		)
 
 		itemTitle, status, err := GetTitle(
-			siteId,
+			siteID,
 			h.ItemTypes[h.ItemTypeEvent],
 			attendee.EventId,
 			0,
@@ -922,7 +919,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 		}
 		mergeData.ContextText = itemTitle
 
-		byProfile, status, err := GetProfileSummary(siteId, attendee.ProfileId)
+		byProfile, status, err := GetProfileSummary(siteID, attendee.ProfileId)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetProfileSummary()", err)
 			return http.StatusInternalServerError, err
@@ -969,8 +966,8 @@ func SendUpdatesForNewAttendeeInAnEvent(
 				mergeData.ForEmail = user.Email
 
 				status, err = MergeAndSendEmail(
-					siteId,
-					fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteId)),
+					siteID,
+					fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteID)),
 					mergeData.ForEmail,
 					subjectTemplate,
 					textTemplate,
@@ -999,25 +996,25 @@ func SendUpdatesForNewAttendeeInAnEvent(
 	return http.StatusOK, nil
 }
 
-// Update Type #6 : New vote in a poll
-func SendUpdatesForNewVoteInAPoll(siteId int64, poll *PollType) (int, error) {
+// SendUpdatesForNewVoteInAPoll is Update Type #6 : New vote in a poll
+func SendUpdatesForNewVoteInAPoll(siteID int64, poll *PollType) (int, error) {
 
 	// TODO(buro9): Not yet implemented
 
 	return http.StatusOK, nil
 }
 
-// Update Type #7 : Event reminder as event imminent
-func SendUpdatesForEventReminder(siteId int64, event *EventType) (int, error) {
+// SendUpdatesForEventReminder is Update Type #7 : Event reminder as event imminent
+func SendUpdatesForEventReminder(siteID int64, event *EventType) (int, error) {
 
 	// TODO(buro9): Not yet implemented but could be done
 
 	return http.StatusOK, nil
 }
 
-// Update Type #8 : A new item in a Microcosm
+// SendUpdatesForNewItemInAMicrocosm is Update Type #8 : A new item in a Microcosm
 func SendUpdatesForNewItemInAMicrocosm(
-	siteId int64,
+	siteID int64,
 	item interface{},
 ) (
 	int,
@@ -1031,10 +1028,10 @@ func SendUpdatesForNewItemInAMicrocosm(
 	}
 
 	var (
-		itemTypeId   int64
+		itemTypeID   int64
 		itemType     string
-		itemId       int64
-		createdById  int64
+		itemID       int64
+		createdByID  int64
 		conversation ConversationType
 		event        EventType
 		poll         PollType
@@ -1043,24 +1040,24 @@ func SendUpdatesForNewItemInAMicrocosm(
 	switch item.(type) {
 	case ConversationType:
 		conversation = item.(ConversationType)
-		itemTypeId = h.ItemTypes[h.ItemTypeConversation]
+		itemTypeID = h.ItemTypes[h.ItemTypeConversation]
 		itemType = h.ItemTypeConversation
-		itemId = conversation.Id
-		createdById = conversation.Meta.CreatedById
+		itemID = conversation.Id
+		createdByID = conversation.Meta.CreatedById
 
 	case EventType:
 		event = item.(EventType)
-		itemTypeId = h.ItemTypes[h.ItemTypeEvent]
+		itemTypeID = h.ItemTypes[h.ItemTypeEvent]
 		itemType = h.ItemTypeEvent
-		itemId = event.Id
-		createdById = event.Meta.CreatedById
+		itemID = event.Id
+		createdByID = event.Meta.CreatedById
 
 	case PollType:
 		poll = item.(PollType)
-		itemTypeId = h.ItemTypes[h.ItemTypePoll]
+		itemTypeID = h.ItemTypes[h.ItemTypePoll]
 		itemType = h.ItemTypePoll
-		itemId = poll.Id
-		createdById = poll.Meta.CreatedById
+		itemID = poll.Id
+		createdByID = poll.Meta.CreatedById
 
 	default:
 		glog.Errorf("%s %+v", "type not known", item)
@@ -1070,11 +1067,11 @@ func SendUpdatesForNewItemInAMicrocosm(
 
 	// WHO GETS THE UPDATES?
 	recipients, status, err := GetUpdateRecipients(
-		siteId,
-		itemTypeId,
-		itemId,
-		updateType.Id,
-		createdById,
+		siteID,
+		itemTypeID,
+		itemID,
+		updateType.ID,
+		createdByID,
 	)
 	if err != nil {
 		glog.Errorf("%s %+v", "GetUpdateRecipients()", err)
@@ -1093,9 +1090,8 @@ func SendUpdatesForNewItemInAMicrocosm(
 	tx, err := h.GetTransaction()
 	if err != nil {
 		glog.Errorf("%s %+v", "h.GetTransaction()", err)
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not start transaction: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -1105,19 +1101,19 @@ func SendUpdatesForNewItemInAMicrocosm(
 
 		if !sendEmails &&
 			recipient.SendEmail &&
-			recipient.ForProfile.Id != createdById {
+			recipient.ForProfile.Id != createdByID {
 
 			sendEmails = true
 		}
 
 		// Everyone gets an update
 		var update = UpdateType{}
-		update.SiteId = siteId
-		update.UpdateTypeId = updateType.Id
-		update.ForProfileId = recipient.ForProfile.Id
-		update.ItemTypeId = itemTypeId
-		update.ItemId = itemId
-		update.Meta.CreatedById = createdById
+		update.SiteID = siteID
+		update.UpdateTypeID = updateType.ID
+		update.ForProfileID = recipient.ForProfile.Id
+		update.ItemTypeID = itemTypeID
+		update.ItemID = itemID
+		update.Meta.CreatedById = createdByID
 		status, err := update.insert(tx)
 		if err != nil {
 			glog.Errorf("%s %+v", "update.insert(tx)", err)
@@ -1127,12 +1123,11 @@ func SendUpdatesForNewItemInAMicrocosm(
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("%s %+v", "tx.Commit()", err)
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
-	} else {
-		glog.Info("Updates sent")
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
+
+	//	glog.Info("Updates sent")
 
 	///////////////////
 	// EMAIL UPDATES //
@@ -1145,7 +1140,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 		glog.Info("Building email merge data")
 		mergeData := EmailMergeData{}
 
-		site, status, err := GetSite(siteId)
+		site, status, err := GetSite(siteID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetSite()", err)
 			return status, err
@@ -1157,17 +1152,17 @@ func SendUpdatesForNewItemInAMicrocosm(
 			"%s/%ss/%d/",
 			mergeData.ProtoAndHost,
 			itemType,
-			itemId,
+			itemID,
 		)
 
-		itemTitle, status, err := GetTitle(siteId, itemTypeId, itemId, 0)
+		itemTitle, status, err := GetTitle(siteID, itemTypeID, itemID, 0)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetTitle()", err)
 			return status, err
 		}
 		mergeData.ContextText = itemTitle
 
-		byProfile, status, err := GetProfileSummary(siteId, createdById)
+		byProfile, status, err := GetProfileSummary(siteID, createdByID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetProfileSummary()", err)
 			return http.StatusInternalServerError, err
@@ -1186,7 +1181,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 			// Everyone who wants an email gets an email... except:
 			// 1) the author
 			if recipient.SendEmail &&
-				recipient.ForProfile.Id != createdById {
+				recipient.ForProfile.Id != createdByID {
 
 				// Personalisation of email
 				mergeData.ForProfile = recipient.ForProfile
@@ -1199,8 +1194,8 @@ func SendUpdatesForNewItemInAMicrocosm(
 				mergeData.ForEmail = user.Email
 
 				status, err = MergeAndSendEmail(
-					siteId,
-					fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteId)),
+					siteID,
+					fmt.Sprintf(EMAIL_FROM, GetSiteTitle(siteID)),
 					mergeData.ForEmail,
 					subjectTemplate,
 					textTemplate,
@@ -1229,10 +1224,10 @@ func SendUpdatesForNewItemInAMicrocosm(
 	return http.StatusOK, nil
 }
 
-// Update Type #9 : A new item in a Microcosm
+// SendUpdatesForNewProfileOnSite is Update Type #9 : A new item in a Microcosm
 func SendUpdatesForNewProfileOnSite(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 ) (
 	int,
 	error,
@@ -1245,23 +1240,23 @@ func SendUpdatesForNewProfileOnSite(
 	return http.StatusOK, nil
 }
 
-// returns a user's update options if present, otherwise it returns
-// the default preference for the given update type.
+// GetCommunicationOptions returns a user's update options if present,
+// otherwise it returns the default preference for the given update type.
 func GetCommunicationOptions(
-	siteId int64,
-	profileId int64,
-	updateTypeId int64,
-	itemTypeId int64,
-	itemId int64,
+	siteID int64,
+	profileID int64,
+	updateTypeID int64,
+	itemTypeID int64,
+	itemID int64,
 ) (
 	UpdateOptionType,
 	int,
 	error,
 ) {
 
-	_, status, err := GetProfileOptions(profileId)
+	_, status, err := GetProfileOptions(profileID)
 	if err != nil {
-		glog.Errorf("GetProfileOptions(%d) %+v", profileId, err)
+		glog.Errorf("GetProfileOptions(%d) %+v", profileID, err)
 		// Can't do anything here as the profile_id fkey constraint will fail
 		return UpdateOptionType{}, status, errors.New("Insert of update options failed")
 	}
@@ -1278,20 +1273,20 @@ SELECT send_email
       ,description
   FROM get_communication_options($1, $2, $3, $4, $5)
        LEFT JOIN update_types a ON update_type_id = $5`,
-		siteId,
-		itemId,
-		itemTypeId,
-		profileId,
-		updateTypeId,
+		siteID,
+		itemID,
+		itemTypeID,
+		profileID,
+		updateTypeID,
 	)
 	if err != nil {
 		glog.Errorf(
 			"db.Query(%d, %d, %d, %d, %d) %+v",
-			siteId,
-			itemId,
-			itemTypeId,
-			profileId,
-			updateTypeId,
+			siteID,
+			itemID,
+			itemTypeID,
+			profileID,
+			updateTypeID,
 			err,
 		)
 		return UpdateOptionType{},
@@ -1325,8 +1320,8 @@ SELECT send_email
 	}
 	rows.Close()
 
-	m.ProfileId = int64(profileId)
-	m.UpdateTypeId = int64(updateTypeId)
+	m.ProfileID = int64(profileID)
+	m.UpdateTypeID = int64(updateTypeID)
 
 	return m, http.StatusOK, nil
 }

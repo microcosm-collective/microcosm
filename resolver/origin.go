@@ -12,6 +12,7 @@ import (
 
 const ttl int32 = (60 * 60 * 24 * 365) / 12 // 1 Month
 
+// Origin encapsulates the records of an imported site
 type Origin struct {
 	OriginID int64
 	SiteID   int64

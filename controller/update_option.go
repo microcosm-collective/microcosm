@@ -86,8 +86,8 @@ func (ctl *UpdateOptionController) Update(c *models.Context) {
 	}
 
 	// Profile ID cannot be changed
-	m.UpdateTypeId = itemId
-	m.ProfileId = c.Auth.ProfileId
+	m.UpdateTypeID = itemId
+	m.ProfileID = c.Auth.ProfileId
 
 	if exists {
 		// Update
@@ -105,7 +105,7 @@ func (ctl *UpdateOptionController) Update(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			h.ApiTypeUpdateOptionType,
-			m.UpdateTypeId,
+			m.UpdateTypeID,
 		),
 	)
 

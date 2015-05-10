@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,8 +10,8 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
-// Distilling watchers and communications options into a single actionable
-// and switchable thing
+// UpdateRecipient distills watchers and communications options into a single
+// actionable and switchable thing
 type UpdateRecipient struct {
 	Watcher              WatcherType
 	ForProfile           ProfileSummaryType
@@ -22,12 +21,14 @@ type UpdateRecipient struct {
 	LastNotified         time.Time
 }
 
+// GetUpdateRecipients returns the update recipients for a given item that has
+// been updated
 func GetUpdateRecipients(
-	siteId int64,
-	itemTypeId int64,
-	itemId int64,
-	updateTypeId int64,
-	createdById int64,
+	siteID int64,
+	itemTypeID int64,
+	itemID int64,
+	updateTypeID int64,
+	createdByID int64,
 ) (
 	[]UpdateRecipient,
 	int,
@@ -40,7 +41,7 @@ func GetUpdateRecipients(
 		includeHuddleWatchers    bool
 	)
 
-	switch updateTypeId {
+	switch updateTypeID {
 	case h.UpdateTypes[h.UpdateTypeNewComment]:
 		includeMicrocosmWatchers = true
 		includeSiteWatchers = true
@@ -184,12 +185,10 @@ SELECT CASE WHEN BIT_AND(a.item_watcher) > 0 THEN
    AND f.item_id = $3
    AND (get_effective_permissions($1, COALESCE(f.microcosm_id, 0), $2, $3, w.profile_id)).can_read IS TRUE`
 
-	rows, err := db.Query(sql, siteId, itemTypeId, itemId, createdById)
+	rows, err := db.Query(sql, siteID, itemTypeID, itemID, createdByID)
 	if err != nil {
 		return []UpdateRecipient{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -199,24 +198,22 @@ SELECT CASE WHEN BIT_AND(a.item_watcher) > 0 THEN
 		m := UpdateRecipient{}
 
 		var (
-			profileId int64
-			watcherId int64
+			profileID int64
+			watcherID int64
 		)
 		err = rows.Scan(
-			&watcherId,
-			&profileId,
+			&watcherID,
+			&profileID,
 			&m.LastNotifiedNullable,
 			&m.SendEmail,
 			&m.SendSMS,
 		)
 		if err != nil {
 			return []UpdateRecipient{}, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
-		watcher, status, err := GetWatcher(watcherId, siteId)
+		watcher, status, err := GetWatcher(watcherID, siteID)
 		if err != nil {
 			return []UpdateRecipient{}, status, err
 		}
@@ -226,7 +223,7 @@ SELECT CASE WHEN BIT_AND(a.item_watcher) > 0 THEN
 			m.LastNotified = m.LastNotifiedNullable.Time
 		}
 
-		profile, status, err := GetProfileSummary(siteId, profileId)
+		profile, status, err := GetProfileSummary(siteID, profileID)
 		if err != nil {
 			return []UpdateRecipient{}, status, err
 		}
@@ -237,9 +234,7 @@ SELECT CASE WHEN BIT_AND(a.item_watcher) > 0 THEN
 	err = rows.Err()
 	if err != nil {
 		return []UpdateRecipient{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

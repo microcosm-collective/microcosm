@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"text/template"
@@ -13,21 +12,22 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
-// This is an unwieldy name, but it convenes to how all other
+// UpdateTypesType is an unwieldy name, but it convenes to how all other
 // table structs are named (the table is `UpdateType`)
 type UpdateTypesType struct {
-	Id            int64  `json:"id"`
+	ID            int64  `json:"id"`
 	Title         string `json:"title"`
 	Description   string `json:"description"`
 	EmailSubject  string `json:"emailSubject"`
 	EmailBodyText string `json:"emailBodyText"`
-	EmailBodyHtml string `json:"emailBodyHtml"`
+	EmailBodyHTML string `json:"emailBodyHtml"`
 }
 
-func GetUpdateType(updateTypeId int64) (UpdateTypesType, int, error) {
+// GetUpdateType retrieves an email update template for a given update type
+func GetUpdateType(updateTypeID int64) (UpdateTypesType, int, error) {
 
 	// Try fetching from cache
-	mcKey := fmt.Sprintf(mcUpdateTypeKeys[c.CacheDetail], updateTypeId)
+	mcKey := fmt.Sprintf(mcUpdateTypeKeys[c.CacheDetail], updateTypeID)
 	if val, ok := c.CacheGet(mcKey, UpdateTypesType{}); ok {
 		m := val.(UpdateTypesType)
 		return m, http.StatusOK, nil
@@ -48,28 +48,21 @@ SELECT update_type_id
       ,email_body_html
   FROM update_types
  WHERE update_type_id = $1`,
-		updateTypeId,
+		updateTypeID,
 	).Scan(
-		&m.Id,
+		&m.ID,
 		&m.Title,
 		&m.Description,
 		&m.EmailSubject,
 		&m.EmailBodyText,
-		&m.EmailBodyHtml,
+		&m.EmailBodyHTML,
 	)
 	if err == sql.ErrNoRows {
 		return UpdateTypesType{}, http.StatusNotFound,
-			errors.New(
-				fmt.Sprintf(
-					"Resource with update type ID %d not found",
-					updateTypeId,
-				),
-			)
+			fmt.Errorf("Resource with update type ID %d not found", updateTypeID)
 	} else if err != nil {
 		return UpdateTypesType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	c.CacheSet(mcKey, m, mcTtl)
@@ -77,6 +70,7 @@ SELECT update_type_id
 	return m, http.StatusOK, nil
 }
 
+// GetEmailTemplates returns the email templates for an update type
 func (m *UpdateTypesType) GetEmailTemplates() (
 	*template.Template,
 	*template.Template,
@@ -109,7 +103,7 @@ func (m *UpdateTypesType) GetEmailTemplates() (
 	}
 
 	bodyHTMLTemplate, err =
-		template.New("email_body_html").Parse(m.EmailBodyHtml)
+		template.New("email_body_html").Parse(m.EmailBodyHTML)
 	if err != nil {
 		glog.Errorf("Could not HTML get template: %+v", err)
 		return subjectTemplate, bodyTextTemplate, bodyHTMLTemplate,

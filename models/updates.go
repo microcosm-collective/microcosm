@@ -14,48 +14,43 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// UpdatesType is an array of UpdateType
 type UpdatesType struct {
 	Updates h.ArrayType    `json:"updates"`
 	Meta    h.CoreMetaType `json:"meta"`
 }
 
+// UpdateType encapsulates an update that for occured on an item that we are
+// recording for a profile so that we can show them their updates and send
+// notifications based on them.
 type UpdateType struct {
-	Id               int64             `json:"id"`
-	SiteId           int64             `json:"-"`
-	ForProfileId     int64             `json:"-"`
-	UpdateTypeId     int64             `json:"-"`
+	ID               int64             `json:"id"`
+	SiteID           int64             `json:"-"`
+	ForProfileID     int64             `json:"-"`
+	UpdateTypeID     int64             `json:"-"`
 	UpdateType       string            `json:"updateType"`
-	ItemTypeId       int64             `json:"-"`
+	ItemTypeID       int64             `json:"-"`
 	ItemType         string            `json:"itemType"`
-	ItemId           int64             `json:"-"`
+	ItemID           int64             `json:"-"`
 	Item             interface{}       `json:"item,omitempty"`
-	ParentItemTypeId int64             `json:"-"`
+	ParentItemTypeID int64             `json:"-"`
 	ParentItemType   string            `json:"parentItemType,omitempty"`
-	ParentItemId     int64             `json:"-"`
+	ParentItemID     int64             `json:"-"`
 	ParentItem       interface{}       `json:"parentItem,omitempty"`
 	Meta             h.CreatedMetaType `json:"meta"`
 }
 
+// Validate returns true if no errors exist in the UpdateType
 func (m *UpdateType) Validate(exists bool) (int, error) {
 
-	if m.ForProfileId < 0 {
+	if m.ForProfileID < 0 {
 		return http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf(
-					"forProfileId ('%d') cannot be negative.",
-					m.ForProfileId,
-				),
-			)
+			fmt.Errorf("forProfileID ('%d') cannot be negative", m.ForProfileID)
 	}
 
-	if m.UpdateTypeId < 0 {
+	if m.UpdateTypeID < 0 {
 		return http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf(
-					"updateTypeId ('%d') cannot be negative.",
-					m.UpdateTypeId,
-				),
-			)
+			fmt.Errorf("updateTypeID ('%d') cannot be negative", m.UpdateTypeID)
 	}
 
 	return http.StatusOK, nil
@@ -63,13 +58,13 @@ func (m *UpdateType) Validate(exists bool) (int, error) {
 
 // FetchSummaries fetches profile/item summary for a update entry.
 // Called post SELECT or post-GetFromCache
-func (m *UpdateType) FetchSummaries(siteId int64) (int, error) {
+func (m *UpdateType) FetchSummaries(siteID int64) (int, error) {
 
 	profile, status, err := GetSummary(
-		siteId,
+		siteID,
 		h.ItemTypes[h.ItemTypeProfile],
 		m.Meta.CreatedById,
-		m.ForProfileId,
+		m.ForProfileID,
 	)
 	if err != nil {
 		return status, err
@@ -77,29 +72,29 @@ func (m *UpdateType) FetchSummaries(siteId int64) (int, error) {
 	m.Meta.CreatedBy = profile
 
 	itemSummary, status, err := GetSummary(
-		siteId,
-		m.ItemTypeId,
-		m.ItemId,
-		m.ForProfileId,
+		siteID,
+		m.ItemTypeID,
+		m.ItemID,
+		m.ForProfileID,
 	)
 	if err != nil {
 		return status, err
 	}
 	m.Item = itemSummary
 
-	if m.ItemTypeId == h.ItemTypes[h.ItemTypeComment] {
+	if m.ItemTypeID == h.ItemTypes[h.ItemTypeComment] {
 		comment := itemSummary.(CommentSummaryType)
 		parent, status, err := GetSummary(
-			siteId,
+			siteID,
 			comment.ItemTypeId,
 			comment.ItemId,
-			m.ForProfileId,
+			m.ForProfileID,
 		)
 		if err != nil {
 			return status, err
 		}
 		m.ParentItem = parent
-		m.ParentItemTypeId = comment.ItemTypeId
+		m.ParentItemTypeID = comment.ItemTypeId
 		parentItemType, err := h.GetMapStringFromInt(
 			h.ItemTypes,
 			comment.ItemTypeId,
@@ -108,10 +103,10 @@ func (m *UpdateType) FetchSummaries(siteId int64) (int, error) {
 			return http.StatusInternalServerError, err
 		}
 		m.ParentItemType = parentItemType
-		m.ParentItemId = comment.ItemId
+		m.ParentItemID = comment.ItemId
 	}
 
-	updateType, status, err := GetUpdateType(m.UpdateTypeId)
+	updateType, status, err := GetUpdateType(m.UpdateTypeID)
 	if err != nil {
 		return status, err
 	}
@@ -120,13 +115,13 @@ func (m *UpdateType) FetchSummaries(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
+// Insert stores the UpdateType in the database
 func (m *UpdateType) Insert() (int, error) {
 
 	tx, err := h.GetTransaction()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not start transaction: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -137,9 +132,8 @@ func (m *UpdateType) Insert() (int, error) {
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -151,12 +145,11 @@ func (m *UpdateType) insert(tx *sql.Tx) (int, error) {
 
 	status, err := m.Validate(false)
 	if err != nil {
-		return status, errors.New(
-			fmt.Sprintf("Insert did not validate: %v", err.Error()),
-		)
+		return status,
+			fmt.Errorf("Insert did not validate: %v", err.Error())
 	}
 
-	var insertId int64
+	var insertID int64
 	err = tx.QueryRow(`
 INSERT INTO updates (
     site_id
@@ -171,26 +164,21 @@ INSERT INTO updates (
    $1, $2, $3, $4, $5,
    $6, NOW()
 ) RETURNING update_id`,
-		m.SiteId,
-		m.ForProfileId,
-		m.UpdateTypeId,
-		m.ItemTypeId,
-		m.ItemId,
+		m.SiteID,
+		m.ForProfileID,
+		m.UpdateTypeID,
+		m.ItemTypeID,
+		m.ItemID,
 
 		m.Meta.CreatedById,
 	).Scan(
-		&insertId,
+		&insertID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf(
-					"Error inserting data and returning ID: %v",
-					err.Error(),
-				),
-			)
+			fmt.Errorf("Error inserting data and returning ID: %v", err.Error())
 	}
-	m.Id = insertId
+	m.ID = insertID
 
 	return http.StatusOK, nil
 }
@@ -206,9 +194,8 @@ func (m *UpdateType) upsert(tx *sql.Tx) (int, error) {
 
 	status, err := m.Validate(false)
 	if err != nil {
-		return status, errors.New(
-			fmt.Sprintf("Update did not validate: %v", err.Error()),
-		)
+		return status,
+			fmt.Errorf("Update did not validate: %v", err.Error())
 	}
 
 	_, err = tx.Exec(`
@@ -234,28 +221,27 @@ INSERT INTO updates (
        AND item_id = $5
        AND created_by = $6
 )`,
-		m.SiteId,
-		m.ForProfileId,
-		m.UpdateTypeId,
-		m.ItemTypeId,
-		m.ItemId,
+		m.SiteID,
+		m.ForProfileID,
+		m.UpdateTypeID,
+		m.ItemTypeID,
+		m.ItemID,
 
 		m.Meta.CreatedById,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error inserting data and returning ID: %+v", err),
-			)
+			fmt.Errorf("Error inserting data and returning ID: %+v", err)
 	}
 
 	return http.StatusOK, nil
 }
 
+// GetUpdate fetches the detail of a single update for a profile
 func GetUpdate(
-	siteId int64,
-	updateId int64,
-	profileId int64,
+	siteID int64,
+	updateID int64,
+	profileID int64,
 ) (
 	UpdateType,
 	int,
@@ -263,10 +249,10 @@ func GetUpdate(
 ) {
 
 	// Try fetching from cache
-	mcKey := fmt.Sprintf(mcUpdateKeys[c.CacheDetail], updateId)
+	mcKey := fmt.Sprintf(mcUpdateKeys[c.CacheDetail], updateID)
 	if val, ok := c.CacheGet(mcKey, UpdateType{}); ok {
 		m := val.(UpdateType)
-		m.FetchSummaries(siteId)
+		m.FetchSummaries(siteID)
 		return m, http.StatusOK, nil
 	}
 
@@ -289,45 +275,42 @@ SELECT update_id
  WHERE site_id = $1
    AND update_id = $2
    AND for_profile_id = $3`,
-		siteId,
-		updateId,
-		profileId,
+		siteID,
+		updateID,
+		profileID,
 	).Scan(
-		&m.Id,
-		&m.ForProfileId,
-		&m.UpdateTypeId,
-		&m.ItemTypeId,
-		&m.ItemId,
+		&m.ID,
+		&m.ForProfileID,
+		&m.UpdateTypeID,
+		&m.ItemTypeID,
+		&m.ItemID,
 		&m.Meta.CreatedById,
 		&m.Meta.Created,
-		&m.SiteId,
+		&m.SiteID,
 	)
 	if err == sql.ErrNoRows {
 		return UpdateType{}, http.StatusNotFound,
-			errors.New(
-				fmt.Sprintf("Update not found: %v", err.Error()),
-			)
+			fmt.Errorf("Update not found: %v", err.Error())
 	} else if err != nil {
 		return UpdateType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching update: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching update: %v", err.Error())
 	}
 
-	itemType, err := h.GetItemTypeFromInt(m.ItemTypeId)
+	itemType, err := h.GetItemTypeFromInt(m.ItemTypeID)
 	if err != nil {
 		return UpdateType{}, http.StatusInternalServerError, err
 	}
 	m.ItemType = itemType
-	m.FetchSummaries(siteId)
+	m.FetchSummaries(siteID)
 
 	c.CacheSet(mcKey, m, mcTtl)
 	return m, http.StatusOK, nil
 }
 
+// GetUpdates retieves the list of updates for the given profile
 func GetUpdates(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -518,12 +501,12 @@ SELECT total
           OFFSET $4
           ) final_rollup`
 
-	rows, err := db.Query(sqlQuery, siteId, profileId, limit, offset)
+	rows, err := db.Query(sqlQuery, siteID, profileID, limit, offset)
 	if err != nil {
 		glog.Errorf(
 			"db.Query(%d, %d, %d, %d) %+v",
-			profileId,
-			siteId,
+			profileID,
+			siteID,
 			limit,
 			offset,
 			err,
@@ -540,14 +523,14 @@ SELECT total
 		m := UpdateType{}
 		err = rows.Scan(
 			&total,
-			&m.Id,
-			&m.ForProfileId,
-			&m.UpdateTypeId,
-			&m.ItemTypeId,
-			&m.ItemId,
+			&m.ID,
+			&m.ForProfileID,
+			&m.UpdateTypeID,
+			&m.ItemTypeID,
+			&m.ItemID,
 			&m.Meta.CreatedById,
 			&m.Meta.Created,
-			&m.SiteId,
+			&m.SiteID,
 			&unread,
 		)
 		if err != nil {
@@ -556,9 +539,9 @@ SELECT total
 				errors.New("Row parsing error")
 		}
 
-		itemType, err := h.GetItemTypeFromInt(m.ItemTypeId)
+		itemType, err := h.GetItemTypeFromInt(m.ItemTypeID)
 		if err != nil {
-			glog.Errorf("h.GetItemTypeFromInt(%d) %+v", m.ItemTypeId, err)
+			glog.Errorf("h.GetItemTypeFromInt(%d) %+v", m.ItemTypeID, err)
 			return []UpdateType{}, 0, 0, http.StatusInternalServerError, err
 		}
 		m.ItemType = itemType
@@ -581,10 +564,8 @@ SELECT total
 	if offset > maxOffset {
 		glog.Infoln("offset > maxOffset")
 		return []UpdateType{}, 0, 0, http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf("not enough records, "+
-					"offset (%d) would return an empty page.", offset),
-			)
+			fmt.Errorf("not enough records, "+
+				"offset (%d) would return an empty page.", offset)
 	}
 
 	// Get the first round of summaries
@@ -595,10 +576,10 @@ SELECT total
 	seq := 0
 	for i := 0; i < len(ems); i++ {
 		go HandleSummaryContainerRequest(
-			siteId,
+			siteID,
 			h.ItemTypes[h.ItemTypeProfile],
 			ems[i].Meta.CreatedById,
-			ems[i].ForProfileId,
+			ems[i].ForProfileID,
 			seq,
 			chan1,
 		)
@@ -606,17 +587,17 @@ SELECT total
 		seq++
 
 		go HandleSummaryContainerRequest(
-			siteId,
-			ems[i].ItemTypeId,
-			ems[i].ItemId,
-			ems[i].ForProfileId,
+			siteID,
+			ems[i].ItemTypeID,
+			ems[i].ItemID,
+			ems[i].ForProfileID,
 			seq,
 			chan1,
 		)
 		wg1.Add(1)
 		seq++
 
-		updateType, status, err := GetUpdateType(ems[i].UpdateTypeId)
+		updateType, status, err := GetUpdateType(ems[i].UpdateTypeID)
 		if err != nil {
 			return []UpdateType{}, 0, 0, status, err
 		}
@@ -656,14 +637,14 @@ SELECT total
 		ems[i].Item = resps[seq].Item.Summary
 		seq++
 
-		if ems[i].ItemTypeId == h.ItemTypes[h.ItemTypeComment] {
+		if ems[i].ItemTypeID == h.ItemTypes[h.ItemTypeComment] {
 			comment := ems[i].Item.(CommentSummaryType)
 
 			go HandleSummaryContainerRequest(
-				siteId,
+				siteID,
 				comment.ItemTypeId,
 				comment.ItemId,
-				ems[i].ForProfileId,
+				ems[i].ForProfileID,
 				seq,
 				chan2,
 			)
@@ -698,14 +679,14 @@ SELECT total
 	commentItemSeq := 0
 	for i := 0; i < len(ems); i++ {
 
-		if ems[i].ItemTypeId == h.ItemTypes[h.ItemTypeComment] {
+		if ems[i].ItemTypeID == h.ItemTypes[h.ItemTypeComment] {
 			comment := ems[i].Item.(CommentSummaryType)
 
 			go HandleSummaryContainerRequest(
-				siteId,
+				siteID,
 				comment.ItemTypeId,
 				comment.ItemId,
-				ems[i].ForProfileId,
+				ems[i].ForProfileID,
 				commentItemSeq,
 				chan3,
 			)
@@ -713,7 +694,7 @@ SELECT total
 			commentItemSeq++
 			wg3.Add(1)
 
-			ems[i].ParentItemTypeId = comment.ItemTypeId
+			ems[i].ParentItemTypeID = comment.ItemTypeId
 			parentItemType, err := h.GetMapStringFromInt(
 				h.ItemTypes,
 				comment.ItemTypeId,
@@ -722,7 +703,7 @@ SELECT total
 				return []UpdateType{}, 0, 0, http.StatusInternalServerError, err
 			}
 			ems[i].ParentItemType = parentItemType
-			ems[i].ParentItemId = comment.ItemId
+			ems[i].ParentItemID = comment.ItemId
 		}
 	}
 
@@ -744,7 +725,7 @@ SELECT total
 
 	commentItemSeq = 0
 	for i := 0; i < len(ems); i++ {
-		if ems[i].ItemTypeId == h.ItemTypes[h.ItemTypeComment] {
+		if ems[i].ItemTypeID == h.ItemTypes[h.ItemTypeComment] {
 			ems[i].ParentItem = commentResps[commentItemSeq].Item.Summary
 			commentItemSeq++
 		}

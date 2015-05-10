@@ -107,7 +107,9 @@ INSERT INTO users (
 	return http.StatusOK, nil
 }
 
-func UserIsOnSite(userId int64, siteId int64) bool {
+// UserIsOnSite returns true if the given userId exists as a profile on the
+// given site.
+func UserIsOnSite(userID int64, siteID int64) bool {
 	db, err := h.GetConnection()
 	if err != nil {
 		return false
@@ -119,8 +121,8 @@ SELECT COUNT(*) > 0
   FROM profiles
  WHERE site_id = $1
    AND user_id = $2`,
-		siteId,
-		userId,
+		siteID,
+		userID,
 	).Scan(&val)
 	if err != nil {
 		return false

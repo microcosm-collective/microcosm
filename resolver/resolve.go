@@ -7,6 +7,7 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// Redirect encapsulates both the old URL and it's new destination
 type Redirect struct {
 	Origin     Origin     `json:"-"`
 	RawURL     string     `json:"url"`
@@ -22,10 +23,17 @@ type Redirect struct {
 }
 
 const (
-	ActionNewComment       string = "newcomment"
+	// ActionNewComment covers the query string arg newcomment
+	ActionNewComment string = "newcomment"
+
+	// ActionCommentInContext covers the query string arg incontext
 	ActionCommentInContext string = "incontext"
-	ActionSearch           string = "search"
-	ActionWhoIsOnline      string = "online"
+
+	// ActionSearch covers the query string arg search
+	ActionSearch string = "search"
+
+	// ActionWhoIsOnline covers the query string arg online
+	ActionWhoIsOnline string = "online"
 )
 
 // Resolve takes a URL and attempts to find a suitable new URL for the old one.

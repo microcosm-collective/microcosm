@@ -283,11 +283,11 @@ func ProcessMention(
 
 	// Send the update
 	var update = UpdateType{}
-	update.SiteId = siteId
-	update.UpdateTypeId = h.UpdateTypes[h.UpdateTypeMentioned]
-	update.ForProfileId = profileId
-	update.ItemTypeId = h.ItemTypes[h.ItemTypeComment]
-	update.ItemId = commentId
+	update.SiteID = siteId
+	update.UpdateTypeID = h.UpdateTypes[h.UpdateTypeMentioned]
+	update.ForProfileID = profileId
+	update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
+	update.ItemID = commentId
 	update.Meta.CreatedById = createdBy
 	_, err := update.insert(tx)
 	if err != nil {
@@ -297,8 +297,8 @@ func ProcessMention(
 
 	go SendUpdatesForNewMentionInComment(
 		siteId,
-		update.ForProfileId,
-		update.ItemId,
+		update.ForProfileID,
+		update.ItemID,
 	)
 
 	return nil
