@@ -16,9 +16,9 @@ import (
 )
 
 func searchMetaData(
-	siteId int64,
-	searchUrl url.URL,
-	profileId int64,
+	siteID int64,
+	searchURL url.URL,
+	profileID int64,
 	m SearchResults,
 ) (
 	SearchResults,
@@ -26,7 +26,7 @@ func searchMetaData(
 	error,
 ) {
 
-	limit, offset, status, err := h.GetLimitAndOffset(searchUrl.Query())
+	limit, offset, status, err := h.GetLimitAndOffset(searchURL.Query())
 	if err != nil {
 		glog.Errorf("h.GetLimitAndOffset(searchUrl.Query()) %+v", err)
 		return m, status, err
@@ -196,16 +196,16 @@ func searchMetaData(
 		}
 	}
 
-	var filterProfileId string
+	var filterProfileID string
 	if m.Query.ProfileID > 0 {
-		filterProfileId = fmt.Sprintf(`
+		filterProfileID = fmt.Sprintf(`
    AND f.created_by = %d`, m.Query.ProfileID)
 	}
 
-	var filterMicrocosmIds string
+	var filterMicrocosmIDs string
 	if len(m.Query.MicrocosmIDs) > 0 {
 		if len(m.Query.MicrocosmIDs) == 1 {
-			filterMicrocosmIds = fmt.Sprintf(`
+			filterMicrocosmIDs = fmt.Sprintf(`
    AND f.microcosm_id = %d`, m.Query.MicrocosmIDs[0])
 			includeHuddles = false
 		} else {
@@ -217,7 +217,7 @@ func searchMetaData(
 					inList += `,`
 				}
 			}
-			filterMicrocosmIds = `
+			filterMicrocosmIDs = `
    AND f.microcosm_id IN (` + inList + `)`
 		}
 	}
@@ -278,7 +278,7 @@ func searchMetaData(
 		if m.Query.Attendee {
 			filterEventsJoin += `
        JOIN attendees a ON a.event_id = e.event_id
-                       AND a.profile_id = ` + strconv.FormatInt(profileId, 10) + `
+                       AND a.profile_id = ` + strconv.FormatInt(profileID, 10) + `
                        AND a.state_id = 1`
 		}
 	}
@@ -348,10 +348,10 @@ SELECT f.item_type_id
  WHERE f.site_id = $1
    AND i.profile_id IS NULL` +
 		filterModified +
-		filterMicrocosmIds +
+		filterMicrocosmIDs +
 		filterItemTypes +
 		filterItems +
-		filterProfileId +
+		filterProfileID +
 		filterEventsWhere + `
    AND f.microcosm_is_deleted IS NOT TRUE
    AND f.microcosm_is_moderated IS NOT TRUE
@@ -408,8 +408,8 @@ OFFSET $4`
 	var total int64
 	err = db.QueryRow(
 		sqlWith+`SELECT COUNT(*)`+sqlFromWhere,
-		siteId,
-		profileId,
+		siteID,
+		profileID,
 	).Scan(&total)
 	if err != nil {
 		glog.Error(err)
@@ -434,17 +434,17 @@ SELECT item_type_id
 		sqlFromWhere+
 		sqlOrderLimit+
 		`) r`,
-		siteId,
-		profileId,
+		siteID,
+		profileID,
 		limit,
 		offset,
 	)
 	if err != nil {
 		glog.Errorf(
 			"stmt.Query(%d, %s, %d, %d, %d) %+v",
-			siteId,
+			siteID,
 			m.Query.Query,
-			profileId,
+			profileID,
 			limit,
 			offset,
 			err,
@@ -458,10 +458,10 @@ SELECT item_type_id
 	for rows.Next() {
 		var r SearchResult
 		err = rows.Scan(
-			&r.ItemTypeId,
-			&r.ItemId,
-			&r.ParentItemTypeId,
-			&r.ParentItemId,
+			&r.ItemTypeID,
+			&r.ItemID,
+			&r.ParentItemTypeID,
+			&r.ParentItemID,
 			&r.LastModified,
 			&r.Rank,
 			&r.Highlight,
@@ -473,24 +473,24 @@ SELECT item_type_id
 				errors.New("Row parsing error")
 		}
 
-		itemType, err := h.GetMapStringFromInt(h.ItemTypes, r.ItemTypeId)
+		itemType, err := h.GetMapStringFromInt(h.ItemTypes, r.ItemTypeID)
 		if err != nil {
 			glog.Errorf(
 				"h.GetMapStringFromInt(h.ItemTypes, %d) %+v",
-				r.ItemTypeId,
+				r.ItemTypeID,
 				err,
 			)
 			return m, http.StatusInternalServerError, err
 		}
 		r.ItemType = itemType
 
-		if r.ParentItemTypeId.Valid {
+		if r.ParentItemTypeID.Valid {
 			parentItemType, err :=
-				h.GetMapStringFromInt(h.ItemTypes, r.ParentItemTypeId.Int64)
+				h.GetMapStringFromInt(h.ItemTypes, r.ParentItemTypeID.Int64)
 			if err != nil {
 				glog.Errorf(
 					"h.GetMapStringFromInt(h.ItemTypes, %d) %+v",
-					r.ParentItemTypeId.Int64,
+					r.ParentItemTypeID.Int64,
 					err,
 				)
 				return m, http.StatusInternalServerError, err
@@ -513,10 +513,9 @@ SELECT item_type_id
 
 	if offset > maxOffset {
 		glog.Infoln("offset > maxOffset")
-		return m, http.StatusBadRequest, errors.New(
-			fmt.Sprintf("not enough records, "+
-				"offset (%d) would return an empty page.", offset),
-		)
+		return m, http.StatusBadRequest,
+			fmt.Errorf("not enough records, "+
+				"offset (%d) would return an empty page.", offset)
 	}
 
 	// Extract the summaries
@@ -527,22 +526,22 @@ SELECT item_type_id
 	seq := 0
 	for i := 0; i < len(rs); i++ {
 		go HandleSummaryContainerRequest(
-			siteId,
-			rs[i].ItemTypeId,
-			rs[i].ItemId,
-			profileId,
+			siteID,
+			rs[i].ItemTypeID,
+			rs[i].ItemID,
+			profileID,
 			seq,
 			req,
 		)
 		seq++
 		wg1.Add(1)
 
-		if rs[i].ParentItemId.Valid && rs[i].ParentItemId.Int64 > 0 {
+		if rs[i].ParentItemID.Valid && rs[i].ParentItemID.Int64 > 0 {
 			go HandleSummaryContainerRequest(
-				siteId,
-				rs[i].ParentItemTypeId.Int64,
-				rs[i].ParentItemId.Int64,
-				profileId,
+				siteID,
+				rs[i].ParentItemTypeID.Int64,
+				rs[i].ParentItemID.Int64,
+				profileID,
 				seq,
 				req,
 			)
@@ -573,7 +572,7 @@ SELECT item_type_id
 		rs[i].Item = resps[seq].Item.Summary
 		seq++
 
-		if rs[i].ParentItemId.Valid && rs[i].ParentItemId.Int64 > 0 {
+		if rs[i].ParentItemID.Valid && rs[i].ParentItemID.Int64 > 0 {
 			rs[i].ParentItem = resps[seq].Item.Summary
 			seq++
 		}
@@ -586,7 +585,7 @@ SELECT item_type_id
 		limit,
 		offset,
 		pages,
-		&searchUrl,
+		&searchURL,
 	)
 
 	// return milliseconds

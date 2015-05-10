@@ -8,20 +8,22 @@ import (
 	"time"
 )
 
+// SearchResults is a list of SearchResult
 type SearchResults struct {
 	Query     SearchQuery `json:"query"`
 	TimeTaken int64       `json:"timeTakenInMs,omitempty"`
 	Results   interface{} `json:"results,omitempty"`
 }
 
+// SearchResult is an encapsulation of a hit against a search
 type SearchResult struct {
 	ItemType         string        `json:"itemType"`
-	ItemTypeId       int64         `json:"-"`
-	ItemId           int64         `json:"-"`
+	ItemTypeID       int64         `json:"-"`
+	ItemID           int64         `json:"-"`
 	Item             interface{}   `json:"item"`
 	ParentItemType   string        `json:"parentItemType,omitempty"`
-	ParentItemTypeId sql.NullInt64 `json:"-"`
-	ParentItemId     sql.NullInt64 `json:"-"`
+	ParentItemTypeID sql.NullInt64 `json:"-"`
+	ParentItemID     sql.NullInt64 `json:"-"`
 	ParentItem       interface{}   `json:"parentItem,omitempty"`
 	Unread           bool          `json:"unread"`
 
@@ -31,10 +33,11 @@ type SearchResult struct {
 	Highlight    string    `json:"highlight"`
 }
 
+// Search performs a search against the database
 func Search(
-	siteId int64,
-	searchUrl url.URL,
-	profileId int64,
+	siteID int64,
+	searchURL url.URL,
+	profileID int64,
 ) (
 	SearchResults,
 	int,
@@ -44,7 +47,7 @@ func Search(
 	// Parse the search options and determine what kind of search that we will
 	// be performing.
 	m := SearchResults{
-		Query: GetSearchQueryFromURL(searchUrl),
+		Query: GetSearchQueryFromURL(searchURL),
 	}
 
 	if !m.Query.Valid {
@@ -52,9 +55,8 @@ func Search(
 	}
 
 	if strings.Trim(m.Query.Query, " ") != "" {
-		return searchFullText(siteId, searchUrl, profileId, m)
-	} else {
-		return searchMetaData(siteId, searchUrl, profileId, m)
+		return searchFullText(siteID, searchURL, profileID, m)
 	}
 
+	return searchMetaData(siteID, searchURL, profileID, m)
 }

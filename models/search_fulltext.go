@@ -25,9 +25,9 @@ import (
 const searchTimeout = 15 * time.Second
 
 func searchFullText(
-	siteId int64,
-	searchUrl url.URL,
-	profileId int64,
+	siteID int64,
+	searchURL url.URL,
+	profileID int64,
 	m SearchResults,
 ) (
 	SearchResults,
@@ -35,9 +35,9 @@ func searchFullText(
 	error,
 ) {
 
-	limit, offset, status, err := h.GetLimitAndOffset(searchUrl.Query())
+	limit, offset, status, err := h.GetLimitAndOffset(searchURL.Query())
 	if err != nil {
-		glog.Errorf("h.GetLimitAndOffset(searchUrl.Query()) %+v", err)
+		glog.Errorf("h.GetLimitAndOffset(searchURL.Query()) %+v", err)
 		return m, status, err
 	}
 
@@ -168,16 +168,16 @@ func searchFullText(
               AND si.` + fullTextScope + `_text ~* '\W` + hashtag + `\W'`
 	}
 
-	var filterProfileId string
+	var filterProfileID string
 	if m.Query.ProfileID > 0 {
-		filterProfileId = fmt.Sprintf(`
+		filterProfileID = fmt.Sprintf(`
               AND si.profile_id = %d`, m.Query.ProfileID)
 	}
 
-	var filterMicrocosmIds string
+	var filterMicrocosmIDs string
 	if len(m.Query.MicrocosmIDs) > 0 {
 		if len(m.Query.MicrocosmIDs) == 1 {
-			filterMicrocosmIds = fmt.Sprintf(`
+			filterMicrocosmIDs = fmt.Sprintf(`
    AND f.microcosm_id = %d`, m.Query.MicrocosmIDs[0])
 		} else {
 			var inList = ``
@@ -188,7 +188,7 @@ func searchFullText(
 					inList += `,`
 				}
 			}
-			filterMicrocosmIds = `
+			filterMicrocosmIDs = `
    AND f.microcosm_id IN (` + inList + `)`
 		}
 	}
@@ -250,7 +250,7 @@ func searchFullText(
 		if m.Query.Attendee {
 			filterEventsJoin += `
        JOIN attendees a ON a.event_id = e.event_id
-                       AND a.profile_id = ` + strconv.FormatInt(profileId, 10) + `
+                       AND a.profile_id = ` + strconv.FormatInt(profileID, 10) + `
                        AND a.state_id = 1`
 		}
 	}
@@ -309,13 +309,13 @@ SELECT total
             WHERE f.site_id = $1
               AND i.profile_id IS NULL` +
 		filterModified +
-		filterMicrocosmIds +
+		filterMicrocosmIDs +
 		filterTitle +
 		filterItemTypes +
 		filterItems +
 		filterHashTag +
 		filterEventsWhere +
-		filterProfileId + `
+		filterProfileID + `
               AND f.microcosm_is_deleted IS NOT TRUE
               AND f.microcosm_is_moderated IS NOT TRUE
               AND f.parent_is_deleted IS NOT TRUE
@@ -343,23 +343,23 @@ SELECT total
 		return m, http.StatusInternalServerError, err
 	}
 
-	queryId := `Search` + randomString()
+	queryID := `Search` + randomString()
 	queryTimer := time.NewTimer(searchTimeout)
 	go func() {
 		<-queryTimer.C
 		db.Exec(`SELECT pg_cancel_backend(pid)
   FROM pg_stat_activity
  WHERE state = 'active'
-   AND query LIKE '--` + queryId + `%'`)
+   AND query LIKE '--` + queryID + `%'`)
 	}()
 	// This nested query is used to run the `has_unread` query on only the rows
 	// that are returned, rather than on all rows in the underlying query before
 	// limit has been applied.
 	rows, err := db.Query(
-		`--`+queryId+
+		`--`+queryID+
 			sqlQuery,
-		siteId,
-		profileId,
+		siteID,
+		profileID,
 		m.Query.Query,
 		limit,
 		offset,
@@ -371,9 +371,9 @@ SELECT total
 		if !ok {
 			glog.Errorf(
 				"stmt.Query(%d, %s, %d, %d, %d) %+v",
-				siteId,
+				siteID,
 				m.Query.Query,
-				profileId,
+				profileID,
 				limit,
 				offset,
 				err,
@@ -396,9 +396,9 @@ SELECT total
 		default:
 			glog.Errorf(
 				"stmt.Query(%d, %s, %d, %d, %d) %+v",
-				siteId,
+				siteID,
 				m.Query.Query,
-				profileId,
+				profileID,
 				limit,
 				offset,
 				err,
@@ -415,10 +415,10 @@ SELECT total
 		var r SearchResult
 		err = rows.Scan(
 			&total,
-			&r.ItemTypeId,
-			&r.ItemId,
-			&r.ParentItemTypeId,
-			&r.ParentItemId,
+			&r.ItemTypeID,
+			&r.ItemID,
+			&r.ParentItemTypeID,
+			&r.ParentItemID,
 			&r.LastModified,
 			&r.Rank,
 			&r.Highlight,
@@ -430,24 +430,24 @@ SELECT total
 				errors.New("Row parsing error")
 		}
 
-		itemType, err := h.GetMapStringFromInt(h.ItemTypes, r.ItemTypeId)
+		itemType, err := h.GetMapStringFromInt(h.ItemTypes, r.ItemTypeID)
 		if err != nil {
 			glog.Errorf(
 				"h.GetMapStringFromInt(h.ItemTypes, %d) %+v",
-				r.ItemTypeId,
+				r.ItemTypeID,
 				err,
 			)
 			return m, http.StatusInternalServerError, err
 		}
 		r.ItemType = itemType
 
-		if r.ParentItemTypeId.Valid {
+		if r.ParentItemTypeID.Valid {
 			parentItemType, err :=
-				h.GetMapStringFromInt(h.ItemTypes, r.ParentItemTypeId.Int64)
+				h.GetMapStringFromInt(h.ItemTypes, r.ParentItemTypeID.Int64)
 			if err != nil {
 				glog.Errorf(
 					"h.GetMapStringFromInt(h.ItemTypes, %d) %+v",
-					r.ParentItemTypeId.Int64,
+					r.ParentItemTypeID.Int64,
 					err,
 				)
 				return m, http.StatusInternalServerError, err
@@ -470,10 +470,9 @@ SELECT total
 
 	if offset > maxOffset {
 		glog.Infoln("offset > maxOffset")
-		return m, http.StatusBadRequest, errors.New(
-			fmt.Sprintf("not enough records, "+
-				"offset (%d) would return an empty page.", offset),
-		)
+		return m, http.StatusBadRequest,
+			fmt.Errorf("not enough records, "+
+				"offset (%d) would return an empty page.", offset)
 	}
 
 	// Extract the summaries
@@ -484,22 +483,22 @@ SELECT total
 	seq := 0
 	for i := 0; i < len(rs); i++ {
 		go HandleSummaryContainerRequest(
-			siteId,
-			rs[i].ItemTypeId,
-			rs[i].ItemId,
-			profileId,
+			siteID,
+			rs[i].ItemTypeID,
+			rs[i].ItemID,
+			profileID,
 			seq,
 			req,
 		)
 		seq++
 		wg1.Add(1)
 
-		if rs[i].ParentItemId.Valid && rs[i].ParentItemId.Int64 > 0 {
+		if rs[i].ParentItemID.Valid && rs[i].ParentItemID.Int64 > 0 {
 			go HandleSummaryContainerRequest(
-				siteId,
-				rs[i].ParentItemTypeId.Int64,
-				rs[i].ParentItemId.Int64,
-				profileId,
+				siteID,
+				rs[i].ParentItemTypeID.Int64,
+				rs[i].ParentItemID.Int64,
+				profileID,
 				seq,
 				req,
 			)
@@ -530,7 +529,7 @@ SELECT total
 		rs[i].Item = resps[seq].Item.Summary
 		seq++
 
-		if rs[i].ParentItemId.Valid && rs[i].ParentItemId.Int64 > 0 {
+		if rs[i].ParentItemID.Valid && rs[i].ParentItemID.Int64 > 0 {
 			rs[i].ParentItem = resps[seq].Item.Summary
 			seq++
 		}
@@ -543,7 +542,7 @@ SELECT total
 		limit,
 		offset,
 		pages,
-		&searchUrl,
+		&searchURL,
 	)
 
 	// return milliseconds
