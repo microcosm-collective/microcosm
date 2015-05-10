@@ -16,7 +16,7 @@ package blackfriday
 import (
 	"bytes"
 
-	"github.com/shurcooL/go/github_flavored_markdown/sanitized_anchor_name"
+	"github.com/shurcooL/sanitized_anchor_name"
 )
 
 // Parse block-level data.
@@ -196,11 +196,8 @@ func (p *parser) prefixHeader(out *bytes.Buffer, data []byte) int {
 	for level < 6 && data[level] == '#' {
 		level++
 	}
-	i, end := 0, 0
-	for i = level; data[i] == ' '; i++ {
-	}
-	for end = i; data[end] != '\n'; end++ {
-	}
+	i := skipChar(data, level, ' ')
+	end := skipUntilChar(data, i, '\n')
 	skip := end
 	id := ""
 	if p.flags&EXTENSION_HEADER_IDS != 0 {
@@ -221,6 +218,9 @@ func (p *parser) prefixHeader(out *bytes.Buffer, data []byte) int {
 		}
 	}
 	for end > 0 && data[end-1] == '#' {
+		if isBackslashEscaped(data, end-1) {
+			break
+		}
 		end--
 	}
 	for end > 0 && data[end-1] == ' ' {
@@ -242,13 +242,8 @@ func (p *parser) prefixHeader(out *bytes.Buffer, data []byte) int {
 func (p *parser) isUnderlinedHeader(data []byte) int {
 	// test of level 1 header
 	if data[0] == '=' {
-		i := 1
-		for data[i] == '=' {
-			i++
-		}
-		for data[i] == ' ' {
-			i++
-		}
+		i := skipChar(data, 1, '=')
+		i = skipChar(data, i, ' ')
 		if data[i] == '\n' {
 			return 1
 		} else {
@@ -258,13 +253,8 @@ func (p *parser) isUnderlinedHeader(data []byte) int {
 
 	// test of level 2 header
 	if data[0] == '-' {
-		i := 1
-		for data[i] == '-' {
-			i++
-		}
-		for data[i] == ' ' {
-			i++
-		}
+		i := skipChar(data, 1, '-')
+		i = skipChar(data, i, ' ')
 		if data[i] == '\n' {
 			return 2
 		} else {
@@ -556,8 +546,11 @@ func (p *parser) isFencedCode(data []byte, syntax **string, oldmarker string) (s
 	skip = 0
 
 	// skip up to three spaces
-	for i < 3 && data[i] == ' ' {
+	for i < len(data) && i < 3 && data[i] == ' ' {
 		i++
+	}
+	if i >= len(data) {
+		return
 	}
 
 	// check for the marker characters: ~ or `
@@ -568,9 +561,13 @@ func (p *parser) isFencedCode(data []byte, syntax **string, oldmarker string) (s
 	c := data[i]
 
 	// the whole line must be the same char or whitespace
-	for data[i] == c {
+	for i < len(data) && data[i] == c {
 		size++
 		i++
+	}
+
+	if i >= len(data) {
+		return
 	}
 
 	// the marker char must occur at least 3 times
@@ -586,9 +583,10 @@ func (p *parser) isFencedCode(data []byte, syntax **string, oldmarker string) (s
 
 	if syntax != nil {
 		syn := 0
+		i = skipChar(data, i, ' ')
 
-		for data[i] == ' ' {
-			i++
+		if i >= len(data) {
+			return
 		}
 
 		syntaxStart := i
@@ -597,12 +595,12 @@ func (p *parser) isFencedCode(data []byte, syntax **string, oldmarker string) (s
 			i++
 			syntaxStart++
 
-			for data[i] != '}' && data[i] != '\n' {
+			for i < len(data) && data[i] != '}' && data[i] != '\n' {
 				syn++
 				i++
 			}
 
-			if data[i] != '}' {
+			if i >= len(data) || data[i] != '}' {
 				return
 			}
 
@@ -619,7 +617,7 @@ func (p *parser) isFencedCode(data []byte, syntax **string, oldmarker string) (s
 
 			i++
 		} else {
-			for !isspace(data[i]) {
+			for i < len(data) && !isspace(data[i]) {
 				syn++
 				i++
 			}
@@ -629,10 +627,8 @@ func (p *parser) isFencedCode(data []byte, syntax **string, oldmarker string) (s
 		*syntax = &language
 	}
 
-	for data[i] == ' ' {
-		i++
-	}
-	if data[i] != '\n' {
+	i = skipChar(data, i, ' ')
+	if i >= len(data) || data[i] != '\n' {
 		return
 	}
 
@@ -660,11 +656,7 @@ func (p *parser) fencedCode(out *bytes.Buffer, data []byte, doRender bool) int {
 		}
 
 		// copy the current line
-		end := beg
-		for data[end] != '\n' {
-			end++
-		}
-		end++
+		end := skipUntilChar(data, beg, '\n') + 1
 
 		// did we reach the end of the buffer without a closing marker?
 		if end >= len(data) {
@@ -722,7 +714,7 @@ func (p *parser) table(out *bytes.Buffer, data []byte) int {
 	return i
 }
 
-// check if the specified position is preceeded by an odd number of backslashes
+// check if the specified position is preceded by an odd number of backslashes
 func isBackslashEscaped(data []byte, i int) bool {
 	backslashes := 0
 	for i-backslashes-1 >= 0 && data[i-backslashes-1] == '\\' {
@@ -767,9 +759,7 @@ func (p *parser) tableHeader(out *bytes.Buffer, data []byte) (size int, columns 
 	if data[i] == '|' && !isBackslashEscaped(data, i) {
 		i++
 	}
-	for data[i] == ' ' {
-		i++
-	}
+	i = skipChar(data, i, ' ')
 
 	// each column header is of form: / *:?-+:? *|/ with # dashes + # colons >= 3
 	// and trailing | optional on last column

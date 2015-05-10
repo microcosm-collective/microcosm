@@ -15,6 +15,7 @@ import (
 	"image/color"
 	"io"
 	"io/ioutil"
+	"math"
 
 	"golang.org/x/image/tiff/lzw"
 )
@@ -70,8 +71,19 @@ func (d *decoder) firstVal(tag int) uint {
 // or Long type, and returns the decoded uint values.
 func (d *decoder) ifdUint(p []byte) (u []uint, err error) {
 	var raw []byte
+	if len(p) < ifdLen {
+		return nil, FormatError("bad IFD entry")
+	}
+
 	datatype := d.byteOrder.Uint16(p[2:4])
+	if dt := int(datatype); dt <= 0 || dt >= len(lengths) {
+		return nil, UnsupportedError("IFD entry datatype")
+	}
+
 	count := d.byteOrder.Uint32(p[4:8])
+	if count > math.MaxInt32/lengths[datatype] {
+		return nil, FormatError("IFD data too large")
+	}
 	if datalen := lengths[datatype] * count; datalen > 4 {
 		// The IFD contains a pointer to the real value.
 		raw = make([]byte, datalen)
@@ -164,9 +176,12 @@ func (d *decoder) parseIFD(p []byte) error {
 }
 
 // readBits reads n bits from the internal buffer starting at the current offset.
-func (d *decoder) readBits(n uint) uint32 {
+func (d *decoder) readBits(n uint) (v uint32, ok bool) {
 	for d.nbits < n {
 		d.v <<= 8
+		if d.off >= len(d.buf) {
+			return 0, false
+		}
 		d.v |= uint32(d.buf[d.off])
 		d.off++
 		d.nbits += 8
@@ -174,7 +189,7 @@ func (d *decoder) readBits(n uint) uint32 {
 	d.nbits -= n
 	rv := d.v >> d.nbits
 	d.v &^= rv << d.nbits
-	return rv
+	return rv, true
 }
 
 // flushBits discards the unread bits in the buffer used by readBits.
@@ -203,12 +218,14 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 	if d.firstVal(tPredictor) == prHorizontal {
 		if d.bpp == 16 {
 			var off int
-			spp := len(d.features[tBitsPerSample]) // samples per pixel
-			bpp := spp * 2                         // bytes per pixel
+			n := 2 * len(d.features[tBitsPerSample]) // bytes per sample times samples per pixel
 			for y := ymin; y < ymax; y++ {
-				off += spp * 2
-				for x := 0; x < (xmax-xmin-1)*bpp; x += 2 {
-					v0 := d.byteOrder.Uint16(d.buf[off-bpp : off-bpp+2])
+				off += n
+				for x := 0; x < (xmax-xmin-1)*n; x += 2 {
+					if off+2 > len(d.buf) {
+						return FormatError("not enough pixel data")
+					}
+					v0 := d.byteOrder.Uint16(d.buf[off-n : off-n+2])
 					v1 := d.byteOrder.Uint16(d.buf[off : off+2])
 					d.byteOrder.PutUint16(d.buf[off:off+2], v1+v0)
 					off += 2
@@ -216,11 +233,14 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 			}
 		} else if d.bpp == 8 {
 			var off int
-			spp := len(d.features[tBitsPerSample]) // samples per pixel
+			n := 1 * len(d.features[tBitsPerSample]) // bytes per sample times samples per pixel
 			for y := ymin; y < ymax; y++ {
-				off += spp
-				for x := 0; x < (xmax-xmin-1)*spp; x++ {
-					d.buf[off] += d.buf[off-spp]
+				off += n
+				for x := 0; x < (xmax-xmin-1)*n; x++ {
+					if off >= len(d.buf) {
+						return FormatError("not enough pixel data")
+					}
+					d.buf[off] += d.buf[off-n]
 					off++
 				}
 			}
@@ -235,6 +255,9 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 			img := dst.(*image.Gray16)
 			for y := ymin; y < rMaxY; y++ {
 				for x := xmin; x < rMaxX; x++ {
+					if d.off+2 > len(d.buf) {
+						return FormatError("not enough pixel data")
+					}
 					v := d.byteOrder.Uint16(d.buf[d.off : d.off+2])
 					d.off += 2
 					if d.mode == mGrayInvert {
@@ -248,11 +271,15 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 			max := uint32((1 << d.bpp) - 1)
 			for y := ymin; y < rMaxY; y++ {
 				for x := xmin; x < rMaxX; x++ {
-					v := uint8(d.readBits(d.bpp) * 0xff / max)
+					v, ok := d.readBits(d.bpp)
+					if !ok {
+						return FormatError("not enough pixel data")
+					}
+					v = v * 0xff / max
 					if d.mode == mGrayInvert {
 						v = 0xff - v
 					}
-					img.SetGray(x, y, color.Gray{v})
+					img.SetGray(x, y, color.Gray{uint8(v)})
 				}
 				d.flushBits()
 			}
@@ -261,7 +288,11 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 		img := dst.(*image.Paletted)
 		for y := ymin; y < rMaxY; y++ {
 			for x := xmin; x < rMaxX; x++ {
-				img.SetColorIndex(x, y, uint8(d.readBits(d.bpp)))
+				v, ok := d.readBits(d.bpp)
+				if !ok {
+					return FormatError("not enough pixel data")
+				}
+				img.SetColorIndex(x, y, uint8(v))
 			}
 			d.flushBits()
 		}
@@ -270,6 +301,9 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 			img := dst.(*image.RGBA64)
 			for y := ymin; y < rMaxY; y++ {
 				for x := xmin; x < rMaxX; x++ {
+					if d.off+6 > len(d.buf) {
+						return FormatError("not enough pixel data")
+					}
 					r := d.byteOrder.Uint16(d.buf[d.off+0 : d.off+2])
 					g := d.byteOrder.Uint16(d.buf[d.off+2 : d.off+4])
 					b := d.byteOrder.Uint16(d.buf[d.off+4 : d.off+6])
@@ -284,6 +318,9 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 				max := img.PixOffset(rMaxX, y)
 				off := (y - ymin) * (xmax - xmin) * 3
 				for i := min; i < max; i += 4 {
+					if d.off+3 > len(d.buf) {
+						return FormatError("not enough pixel data")
+					}
 					img.Pix[i+0] = d.buf[off+0]
 					img.Pix[i+1] = d.buf[off+1]
 					img.Pix[i+2] = d.buf[off+2]
@@ -297,6 +334,9 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 			img := dst.(*image.NRGBA64)
 			for y := ymin; y < rMaxY; y++ {
 				for x := xmin; x < rMaxX; x++ {
+					if d.off+8 > len(d.buf) {
+						return FormatError("not enough pixel data")
+					}
 					r := d.byteOrder.Uint16(d.buf[d.off+0 : d.off+2])
 					g := d.byteOrder.Uint16(d.buf[d.off+2 : d.off+4])
 					b := d.byteOrder.Uint16(d.buf[d.off+4 : d.off+6])
@@ -310,8 +350,11 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 			for y := ymin; y < rMaxY; y++ {
 				min := img.PixOffset(xmin, y)
 				max := img.PixOffset(rMaxX, y)
-				buf := d.buf[(y-ymin)*(xmax-xmin)*4 : (y-ymin+1)*(xmax-xmin)*4]
-				copy(img.Pix[min:max], buf)
+				i0, i1 := (y-ymin)*(xmax-xmin)*4, (y-ymin+1)*(xmax-xmin)*4
+				if i1 > len(d.buf) {
+					return FormatError("not enough pixel data")
+				}
+				copy(img.Pix[min:max], d.buf[i0:i1])
 			}
 		}
 	case mRGBA:
@@ -319,6 +362,9 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 			img := dst.(*image.RGBA64)
 			for y := ymin; y < rMaxY; y++ {
 				for x := xmin; x < rMaxX; x++ {
+					if d.off+8 > len(d.buf) {
+						return FormatError("not enough pixel data")
+					}
 					r := d.byteOrder.Uint16(d.buf[d.off+0 : d.off+2])
 					g := d.byteOrder.Uint16(d.buf[d.off+2 : d.off+4])
 					b := d.byteOrder.Uint16(d.buf[d.off+4 : d.off+6])
@@ -332,8 +378,11 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 			for y := ymin; y < rMaxY; y++ {
 				min := img.PixOffset(xmin, y)
 				max := img.PixOffset(rMaxX, y)
-				buf := d.buf[(y-ymin)*(xmax-xmin)*4 : (y-ymin+1)*(xmax-xmin)*4]
-				copy(img.Pix[min:max], buf)
+				i0, i1 := (y-ymin)*(xmax-xmin)*4, (y-ymin+1)*(xmax-xmin)*4
+				if i1 > len(d.buf) {
+					return FormatError("not enough pixel data")
+				}
+				copy(img.Pix[min:max], d.buf[i0:i1])
 			}
 		}
 	}
@@ -488,6 +537,13 @@ func Decode(r io.Reader) (img image.Image, err error) {
 	blocksAcross := 1
 	blocksDown := 1
 
+	if d.config.Width == 0 {
+		blocksAcross = 0
+	}
+	if d.config.Height == 0 {
+		blocksDown = 0
+	}
+
 	var blockOffsets, blockCounts []uint
 
 	if int(d.firstVal(tTileWidth)) != 0 {
@@ -496,8 +552,12 @@ func Decode(r io.Reader) (img image.Image, err error) {
 		blockWidth = int(d.firstVal(tTileWidth))
 		blockHeight = int(d.firstVal(tTileLength))
 
-		blocksAcross = (d.config.Width + blockWidth - 1) / blockWidth
-		blocksDown = (d.config.Height + blockHeight - 1) / blockHeight
+		if blockWidth != 0 {
+			blocksAcross = (d.config.Width + blockWidth - 1) / blockWidth
+		}
+		if blockHeight != 0 {
+			blocksDown = (d.config.Height + blockHeight - 1) / blockHeight
+		}
 
 		blockCounts = d.features[tTileByteCounts]
 		blockOffsets = d.features[tTileOffsets]
@@ -507,7 +567,9 @@ func Decode(r io.Reader) (img image.Image, err error) {
 			blockHeight = int(d.firstVal(tRowsPerStrip))
 		}
 
-		blocksDown = (d.config.Height + blockHeight - 1) / blockHeight
+		if blockHeight != 0 {
+			blocksDown = (d.config.Height + blockHeight - 1) / blockHeight
+		}
 
 		blockOffsets = d.features[tStripOffsets]
 		blockCounts = d.features[tStripByteCounts]
@@ -571,7 +633,8 @@ func Decode(r io.Reader) (img image.Image, err error) {
 				d.buf, err = ioutil.ReadAll(r)
 				r.Close()
 			case cDeflate, cDeflateOld:
-				r, err := zlib.NewReader(io.NewSectionReader(d.r, offset, n))
+				var r io.ReadCloser
+				r, err = zlib.NewReader(io.NewSectionReader(d.r, offset, n))
 				if err != nil {
 					return nil, err
 				}

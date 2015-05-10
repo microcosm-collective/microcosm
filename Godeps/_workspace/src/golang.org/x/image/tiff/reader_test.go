@@ -5,6 +5,8 @@
 package tiff
 
 import (
+	"bytes"
+	"encoding/binary"
 	"image"
 	"io/ioutil"
 	"os"
@@ -71,6 +73,53 @@ func TestUnpackBits(t *testing.T) {
 		if string(buf) != u.uncompressed {
 			t.Fatalf("unpackBits: want %x, got %x", u.uncompressed, buf)
 		}
+	}
+}
+
+func TestShortBlockData(t *testing.T) {
+	b, err := ioutil.ReadFile("../testdata/bw-uncompressed.tiff")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The bw-uncompressed.tiff image is a 153x55 bi-level image. This is 1 bit
+	// per pixel, or 20 bytes per row, times 55 rows, or 1100 bytes of pixel
+	// data. 1100 in hex is 0x44c, or "\x4c\x04" in little-endian. We replace
+	// that byte count (StripByteCounts-tagged data) by something less than
+	// that, so that there is not enough pixel data.
+	old := []byte{0x4c, 0x04}
+	new := []byte{0x01, 0x01}
+	i := bytes.Index(b, old)
+	if i < 0 {
+		t.Fatal(`could not find "\x4c\x04" byte count`)
+	}
+	if bytes.Contains(b[i+len(old):], old) {
+		t.Fatal(`too many occurrences of "\x4c\x04"`)
+	}
+	b[i+0] = new[0]
+	b[i+1] = new[1]
+	if _, err = Decode(bytes.NewReader(b)); err == nil {
+		t.Fatal("got nil error, want non-nil")
+	}
+}
+
+func TestDecodeInvalidDataType(t *testing.T) {
+	b, err := ioutil.ReadFile("../testdata/bw-uncompressed.tiff")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// off is the offset of the ImageWidth tag. It is the offset of the overall
+	// IFD block (0x00000454), plus 2 for the uint16 number of IFD entries, plus 12
+	// to skip the first entry.
+	const off = 0x00000454 + 2 + 12*1
+
+	if v := binary.LittleEndian.Uint16(b[off : off+2]); v != tImageWidth {
+		t.Fatal(`could not find ImageWidth tag`)
+	}
+	binary.LittleEndian.PutUint16(b[off+2:], uint16(len(lengths))) // invalid datatype
+
+	if _, err = Decode(bytes.NewReader(b)); err == nil {
+		t.Fatal("got nil error, want non-nil")
 	}
 }
 
@@ -159,6 +208,50 @@ func TestDecompress(t *testing.T) {
 			continue
 		}
 		compare(t, img0, img1)
+	}
+}
+
+// Do not panic when image dimensions are zero, return zero-sized
+// image instead.
+// Issue 10393.
+func TestZeroSizedImages(t *testing.T) {
+	testsizes := []struct {
+		w, h int
+	}{
+		{0, 0},
+		{1, 0},
+		{0, 1},
+		{1, 1},
+	}
+	for _, r := range testsizes {
+		img := image.NewRGBA(image.Rect(0, 0, r.w, r.h))
+		var buf bytes.Buffer
+		if err := Encode(&buf, img, nil); err != nil {
+			t.Errorf("encode w=%d h=%d: %v", r.w, r.h, err)
+			continue
+		}
+		if _, err := Decode(&buf); err != nil {
+			t.Errorf("decode w=%d h=%d: %v", r.w, r.h, err)
+		}
+	}
+}
+
+// TestLargeIFDEntry verifies that a large IFD entry does not cause Decode
+// to panic.
+// Issue 10596.
+func TestLargeIFDEntry(t *testing.T) {
+	testdata := "II*\x00\x08\x00\x00\x00\f\x000000000000" +
+		"00000000000000000000" +
+		"00000000000000000000" +
+		"00000000000000000000" +
+		"00000000000000\x17\x01\x04\x00\x01\x00" +
+		"\x00\xc0000000000000000000" +
+		"00000000000000000000" +
+		"00000000000000000000" +
+		"000000"
+	_, err := Decode(strings.NewReader(testdata))
+	if err == nil {
+		t.Fatal("Decode with large IFD entry: got nil error, want non-nil")
 	}
 }
 
