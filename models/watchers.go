@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -48,7 +47,7 @@ func (m *WatcherType) validate(exists bool) (int, error) {
 	} else {
 		if m.ID < 0 || m.ID > 0 {
 			return http.StatusBadRequest,
-				errors.New("You cannot specify an ID when creating a resource")
+				fmt.Errorf("You cannot specify an ID when creating a resource")
 		}
 	}
 

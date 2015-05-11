@@ -144,7 +144,7 @@ func PurgeCache(itemTypeId int64, itemId int64) {
 		}
 		defer tx.Rollback()
 
-		_, err = FlushRoleMembersCacheByRoleId(tx, itemId)
+		_, err = FlushRoleMembersCacheByRoleID(tx, itemId)
 		if err != nil {
 			glog.Errorf("+%v", err)
 			return

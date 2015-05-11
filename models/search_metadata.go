@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -450,7 +449,7 @@ SELECT item_type_id
 			err,
 		)
 		return m, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 	defer rows.Close()
 
@@ -470,7 +469,7 @@ SELECT item_type_id
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return m, http.StatusInternalServerError,
-				errors.New("Row parsing error")
+				fmt.Errorf("Row parsing error")
 		}
 
 		itemType, err := h.GetMapStringFromInt(h.ItemTypes, r.ItemTypeID)
@@ -504,7 +503,7 @@ SELECT item_type_id
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return m, http.StatusInternalServerError,
-			errors.New("Error fetching rows")
+			fmt.Errorf("Error fetching rows")
 	}
 	rows.Close()
 

@@ -224,7 +224,7 @@ WHERE attribute_id IN (
 
 		if itemTypeId == h.ItemTypes[h.ItemTypeProfile] {
 
-			status, err = FlushRoleMembersCacheByProfileId(tx, itemId)
+			status, err = FlushRoleMembersCacheByProfileID(tx, itemId)
 			if err != nil {
 				return http.StatusInternalServerError,
 					errors.New(
@@ -279,7 +279,7 @@ INSERT INTO attribute_values (
 	}
 
 	if itemTypeId == h.ItemTypes[h.ItemTypeProfile] {
-		status, err = FlushRoleMembersCacheByProfileId(tx, itemId)
+		status, err = FlushRoleMembersCacheByProfileID(tx, itemId)
 		if err != nil {
 			return http.StatusInternalServerError,
 				errors.New(

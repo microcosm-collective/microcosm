@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -133,7 +132,7 @@ SELECT item_id
 		if err != nil {
 			glog.Errorf("Trending rows.Scan(): %+v", err)
 			return []TrendingItem{}, 0, 0, http.StatusInternalServerError,
-				errors.New("Trending: row parsing error")
+				fmt.Errorf("Trending: row parsing error")
 		}
 
 		unread[strconv.FormatInt(t.ItemTypeID, 10)+`_`+
@@ -157,7 +156,7 @@ SELECT item_id
 	if err != nil {
 		glog.Errorf("Trending rows.Err(): %+v", err)
 		return []TrendingItem{}, 0, 0, http.StatusInternalServerError,
-			errors.New("Error fetching rows")
+			fmt.Errorf("Error fetching rows")
 	}
 	rows.Close()
 

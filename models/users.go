@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -43,18 +42,18 @@ func (m *UserType) Validate(exists bool) (int, error) {
 	if exists == false {
 		if m.ID != 0 {
 			return http.StatusBadRequest,
-				errors.New("You cannot specify an ID")
+				fmt.Errorf("You cannot specify an ID")
 		}
 
 		if !m.Created.IsZero() {
 			return http.StatusBadRequest,
-				errors.New("You cannot specify creation time")
+				fmt.Errorf("You cannot specify creation time")
 		}
 	}
 
 	if strings.Trim(m.Email, " ") == "" {
 		return http.StatusBadRequest,
-			errors.New("An email address must be provided")
+			fmt.Errorf("An email address must be provided")
 	}
 
 	return http.StatusOK, nil
@@ -135,7 +134,7 @@ SELECT COUNT(*) > 0
 func GetUser(id int64) (UserType, int, error) {
 
 	if id == 0 {
-		return UserType{}, http.StatusNotFound, errors.New("User not found")
+		return UserType{}, http.StatusNotFound, fmt.Errorf("User not found")
 	}
 
 	// Get from cache if it's available
@@ -201,17 +200,17 @@ SELECT user_id
 func (m *UserType) Update() (int, error) {
 
 	return http.StatusNotImplemented,
-		errors.New("Update User is not yet implemented")
+		fmt.Errorf("Update User is not yet implemented")
 	/*
 	   	if m.Id < 1 {
-	   		return http.StatusBadRequest, errors.New(fmt.Sprintf(
+	   		return http.StatusBadRequest, fmt.Errorf(fmt.Sprintf(
 	   			"Invalid ID supplied: %v", m.Id),
 	   		)
 	   	}
 
 	   	tx, err := h.GetTransaction()
 	   	if err != nil {
-	   		return http.StatusInternalServerError, errors.New(
+	   		return http.StatusInternalServerError, fmt.Errorf(
 	   			fmt.Sprintf("Could not start transaction: %v", err.Error()),
 	   		)
 	   	}
@@ -245,7 +244,7 @@ func (m *UserType) Update() (int, error) {
 	   	)
 
 	   	if err != nil {
-	   		return http.StatusInternalServerError, errors.New(
+	   		return http.StatusInternalServerError, fmt.Errorf(
 	   			fmt.Sprintf("Could not prepare insert statement: %v", err.Error()),
 	   		)
 	   	}
@@ -266,14 +265,14 @@ func (m *UserType) Update() (int, error) {
 	   	var insertId int64
 	   	err = row.Scan(&insertId)
 	   	if err != nil {
-	   		return http.StatusInternalServerError, errors.New(
+	   		return http.StatusInternalServerError, fmt.Errorf(
 	   			fmt.Sprintf("Error updating : %v", err.Error()),
 	   		)
 	   	}
 
 	   	err = tx.Commit()
 	   	if err != nil {
-	   		return http.StatusInternalServerError, errors.New(
+	   		return http.StatusInternalServerError, fmt.Errorf(
 	   			fmt.Sprintf("Transaction failed: %v", err.Error()),
 	   		)
 	   	}
@@ -286,11 +285,11 @@ func (m *UserType) Update() (int, error) {
 func (m *UserType) Delete() (int, error) {
 
 	return http.StatusNotImplemented,
-		errors.New("Delete User is not yet implemented")
+		fmt.Errorf("Delete User is not yet implemented")
 
 	/*
 	   	if m.Id < 1 {
-	   		return http.StatusBadRequest, errors.New(
+	   		return http.StatusBadRequest, fmt.Errorf(
 	   			fmt.Sprintf("The supplied ID ('%d') cannot be zero or negative.", m.Id),
 	   		)
 	   	}
@@ -306,21 +305,21 @@ func (m *UserType) Delete() (int, error) {
 	    WHERE user_id = $1`,
 	   	)
 	   	if err != nil {
-	   		return http.StatusInternalServerError, errors.New(
+	   		return http.StatusInternalServerError, fmt.Errorf(
 	   			fmt.Sprintf("Could not prepare statement: %v", err.Error()),
 	   		)
 	   	}
 
 	   	_, err = stmt.Exec(m.Id)
 	   	if err != nil {
-	   		return http.StatusInternalServerError, errors.New(
+	   		return http.StatusInternalServerError, fmt.Errorf(
 	   			fmt.Sprintf("Delete failed: %v", err.Error()),
 	   		)
 	   	}
 
 	   	err = tx.Commit()
 	   	if err != nil {
-	   		return http.StatusInternalServerError, errors.New(
+	   		return http.StatusInternalServerError, fmt.Errorf(
 	   			fmt.Sprintf("Transaction failed: %v", err.Error()),
 	   		)
 	   	}
@@ -334,7 +333,7 @@ func CreateUserByEmailAddress(email string) (UserType, int, error) {
 
 	if strings.Trim(email, " ") == "" {
 		return UserType{}, http.StatusBadRequest,
-			errors.New("You must specify an email address")
+			fmt.Errorf("You must specify an email address")
 	}
 
 	m := UserType{}
@@ -355,7 +354,7 @@ func GetUserByEmailAddress(email string) (UserType, int, error) {
 
 	if strings.Trim(email, " ") == "" {
 		return UserType{}, http.StatusBadRequest,
-			errors.New("You must specify an email address")
+			fmt.Errorf("You must specify an email address")
 	}
 
 	db, err := h.GetConnection()

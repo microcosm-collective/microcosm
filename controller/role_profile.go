@@ -129,7 +129,7 @@ func (ctl *RoleProfileController) Update(c *models.Context) {
 	}
 
 	m := models.RoleProfileType{}
-	m.Id = profileId
+	m.ID = profileId
 
 	// Authorisation
 	perms := models.GetPermission(
@@ -193,7 +193,7 @@ func (ctl *RoleProfileController) Delete(c *models.Context) {
 	}
 
 	m := models.RoleProfileType{}
-	m.Id = profileId
+	m.ID = profileId
 
 	// Authorisation
 	perms := models.GetPermission(

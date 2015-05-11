@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -197,23 +196,23 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 
 	if exists {
 		if m.ID < 1 {
-			return http.StatusBadRequest, errors.New("Invalid site ID")
+			return http.StatusBadRequest, fmt.Errorf("Invalid site ID")
 		}
 	}
 
 	if strings.Trim(m.Title, " ") == "" {
 		return http.StatusBadRequest,
-			errors.New("You must specify a site title")
+			fmt.Errorf("You must specify a site title")
 	}
 
 	if strings.Trim(m.Description, " ") == "" {
 		return http.StatusBadRequest,
-			errors.New("You must specify a site description")
+			fmt.Errorf("You must specify a site description")
 	}
 
 	if strings.Trim(m.SubdomainKey, " ") == "" {
 		return http.StatusBadRequest,
-			errors.New("You must specify a subdomain key")
+			fmt.Errorf("You must specify a subdomain key")
 	}
 
 	if m.SubdomainKey != "" {
@@ -228,7 +227,7 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 		}
 		if !regAlphaNum.MatchString(m.SubdomainKey) {
 			return http.StatusBadRequest,
-				errors.New("Subdomain key must be alphanumeric")
+				fmt.Errorf("Subdomain key must be alphanumeric")
 		}
 	}
 
@@ -239,7 +238,7 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 
 	if !h.IsValidColor(m.BackgroundColor) {
 		return http.StatusBadRequest,
-			errors.New(
+			fmt.Errorf(
 				"Background color is not a valid HTML color (hex or named)",
 			)
 	}
@@ -251,7 +250,7 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 
 	if !h.IsValidColor(m.LinkColor) {
 		return http.StatusBadRequest,
-			errors.New("Link color is not a valid HTML color (hex or named)")
+			fmt.Errorf("Link color is not a valid HTML color (hex or named)")
 	}
 
 	validBackgroundPosition := map[string]bool{
@@ -270,7 +269,7 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 	if m.GaWebPropertyID != "" {
 		if !strings.HasPrefix(m.GaWebPropertyID, "UA-") {
 			return http.StatusBadRequest,
-				errors.New(
+				fmt.Errorf(
 					"gaWebPropertyId must be in the form of the UA-XXXX-Y " +
 						"property ID that Google Analytics provided to you",
 				)
@@ -1184,7 +1183,7 @@ func CheckSiteHealth(site SiteType) (SiteHealthType, int, error) {
 	siteHealth := SiteHealthType{}
 	if site.ID == 1 {
 		return siteHealth, http.StatusBadRequest,
-			errors.New("Cannot fetch status of root site.")
+			fmt.Errorf("Cannot fetch status of root site.")
 	}
 	siteHealth.Site = site
 

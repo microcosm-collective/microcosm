@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -11,27 +10,31 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// RoleProfilesType is an array of RoleProfileType
 type RoleProfilesType struct {
 	RoleProfiles h.ArrayType    `json:"profiles"`
 	Meta         h.CoreMetaType `json:"meta"`
 }
 
+// RoleProfileType describes a profile that belongs to a role
 type RoleProfileType struct {
-	Id      int64       `json:"id,omitempty"`
+	ID      int64       `json:"id,omitempty"`
 	Profile interface{} `json:"profile"`
 }
 
+// GetLink returns an API link to this role profile
 func (m *RoleProfileType) GetLink(roleLink string) string {
-	return fmt.Sprintf("%s/profiles/%d", roleLink, m.Id)
+	return fmt.Sprintf("%s/profiles/%d", roleLink, m.ID)
 }
 
-func (m *RoleProfileType) Validate(siteId int64) (int, error) {
-	if m.Id < 1 {
+// Validate returns true if the role profile is valid
+func (m *RoleProfileType) Validate(siteID int64) (int, error) {
+	if m.ID < 1 {
 		return http.StatusBadRequest,
-			errors.New("profile id needs to be a positive integer")
+			fmt.Errorf("profile id needs to be a positive integer")
 	}
 
-	profileSummary, status, err := GetProfileSummary(siteId, m.Id)
+	profileSummary, status, err := GetProfileSummary(siteID, m.ID)
 	if err != nil {
 		return status, err
 	}
@@ -40,9 +43,11 @@ func (m *RoleProfileType) Validate(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
+// UpdateManyRoleProfiles allows many role profiles to be added at the
+// same time
 func UpdateManyRoleProfiles(
-	siteId int64,
-	roleId int64,
+	siteID int64,
+	roleID int64,
 	ems []RoleProfileType,
 ) (
 	int,
@@ -56,7 +61,7 @@ func UpdateManyRoleProfiles(
 	defer tx.Rollback()
 
 	for _, m := range ems {
-		status, err := m.insert(tx, siteId, roleId)
+		status, err := m.insert(tx, siteID, roleID)
 		if err != nil {
 			return status, err
 		}
@@ -65,22 +70,23 @@ func UpdateManyRoleProfiles(
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %v", err.Error()))
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleId)
+	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleID)
 
 	return http.StatusOK, nil
 }
 
-func (m *RoleProfileType) Update(siteId int64, roleId int64) (int, error) {
+// Update adds a single profile to the role
+func (m *RoleProfileType) Update(siteID int64, roleID int64) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	defer tx.Rollback()
 
-	status, err := m.insert(tx, siteId, roleId)
+	status, err := m.insert(tx, siteID, roleID)
 	if err != nil {
 		return status, err
 	}
@@ -88,24 +94,25 @@ func (m *RoleProfileType) Update(siteId int64, roleId int64) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %v", err.Error()))
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleId)
+	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleID)
 
 	return http.StatusOK, nil
 }
 
+// insert saves a profile to a role
 func (m *RoleProfileType) insert(
 	tx *sql.Tx,
-	siteId int64,
-	roleId int64,
+	siteID int64,
+	roleID int64,
 ) (
 	int,
 	error,
 ) {
 
-	status, err := m.Validate(siteId)
+	status, err := m.Validate(siteID)
 	if err != nil {
 		return status, err
 	}
@@ -121,18 +128,19 @@ SELECT $1, $2
         WHERE role_id = $1
           AND profile_id = $2
        )`,
-		roleId,
-		m.Id,
+		roleID,
+		m.ID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Error executing upsert: %v", err.Error()))
+			fmt.Errorf("Error executing upsert: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
-func DeleteManyRoleProfiles(roleId int64, ems []RoleProfileType) (int, error) {
+// DeleteManyRoleProfiles removes many profiles from a role at once
+func DeleteManyRoleProfiles(roleID int64, ems []RoleProfileType) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -144,16 +152,16 @@ func DeleteManyRoleProfiles(roleId int64, ems []RoleProfileType) (int, error) {
 		_, err = tx.Exec(`
 	DELETE FROM role_profiles
 	 WHERE role_id = $1`,
-			roleId,
+			roleID,
 		)
 		if err != nil {
 			return http.StatusInternalServerError,
-				errors.New(fmt.Sprintf("Error executing delete: %+v", err))
+				fmt.Errorf("Error executing delete: %+v", err)
 		}
 	} else {
 		// Delete specific profiles
 		for _, m := range ems {
-			status, err := m.delete(tx, roleId)
+			status, err := m.delete(tx, roleID)
 			if err != nil {
 				return status, err
 			}
@@ -163,22 +171,23 @@ func DeleteManyRoleProfiles(roleId int64, ems []RoleProfileType) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %v", err.Error()))
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleId)
+	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleID)
 
 	return http.StatusOK, nil
 }
 
-func (m *RoleProfileType) Delete(roleId int64) (int, error) {
+// Delete removes a profile from a role
+func (m *RoleProfileType) Delete(roleID int64) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	defer tx.Rollback()
 
-	status, err := m.delete(tx, roleId)
+	status, err := m.delete(tx, roleID)
 	if err != nil {
 		return status, err
 	}
@@ -186,36 +195,36 @@ func (m *RoleProfileType) Delete(roleId int64) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %v", err.Error()))
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleId)
+	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleID)
 
 	return http.StatusOK, nil
 }
 
-func (m *RoleProfileType) delete(tx *sql.Tx, roleId int64) (int, error) {
-
-	// Only inserts once, cannot break the primary key
+// delete deletes a profile from a role
+func (m *RoleProfileType) delete(tx *sql.Tx, roleID int64) (int, error) {
 	_, err := tx.Exec(`
 DELETE FROM role_profiles
  WHERE role_id = $1
    AND profile_id = $2`,
-		roleId,
-		m.Id,
+		roleID,
+		m.ID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Error executing delete: %v", err.Error()))
+			fmt.Errorf("Error executing delete: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
+// GetRoleProfile returns a single profile for a role
 func GetRoleProfile(
-	siteId int64,
-	roleId int64,
-	profileId int64,
+	siteID int64,
+	roleID int64,
+	profileID int64,
 ) (
 	ProfileSummaryType,
 	int,
@@ -233,14 +242,12 @@ SELECT profile_id
   FROM role_profiles
  WHERE role_id = $1
    AND profile_id = $2`,
-		roleId,
-		profileId,
+		roleID,
+		profileID,
 	)
 	if err != nil {
 		return ProfileSummaryType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -251,16 +258,14 @@ SELECT profile_id
 		)
 		if err != nil {
 			return ProfileSummaryType{}, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Error fetching row: %v", err.Error()),
-				)
+				fmt.Errorf("Error fetching row: %v", err.Error())
 		}
 
 		// Make a request the profile summary
 		req := make(chan ProfileSummaryRequest)
 		defer close(req)
 
-		go HandleProfileSummaryRequest(siteId, m.Id, 0, req)
+		go HandleProfileSummaryRequest(siteID, m.Id, 0, req)
 
 		// Receive the response
 		resp := <-req
@@ -273,18 +278,17 @@ SELECT profile_id
 	err = rows.Err()
 	if err != nil {
 		return ProfileSummaryType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
 	return m, http.StatusOK, nil
 }
 
+// GetRoleProfiles fetches multiple profiles belonging to a role
 func GetRoleProfiles(
-	siteId int64,
-	roleId int64,
+	siteID int64,
+	roleID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -310,15 +314,13 @@ SELECT COUNT(*) OVER() AS total
  ORDER BY rp.profile_id ASC
  LIMIT $2
 OFFSET $3`,
-		roleId,
+		roleID,
 		limit,
 		offset,
 	)
 	if err != nil {
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -333,9 +335,7 @@ OFFSET $3`,
 		)
 		if err != nil {
 			return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
 		ids = append(ids, id)
@@ -343,9 +343,7 @@ OFFSET $3`,
 	err = rows.Err()
 	if err != nil {
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -355,7 +353,7 @@ OFFSET $3`,
 	defer close(req)
 
 	for seq, id := range ids {
-		go HandleProfileSummaryRequest(siteId, id, seq, req)
+		go HandleProfileSummaryRequest(siteID, id, seq, req)
 		wg1.Add(1)
 	}
 
@@ -387,12 +385,11 @@ OFFSET $3`,
 	maxOffset := h.GetMaxOffset(total, limit)
 
 	if offset > maxOffset {
-		return []ProfileSummaryType{}, 0, 0, http.StatusBadRequest, errors.New(
-			fmt.Sprintf(
-				"not enough records, offset (%d) would return an empty page.",
+		return []ProfileSummaryType{}, 0, 0, http.StatusBadRequest,
+			fmt.Errorf(
+				"not enough records, offset (%d) would return an empty page",
 				offset,
-			),
-		)
+			)
 	}
 
 	return ems, total, pages, http.StatusOK, nil

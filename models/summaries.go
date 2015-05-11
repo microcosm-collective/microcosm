@@ -1,7 +1,7 @@
 package models
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -126,7 +126,7 @@ func GetSummary(
 			itemID,
 			profileID,
 		)
-		return nil, http.StatusNotFound, errors.New("Item not found")
+		return nil, http.StatusNotFound, fmt.Errorf("Item not found")
 	}
 
 	switch itemTypeID {
@@ -256,7 +256,7 @@ func GetSummary(
 	}
 
 	return nil, http.StatusInternalServerError,
-		errors.New("GetSummary() not yet implemented")
+		fmt.Errorf("GetSummary() not yet implemented")
 }
 
 // GetTitle fetches a title of a thing, or something that can be used as a
@@ -314,5 +314,5 @@ func GetTitle(
 	}
 
 	return "", http.StatusNotImplemented,
-		errors.New("GetTitle is not implemented for this item")
+		fmt.Errorf("GetTitle is not implemented for this item")
 }

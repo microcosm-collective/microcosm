@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -11,60 +10,60 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
-func FlushRoleMembersCacheByProfileId(
+// FlushRoleMembersCacheByProfileID clears the database caches
+func FlushRoleMembersCacheByProfileID(
 	tx *sql.Tx,
-	profileId int64,
+	profileID int64,
 ) (
 	int,
 	error,
 ) {
 	_, err := tx.Exec(
 		`DELETE FROM permissions_cache WHERE profile_id = $1`,
-		profileId,
+		profileID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error executing statement: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Error executing statement: %v", err.Error())
 	}
 
 	_, err = tx.Exec(
 		`DELETE FROM role_members_cache WHERE profile_id = $1`,
-		profileId,
+		profileID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error executing statement: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Error executing statement: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
-func FlushRoleMembersCacheByRoleId(tx *sql.Tx, roleId int64) (int, error) {
+// FlushRoleMembersCacheByRoleID clears the database caches
+func FlushRoleMembersCacheByRoleID(tx *sql.Tx, roleID int64) (int, error) {
 	_, err := tx.Exec(`TRUNCATE permissions_cache`)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error executing statement: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Error executing statement: %v", err.Error())
 	}
 
 	_, err = tx.Exec(
 		`DELETE FROM role_members_cache WHERE role_id = $1`,
-		roleId,
+		roleID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error executing statement: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Error executing statement: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
+// GetRoleMembers fetches all profiles who are part of this role, either
+// explicitly so or implicitly so.
 func GetRoleMembers(
-	siteId int64,
-	roleId int64,
+	siteID int64,
+	roleID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -87,16 +86,14 @@ SELECT COUNT(*) OVER() AS total
  WHERE profile_id > 0
  LIMIT $3
 OFFSET $4`,
-		siteId,
-		roleId,
+		siteID,
+		roleID,
 		limit,
 		offset,
 	)
 	if err != nil {
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -111,9 +108,7 @@ OFFSET $4`,
 		)
 		if err != nil {
 			return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
 		ids = append(ids, id)
@@ -121,9 +116,7 @@ OFFSET $4`,
 	err = rows.Err()
 	if err != nil {
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -133,7 +126,7 @@ OFFSET $4`,
 	defer close(req)
 
 	for seq, id := range ids {
-		go HandleProfileSummaryRequest(siteId, id, seq, req)
+		go HandleProfileSummaryRequest(siteID, id, seq, req)
 		wg1.Add(1)
 	}
 
@@ -165,12 +158,11 @@ OFFSET $4`,
 	maxOffset := h.GetMaxOffset(total, limit)
 
 	if offset > maxOffset {
-		return []ProfileSummaryType{}, 0, 0, http.StatusBadRequest, errors.New(
-			fmt.Sprintf(
-				"not enough records, offset (%d) would return an empty page.",
+		return []ProfileSummaryType{}, 0, 0, http.StatusBadRequest,
+			fmt.Errorf(
+				"not enough records, offset (%d) would return an empty page",
 				offset,
-			),
-		)
+			)
 	}
 
 	return ems, total, pages, http.StatusOK, nil

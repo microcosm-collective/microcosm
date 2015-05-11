@@ -2,7 +2,6 @@ package models
 
 import (
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -379,7 +378,7 @@ SELECT total
 				err,
 			)
 			return m, http.StatusInternalServerError,
-				errors.New("Database query failed")
+				fmt.Errorf("Database query failed")
 		}
 
 		switch e.Code.Name() {
@@ -404,7 +403,7 @@ SELECT total
 				err,
 			)
 			return m, http.StatusInternalServerError,
-				errors.New("Database query failed")
+				fmt.Errorf("Database query failed")
 		}
 	}
 	defer rows.Close()
@@ -427,7 +426,7 @@ SELECT total
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return m, http.StatusInternalServerError,
-				errors.New("Row parsing error")
+				fmt.Errorf("Row parsing error")
 		}
 
 		itemType, err := h.GetMapStringFromInt(h.ItemTypes, r.ItemTypeID)
@@ -461,7 +460,7 @@ SELECT total
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return m, http.StatusInternalServerError,
-			errors.New("Error fetching rows")
+			fmt.Errorf("Error fetching rows")
 	}
 	rows.Close()
 

@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -512,7 +511,7 @@ SELECT total
 			err,
 		)
 		return []UpdateType{}, 0, 0, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 	defer rows.Close()
 
@@ -536,7 +535,7 @@ SELECT total
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return []UpdateType{}, 0, 0, http.StatusInternalServerError,
-				errors.New("Row parsing error")
+				fmt.Errorf("Row parsing error")
 		}
 
 		itemType, err := h.GetItemTypeFromInt(m.ItemTypeID)
@@ -554,7 +553,7 @@ SELECT total
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return []UpdateType{}, 0, 0, http.StatusInternalServerError,
-			errors.New("Error fetching rows")
+			fmt.Errorf("Error fetching rows")
 	}
 	rows.Close()
 

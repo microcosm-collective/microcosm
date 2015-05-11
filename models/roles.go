@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -349,7 +348,7 @@ func (m *RoleType) Patch(ac AuthContext, patches []h.PatchType) (int, error) {
 				fmt.Sprintf("Set %s to %t", patch.Path, m.IncludeUsers)
 		default:
 			return http.StatusBadRequest,
-				errors.New("Unsupported path in patch replace operation")
+				fmt.Errorf("Unsupported path in patch replace operation")
 		}
 
 		_, err = tx.Exec(`

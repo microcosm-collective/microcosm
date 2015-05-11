@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -1062,7 +1061,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 	default:
 		glog.Errorf("%s %+v", "type not known", item)
 		return http.StatusExpectationFailed,
-			errors.New("Type of item is mysterious")
+			fmt.Errorf("Type of item is mysterious")
 	}
 
 	// WHO GETS THE UPDATES?
@@ -1258,7 +1257,7 @@ func GetCommunicationOptions(
 	if err != nil {
 		glog.Errorf("GetProfileOptions(%d) %+v", profileID, err)
 		// Can't do anything here as the profile_id fkey constraint will fail
-		return UpdateOptionType{}, status, errors.New("Insert of update options failed")
+		return UpdateOptionType{}, status, fmt.Errorf("Insert of update options failed")
 	}
 
 	db, err := h.GetConnection()
@@ -1291,7 +1290,7 @@ SELECT send_email
 		)
 		return UpdateOptionType{},
 			http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 	defer rows.Close()
 
@@ -1308,7 +1307,7 @@ SELECT send_email
 			glog.Errorf("rows.Scan() %+v", err)
 			return UpdateOptionType{},
 				http.StatusInternalServerError,
-				errors.New("Row parsing error")
+				fmt.Errorf("Row parsing error")
 		}
 	}
 	err = rows.Err()
@@ -1316,7 +1315,7 @@ SELECT send_email
 		glog.Errorf("rows.Err() %+v", err)
 		return UpdateOptionType{},
 			http.StatusInternalServerError,
-			errors.New("Error fetching rows")
+			fmt.Errorf("Error fetching rows")
 	}
 	rows.Close()
 
