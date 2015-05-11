@@ -56,7 +56,7 @@ func (ctl *ProfileReadController) Update(c *models.Context) {
 		c.RespondWithErrorMessage("Unknown item type", http.StatusBadRequest)
 		return
 	}
-	rs.ItemTypeId = itemTypeId
+	rs.ItemTypeID = itemTypeId
 
 	status, err := models.MarkScopeAsRead(c.Auth.ProfileId, rs)
 	if err != nil {
