@@ -15,18 +15,20 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// RolesType is a collection of roles
 type RolesType struct {
 	DefaultRoles bool           `json:"defaultRoles,omitempty"`
 	Roles        h.ArrayType    `json:"roles"`
 	Meta         h.CoreMetaType `json:"meta"`
 }
 
+// RoleType encapsulates a role, including who can do what. It is a whitelist
 type RoleType struct {
-	Id                  int64         `json:"id"`
+	ID                  int64         `json:"id"`
 	Title               string        `json:"title"`
-	SiteId              int64         `json:"siteId,omitempty"`
-	MicrocosmId         int64         `json:"microcosmId,omitempty"`
-	MicrocosmIdNullable sql.NullInt64 `json:"-"`
+	SiteID              int64         `json:"siteId,omitempty"`
+	MicrocosmID         int64         `json:"microcosmId,omitempty"`
+	MicrocosmIDNullable sql.NullInt64 `json:"-"`
 
 	IsModerator   bool `json:"moderator"`
 	IsBanned      bool `json:"banned"`
@@ -48,12 +50,14 @@ type RoleType struct {
 	Profiles []RoleProfileType   `json:"-"`
 }
 
+// RoleSummaryType is a summary of a role
 type RoleSummaryType struct {
 	RoleType
 
 	Members h.ArrayType `json:"members"`
 }
 
+// RoleMetaType is a reduced meta JSON holder for roles
 type RoleMetaType struct {
 	h.CreatedType
 	h.EditedType
@@ -61,23 +65,24 @@ type RoleMetaType struct {
 	Permissions interface{}  `json:"permissions,omitempty"`
 }
 
+// GetLink fetches a link to this role
 func (m *RoleType) GetLink() string {
-
-	if m.MicrocosmId > 0 {
+	if m.MicrocosmID > 0 {
 		return fmt.Sprintf(
 			"%s/%d/roles/%d",
 			h.ApiTypeMicrocosm,
-			m.MicrocosmId,
-			m.Id,
+			m.MicrocosmID,
+			m.ID,
 		)
 	}
 
-	return fmt.Sprintf("%s/%d", h.ApiTypeRole, m.Id)
+	return fmt.Sprintf("%s/%d", h.ApiTypeRole, m.ID)
 }
 
+// Validate returns true if the role config is valid
 func (m *RoleType) Validate(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 	exists bool,
 ) (
 	int,
@@ -87,19 +92,17 @@ func (m *RoleType) Validate(
 	m.Title = SanitiseText(m.Title)
 
 	// Does the Microcosm specified exist on this site?
-	if !exists && m.MicrocosmId > 0 {
-		_, status, err := GetMicrocosmSummary(siteId, m.MicrocosmId, profileId)
+	if !exists && m.MicrocosmID > 0 {
+		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmID, profileID)
 		if err != nil {
 			return status, err
 		}
 	}
 
 	if exists {
-		if m.Id < 1 {
+		if m.ID < 1 {
 			return http.StatusBadRequest,
-				errors.New(
-					fmt.Sprintf("ID ('%d') cannot be zero or negative.", m.Id),
-				)
+				fmt.Errorf("ID ('%d') cannot be zero or negative", m.ID)
 		}
 
 		if strings.Trim(m.Meta.EditReason, " ") == "" ||
@@ -112,35 +115,36 @@ func (m *RoleType) Validate(
 	}
 
 	if strings.Trim(m.Title, " ") == "" {
-		return http.StatusBadRequest, errors.New("Title is a required field")
+		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
 
 	m.Title = ShoutToWhisper(m.Title)
 
 	// Needs to be NULL if it's a default role
-	if m.MicrocosmId > 0 {
-		m.MicrocosmIdNullable = sql.NullInt64{Int64: m.MicrocosmId, Valid: true}
+	if m.MicrocosmID > 0 {
+		m.MicrocosmIDNullable = sql.NullInt64{Int64: m.MicrocosmID, Valid: true}
 	}
 
 	return http.StatusOK, nil
 }
 
-func (m *RoleType) Insert(siteId int64, profileId int64) (int, error) {
+// Insert saves a role to the database
+func (m *RoleType) Insert(siteID int64, profileID int64) (int, error) {
 
-	status, err := m.Validate(siteId, profileId, false)
+	status, err := m.Validate(siteID, profileID, false)
 	if err != nil {
 		return status, err
 	}
 
 	dupeKey := "dupe_" + h.Md5sum(
-		strconv.FormatInt(m.MicrocosmId, 10)+
+		strconv.FormatInt(m.MicrocosmID, 10)+
 			m.Title+
 			strconv.FormatInt(m.Meta.CreatedById, 10),
 	)
 
 	v, ok := c.CacheGetInt64(dupeKey)
 	if ok {
-		m.Id = v
+		m.ID = v
 		return http.StatusOK, nil
 	}
 
@@ -150,7 +154,7 @@ func (m *RoleType) Insert(siteId int64, profileId int64) (int, error) {
 	}
 	defer tx.Rollback()
 
-	var insertId int64
+	var insertID int64
 	err = tx.QueryRow(`
 INSERT INTO roles (
     title, site_id, microcosm_id, created, created_by,
@@ -164,8 +168,8 @@ INSERT INTO roles (
     $16
 ) RETURNING role_id`,
 		m.Title,
-		m.SiteId,
-		m.MicrocosmIdNullable,
+		m.SiteID,
+		m.MicrocosmIDNullable,
 		m.Meta.Created,
 		m.Meta.CreatedById,
 
@@ -183,30 +187,29 @@ INSERT INTO roles (
 
 		m.IncludeUsers,
 	).Scan(
-		&insertId,
+		&insertID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error inserting data and returning ID: %+v", err),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Error inserting data and returning ID: %+v", err)
 	}
-	m.Id = insertId
+	m.ID = insertID
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.Id)
+	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.ID)
 
 	return http.StatusOK, nil
 }
 
-func (m *RoleType) Update(siteId int64, profileId int64) (int, error) {
+// Update saves a role to the database
+func (m *RoleType) Update(siteID int64, profileID int64) (int, error) {
 
-	status, err := m.Validate(siteId, profileId, true)
+	status, err := m.Validate(siteID, profileID, true)
 	if err != nil {
 		return status, err
 	}
@@ -235,7 +238,7 @@ UPDATE roles
       ,include_guests = $15
       ,include_users = $16
  WHERE role_id = $1`,
-		m.Id,
+		m.ID,
 		m.Title,
 		m.Meta.EditedNullable,
 		m.Meta.EditedByNullable,
@@ -256,23 +259,22 @@ UPDATE roles
 		m.IncludeUsers,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.Id)
+	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.ID)
 
 	return http.StatusOK, nil
 }
 
+// Patch allows partial updates to a role
 func (m *RoleType) Patch(ac AuthContext, patches []h.PatchType) (int, error) {
 
 	tx, err := h.GetTransaction()
@@ -357,31 +359,30 @@ UPDATE roles
       ,edited_by = $4
       ,edit_reason = $5
  WHERE role_id = $1`,
-			m.Id,
+			m.ID,
 			patch.Bool.Bool,
 			m.Meta.EditedNullable,
 			m.Meta.EditedByNullable,
 			m.Meta.EditReason,
 		)
 		if err != nil {
-			return http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Update failed: %v", err.Error()),
-			)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Update failed: %v", err.Error())
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.Id)
+	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.ID)
 
 	return http.StatusOK, nil
 }
 
+// Delete removes a role from the database
 func (m *RoleType) Delete() (int, error) {
 
 	tx, err := h.GetTransaction()
@@ -392,76 +393,71 @@ func (m *RoleType) Delete() (int, error) {
 
 	_, err = tx.Exec(`TRUNCATE permissions_cache`)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Delete failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
 	_, err = tx.Exec(`
 DELETE
   FROM role_members_cache
  WHERE role_id = $1`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Delete failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
 	_, err = tx.Exec(`
 DELETE
   FROM role_profiles
  WHERE role_id = $1`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Delete failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
 	_, err = tx.Exec(`
 DELETE
   FROM criteria
  WHERE role_id = $1`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Delete failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
 	_, err = tx.Exec(`
 DELETE
   FROM roles
  WHERE role_id = $1`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Delete failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.Id)
+	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.ID)
 
 	return http.StatusOK, nil
 }
 
+// GetRole fetches a role from the database
 func GetRole(
-	siteId int64,
-	microcosmId int64,
-	roleId int64,
-	profileId int64,
+	siteID int64,
+	microcosmID int64,
+	roleID int64,
+	profileID int64,
 ) (
 	RoleType,
 	int,
@@ -469,17 +465,17 @@ func GetRole(
 ) {
 
 	// Get from cache if it's available
-	mcKey := fmt.Sprintf(mcRoleKeys[c.CacheDetail], roleId)
+	mcKey := fmt.Sprintf(mcRoleKeys[c.CacheDetail], roleID)
 	if val, ok := c.CacheGet(mcKey, RoleType{}); ok {
 
 		m := val.(RoleType)
 
-		_, status, err := GetMicrocosmSummary(siteId, microcosmId, profileId)
+		_, status, err := GetMicrocosmSummary(siteID, microcosmID, profileID)
 		if err != nil {
 			return RoleType{}, status, err
 		}
 
-		m.FetchProfileSummaries(siteId)
+		m.FetchProfileSummaries(siteID)
 
 		return m, http.StatusOK, nil
 	}
@@ -490,7 +486,7 @@ func GetRole(
 		return RoleType{}, http.StatusInternalServerError, err
 	}
 
-	m := RoleType{SiteId: siteId}
+	m := RoleType{SiteID: siteID}
 	err = db.QueryRow(`
 SELECT role_id
       ,title
@@ -517,10 +513,10 @@ SELECT role_id
   FROM roles
  WHERE site_id = $1
    AND role_id = $2`,
-		siteId,
-		roleId,
+		siteID,
+		roleID,
 	).Scan(
-		&m.Id,
+		&m.ID,
 		&m.Title,
 		&m.Meta.Created,
 		&m.Meta.CreatedById,
@@ -541,20 +537,18 @@ SELECT role_id
 		&m.CanCloseOwn,
 		&m.CanOpenOwn,
 		&m.CanReadOthers,
-		&m.MicrocosmIdNullable,
+		&m.MicrocosmIDNullable,
 	)
 	if err == sql.ErrNoRows {
-		return RoleType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Role resource with ID %d not found", roleId),
-		)
+		return RoleType{}, http.StatusNotFound,
+			fmt.Errorf("Role resource with ID %d not found", roleID)
 	} else if err != nil {
-		return RoleType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return RoleType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
-	if m.MicrocosmIdNullable.Valid {
-		m.MicrocosmId = m.MicrocosmIdNullable.Int64
+	if m.MicrocosmIDNullable.Valid {
+		m.MicrocosmID = m.MicrocosmIDNullable.Int64
 	}
 
 	if m.Meta.EditReasonNullable.Valid {
@@ -566,58 +560,59 @@ SELECT role_id
 			m.Meta.EditedNullable.Time.Format(time.RFC3339Nano)
 	}
 
-	if m.MicrocosmId != 0 && m.MicrocosmId != microcosmId {
-		return RoleType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Valid role resource with ID %d not found", roleId),
-		)
+	if m.MicrocosmID != 0 && m.MicrocosmID != microcosmID {
+		return RoleType{}, http.StatusNotFound,
+			fmt.Errorf("Valid role resource with ID %d not found", roleID)
 	}
 
-	if m.MicrocosmId > 0 {
+	if m.MicrocosmID > 0 {
 		m.Meta.Links =
 			[]h.LinkType{
-				h.GetLink("self", "", h.ItemTypeRole, m.Id),
+				h.GetLink("self", "", h.ItemTypeRole, m.ID),
 				h.GetLink(
 					"microcosm",
-					GetMicrocosmTitle(m.MicrocosmId),
+					GetMicrocosmTitle(m.MicrocosmID),
 					h.ItemTypeMicrocosm,
-					m.MicrocosmId,
+					m.MicrocosmID,
 				),
 			}
 	} else {
 		m.Meta.Links =
 			[]h.LinkType{
-				h.GetLink("self", "", h.ItemTypeRole, m.Id),
+				h.GetLink("self", "", h.ItemTypeRole, m.ID),
 			}
 	}
 
 	// Update cache
 	c.CacheSet(mcKey, m, mcTtl)
 
-	m.FetchProfileSummaries(siteId)
+	m.FetchProfileSummaries(siteID)
+
 	return m, http.StatusOK, nil
 }
 
+// GetRoleSummary fetches a summary of a role from the database
 func GetRoleSummary(
-	siteId int64,
-	microcosmId int64,
-	roleId int64,
-	profileId int64,
+	siteID int64,
+	microcosmID int64,
+	roleID int64,
+	profileID int64,
 ) (
 	RoleSummaryType,
 	int,
 	error,
 ) {
 
-	role, status, err := GetRole(siteId, microcosmId, roleId, profileId)
+	role, status, err := GetRole(siteID, microcosmID, roleID, profileID)
 	if err != nil {
 		return RoleSummaryType{}, status, err
 	}
 
 	roleSummary := RoleSummaryType{}
-	roleSummary.Id = role.Id
+	roleSummary.ID = role.ID
 	roleSummary.Title = role.Title
-	roleSummary.SiteId = role.SiteId
-	roleSummary.MicrocosmId = role.MicrocosmId
+	roleSummary.SiteID = role.SiteID
+	roleSummary.MicrocosmID = role.MicrocosmID
 	roleSummary.IsModerator = role.IsModerator
 	roleSummary.IsBanned = role.IsBanned
 	roleSummary.IncludeGuests = role.IncludeGuests
@@ -635,8 +630,8 @@ func GetRoleSummary(
 	limit := int64(5)
 	offset := h.DefaultQueryOffset
 	ems, total, pages, status, err := GetRoleMembers(
-		siteId,
-		roleId,
+		siteID,
+		roleID,
 		limit,
 		offset,
 	)
@@ -657,9 +652,10 @@ func GetRoleSummary(
 	return roleSummary, http.StatusOK, nil
 }
 
-func (m *RoleType) FetchProfileSummaries(siteId int64) (int, error) {
+// FetchProfileSummaries populates the profile summaries for a role
+func (m *RoleType) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteId, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		return status, err
 	}
@@ -667,7 +663,7 @@ func (m *RoleType) FetchProfileSummaries(siteId int64) (int, error) {
 
 	if m.Meta.EditedByNullable.Valid {
 		profile, status, err :=
-			GetProfileSummary(siteId, m.Meta.EditedByNullable.Int64)
+			GetProfileSummary(siteID, m.Meta.EditedByNullable.Int64)
 		if err != nil {
 			return status, err
 		}
@@ -677,10 +673,11 @@ func (m *RoleType) FetchProfileSummaries(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
+// GetRoles fetches all roles for a given site or microcosm
 func GetRoles(
-	siteId int64,
-	microcosmId int64,
-	profileId int64,
+	siteID int64,
+	microcosmID int64,
+	profileID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -710,16 +707,14 @@ SELECT COUNT(*) OVER() AS total
  ORDER BY is_moderator_role DESC, is_banned_role, title
  LIMIT $3
 OFFSET $4`,
-		siteId,
-		microcosmId,
+		siteID,
+		microcosmID,
 		limit,
 		offset,
 	)
 	if err != nil {
 		return []RoleSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -736,12 +731,10 @@ OFFSET $4`,
 		if err != nil {
 			return []RoleSummaryType{}, 0, 0,
 				http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
-		m, status, err := GetRoleSummary(siteId, microcosmId, id, profileId)
+		m, status, err := GetRoleSummary(siteID, microcosmID, id, profileID)
 		if err != nil {
 			return []RoleSummaryType{}, 0, 0, status, err
 		}
@@ -751,9 +744,7 @@ OFFSET $4`,
 	err = rows.Err()
 	if err != nil {
 		return []RoleSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -762,10 +753,8 @@ OFFSET $4`,
 
 	if offset > maxOffset {
 		return []RoleSummaryType{}, 0, 0, http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf("not enough records, "+
-					"offset (%d) would return an empty page.", offset),
-			)
+			fmt.Errorf("not enough records, "+
+				"offset (%d) would return an empty page.", offset)
 	}
 
 	return ems, total, pages, http.StatusOK, nil

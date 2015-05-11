@@ -161,7 +161,7 @@ func (ctl *RoleController) Update(c *models.Context) {
 	audit.Replace(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeRole],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -300,7 +300,7 @@ func (ctl *RoleController) Patch(c *models.Context) {
 	audit.Update(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeRole],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -362,7 +362,7 @@ func (ctl *RoleController) Delete(c *models.Context) {
 	audit.Delete(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeRole],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,

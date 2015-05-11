@@ -144,8 +144,8 @@ func (ctl *RolesController) Create(c *models.Context) {
 	// End : Authorisation
 
 	// Populate where applicable from auth and context
-	m.SiteId = c.Site.ID
-	m.MicrocosmId = microcosmId
+	m.SiteID = c.Site.ID
+	m.MicrocosmID = microcosmId
 	m.Meta.CreatedById = c.Auth.ProfileId
 	m.Meta.Created = time.Now()
 
@@ -158,7 +158,7 @@ func (ctl *RolesController) Create(c *models.Context) {
 	audit.Create(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeRole],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
