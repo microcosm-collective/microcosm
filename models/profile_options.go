@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	c "github.com/microcosm-cc/microcosm/cache"
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
@@ -50,6 +51,8 @@ INSERT INTO profile_options (
 			fmt.Errorf("Error inserting data: %v", err.Error())
 	}
 
+	go PurgeCacheByScope(c.CacheOptions, h.ItemTypes[h.ItemTypeProfile], m.ProfileID)
+
 	return http.StatusOK, nil
 }
 
@@ -91,12 +94,21 @@ WHERE profile_id = $1`,
 			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
+	go PurgeCacheByScope(c.CacheOptions, h.ItemTypes[h.ItemTypeProfile], m.ProfileID)
+
 	return http.StatusOK, nil
 }
 
 // GetProfileOptions returns the options for a profile
 func GetProfileOptions(profileID int64) (ProfileOptionType, int, error) {
-	// TODO(buro9): Add caching as this would be called on nearly all updates
+
+	// Get from cache if it's available
+	mcKey := fmt.Sprintf(mcProfileKeys[c.CacheOptions], profileID)
+	if val, ok := c.CacheGet(mcKey, ProfileOptionType{}); ok {
+		m := val.(ProfileOptionType)
+		return m, http.StatusOK, nil
+	}
+
 	db, err := h.GetConnection()
 	if err != nil {
 		return ProfileOptionType{}, http.StatusInternalServerError, err
@@ -129,6 +141,9 @@ SELECT profile_id
 		return ProfileOptionType{}, http.StatusInternalServerError,
 			fmt.Errorf("Database query failed: %v", err.Error())
 	}
+
+	// Update cache
+	c.CacheSet(mcKey, m, mcTtl)
 
 	return m, http.StatusOK, nil
 }

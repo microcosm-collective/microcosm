@@ -25,6 +25,7 @@ const (
 	CacheUser       int = 7
 	CacheProfileIds int = 8
 	CacheCounts     int = 9
+	CacheOptions    int = 10
 )
 
 var (

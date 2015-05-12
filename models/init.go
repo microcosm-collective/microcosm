@@ -24,6 +24,7 @@ func init() {
 	gob.Register(MicrocosmType{})
 	gob.Register(PollSummaryType{})
 	gob.Register(PollType{})
+	gob.Register(ProfileOptionType{})
 	gob.Register(ProfileSummaryType{})
 	gob.Register(ProfileType{})
 	gob.Register(RoleType{})

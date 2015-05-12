@@ -55,6 +55,7 @@ var (
 		c.CacheSummary: "pr_s%d",
 		c.CacheUser:    "us_d%d",
 		c.CacheCounts:  "pr_c%d",
+		c.CacheOptions: "pr_o%d",
 	}
 	mcRoleKeys = map[int]string{
 		c.CacheDetail: "r_d%d",
