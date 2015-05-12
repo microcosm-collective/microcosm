@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -20,56 +19,64 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
-const UrlGravatar string = "https://secure.gravatar.com/avatar/"
+// URLGravatar is the first part of the URL which Gravatar uses to serve
+// avatars
+const URLGravatar string = "https://secure.gravatar.com/avatar/"
 
+// ProfilesType encapsulates a collection of profiles
 type ProfilesType struct {
 	Profiles h.ArrayType    `json:"profiles"`
 	Meta     h.CoreMetaType `json:"meta"`
 }
 
+// ProfileSummaryType describes a profile, in summary
 type ProfileSummaryType struct {
-	Id                int64              `json:"id"`
-	SiteId            int64              `json:"siteId,omitempty"`
-	UserId            int64              `json:"userId"`
+	ID                int64              `json:"id"`
+	SiteID            int64              `json:"siteId,omitempty"`
+	UserID            int64              `json:"userId"`
 	ProfileName       string             `json:"profileName"`
 	Visible           bool               `json:"visible"`
-	AvatarUrlNullable sql.NullString     `json:"-"`
-	AvatarUrl         string             `json:"avatar"`
-	AvatarIdNullable  sql.NullInt64      `json:"-"`
-	AvatarId          int64              `json:"-"`
+	AvatarURLNullable sql.NullString     `json:"-"`
+	AvatarURL         string             `json:"avatar"`
+	AvatarIDNullable  sql.NullInt64      `json:"-"`
+	AvatarID          int64              `json:"-"`
 	Meta              h.ExtendedMetaType `json:"meta"`
 }
 
+// ProfileType describes a profile
 type ProfileType struct {
-	Id                int64              `json:"id"`
-	SiteId            int64              `json:"siteId,omitempty"`
-	UserId            int64              `json:"userId"`
+	ID                int64              `json:"id"`
+	SiteID            int64              `json:"siteId,omitempty"`
+	UserID            int64              `json:"userId"`
 	Email             string             `json:"email,omitempty"`
 	ProfileName       string             `json:"profileName"`
 	GenderNullable    sql.NullString     `json:"-"`
 	Gender            string             `json:"gender,omitempty"`
 	Visible           bool               `json:"visible"`
-	StyleId           int64              `json:"styleId"`
+	StyleID           int64              `json:"styleId"`
 	ItemCount         int32              `json:"itemCount"`
 	CommentCount      int32              `json:"commentCount"`
 	ProfileComment    interface{}        `json:"profileComment"`
 	Created           time.Time          `json:"created"`
 	LastActive        time.Time          `json:"lastActive"`
-	AvatarUrlNullable sql.NullString     `json:"-"`
-	AvatarUrl         string             `json:"avatar"`
-	AvatarIdNullable  sql.NullInt64      `json:"-"`
-	AvatarId          int64              `json:"-"`
+	AvatarURLNullable sql.NullString     `json:"-"`
+	AvatarURL         string             `json:"avatar"`
+	AvatarIDNullable  sql.NullInt64      `json:"-"`
+	AvatarID          int64              `json:"-"`
 	Meta              h.ExtendedMetaType `json:"meta"`
 }
 
+// ProfileSearchOptions describes the available ways to search and filter
+// profiles
 type ProfileSearchOptions struct {
 	OrderByCommentCount bool
 	IsFollowing         bool
 	IsOnline            bool
 	StartsWith          string
-	ProfileId           int64
+	ProfileID           int64
 }
 
+// ProfileSummaryRequest is an envelope to request a profile
 type ProfileSummaryRequest struct {
 	Item   ProfileSummaryType
 	Err    error
@@ -77,20 +84,26 @@ type ProfileSummaryRequest struct {
 	Seq    int
 }
 
+// ProfileSummaryRequestBySeq is a collection of profile requests
 type ProfileSummaryRequestBySeq []ProfileSummaryRequest
 
+// Len returns the length of the array
 func (v ProfileSummaryRequestBySeq) Len() int {
 	return len(v)
 }
 
+// Swap exchanges two items in the array
 func (v ProfileSummaryRequestBySeq) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
 }
 
+// Less determines whether one profile is lower in sequence than another
 func (v ProfileSummaryRequestBySeq) Less(i, j int) bool {
 	return v[i].Seq < v[j].Seq
 }
 
+// ValidateProfileName returns true if the profile name is valid and not taken
+// by another user on this site already
 func ValidateProfileName(name string) (string, int, error) {
 	// Note: We are not preventing shouting in usernames as some people will
 	// use their initials for their username
@@ -98,57 +111,58 @@ func ValidateProfileName(name string) (string, int, error) {
 
 	if name == "" {
 		return name, http.StatusBadRequest,
-			errors.New("You must supply a profile name")
+			fmt.Errorf("You must supply a profile name")
 	}
 
 	nameLen := utf8.RuneCountInString(name)
 	if nameLen < 2 {
 		return name, http.StatusBadRequest,
-			errors.New("Profile name is too short, " +
-				"it must be 2 characters or more.")
+			fmt.Errorf("Profile name is too short, " +
+				"it must be 2 characters or more")
 	}
 
 	if nameLen > 25 {
 		return name, http.StatusBadRequest,
-			errors.New("Profile name is too long, " +
-				"it must be 25 or fewer characters in length.")
+			fmt.Errorf("Profile name is too long, " +
+				"it must be 25 or fewer characters in length")
 	}
 
 	if strings.Contains(name, " ") {
 		return name, http.StatusBadRequest,
-			errors.New("Profile name cannot contain a space, " +
+			fmt.Errorf("Profile name cannot contain a space, " +
 				"have you considered using an underscore instead?")
 	}
 
 	if strings.Contains(name, "@") {
 		return name, http.StatusBadRequest,
-			errors.New("Profile name cannot contain an @, " +
+			fmt.Errorf("Profile name cannot contain an @, " +
 				"have you considered using an underscore instead?")
 	}
 
 	if strings.Contains(name, "+") {
 		return name, http.StatusBadRequest,
-			errors.New("Profile name cannot contain a +, " +
+			fmt.Errorf("Profile name cannot contain a +, " +
 				"have you considered using an underscore instead?")
 	}
 
 	return name, http.StatusOK, nil
 }
 
+// Validate returns true if the profile is valid
 func (m *ProfileType) Validate(exists bool) (int, error) {
 
 	m.Gender = SanitiseText(m.Gender)
 
-	if m.SiteId < 1 {
-		return http.StatusBadRequest, errors.New("Invalid site ID supplied")
+	if m.SiteID < 1 {
+		return http.StatusBadRequest, fmt.Errorf("Invalid site ID supplied")
 	}
 
-	if m.UserId < 1 {
-		return http.StatusBadRequest, errors.New("Invalid user ID supplied")
+	if m.UserID < 1 {
+		return http.StatusBadRequest, fmt.Errorf("Invalid user ID supplied")
 	}
 
-	if m.StyleId < 0 {
-		return http.StatusBadRequest, errors.New("Invalid style ID supplied")
+	if m.StyleID < 0 {
+		return http.StatusBadRequest, fmt.Errorf("Invalid style ID supplied")
 	}
 
 	name, status, err := ValidateProfileName(m.ProfileName)
@@ -158,13 +172,14 @@ func (m *ProfileType) Validate(exists bool) (int, error) {
 	m.ProfileName = name
 
 	profileNameTaken, status, err :=
-		IsProfileNameTaken(m.SiteId, m.UserId, m.ProfileName)
+		IsProfileNameTaken(m.SiteID, m.UserID, m.ProfileName)
 	if err != nil {
 		return status, err
 	}
+
 	if profileNameTaken {
 		// Suggest an alternative
-		user, status, err := GetUser(m.UserId)
+		user, status, err := GetUser(m.UserID)
 		if err != nil {
 			return status, err
 		}
@@ -173,29 +188,29 @@ func (m *ProfileType) Validate(exists bool) (int, error) {
 	}
 
 	if !exists {
-		if m.Id != 0 {
+		if m.ID != 0 {
 			return http.StatusBadRequest,
-				errors.New("You cannot specify an ID")
+				fmt.Errorf("You cannot specify an ID")
 		}
 
 		if m.ItemCount != 0 {
 			return http.StatusBadRequest,
-				errors.New("You cannot specify item count")
+				fmt.Errorf("You cannot specify item count")
 		}
 
 		if m.CommentCount != 0 {
 			return http.StatusBadRequest,
-				errors.New("You cannot specify comment count")
+				fmt.Errorf("You cannot specify comment count")
 		}
 
 		if !m.Created.IsZero() {
 			return http.StatusBadRequest,
-				errors.New("You cannot specify creation time")
+				fmt.Errorf("You cannot specify creation time")
 		}
 
 		if !m.LastActive.IsZero() {
 			return http.StatusBadRequest,
-				errors.New("You cannot specify last active time")
+				fmt.Errorf("You cannot specify last active time")
 		}
 	}
 
@@ -244,18 +259,19 @@ func (m *ProfileType) Import() (int, error) {
 	return m.insert(true)
 }
 
+// insert actually inserts the profile into the database
 func (m *ProfileType) insert(isImport bool) (int, error) {
 
 	tx, err := h.GetTransaction()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
+		return http.StatusInternalServerError, fmt.Errorf(
 			fmt.Sprintf("Could not start transaction: %v", err.Error()),
 		)
 	}
 
 	defer tx.Rollback()
 
-	var insertId int64
+	var insertID int64
 	err = tx.QueryRow(`--Create Profile
 INSERT INTO profiles (
     site_id
@@ -288,78 +304,73 @@ INSERT INTO profiles (
    ,$11
    ,$12
 ) RETURNING profile_id`,
-		m.SiteId,
-		m.UserId,
+		m.SiteID,
+		m.UserID,
 		m.ProfileName,
 		m.GenderNullable,
 		m.Visible,
 
-		m.StyleId,
+		m.StyleID,
 		m.ItemCount,
 		m.CommentCount,
-		m.AvatarUrlNullable,
-		m.AvatarIdNullable,
+		m.AvatarURLNullable,
+		m.AvatarIDNullable,
 
 		m.Created,
 		m.LastActive,
-	).Scan(&insertId)
+	).Scan(
+		&insertID,
+	)
 
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error inserting data and returning ID: %+v", err),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Error inserting data and returning ID: %+v", err)
 	}
-	m.Id = insertId
+	m.ID = insertID
 
 	// Set options for profile
-	profileOptions, status, err := GetProfileOptionsDefaults(m.SiteId)
+	profileOptions, status, err := GetProfileOptionsDefaults(m.SiteID)
 	if err != nil {
-		return status, errors.New(
-			fmt.Sprintf("Could not load default profile options: %+v", err),
-		)
+		return status,
+			fmt.Errorf("Could not load default profile options: %+v", err)
 	}
-	profileOptions.ProfileId = insertId
+	profileOptions.ProfileID = insertID
 
 	status, err = profileOptions.Insert(tx)
 	if err != nil {
-		return status, errors.New(
-			fmt.Sprintf("Could not insert new profile options: %+v", err),
-		)
+		return status,
+			fmt.Errorf("Could not insert new profile options: %+v", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %+v", err),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %+v", err)
 	}
 
 	// Fetch gravatar (or default to pattern based on email address)
-	user, _, err := GetUser(m.UserId)
+	user, _, err := GetUser(m.UserID)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("No user found for profile: %+v", err),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("No user found for profile: %+v", err)
 	}
 
 	// Create attachment for avatar and attach it to profile
-	avatarUrl := MakeGravatarUrl(user.Email)
+	avatarURL := MakeGravatarURL(user.Email)
 	if !isImport {
-		fm, _, err := StoreGravatar(avatarUrl)
+		fm, _, err := StoreGravatar(avatarURL)
 		if err != nil {
-			return http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Could not store gravatar for profile: %+v", err),
-			)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Could not store gravatar for profile: %+v", err)
 		}
 
 		// Attach avatar to profile
-		attachment, status, err := AttachAvatar(m.Id, fm)
+		attachment, status, err := AttachAvatar(m.ID, fm)
 		if err != nil {
-			return status, errors.New(
-				fmt.Sprintf("Could not attach avatar to profile: %+v", err),
-			)
+			return status,
+				fmt.Errorf("Could not attach avatar to profile: %+v", err)
 		}
-		m.AvatarIdNullable = sql.NullInt64{
+		m.AvatarIDNullable = sql.NullInt64{
 			Int64: attachment.AttachmentId,
 			Valid: true,
 		}
@@ -367,33 +378,33 @@ INSERT INTO profiles (
 		if fm.FileExt != "" {
 			filePath += `.` + fm.FileExt
 		}
-		avatarUrl = fmt.Sprintf("%s/%s", h.ApiTypeFile, filePath)
+		avatarURL = fmt.Sprintf("%s/%s", h.ApiTypeFile, filePath)
 	}
 
 	// Construct URL to avatar, update profile with Avatar ID and URL
-	m.AvatarUrlNullable = sql.NullString{
-		String: avatarUrl,
+	m.AvatarURLNullable = sql.NullString{
+		String: avatarURL,
 		Valid:  true,
 	}
 	status, err = m.Update()
 	if err != nil {
-		return status, errors.New(
-			fmt.Sprintf("Could not update profile with avatar: %+v", err),
-		)
+		return status,
+			fmt.Errorf("Could not update profile with avatar: %+v", err)
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeProfile], m.Id)
-	go MarkAllAsRead(m.Id)
+	go PurgeCache(h.ItemTypes[h.ItemTypeProfile], m.ID)
+	go MarkAllAsRead(m.ID)
 
 	return http.StatusOK, nil
 }
 
+// Delete removes a profile from the database
 func (m *ProfileType) Delete() (int, error) {
-
 	return http.StatusNotImplemented,
-		errors.New("Delete Profile is not yet implemented")
+		fmt.Errorf("Delete Profile is not yet implemented")
 }
 
+// Update saves the current version of the profile to the database
 func (m *ProfileType) Update() (int, error) {
 
 	status, err := m.Validate(true)
@@ -403,9 +414,8 @@ func (m *ProfileType) Update() (int, error) {
 
 	tx, err := h.GetTransaction()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not start transaction: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -421,52 +431,48 @@ UPDATE profiles
       ,avatar_url = $9
       ,avatar_id = $10
  WHERE profile_id = $1`,
-		m.Id,
+		m.ID,
 		m.ProfileName,
 		m.GenderNullable,
 		m.Visible,
-		m.StyleId,
+		m.StyleID,
 		m.ItemCount,
 		m.CommentCount,
 		m.LastActive,
-		m.AvatarUrlNullable,
-		m.AvatarIdNullable,
+		m.AvatarURLNullable,
+		m.AvatarIDNullable,
 	)
 	if err != nil {
 		tx.Rollback()
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update of profile failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update of profile failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeProfile], m.Id)
+	PurgeCache(h.ItemTypes[h.ItemTypeProfile], m.ID)
 
 	return http.StatusOK, nil
-
 }
 
-func UpdateLastActive(profileId int64, lastActive time.Time) (int, error) {
+// UpdateLastActive marks a profile as being active
+func UpdateLastActive(profileID int64, lastActive time.Time) (int, error) {
 
 	db, err := h.GetConnection()
 	if err != nil {
 		glog.Errorf("h.GetConnection() %+v", err)
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not get a database connection: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not get a database connection: %v", err.Error())
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not start transaction: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -474,7 +480,7 @@ func UpdateLastActive(profileId int64, lastActive time.Time) (int, error) {
 UPDATE profiles
    SET last_active = $2
  WHERE profile_id = $1;`,
-		profileId,
+		profileID,
 		lastActive,
 	)
 	if err != nil {
@@ -483,24 +489,23 @@ UPDATE profiles
 			glog.Errorf("Cannot rollback: %+v", nerr)
 		}
 
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update of last active failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update of last active failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCacheByScope(c.CacheDetail, h.ItemTypes[h.ItemTypeProfile], profileId)
+	PurgeCacheByScope(c.CacheDetail, h.ItemTypes[h.ItemTypeProfile], profileID)
 
 	return http.StatusOK, nil
 }
 
-func IncrementProfileCommentCount(profileId int64) {
+// IncrementProfileCommentCount increments the comment count
+func IncrementProfileCommentCount(profileID int64) {
 
 	db, err := h.GetConnection()
 	if err != nil {
@@ -512,17 +517,18 @@ func IncrementProfileCommentCount(profileId int64) {
 UPDATE profiles
    SET comment_count = comment_count + 1
  WHERE profile_id = $1`,
-		profileId,
+		profileID,
 	)
 	if err != nil {
 		glog.Error(err)
 		return
 	}
 
-	PurgeCacheByScope(c.CacheDetail, h.ItemTypes[h.ItemTypeProfile], profileId)
+	PurgeCacheByScope(c.CacheDetail, h.ItemTypes[h.ItemTypeProfile], profileID)
 }
 
-func DecrementProfileCommentCount(profileId int64) {
+// DecrementProfileCommentCount decrements the comment count
+func DecrementProfileCommentCount(profileID int64) {
 
 	db, err := h.GetConnection()
 	if err != nil {
@@ -534,27 +540,25 @@ func DecrementProfileCommentCount(profileId int64) {
 UPDATE profiles
    SET comment_count = comment_count - 1
  WHERE profile_id = $1`,
-		profileId,
+		profileID,
 	)
 	if err != nil {
 		glog.Error(err)
 		return
 	}
 
-	PurgeCacheByScope(c.CacheDetail, h.ItemTypes[h.ItemTypeProfile], profileId)
+	PurgeCacheByScope(c.CacheDetail, h.ItemTypes[h.ItemTypeProfile], profileID)
 }
 
 // UpdateCommentCountForAllProfiles is intended as an import/admin task only.
 // It is relatively expensive due to calling is_deleted() for every comment on
 // a site.
-//
-func UpdateCommentCountForAllProfiles(siteId int64) (int, error) {
+func UpdateCommentCountForAllProfiles(siteID int64) (int, error) {
 
 	db, err := h.GetConnection()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not get db connection: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not get db connection: %v", err.Error())
 	}
 
 	_, err = db.Exec(`-- Reset Profile Counts for All Profiles on Site
@@ -562,12 +566,11 @@ UPDATE profiles
    SET comment_count = 0
       ,item_count = 0
  WHERE site_id = $1`,
-		siteId,
+		siteID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update of comment count failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update of comment count failed: %v", err.Error())
 	}
 
 	_, err = db.Exec(`-- Update Comment Counts for All Profiles on Site
@@ -588,12 +591,11 @@ UPDATE profiles AS p
   GROUP BY created_by
        ) AS c
  WHERE p.profile_id = c.profile_id`,
-		siteId,
+		siteID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update of comment count failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update of comment count failed: %v", err.Error())
 	}
 
 	_, err = db.Exec(`-- Update Item Counts for All Profiles on Site
@@ -614,22 +616,22 @@ UPDATE profiles AS p
   GROUP BY created_by
        ) AS c
  WHERE p.profile_id = c.profile_id`,
-		siteId,
+		siteID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update of comment count failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update of comment count failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
-func GetProfile(siteId int64, id int64) (ProfileType, int, error) {
+// GetProfile fetches a single profile
+func GetProfile(siteID int64, id int64) (ProfileType, int, error) {
 
 	if id == 0 {
 		return ProfileType{}, http.StatusNotFound,
-			errors.New("Profile not found")
+			fmt.Errorf("Profile not found")
 	}
 
 	// Get from cache if it's available
@@ -637,8 +639,8 @@ func GetProfile(siteId int64, id int64) (ProfileType, int, error) {
 	if val, ok := c.CacheGet(mcKey, ProfileType{}); ok {
 		m := val.(ProfileType)
 
-		if m.SiteId != siteId {
-			return ProfileType{}, http.StatusNotFound, errors.New("Not found")
+		if m.SiteID != siteID {
+			return ProfileType{}, http.StatusNotFound, fmt.Errorf("Not found")
 		}
 		return m, http.StatusOK, nil
 	}
@@ -650,7 +652,7 @@ func GetProfile(siteId int64, id int64) (ProfileType, int, error) {
 	}
 
 	var m ProfileType
-	var profileCommentId int64
+	var profileCommentID int64
 
 	err = db.QueryRow(`--GetProfile
 SELECT p.profile_id
@@ -697,47 +699,46 @@ SELECT p.profile_id
        ) AS si
  WHERE p.site_id = $1
    AND p.profile_id = $2`,
-		siteId,
+		siteID,
 		id,
 	).Scan(
-		&m.Id,
-		&m.SiteId,
-		&m.UserId,
+		&m.ID,
+		&m.SiteID,
+		&m.UserID,
 		&m.ProfileName,
 		&m.GenderNullable,
 		&m.Visible,
 		&m.ItemCount,
 		&m.CommentCount,
-		&profileCommentId,
+		&profileCommentID,
 		&m.Created,
 		&m.LastActive,
-		&m.AvatarUrlNullable,
-		&m.AvatarIdNullable,
+		&m.AvatarURLNullable,
+		&m.AvatarIDNullable,
 	)
 
 	if err == sql.ErrNoRows {
-		return ProfileType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Resource with profile ID %d not found", id),
-		)
+		return ProfileType{}, http.StatusNotFound,
+			fmt.Errorf("Resource with profile ID %d not found", id)
+
 	} else if err != nil {
 		glog.Error(err)
-		return ProfileType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return ProfileType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	if m.GenderNullable.Valid {
 		m.Gender = m.GenderNullable.String
 	}
-	if m.AvatarIdNullable.Valid {
-		m.AvatarId = m.AvatarIdNullable.Int64
+	if m.AvatarIDNullable.Valid {
+		m.AvatarID = m.AvatarIDNullable.Int64
 	}
-	if m.AvatarUrlNullable.Valid {
-		m.AvatarUrl = m.AvatarUrlNullable.String
+	if m.AvatarURLNullable.Valid {
+		m.AvatarURL = m.AvatarURLNullable.String
 	}
 
-	if profileCommentId > 0 {
-		comment, status, err := GetCommentSummary(siteId, profileCommentId)
+	if profileCommentID > 0 {
+		comment, status, err := GetCommentSummary(siteID, profileCommentID)
 		if err != nil {
 			glog.Error(err)
 			return ProfileType{}, status, err
@@ -747,8 +748,8 @@ SELECT p.profile_id
 
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeProfile, m.Id),
-			h.GetLink("site", "", h.ItemTypeSite, m.SiteId),
+			h.GetLink("self", "", h.ItemTypeProfile, m.ID),
+			h.GetLink("site", "", h.ItemTypeSite, m.SiteID),
 		}
 
 	// Update cache
@@ -757,13 +758,17 @@ SELECT p.profile_id
 	return m, http.StatusOK, nil
 }
 
+// UpdateUnreadHuddleCount updates the unread huddle count
 func (m *ProfileType) UpdateUnreadHuddleCount() {
-	UpdateUnreadHuddleCount(m.Id)
-}
-func (m *ProfileSummaryType) UpdateUnreadHuddleCount() {
-	UpdateUnreadHuddleCount(m.Id)
+	UpdateUnreadHuddleCount(m.ID)
 }
 
+// UpdateUnreadHuddleCount updates the unread huddle count
+func (m *ProfileSummaryType) UpdateUnreadHuddleCount() {
+	UpdateUnreadHuddleCount(m.ID)
+}
+
+// UpdateUnreadHuddleCount updates the unread huddle count
 func UpdateUnreadHuddleCount(profileID int64) {
 	tx, err := h.GetTransaction()
 	if err != nil {
@@ -781,6 +786,7 @@ func UpdateUnreadHuddleCount(profileID int64) {
 	}
 }
 
+// updateUnreadHuddleCount updates the unread huddle count
 func updateUnreadHuddleCount(tx *sql.Tx, profileID int64) {
 
 	_, err := tx.Exec(`--updateUnreadHuddleCount
@@ -819,10 +825,11 @@ UPDATE profiles
 	PurgeCacheByScope(c.CacheCounts, h.ItemTypes[h.ItemTypeProfile], profileID)
 }
 
+// GetUnreadHuddleCount fetches the current unread huddle count
 func (m *ProfileType) GetUnreadHuddleCount() (int, error) {
 
 	// Get from cache if it's available
-	mcKey := fmt.Sprintf(mcProfileKeys[c.CacheCounts], m.Id)
+	mcKey := fmt.Sprintf(mcProfileKeys[c.CacheCounts], m.ID)
 	if i, ok := c.CacheGetInt64(mcKey); ok {
 
 		m.Meta.Stats = append(
@@ -843,13 +850,13 @@ func (m *ProfileType) GetUnreadHuddleCount() (int, error) {
 SELECT unread_huddles
   FROM profiles
  WHERE profile_id = $1`,
-		m.Id,
+		m.ID,
 	).Scan(
 		&unreadHuddles,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Error fetching row: %v", err.Error()))
+			fmt.Errorf("Error fetching row: %v", err.Error())
 	}
 
 	m.Meta.Stats = append(
@@ -862,14 +869,15 @@ SELECT unread_huddles
 	return http.StatusOK, nil
 }
 
+// HandleProfileSummaryRequest is a wrapper to fetch a profile summary
 func HandleProfileSummaryRequest(
-	siteId int64,
+	siteID int64,
 	id int64,
 	seq int,
 	out chan<- ProfileSummaryRequest,
 ) {
 
-	item, status, err := GetProfileSummary(siteId, id)
+	item, status, err := GetProfileSummary(siteID, id)
 
 	response := ProfileSummaryRequest{
 		Item:   item,
@@ -880,8 +888,9 @@ func HandleProfileSummaryRequest(
 	out <- response
 }
 
+// GetProfileSummary fetches a summary of a profile
 func GetProfileSummary(
-	siteId int64,
+	siteID int64,
 	id int64,
 ) (
 	ProfileSummaryType,
@@ -891,16 +900,16 @@ func GetProfileSummary(
 
 	if id == 0 {
 		return ProfileSummaryType{}, http.StatusNotFound,
-			errors.New("Profile not found")
+			fmt.Errorf("Profile not found")
 	}
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcProfileKeys[c.CacheSummary], id)
 	if val, ok := c.CacheGet(mcKey, ProfileSummaryType{}); ok {
 		m := val.(ProfileSummaryType)
-		if m.SiteId != siteId {
+		if m.SiteID != siteID {
 			return ProfileSummaryType{}, http.StatusNotFound,
-				errors.New("Not found")
+				fmt.Errorf("Not found")
 		}
 		return m, http.StatusOK, nil
 	}
@@ -923,41 +932,38 @@ SELECT profile_id
   FROM profiles
  WHERE site_id = $1
    AND profile_id = $2`,
-		siteId,
+		siteID,
 		id,
 	).Scan(
-		&m.Id,
-		&m.SiteId,
-		&m.UserId,
+		&m.ID,
+		&m.SiteID,
+		&m.UserID,
 		&m.ProfileName,
 		&m.Visible,
-		&m.AvatarUrlNullable,
-		&m.AvatarIdNullable,
+		&m.AvatarURLNullable,
+		&m.AvatarIDNullable,
 	)
 	if err == sql.ErrNoRows {
 		glog.Warning(err)
 		return ProfileSummaryType{}, http.StatusNotFound,
-			errors.New(
-				fmt.Sprintf("Resource with profile ID %d not found", id),
-			)
+			fmt.Errorf("Resource with profile ID %d not found", id)
+
 	} else if err != nil {
 		glog.Error(err)
 		return ProfileSummaryType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
-	if m.AvatarIdNullable.Valid {
-		m.AvatarId = m.AvatarIdNullable.Int64
+	if m.AvatarIDNullable.Valid {
+		m.AvatarID = m.AvatarIDNullable.Int64
 	}
-	if m.AvatarUrlNullable.Valid {
-		m.AvatarUrl = m.AvatarUrlNullable.String
+	if m.AvatarURLNullable.Valid {
+		m.AvatarURL = m.AvatarURLNullable.String
 	}
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeProfile, m.Id),
-			h.GetLink("site", "", h.ItemTypeSite, m.SiteId),
+			h.GetLink("self", "", h.ItemTypeProfile, m.ID),
+			h.GetLink("site", "", h.ItemTypeSite, m.SiteID),
 		}
 
 	// Update cache
@@ -966,9 +972,10 @@ SELECT profile_id
 	return m, http.StatusOK, nil
 }
 
-func GetProfileId(siteId int64, userId int64) (int64, int, error) {
+// GetProfileID fetches a profileID given a userID
+func GetProfileID(siteID int64, userID int64) (int64, int, error) {
 
-	if siteId == 0 || userId == 0 {
+	if siteID == 0 || userID == 0 {
 		return 0, http.StatusOK, nil
 	}
 
@@ -977,16 +984,16 @@ func GetProfileId(siteId int64, userId int64) (int64, int, error) {
 	// This map of siteId+userId = profileId is never expected to change, so
 	// this cache key is unique and does not conform to the cache flushing
 	// mechanism
-	mcKey := fmt.Sprintf("s%d_u%d", siteId, userId)
+	mcKey := fmt.Sprintf("s%d_u%d", siteID, userID)
 	if val, ok := c.CacheGetInt64(mcKey); ok {
 		return val, http.StatusOK, nil
 	}
 
-	var profileId int64
+	var profileID int64
 	db, err := h.GetConnection()
 	if err != nil {
 		glog.Error(err)
-		return profileId, http.StatusInternalServerError, err
+		return profileID, http.StatusInternalServerError, err
 	}
 
 	err = db.QueryRow(`--GetProfileId
@@ -994,35 +1001,33 @@ SELECT profile_id
   FROM profiles
  WHERE site_id = $1
    AND user_id = $2`,
-		siteId,
-		userId,
+		siteID,
+		userID,
 	).Scan(
-		&profileId,
+		&profileID,
 	)
 	if err == sql.ErrNoRows {
 		glog.Warning(err)
-		return profileId, http.StatusNotFound,
-			errors.New(
-				fmt.Sprintf(
-					"Profile for site (%d) and user (%d) not found.",
-					siteId,
-					userId,
-				),
+		return profileID, http.StatusNotFound,
+			fmt.Errorf(
+				"Profile for site (%d) and user (%d) not found.",
+				siteID,
+				userID,
 			)
 
 	} else if err != nil {
 		glog.Error(err)
-		return profileId, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+		return profileID, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
-	c.CacheSetInt64(mcKey, profileId, mcTtl)
+	c.CacheSetInt64(mcKey, profileID, mcTtl)
 
-	return profileId, http.StatusOK, nil
+	return profileID, http.StatusOK, nil
 }
 
+// GetOrCreateProfile is called for new logins, to either fetch a profile or
+// create a new one
 func GetOrCreateProfile(
 	site SiteType,
 	user UserType,
@@ -1032,22 +1037,21 @@ func GetOrCreateProfile(
 	error,
 ) {
 
-	profileId, status, err := GetProfileId(site.ID, user.ID)
+	profileID, status, err := GetProfileID(site.ID, user.ID)
 	if status == http.StatusOK {
-		return GetProfile(site.ID, profileId)
+		return GetProfile(site.ID, profileID)
 	}
 	if err != nil && status != http.StatusNotFound {
-		return ProfileType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error fetching profile: %v", err.Error()),
-		)
+		return ProfileType{}, http.StatusInternalServerError,
+			fmt.Errorf("Error fetching profile: %v", err.Error())
 	}
 
 	// Profile not found, so create one
 	p := ProfileType{}
-	p.SiteId = site.ID
-	p.UserId = user.ID
+	p.SiteID = site.ID
+	p.UserID = user.ID
 	// Create randomised username unless the profile is for Site ID 1 (root site)
-	if p.SiteId == 1 {
+	if p.SiteID == 1 {
 		p.ProfileName = strings.Split(user.Email, "@")[0]
 	} else {
 		p.ProfileName = SuggestProfileName(user)
@@ -1062,8 +1066,9 @@ func GetOrCreateProfile(
 	return p, http.StatusOK, nil
 }
 
+// GetProfiles returns a collection of profiles
 func GetProfiles(
-	siteId int64,
+	siteID int64,
 	so ProfileSearchOptions,
 	limit int64,
 	offset int64,
@@ -1085,7 +1090,7 @@ func GetProfiles(
 	var following string
 	if so.IsFollowing {
 		following = `
-       JOIN watchers w ON w.profile_id = ` + strconv.FormatInt(so.ProfileId, 10) + `
+       JOIN watchers w ON w.profile_id = ` + strconv.FormatInt(so.ProfileID, 10) + `
                       AND w.item_type_id = 3
                       AND p.profile_id = w.item_id`
 	}
@@ -1099,9 +1104,9 @@ func GetProfiles(
 	var selectCountArgs []interface{}
 	var selectArgs []interface{}
 	//                                        $1      $2            $3     $4
-	selectCountArgs = append(selectCountArgs, siteId, so.ProfileId, limit, offset)
+	selectCountArgs = append(selectCountArgs, siteID, so.ProfileID, limit, offset)
 	//                              $1      $2            $3     $4
-	selectArgs = append(selectArgs, siteId, so.ProfileId, limit, offset)
+	selectArgs = append(selectArgs, siteID, so.ProfileID, limit, offset)
 
 	var startsWith string
 	var startsWithOrderBy string
@@ -1149,11 +1154,13 @@ OFFSET $4`
    AND $3 > 0
    AND $4 >= 0`,
 		selectCountArgs...,
-	).Scan(&total)
+	).Scan(
+		&total,
+	)
 	if err != nil {
 		glog.Error(err)
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 
 	rows, err := db.Query(
@@ -1163,14 +1170,14 @@ OFFSET $4`
 	if err != nil {
 		glog.Errorf(
 			"stmt.Query(%d, `%s`, %d, %d) %+v",
-			siteId,
+			siteID,
 			so.StartsWith+`%`,
 			limit,
 			offset,
 			err,
 		)
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 	defer rows.Close()
 
@@ -1182,7 +1189,7 @@ OFFSET $4`
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-				errors.New("Row parsing error")
+				fmt.Errorf("Row parsing error")
 		}
 
 		ids = append(ids, id)
@@ -1191,7 +1198,7 @@ OFFSET $4`
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New("Error fetching rows")
+			fmt.Errorf("Error fetching rows")
 	}
 	rows.Close()
 
@@ -1200,7 +1207,7 @@ OFFSET $4`
 	defer close(req)
 
 	for seq, id := range ids {
-		go HandleProfileSummaryRequest(siteId, id, seq, req)
+		go HandleProfileSummaryRequest(siteID, id, seq, req)
 		wg1.Add(1)
 	}
 
@@ -1232,32 +1239,32 @@ OFFSET $4`
 	if offset > maxOffset {
 		glog.Infoln("offset > maxOffset")
 		return []ProfileSummaryType{}, 0, 0, http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf("not enough records, "+
-					"offset (%d) would return an empty page.", offset),
-			)
+			fmt.Errorf("not enough records, "+
+				"offset (%d) would return an empty page.", offset)
 	}
 
 	return ems, total, pages, http.StatusOK, nil
 }
 
-func MakeGravatarUrl(email string) string {
+// MakeGravatarURL hashes the email and creates the Gravatar URL
+func MakeGravatarURL(email string) string {
 	return fmt.Sprintf(
 		"%s%s?d=identicon",
-		UrlGravatar,
+		URLGravatar,
 		h.Md5sum(strings.ToLower(strings.Trim(email, " "))),
 	)
 }
 
-func StoreGravatar(gravatarUrl string) (FileMetadataType, int, error) {
+// StoreGravatar stores the gravatar file in the database
+func StoreGravatar(gravatarURL string) (FileMetadataType, int, error) {
 
 	// TODO(matt): reduce duplication with models.FileController
-	resp, err := http.Get(gravatarUrl)
+	resp, err := http.Get(gravatarURL)
 
 	if err != nil {
-		glog.Errorf("http.Get(`%s`) %+v", gravatarUrl, err)
+		glog.Errorf("http.Get(`%s`) %+v", gravatarURL, err)
 		return FileMetadataType{}, http.StatusInternalServerError,
-			errors.New("Could not retrieve gravatar")
+			fmt.Errorf("Could not retrieve gravatar")
 	}
 	defer resp.Body.Close()
 
@@ -1265,7 +1272,7 @@ func StoreGravatar(gravatarUrl string) (FileMetadataType, int, error) {
 	if err != nil {
 		glog.Errorf("ioutil.ReadAll(resp.Body) %+v", err)
 		return FileMetadataType{}, http.StatusInternalServerError,
-			errors.New("Could not read gravatar response")
+			fmt.Errorf("Could not read gravatar response")
 	}
 
 	metadata := FileMetadataType{}
@@ -1275,24 +1282,25 @@ func StoreGravatar(gravatarUrl string) (FileMetadataType, int, error) {
 	if err != nil {
 		glog.Errorf("h.Sha1(metadata.Content) %+v", err)
 		return FileMetadataType{}, http.StatusInternalServerError,
-			errors.New("Could not generate file SHA-1")
+			fmt.Errorf("Could not generate file SHA-1")
 	}
 	metadata.MimeType = resp.Header.Get("Content-Type")
 	metadata.Created = time.Now()
-	metadata.AttachCount += 1
+	metadata.AttachCount++
 
 	status, err := metadata.Insert(AvatarMaxWidth, AvatarMaxHeight)
 	if err != nil {
 		glog.Errorf("metadata.Insert(%d, %d) %+v", AvatarMaxWidth, AvatarMaxHeight, err)
 		return FileMetadataType{}, status,
-			errors.New("Could not insert gravatar file metadata")
+			fmt.Errorf("Could not insert gravatar file metadata")
 	}
 
 	return metadata, http.StatusOK, nil
 }
 
+// AttachAvatar allows file uploading of a custom avatar
 func AttachAvatar(
-	profileId int64,
+	profileID int64,
 	fileMetadata FileMetadataType,
 ) (
 	AttachmentType,
@@ -1305,24 +1313,27 @@ func AttachAvatar(
 	attachment.FileHash = fileMetadata.FileHash
 	attachment.Created = time.Now()
 	attachment.ItemTypeId = h.ItemTypes[h.ItemTypeProfile]
-	attachment.ItemId = profileId
-	attachment.ProfileId = profileId
+	attachment.ItemId = profileID
+	attachment.ProfileId = profileID
 
 	_, err := attachment.Insert()
 	if err != nil {
-		return AttachmentType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf(
+		return AttachmentType{}, http.StatusInternalServerError,
+			fmt.Errorf(
 				"Could not create avatar attachment to profile: %+v",
 				err,
-			),
-		)
+			)
 	}
 
 	return attachment, http.StatusOK, nil
 }
 
+// SuggestProfileName will create a semi-random username for a new user
 func SuggestProfileName(user UserType) string {
-	// This is duplication safe for investors
+	// TODO(buro9): Change this to just have a global blacklist of user names
+	//   i.e. root, admin, god, moderator
+	// The old method reserved usernames to email addresses and is no longer
+	// needed
 	if _, inMap := reservedProfileNames[user.Email]; inMap {
 		return reservedProfileNames[user.Email]
 	}
@@ -1332,14 +1343,14 @@ func SuggestProfileName(user UserType) string {
 	return "user" + strconv.FormatInt(user.ID+5830, 10)
 }
 
-// Checks whether a profile name is taken for a given site,
+// IsProfileNameTaken checks whether a profile name is taken for a given site,
 // If the profile name is taken by the user specified then it's considered
 // to be available (as in... updating your own profile won't fail this check)
 // Errors in this method will return "true" for the check as data integrity
 // is everything
 func IsProfileNameTaken(
-	siteId int64,
-	userId int64,
+	siteID int64,
+	userID int64,
 	profileName string,
 ) (
 	bool,
@@ -1366,14 +1377,13 @@ SELECT u.email
            AND user_id != $2
        ) AS p
  WHERE u.user_id = $2`,
-		siteId,
-		userId,
+		siteID,
+		userID,
 		profileName,
 	)
 	if err != nil {
-		return true, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return true, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -1387,16 +1397,14 @@ SELECT u.email
 			&exists,
 		)
 		if err != nil {
-			return true, http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Row parsing error: %v", err.Error()),
-			)
+			return true, http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 	}
 	err = rows.Err()
 	if err != nil {
-		return true, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error fetching rows: %v", err.Error()),
-		)
+		return true, http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -1415,6 +1423,8 @@ SELECT u.email
 	return false, http.StatusOK, nil
 }
 
+// GetProfileSearchOptions fetches the options in the querystring that are being
+// used to filter and search for profiles
 func GetProfileSearchOptions(query url.Values) ProfileSearchOptions {
 
 	so := ProfileSearchOptions{}

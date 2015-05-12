@@ -240,11 +240,11 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 		if metadata.FileExt != "" {
 			filePath += `.` + metadata.FileExt
 		}
-		profile.AvatarUrlNullable = sql.NullString{
+		profile.AvatarURLNullable = sql.NullString{
 			String: fmt.Sprintf("%s/%s", h.ApiTypeFile, filePath),
 			Valid:  true,
 		}
-		profile.AvatarIdNullable = sql.NullInt64{
+		profile.AvatarIDNullable = sql.NullInt64{
 			Int64: attachment.AttachmentId,
 			Valid: true,
 		}

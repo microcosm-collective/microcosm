@@ -92,7 +92,7 @@ func GetLegalDataForSite(site SiteType) (LegalData, int, error) {
 		return data, status, err
 	}
 
-	user, status, err := GetUser(profile.UserId)
+	user, status, err := GetUser(profile.UserID)
 	if err != nil {
 		return data, status, err
 	}

@@ -66,7 +66,7 @@ func (ctl *ProfileOptionsController) Update(c *models.Context) {
 	}
 
 	// Profile ID cannot be changed
-	m.ProfileId = c.Auth.ProfileId
+	m.ProfileID = c.Auth.ProfileId
 
 	status, err := m.Update()
 	if err != nil {
@@ -77,7 +77,7 @@ func (ctl *ProfileOptionsController) Update(c *models.Context) {
 	audit.Update(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
-		m.ProfileId,
+		m.ProfileID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,

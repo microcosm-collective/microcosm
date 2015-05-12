@@ -75,7 +75,7 @@ func (wc *WhoAmIController) Read(c *models.Context) {
 	location := fmt.Sprintf(
 		"%s/%d",
 		h.ApiTypeProfile,
-		m.Id,
+		m.ID,
 	)
 
 	if c.Auth.ProfileId > 0 && c.Auth.Method == "query" {

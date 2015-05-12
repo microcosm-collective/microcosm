@@ -254,7 +254,7 @@ SELECT profile_id
 	m := ProfileSummaryType{}
 	for rows.Next() {
 		err = rows.Scan(
-			&m.Id,
+			&m.ID,
 		)
 		if err != nil {
 			return ProfileSummaryType{}, http.StatusInternalServerError,
@@ -265,7 +265,7 @@ SELECT profile_id
 		req := make(chan ProfileSummaryRequest)
 		defer close(req)
 
-		go HandleProfileSummaryRequest(siteID, m.Id, 0, req)
+		go HandleProfileSummaryRequest(siteID, m.ID, 0, req)
 
 		// Receive the response
 		resp := <-req

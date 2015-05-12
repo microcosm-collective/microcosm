@@ -100,7 +100,7 @@ func (ctl *UsersController) Create(c *models.Context) {
 		profile, status, err := models.GetOrCreateProfile(c.Site, user)
 		if err != nil {
 			c.RespondWithErrorMessage(
-				fmt.Sprintf("Failed to create profile with ID %d: %v", profile.Id, err.Error()),
+				fmt.Sprintf("Failed to create profile with ID %d: %v", profile.ID, err.Error()),
 				status,
 			)
 			return
@@ -109,7 +109,7 @@ func (ctl *UsersController) Create(c *models.Context) {
 		audit.Create(
 			c.Site.ID,
 			h.ItemTypes[h.ItemTypeProfile],
-			profile.Id,
+			profile.ID,
 			c.Auth.ProfileId,
 			time.Now(),
 			c.IP,

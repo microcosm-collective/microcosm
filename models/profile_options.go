@@ -2,15 +2,15 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// ProfileOptionType describes the options for a profile
 type ProfileOptionType struct {
-	ProfileId     int64 `json:"profileId"`
+	ProfileID     int64 `json:"profileId"`
 	ShowDOB       bool  `json:"showDOB"`
 	ShowDOBYear   bool  `json:"showDOBYear"`
 	SendEMail     bool  `json:"sendEmail"`
@@ -18,6 +18,7 @@ type ProfileOptionType struct {
 	IsDiscouraged bool  `json:"isDiscouraged"`
 }
 
+// Insert saves the options to the database
 func (m *ProfileOptionType) Insert(tx *sql.Tx) (int, error) {
 
 	_, err := tx.Exec(`
@@ -36,7 +37,7 @@ INSERT INTO profile_options (
    ,$5
    ,$6
 )`,
-		m.ProfileId,
+		m.ProfileID,
 		m.ShowDOBYear,
 		m.ShowDOB,
 		m.SendEMail,
@@ -45,21 +46,20 @@ INSERT INTO profile_options (
 	)
 	if err != nil {
 		tx.Rollback()
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error inserting data: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Error inserting data: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
+// Update saves the updated options for a profile
 func (m *ProfileOptionType) Update() (int, error) {
 
 	tx, err := h.GetTransaction()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not start transaction: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not start transaction: %v", err.Error())
 	}
 
 	defer tx.Rollback()
@@ -72,7 +72,7 @@ UPDATE profile_options
     ,send_sms = $5
     ,is_discouraged = $6
 WHERE profile_id = $1`,
-		m.ProfileId,
+		m.ProfileID,
 		m.ShowDOBYear,
 		m.ShowDOB,
 		m.SendEMail,
@@ -81,23 +81,22 @@ WHERE profile_id = $1`,
 	)
 	if err != nil {
 		tx.Rollback()
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error inserting data: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Error inserting data: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
-func GetProfileOptions(profileId int64) (ProfileOptionType, int, error) {
-
+// GetProfileOptions returns the options for a profile
+func GetProfileOptions(profileID int64) (ProfileOptionType, int, error) {
+	// TODO(buro9): Add caching as this would be called on nearly all updates
 	db, err := h.GetConnection()
 	if err != nil {
 		return ProfileOptionType{}, http.StatusInternalServerError, err
@@ -113,9 +112,9 @@ SELECT profile_id
       ,is_discouraged
   FROM profile_options
  WHERE profile_id = $1`,
-		profileId,
+		profileID,
 	).Scan(
-		&m.ProfileId,
+		&m.ProfileID,
 		&m.ShowDOB,
 		&m.ShowDOBYear,
 		&m.SendEMail,
@@ -124,21 +123,18 @@ SELECT profile_id
 	)
 	if err == sql.ErrNoRows {
 		return ProfileOptionType{}, http.StatusNotFound,
-			errors.New(
-				fmt.Sprintf("Resource with profile ID %d not found", profileId),
-			)
+			fmt.Errorf("Resource with profile ID %d not found", profileID)
 
 	} else if err != nil {
 		return ProfileOptionType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	return m, http.StatusOK, nil
 }
 
-func GetProfileOptionsDefaults(siteId int64) (ProfileOptionType, int, error) {
+// GetProfileOptionsDefaults returns the default options for this site
+func GetProfileOptionsDefaults(siteID int64) (ProfileOptionType, int, error) {
 
 	db, err := h.GetConnection()
 	if err != nil {
@@ -155,12 +151,11 @@ SELECT COALESCE(s.send_email, p.send_email) AS send_email
              FROM site_options
             WHERE site_id = $1
        ) s ON 1=1`,
-		siteId,
+		siteID,
 	)
 	if err != nil {
-		return ProfileOptionType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return ProfileOptionType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -173,16 +168,14 @@ SELECT COALESCE(s.send_email, p.send_email) AS send_email
 			&m.SendSMS,
 		)
 		if err != nil {
-			return ProfileOptionType{}, http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Row parsing error: %v", err.Error()),
-			)
+			return ProfileOptionType{}, http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 	}
 	err = rows.Err()
 	if err != nil {
-		return ProfileOptionType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error fetching rows: %v", err.Error()),
-		)
+		return ProfileOptionType{}, http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

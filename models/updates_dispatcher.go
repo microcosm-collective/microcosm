@@ -93,7 +93,7 @@ func SendUpdatesForNewCommentInItem(
 
 		if !sendEmails &&
 			recipient.SendEmail &&
-			recipient.ForProfile.Id != comment.Meta.CreatedById {
+			recipient.ForProfile.ID != comment.Meta.CreatedById {
 
 			sendEmails = true
 		}
@@ -102,7 +102,7 @@ func SendUpdatesForNewCommentInItem(
 		var update = UpdateType{}
 		update.SiteID = siteID
 		update.UpdateTypeID = updateType.ID
-		update.ForProfileID = recipient.ForProfile.Id
+		update.ForProfileID = recipient.ForProfile.ID
 		update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
 		update.ItemID = comment.Id
 		update.Meta.CreatedById = comment.Meta.CreatedById
@@ -186,7 +186,7 @@ func SendUpdatesForNewCommentInItem(
 			lastRead, status, err := GetLastReadTime(
 				comment.ItemTypeId,
 				comment.ItemId,
-				recipient.ForProfile.Id,
+				recipient.ForProfile.ID,
 			)
 			if err != nil {
 				glog.Errorf("%s %+v", "GetLastReadTime()", err)
@@ -208,15 +208,15 @@ func SendUpdatesForNewCommentInItem(
 			}
 
 			if recipient.SendEmail &&
-				recipient.ForProfile.Id != comment.Meta.CreatedById &&
+				recipient.ForProfile.ID != comment.Meta.CreatedById &&
 				(lastRead.After(recipient.LastNotified) ||
 					recipient.LastNotified.IsZero()) &&
-				recipient.ForProfile.Id != parentCommentCreatedByID {
+				recipient.ForProfile.ID != parentCommentCreatedByID {
 
 				// Personalisation of email
 				mergeData.ForProfile = recipient.ForProfile
 
-				user, status, err := GetUser(recipient.ForProfile.UserId)
+				user, status, err := GetUser(recipient.ForProfile.UserID)
 				if err != nil {
 					glog.Errorf("%s %+v", "GetUser()", err)
 					return status, err
@@ -302,7 +302,7 @@ func SendUpdatesForNewReplyToYourComment(
 	var update = UpdateType{}
 	update.SiteID = siteID
 	update.UpdateTypeID = updateType.ID
-	update.ForProfileID = forProfile.Id
+	update.ForProfileID = forProfile.ID
 	update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
 	update.ItemID = comment.Id
 	update.Meta.CreatedById = comment.Meta.CreatedById
@@ -390,7 +390,7 @@ func SendUpdatesForNewReplyToYourComment(
 		// Personalisation of email
 		mergeData.ForProfile = forProfile
 
-		user, status, err := GetUser(forProfile.UserId)
+		user, status, err := GetUser(forProfile.UserID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetUser()", err)
 			return status, err
@@ -529,7 +529,7 @@ func SendUpdatesForNewMentionInComment(
 		// Personalisation of email
 		mergeData.ForProfile = forProfile
 
-		user, status, err := GetUser(forProfile.UserId)
+		user, status, err := GetUser(forProfile.UserID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetUser()", err)
 			return status, err
@@ -628,7 +628,7 @@ func SendUpdatesForNewCommentInHuddle(
 
 		if !sendEmails &&
 			recipient.SendEmail &&
-			recipient.ForProfile.Id != comment.Meta.CreatedById {
+			recipient.ForProfile.ID != comment.Meta.CreatedById {
 
 			sendEmails = true
 		}
@@ -637,7 +637,7 @@ func SendUpdatesForNewCommentInHuddle(
 		var update = UpdateType{}
 		update.SiteID = siteID
 		update.UpdateTypeID = updateType.ID
-		update.ForProfileID = recipient.ForProfile.Id
+		update.ForProfileID = recipient.ForProfile.ID
 		update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
 		update.ItemID = comment.Id
 		update.Meta.CreatedById = comment.Meta.CreatedById
@@ -722,7 +722,7 @@ func SendUpdatesForNewCommentInHuddle(
 			lastRead, status, err := GetLastReadTime(
 				comment.ItemTypeId,
 				comment.ItemId,
-				recipient.ForProfile.Id,
+				recipient.ForProfile.ID,
 			)
 			if err != nil {
 				glog.Errorf("%s %+v", "GetLastReadTime()", err)
@@ -744,15 +744,15 @@ func SendUpdatesForNewCommentInHuddle(
 			}
 
 			if recipient.SendEmail &&
-				recipient.ForProfile.Id != comment.Meta.CreatedById &&
+				recipient.ForProfile.ID != comment.Meta.CreatedById &&
 				(lastRead.After(recipient.LastNotified) ||
 					recipient.LastNotified.IsZero()) &&
-				recipient.ForProfile.Id != parentCommentCreatedByID {
+				recipient.ForProfile.ID != parentCommentCreatedByID {
 
 				// Personalisation of email
 				mergeData.ForProfile = recipient.ForProfile
 
-				user, status, err := GetUser(recipient.ForProfile.UserId)
+				user, status, err := GetUser(recipient.ForProfile.UserID)
 				if err != nil {
 					glog.Errorf("%s %+v", "GetUser()", err)
 					return status, err
@@ -853,7 +853,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 
 		if !sendEmails &&
 			recipient.SendEmail &&
-			recipient.ForProfile.Id != attendee.ProfileId {
+			recipient.ForProfile.ID != attendee.ProfileId {
 
 			sendEmails = true
 		}
@@ -862,7 +862,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 		var update = UpdateType{}
 		update.SiteID = siteID
 		update.UpdateTypeID = updateType.ID
-		update.ForProfileID = recipient.ForProfile.Id
+		update.ForProfileID = recipient.ForProfile.ID
 		update.ItemTypeID = h.ItemTypes[h.ItemTypeEvent]
 		update.ItemID = attendee.EventId
 		update.Meta.CreatedById = attendee.ProfileId
@@ -942,7 +942,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 			lastRead, status, err := GetLastReadTime(
 				h.ItemTypes[h.ItemTypeEvent],
 				attendee.EventId,
-				recipient.ForProfile.Id,
+				recipient.ForProfile.ID,
 			)
 			if err != nil {
 				glog.Errorf("%s %+v", "GetLastReadTime()", err)
@@ -950,14 +950,14 @@ func SendUpdatesForNewAttendeeInAnEvent(
 			}
 
 			if recipient.SendEmail &&
-				recipient.ForProfile.Id != attendee.ProfileId &&
+				recipient.ForProfile.ID != attendee.ProfileId &&
 				(lastRead.After(recipient.LastNotified) ||
 					recipient.LastNotified.IsZero()) {
 
 				// Personalisation of email
 				mergeData.ForProfile = recipient.ForProfile
 
-				user, status, err := GetUser(recipient.ForProfile.UserId)
+				user, status, err := GetUser(recipient.ForProfile.UserID)
 				if err != nil {
 					glog.Errorf("%s %+v", "GetUser()", err)
 					return status, err
@@ -1100,7 +1100,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 
 		if !sendEmails &&
 			recipient.SendEmail &&
-			recipient.ForProfile.Id != createdByID {
+			recipient.ForProfile.ID != createdByID {
 
 			sendEmails = true
 		}
@@ -1109,7 +1109,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 		var update = UpdateType{}
 		update.SiteID = siteID
 		update.UpdateTypeID = updateType.ID
-		update.ForProfileID = recipient.ForProfile.Id
+		update.ForProfileID = recipient.ForProfile.ID
 		update.ItemTypeID = itemTypeID
 		update.ItemID = itemID
 		update.Meta.CreatedById = createdByID
@@ -1180,12 +1180,12 @@ func SendUpdatesForNewItemInAMicrocosm(
 			// Everyone who wants an email gets an email... except:
 			// 1) the author
 			if recipient.SendEmail &&
-				recipient.ForProfile.Id != createdByID {
+				recipient.ForProfile.ID != createdByID {
 
 				// Personalisation of email
 				mergeData.ForProfile = recipient.ForProfile
 
-				user, status, err := GetUser(recipient.ForProfile.UserId)
+				user, status, err := GetUser(recipient.ForProfile.UserID)
 				if err != nil {
 					glog.Errorf("%s %+v", "GetUser()", err)
 					return status, err

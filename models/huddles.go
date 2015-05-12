@@ -73,7 +73,7 @@ func (m *HuddleType) Validate(siteId int64, exists bool) (int, error) {
 	}
 
 	for _, p := range m.Participants {
-		_, status, err := GetProfileSummary(siteId, p.Id)
+		_, status, err := GetProfileSummary(siteId, p.ID)
 		if err != nil {
 			return status, err
 		}
@@ -97,7 +97,7 @@ func (m *HuddleType) FetchProfileSummaries(siteId int64) (int, error) {
 	m.Meta.CreatedBy = profile
 
 	for i, v := range m.Participants {
-		profile, status, err = GetProfileSummary(siteId, v.Id)
+		profile, status, err = GetProfileSummary(siteId, v.ID)
 		if err != nil {
 			return status, err
 		}
@@ -116,7 +116,7 @@ func (m *HuddleSummaryType) FetchProfileSummaries(siteId int64) (int, error) {
 	m.Meta.CreatedBy = profile
 
 	for i, v := range m.Participants {
-		profile, status, err = GetProfileSummary(siteId, v.Id)
+		profile, status, err = GetProfileSummary(siteId, v.ID)
 		if err != nil {
 			return status, err
 		}
@@ -219,7 +219,7 @@ INSERT INTO huddle_profiles (
 	// As are all of the explicitly added participants
 	for _, p := range m.Participants {
 		// Cannot add the author twice
-		if p.Id != m.Meta.CreatedById {
+		if p.ID != m.Meta.CreatedById {
 			_, err := tx.Exec(`
 INSERT INTO huddle_profiles (
     huddle_id, profile_id
@@ -227,7 +227,7 @@ INSERT INTO huddle_profiles (
     $1, $2
 )`,
 				m.Id,
-				p.Id,
+				p.ID,
 			)
 			if err != nil {
 				glog.Error(err)
@@ -355,7 +355,7 @@ SELECT h.huddle_id
 
 		m.Participants = append(
 			m.Participants,
-			ProfileSummaryType{Id: participantId},
+			ProfileSummaryType{ID: participantId},
 		)
 	}
 	err = rows.Err()
@@ -532,7 +532,7 @@ SELECT h.huddle_id
 
 		m.Participants = append(
 			m.Participants,
-			ProfileSummaryType{Id: participantId},
+			ProfileSummaryType{ID: participantId},
 		)
 
 		if m.LastCommentIdNullable.Valid {

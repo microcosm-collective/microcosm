@@ -55,7 +55,7 @@ func (ctl *ProfileController) Create(c *models.Context) {
 
 	// TODO: Auth rules on creation
 
-	if m.SiteId != 0 {
+	if m.SiteID != 0 {
 		c.RespondWithErrorMessage(
 			"You cannot supply a site ID when creating a profile",
 			http.StatusBadRequest,
@@ -63,7 +63,7 @@ func (ctl *ProfileController) Create(c *models.Context) {
 		return
 	}
 
-	if m.UserId != 0 {
+	if m.UserID != 0 {
 		c.RespondWithErrorMessage(
 			"You cannot supply a user ID when creating a profile",
 			http.StatusBadRequest,
@@ -72,8 +72,8 @@ func (ctl *ProfileController) Create(c *models.Context) {
 	}
 
 	// Populate site and user ID from goweb context
-	m.SiteId = c.Site.ID
-	m.UserId = c.Auth.UserId
+	m.SiteID = c.Site.ID
+	m.UserID = c.Auth.UserId
 
 	status, err := m.Insert()
 	if err != nil {
@@ -84,7 +84,7 @@ func (ctl *ProfileController) Create(c *models.Context) {
 	audit.Create(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -94,7 +94,7 @@ func (ctl *ProfileController) Create(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypeProfile,
-			m.Id,
+			m.ID,
 		),
 	)
 }
@@ -132,7 +132,7 @@ func (ctl *ProfileController) Read(c *models.Context) {
 	if c.Auth.ProfileId > 0 {
 		// Get watcher status
 		watcherId, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeProfile], m.Id, c.Auth.ProfileId,
+			h.ItemTypes[h.ItemTypeProfile], m.ID, c.Auth.ProfileId,
 		)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
@@ -149,7 +149,7 @@ func (ctl *ProfileController) Read(c *models.Context) {
 			m.Meta.Flags.SendSms = sendSms
 		}
 
-		if c.Auth.ProfileId == m.Id {
+		if c.Auth.ProfileId == m.ID {
 			// Get counts of things
 			m.GetUnreadHuddleCount()
 		}
@@ -201,7 +201,7 @@ func (ctl *ProfileController) Update(c *models.Context) {
 	// End Authorisation
 
 	// Populate site and user ID from goweb context
-	m.SiteId = c.Site.ID
+	m.SiteID = c.Site.ID
 
 	status, err = m.Update()
 	if err != nil {
@@ -212,7 +212,7 @@ func (ctl *ProfileController) Update(c *models.Context) {
 	audit.Replace(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -222,7 +222,7 @@ func (ctl *ProfileController) Update(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypeProfile,
-			m.Id,
+			m.ID,
 		),
 	)
 }

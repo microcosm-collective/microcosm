@@ -356,7 +356,7 @@ OFFSET $3`,
 	ems := []HuddleParticipantType{}
 	for _, resp := range resps {
 		rp := HuddleParticipantType{}
-		rp.Id = resp.Item.Id
+		rp.Id = resp.Item.ID
 		rp.Profile = resp.Item
 
 		ems = append(ems, rp)

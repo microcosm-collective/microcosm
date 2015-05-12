@@ -230,14 +230,14 @@ func (c *Context) authenticate() (int, error) {
 				),
 			)
 		}
-		c.Auth.ProfileId = profile.Id
+		c.Auth.ProfileId = profile.ID
 
 		// Check to see if banned before finishing the profile assignment.
 		// A banned person can never sign in.
 		// Note: We cannot block the URLs required to show an empty error page.
 		if !(c.Request.URL.Path == `/api/v1/site` ||
 			c.Request.URL.Path == `/api/v1/whoami` ||
-			c.Request.URL.Path == fmt.Sprintf(`/api/v1/profiles/%d`, profile.Id)) &&
+			c.Request.URL.Path == fmt.Sprintf(`/api/v1/profiles/%d`, profile.ID)) &&
 			IsBanned(c.Site.ID, storedToken.UserId) {
 
 			c.Auth.IsBanned = true
@@ -260,7 +260,7 @@ func (c *Context) authenticate() (int, error) {
 		}
 
 		// Determine whether user is site owner
-		if c.Site.ID > 0 && c.Site.OwnedByID == profile.Id {
+		if c.Site.ID > 0 && c.Site.OwnedByID == profile.ID {
 			c.Auth.IsSiteOwner = true
 		}
 	}

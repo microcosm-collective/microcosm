@@ -53,7 +53,7 @@ func (ctl *ProfilesController) Create(c *models.Context) {
 
 	// TODO: Auth rules on creation
 
-	if m.SiteId != 0 {
+	if m.SiteID != 0 {
 		c.RespondWithErrorMessage(
 			"You cannot supply a site ID when creating a profile",
 			http.StatusBadRequest,
@@ -61,7 +61,7 @@ func (ctl *ProfilesController) Create(c *models.Context) {
 		return
 	}
 
-	if m.UserId != 0 {
+	if m.UserID != 0 {
 		c.RespondWithErrorMessage(
 			"You cannot supply a user ID when creating a profile",
 			http.StatusBadRequest,
@@ -70,8 +70,8 @@ func (ctl *ProfilesController) Create(c *models.Context) {
 	}
 
 	// Populate site and user ID from goweb context
-	m.SiteId = c.Site.ID
-	m.UserId = c.Auth.UserId
+	m.SiteID = c.Site.ID
+	m.UserID = c.Auth.UserId
 
 	status, err := m.Insert()
 	if err != nil {
@@ -82,7 +82,7 @@ func (ctl *ProfilesController) Create(c *models.Context) {
 	audit.Create(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -92,7 +92,7 @@ func (ctl *ProfilesController) Create(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypeProfile,
-			m.Id,
+			m.ID,
 		),
 	)
 }
@@ -118,7 +118,7 @@ func (ctl *ProfilesController) ReadMany(c *models.Context) {
 	}
 
 	so := models.GetProfileSearchOptions(c.Request.URL.Query())
-	so.ProfileId = c.Auth.ProfileId
+	so.ProfileID = c.Auth.ProfileId
 
 	ems, total, pages, status, err := models.GetProfiles(
 		c.Site.ID,

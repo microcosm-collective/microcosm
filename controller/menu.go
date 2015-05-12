@@ -86,7 +86,7 @@ func (ctl *MenuController) Update(c *models.Context, siteId int64) {
 		return
 	}
 
-	if owner.UserId != c.Auth.UserId {
+	if owner.UserID != c.Auth.UserId {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
@@ -127,7 +127,7 @@ func (ctl *MenuController) Delete(c *models.Context, siteId int64) {
 		return
 	}
 
-	if owner.UserId != c.Auth.UserId {
+	if owner.UserID != c.Auth.UserId {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}

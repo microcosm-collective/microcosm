@@ -360,7 +360,7 @@ func CreateOwnedSite(
 	// Create stub profile to serve as site owner
 	profile := ProfileType{}
 	profile.ProfileName = SuggestProfileName(user)
-	profile.UserId = user.ID
+	profile.UserID = user.ID
 	profile.Visible = true
 
 	tx, err := h.GetTransaction()
@@ -385,8 +385,8 @@ SELECT new_ids.new_site_id,
 		user.ID,
 		profile.ProfileName,
 
-		profile.AvatarIdNullable,
-		profile.AvatarUrlNullable,
+		profile.AvatarIDNullable,
+		profile.AvatarURLNullable,
 		site.DomainNullable,
 		site.Description,
 		site.LogoURL,
@@ -418,8 +418,8 @@ SELECT new_ids.new_site_id,
 	rows.Close()
 
 	site.ID = siteID
-	profile.SiteId = siteID
-	profile.Id = profileID
+	profile.SiteID = siteID
+	profile.ID = profileID
 
 	// Create profile_options record for the newly created profile
 	profileOptions, _, err := GetProfileOptionsDefaults(site.ID)
@@ -427,7 +427,7 @@ SELECT new_ids.new_site_id,
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
 			fmt.Errorf("Could not load default profile options: %v", err.Error())
 	}
-	profileOptions.ProfileId = profile.Id
+	profileOptions.ProfileID = profile.ID
 
 	status, err = profileOptions.Insert(tx)
 	if err != nil {
@@ -442,14 +442,14 @@ SELECT new_ids.new_site_id,
 	}
 
 	// Create attachment for avatar and attach it to profile
-	fm, _, err := StoreGravatar(MakeGravatarUrl(profile.ProfileName))
+	fm, _, err := StoreGravatar(MakeGravatarURL(profile.ProfileName))
 	if err != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
 			fmt.Errorf("Could not store gravatar for profile: %+v", err)
 	}
 
 	// Attach avatar to profile
-	attachment, status, err := AttachAvatar(profile.Id, fm)
+	attachment, status, err := AttachAvatar(profile.ID, fm)
 	if err != nil {
 		return SiteType{}, ProfileType{}, status,
 			fmt.Errorf("Could not attach avatar to profile: %v", err.Error())
@@ -460,11 +460,11 @@ SELECT new_ids.new_site_id,
 	if fm.FileExt != "" {
 		filePath += `.` + fm.FileExt
 	}
-	profile.AvatarUrlNullable = sql.NullString{
+	profile.AvatarURLNullable = sql.NullString{
 		String: fmt.Sprintf("%s/%s", h.ApiTypeFile, filePath),
 		Valid:  true,
 	}
-	profile.AvatarIdNullable = sql.NullInt64{
+	profile.AvatarIDNullable = sql.NullInt64{
 		Int64: attachment.AttachmentId,
 		Valid: true,
 	}
