@@ -187,7 +187,7 @@ UPDATE polls
 
 	PurgeCache(itemTypeId, itemId)
 
-	microcosmId := GetMicrocosmIdForItem(itemTypeId, itemId)
+	microcosmId := GetMicrocosmIDForItem(itemTypeId, itemId)
 	if microcosmId > 0 {
 		_, err = db.Exec(`--Update Microcosm Comment Count
 UPDATE microcosms
@@ -253,7 +253,7 @@ UPDATE polls
 
 	PurgeCache(itemTypeId, itemId)
 
-	microcosmId := GetMicrocosmIdForItem(itemTypeId, itemId)
+	microcosmId := GetMicrocosmIDForItem(itemTypeId, itemId)
 	if microcosmId > 0 {
 		_, err = db.Exec(`--Update Microcosm Comment Count
 UPDATE microcosms

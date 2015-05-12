@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -17,14 +16,16 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// MicrocosmsType is a collection of microcosms
 type MicrocosmsType struct {
 	Microcosms h.ArrayType    `json:"microcosms"`
 	Meta       h.CoreMetaType `json:"meta"`
 }
 
+// MicrocosmSummaryType is a summary of a microcosm
 type MicrocosmSummaryType struct {
-	Id           int64   `json:"id"`
-	SiteId       int64   `json:"siteId,omitempty"`
+	ID           int64   `json:"id"`
+	SiteID       int64   `json:"siteId,omitempty"`
 	Visibility   string  `json:"visibility"`
 	Title        string  `json:"title"`
 	Description  string  `json:"description"`
@@ -37,13 +38,14 @@ type MicrocosmSummaryType struct {
 	Meta h.SummaryMetaType `json:"meta"`
 }
 
+// MicrocosmType is a microcosm
 type MicrocosmType struct {
-	Id          int64  `json:"id"`
-	SiteId      int64  `json:"siteId,omitempty"`
+	ID          int64  `json:"id"`
+	SiteID      int64  `json:"siteId,omitempty"`
 	Visibility  string `json:"visibility"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	OwnedById   int64  `json:"-"`
+	OwnedByID   int64  `json:"-"`
 
 	Moderators []int64 `json:"moderators"`
 
@@ -51,6 +53,7 @@ type MicrocosmType struct {
 	Meta  h.DefaultMetaType `json:"meta"`
 }
 
+// MicrocosmSummaryRequest is an envelope for a microcosm summary
 type MicrocosmSummaryRequest struct {
 	Item   MicrocosmSummaryType
 	Err    error
@@ -58,20 +61,25 @@ type MicrocosmSummaryRequest struct {
 	Seq    int
 }
 
+// MicrocosmSummaryRequestBySeq is a collection of requests
 type MicrocosmSummaryRequestBySeq []MicrocosmSummaryRequest
 
+// Len returns the length of the collection
 func (v MicrocosmSummaryRequestBySeq) Len() int {
 	return len(v)
 }
 
+// Swap changes the position of two items in the collection
 func (v MicrocosmSummaryRequestBySeq) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
 }
 
+// Less determines which item is sequenced lower than the other
 func (v MicrocosmSummaryRequestBySeq) Less(i, j int) bool {
 	return v[i].Seq < v[j].Seq
 }
 
+// Validate returns true if the microcosm is valid
 func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
 
 	m.Title = SanitiseText(m.Title)
@@ -82,7 +90,7 @@ func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
 			len(m.Meta.EditReason) == 0 {
 
 			return http.StatusBadRequest,
-				errors.New("You must provide a reason for the update")
+				fmt.Errorf("You must provide a reason for the update")
 		}
 	}
 
@@ -94,14 +102,14 @@ func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
 	}
 
 	if strings.Trim(m.Title, " ") == "" {
-		return http.StatusBadRequest, errors.New("Title is a required field")
+		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
 
 	m.Title = ShoutToWhisper(m.Title)
 
 	if strings.Trim(m.Description, " ") == "" {
 		return http.StatusBadRequest,
-			errors.New("Description is a required field")
+			fmt.Errorf("Description is a required field")
 	}
 
 	m.Description = ShoutToWhisper(m.Description)
@@ -109,15 +117,16 @@ func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
 	return http.StatusOK, nil
 }
 
+// FetchSummaries populates a partially populated microcosm struct
 func (m *MicrocosmType) FetchSummaries(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 ) (
 	int,
 	error,
 ) {
 
-	profile, status, err := GetProfileSummary(siteId, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		return status, err
 	}
@@ -125,7 +134,7 @@ func (m *MicrocosmType) FetchSummaries(
 
 	if m.Meta.EditedByNullable.Valid {
 		profile, status, err :=
-			GetProfileSummary(siteId, m.Meta.EditedByNullable.Int64)
+			GetProfileSummary(siteID, m.Meta.EditedByNullable.Int64)
 		if err != nil {
 			return status, err
 		}
@@ -140,8 +149,8 @@ func (m *MicrocosmType) FetchSummaries(
 	var unread bool
 	err = db.QueryRow(
 		`SELECT has_unread(2, $1, $2)`,
-		m.Id,
-		profileId,
+		m.ID,
+		profileID,
 	).Scan(
 		&unread,
 	)
@@ -154,14 +163,10 @@ func (m *MicrocosmType) FetchSummaries(
 	return http.StatusOK, nil
 }
 
-func (m *MicrocosmSummaryType) FetchProfileSummaries(
-	siteId int64,
-) (
-	int,
-	error,
-) {
+// FetchSummaries populates a partially populated struct
+func (m *MicrocosmSummaryType) FetchSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteId, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		return status, err
 	}
@@ -170,6 +175,7 @@ func (m *MicrocosmSummaryType) FetchProfileSummaries(
 	return http.StatusOK, nil
 }
 
+// Insert saves the microcosm to the database
 func (m *MicrocosmType) Insert() (int, error) {
 	status, err := m.Validate(false, false)
 	if err != nil {
@@ -179,6 +185,7 @@ func (m *MicrocosmType) Insert() (int, error) {
 	return m.insert()
 }
 
+// Import saves the microcosm to the database
 func (m *MicrocosmType) Import() (int, error) {
 	status, err := m.Validate(true, true)
 	if err != nil {
@@ -188,6 +195,7 @@ func (m *MicrocosmType) Import() (int, error) {
 	return m.insert()
 }
 
+// insert saves the microcosm to the database
 func (m *MicrocosmType) insert() (int, error) {
 
 	tx, err := h.GetTransaction()
@@ -196,7 +204,7 @@ func (m *MicrocosmType) insert() (int, error) {
 	}
 	defer tx.Rollback()
 
-	var insertId int64
+	var insertID int64
 	err = tx.QueryRow(`-- Create Microcosm
 INSERT INTO microcosms (
     site_id, visibility, title, description, created,
@@ -205,36 +213,34 @@ INSERT INTO microcosms (
     $1, $2, $3, $4, $5,
     $6, $7
 ) RETURNING microcosm_id`,
-		m.SiteId,
+		m.SiteID,
 		m.Visibility,
 		m.Title,
 		m.Description,
 		m.Meta.Created,
 		m.Meta.CreatedById,
-		m.OwnedById,
+		m.OwnedByID,
 	).Scan(
-		&insertId,
+		&insertID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error inserting data and returning ID: %+v", err),
-			)
+			fmt.Errorf("Error inserting data and returning ID: %+v", err)
 	}
-	m.Id = insertId
+	m.ID = insertID
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.Id)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.ID)
 
 	return http.StatusOK, nil
 }
 
+// Update saves changes to the microcosm
 func (m *MicrocosmType) Update() (int, error) {
 
 	status, err := m.Validate(true, false)
@@ -259,8 +265,8 @@ UPDATE microcosms
        edited_by = $7,
        edit_reason = $8
  WHERE microcosm_id = $1`,
-		m.Id,
-		m.SiteId,
+		m.ID,
+		m.SiteID,
 		m.Visibility,
 		m.Title,
 		m.Description,
@@ -269,23 +275,22 @@ UPDATE microcosms
 		m.Meta.EditReason,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.Id)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.ID)
 
 	return http.StatusOK, nil
 }
 
+// Patch partially updates a microcosm
 func (m *MicrocosmType) Patch(
 	ac AuthContext,
 	patches []h.PatchType,
@@ -331,7 +336,7 @@ func (m *MicrocosmType) Patch(
 				fmt.Sprintf("Set moderated to %t", m.Meta.Flags.Moderated)
 		default:
 			return http.StatusBadRequest,
-				errors.New("Unsupported path in patch replace operation")
+				fmt.Errorf("Unsupported path in patch replace operation")
 		}
 
 		m.Meta.Flags.SetVisible()
@@ -344,7 +349,7 @@ UPDATE microcosms
       ,edited_by = $5
       ,edit_reason = $6
  WHERE microcosm_id = $1`,
-			m.Id,
+			m.ID,
 			patch.Bool.Bool,
 			m.Meta.Flags.Visible,
 			m.Meta.EditedNullable,
@@ -352,24 +357,23 @@ UPDATE microcosms
 			m.Meta.EditReason,
 		)
 		if err != nil {
-			return http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Update failed: %v", err.Error()),
-			)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Update failed: %v", err.Error())
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.Id)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.ID)
 
 	return http.StatusOK, nil
 }
 
+// Delete removes a microcosm from the database
 func (m *MicrocosmType) Delete() (int, error) {
 
 	// Delete resource
@@ -383,31 +387,30 @@ func (m *MicrocosmType) Delete() (int, error) {
 UPDATE microcosms
    SET is_deleted = true
  WHERE microcosm_id = $1`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
 		tx.Rollback()
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Delete failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.Id)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.ID)
 
 	return http.StatusOK, nil
 }
 
+// GetMicrocosm fetches a microcosm
 func GetMicrocosm(
-	siteId int64,
+	siteID int64,
 	id int64,
-	profileId int64,
+	profileID int64,
 ) (
 	MicrocosmType,
 	int,
@@ -416,7 +419,7 @@ func GetMicrocosm(
 
 	if id == 0 {
 		return MicrocosmType{}, http.StatusNotFound,
-			errors.New("Microcosm not found")
+			fmt.Errorf("Microcosm not found")
 	}
 
 	// Get from cache if it's available
@@ -424,11 +427,11 @@ func GetMicrocosm(
 	if val, ok := c.CacheGet(mcKey, MicrocosmType{}); ok {
 
 		m := val.(MicrocosmType)
-		if m.SiteId != siteId {
-			return MicrocosmType{}, http.StatusNotFound, errors.New("Not found")
+		if m.SiteID != siteID {
+			return MicrocosmType{}, http.StatusNotFound, fmt.Errorf("Not found")
 		}
 
-		m.FetchSummaries(siteId, profileId)
+		m.FetchSummaries(siteID, profileID)
 
 		return m, 0, nil
 	}
@@ -462,11 +465,11 @@ SELECT microcosm_id,
    AND microcosm_id = $2
    AND is_deleted IS NOT TRUE
    AND is_moderated IS NOT TRUE`,
-		siteId,
+		siteID,
 		id,
 	).Scan(
-		&m.Id,
-		&m.SiteId,
+		&m.ID,
+		&m.SiteID,
 		&m.Visibility,
 		&m.Title,
 		&m.Description,
@@ -482,13 +485,12 @@ SELECT microcosm_id,
 		&m.Meta.Flags.Visible,
 	)
 	if err == sql.ErrNoRows {
-		return MicrocosmType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Resource with ID %d not found", id),
-		)
+		return MicrocosmType{}, http.StatusNotFound,
+			fmt.Errorf("Resource with ID %d not found", id)
+
 	} else if err != nil {
-		return MicrocosmType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return MicrocosmType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	if m.Meta.EditReasonNullable.Valid {
@@ -500,26 +502,27 @@ SELECT microcosm_id,
 	}
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeMicrocosm, m.Id),
-			h.GetLink("site", "", h.ItemTypeSite, m.SiteId),
+			h.GetLink("self", "", h.ItemTypeMicrocosm, m.ID),
+			h.GetLink("site", "", h.ItemTypeSite, m.SiteID),
 		}
 
 	// Update cache
 	c.CacheSet(mcKey, m, mcTtl)
 
-	m.FetchSummaries(siteId, profileId)
+	m.FetchSummaries(siteID, profileID)
 	return m, http.StatusOK, nil
 }
 
+// HandleMicrocosmSummaryRequest provides a wrapper to fetching a summary
 func HandleMicrocosmSummaryRequest(
-	siteId int64,
+	siteID int64,
 	id int64,
-	profileId int64,
+	profileID int64,
 	seq int,
 	out chan<- MicrocosmSummaryRequest,
 ) {
 
-	item, status, err := GetMicrocosmSummary(siteId, id, profileId)
+	item, status, err := GetMicrocosmSummary(siteID, id, profileID)
 
 	response := MicrocosmSummaryRequest{
 		Item:   item,
@@ -530,10 +533,11 @@ func HandleMicrocosmSummaryRequest(
 	out <- response
 }
 
+// GetMicrocosmSummary fetches a summary of a microcosm
 func GetMicrocosmSummary(
-	siteId int64,
+	siteID int64,
 	id int64,
-	profileId int64,
+	profileID int64,
 ) (
 	MicrocosmSummaryType,
 	int,
@@ -542,7 +546,7 @@ func GetMicrocosmSummary(
 
 	if id == 0 {
 		return MicrocosmSummaryType{}, http.StatusNotFound,
-			errors.New("Microcosm not found")
+			fmt.Errorf("Microcosm not found")
 	}
 
 	// Get from cache if it's available
@@ -551,12 +555,12 @@ func GetMicrocosmSummary(
 
 		m := val.(MicrocosmSummaryType)
 
-		if m.SiteId != siteId {
+		if m.SiteID != siteID {
 			return MicrocosmSummaryType{}, http.StatusNotFound,
-				errors.New("Not found")
+				fmt.Errorf("Not found")
 		}
 
-		m.FetchProfileSummaries(siteId)
+		m.FetchSummaries(siteID)
 
 		return m, http.StatusOK, nil
 	}
@@ -590,11 +594,11 @@ SELECT microcosm_id
    AND microcosm_id = $2
    AND is_deleted IS NOT TRUE
    AND is_moderated IS NOT TRUE`,
-		siteId,
+		siteID,
 		id,
 	).Scan(
-		&m.Id,
-		&m.SiteId,
+		&m.ID,
+		&m.SiteID,
 		&m.Visibility,
 		&m.Title,
 		&m.Description,
@@ -612,37 +616,38 @@ SELECT microcosm_id
 		glog.Warning(err)
 		return MicrocosmSummaryType{},
 			http.StatusNotFound,
-			errors.New(fmt.Sprintf("Microcosm with ID %d not found", id))
+			fmt.Errorf("Microcosm with ID %d not found", id)
 
 	} else if err != nil {
 		glog.Error(err)
 		return MicrocosmSummaryType{},
 			http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 
-	mru, status, err := GetMostRecentItem(siteId, m.Id, profileId)
+	mru, status, err := GetMostRecentItem(siteID, m.ID, profileID)
 	if err != nil {
 		glog.Error(err)
-		return MicrocosmSummaryType{}, status, errors.New("Row parsing error")
+		return MicrocosmSummaryType{}, status, fmt.Errorf("Row parsing error")
 	}
 	if mru.Valid {
 		m.MRU = mru
 	}
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeMicrocosm, m.Id),
-			h.GetLink("site", "", h.ItemTypeSite, m.SiteId),
+			h.GetLink("self", "", h.ItemTypeMicrocosm, m.ID),
+			h.GetLink("site", "", h.ItemTypeSite, m.SiteID),
 		}
 
 	// Update cache
 	c.CacheSet(mcKey, m, mcTtl)
 
-	m.FetchProfileSummaries(siteId)
+	m.FetchSummaries(siteID)
 
 	return m, http.StatusOK, nil
 }
 
+// GetMicrocosmTitle provides a cheap way to retrieve the title
 func GetMicrocosmTitle(id int64) string {
 
 	// Get from cache if it's available
@@ -678,38 +683,40 @@ SELECT title
 	return title
 }
 
-func GetMicrocosmIdForItem(itemTypeId int64, itemId int64) int64 {
+// GetMicrocosmIDForItem provides a cheap way to fetch an id for an item
+func GetMicrocosmIDForItem(itemTypeID int64, itemID int64) int64 {
 	db, err := h.GetConnection()
 	if err != nil {
 		glog.Error(err)
 		return 0
 	}
 
-	var microcosmId int64
+	var microcosmID int64
 	err = db.QueryRow(`--GetMicrocosmIdForItem
 SELECT microcosm_id
   FROM flags
  WHERE item_type_id = $1
    AND item_id = $2`,
-		itemTypeId,
-		itemId,
+		itemTypeID,
+		itemID,
 	).Scan(
-		&microcosmId,
+		&microcosmID,
 	)
 	if err != nil {
 		glog.Error(err)
 		return 0
 	}
 
-	return microcosmId
+	return microcosmID
 }
 
-func IncrementMicrocosmItemCount(tx *sql.Tx, microcosmId int64) error {
+// IncrementMicrocosmItemCount adds an item to the microcosm
+func IncrementMicrocosmItemCount(tx *sql.Tx, microcosmID int64) error {
 	_, err := tx.Exec(`--Update Microcosm Item Count
 UPDATE microcosms
    SET item_count = item_count + 1
  WHERE microcosm_id = $1`,
-		microcosmId,
+		microcosmID,
 	)
 	if err != nil {
 		glog.Error(err)
@@ -719,12 +726,13 @@ UPDATE microcosms
 	return nil
 }
 
-func DecrementMicrocosmItemCount(tx *sql.Tx, microcosmId int64) error {
+// DecrementMicrocosmItemCount removes an item from the microcosm
+func DecrementMicrocosmItemCount(tx *sql.Tx, microcosmID int64) error {
 	_, err := tx.Exec(`--Update Microcosm Item Count
 UPDATE microcosms
    SET item_count = item_count - 1
  WHERE microcosm_id = $1`,
-		microcosmId,
+		microcosmID,
 	)
 	if err != nil {
 		glog.Error(err)
@@ -734,9 +742,10 @@ UPDATE microcosms
 	return nil
 }
 
+// GetMicrocosms fetches a collection of microcosms
 func GetMicrocosms(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -789,8 +798,8 @@ SELECT (SELECT COUNT(*) FROM m) AS total
             LIMIT $3
            OFFSET $4
        ) r`,
-		siteId,
-		profileId,
+		siteID,
+		profileID,
 		limit,
 		offset,
 	)
@@ -798,15 +807,15 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 	if err != nil {
 		glog.Errorf(
 			"db.Query(%d, %d, %d, %d) %+v",
-			siteId,
-			profileId,
+			siteID,
+			profileID,
 			limit,
 			offset,
 			err,
 		)
 		return []MicrocosmSummaryType{}, 0, 0,
 			http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 	defer rows.Close()
 
@@ -828,7 +837,7 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 			glog.Errorf("rows.Scan() %+v", err)
 			return []MicrocosmSummaryType{}, 0, 0,
 				http.StatusInternalServerError,
-				errors.New("Row parsing error")
+				fmt.Errorf("Row parsing error")
 		}
 
 		unread[id] = hasUnread
@@ -839,7 +848,7 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 		glog.Errorf("rows.Err() %+v", err)
 		return []MicrocosmSummaryType{}, 0, 0,
 			http.StatusInternalServerError,
-			errors.New("Error fetching rows")
+			fmt.Errorf("Error fetching rows")
 	}
 	rows.Close()
 
@@ -849,7 +858,7 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 	defer close(req)
 
 	for seq, id := range ids {
-		go HandleMicrocosmSummaryRequest(siteId, id, profileId, seq, req)
+		go HandleMicrocosmSummaryRequest(siteID, id, profileID, seq, req)
 		wg1.Add(1)
 	}
 
@@ -876,7 +885,7 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 	ems := []MicrocosmSummaryType{}
 	for _, resp := range resps {
 		m := resp.Item
-		m.Meta.Flags.Unread = unread[m.Id]
+		m.Meta.Flags.Unread = unread[m.ID]
 		ems = append(ems, m)
 	}
 
@@ -886,7 +895,7 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 	if offset > maxOffset {
 		return []MicrocosmSummaryType{}, 0, 0,
 			http.StatusBadRequest,
-			errors.New(fmt.Sprintf("not enough records, "+
+			fmt.Errorf(fmt.Sprintf("not enough records, "+
 				"offset (%d) would return an empty page.", offset))
 	}
 

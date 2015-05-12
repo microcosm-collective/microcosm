@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -15,11 +14,13 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// PollsType is an array of polls
 type PollsType struct {
 	Polls h.ArrayType    `json:"polls"`
 	Meta  h.CoreMetaType `json:"meta"`
 }
 
+// PollSummaryType is a summary of a poll
 type PollSummaryType struct {
 	ItemSummary
 
@@ -32,6 +33,7 @@ type PollSummaryType struct {
 	ItemSummaryMeta
 }
 
+// PollType is a poll
 type PollType struct {
 	ItemDetail
 
@@ -49,17 +51,19 @@ type PollType struct {
 	ItemDetailCommentsAndMeta
 }
 
+// PollChoiceType is a single choice on a poll
 type PollChoiceType struct {
-	Id         int64  `json:"id"`
+	ID         int64  `json:"id"`
 	Choice     string `json:"choice"`
 	Order      int64  `json:"order"`
 	Votes      int64  `json:"votes"`
 	VoterCount int64  `json:"voterCount"`
 }
 
+// Validate returns true if the poll is valid
 func (m *PollType) Validate(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 	exists bool,
 ) (
 	int,
@@ -71,7 +75,7 @@ func (m *PollType) Validate(
 
 	// Does the Microcosm specified exist on this site?
 	if !exists {
-		_, status, err := GetMicrocosmSummary(siteId, m.MicrocosmId, profileId)
+		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmId, profileID)
 		if err != nil {
 			return status, err
 		}
@@ -82,58 +86,58 @@ func (m *PollType) Validate(
 			len(m.Meta.EditReason) == 0 {
 
 			return http.StatusBadRequest,
-				errors.New("You must provide a reason for the update")
-		} else {
-			m.Meta.EditReason = ShoutToWhisper(m.Meta.EditReason)
+				fmt.Errorf("You must provide a reason for the update")
 		}
+
+		m.Meta.EditReason = ShoutToWhisper(m.Meta.EditReason)
 	}
 
 	if m.MicrocosmId <= 0 {
 		return http.StatusBadRequest,
-			errors.New("You must specify a Microcosm ID")
+			fmt.Errorf("You must specify a Microcosm ID")
 	}
 
 	if strings.Trim(m.Title, " ") == "" {
-		return http.StatusBadRequest, errors.New("Title is a required field")
+		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
 
 	m.Title = ShoutToWhisper(m.Title)
 
 	if strings.Trim(m.PollQuestion, " ") == "" {
 		return http.StatusBadRequest,
-			errors.New("You must supply a question that the poll will answer")
+			fmt.Errorf("You must supply a question that the poll will answer")
 	}
 
 	m.PollQuestion = ShoutToWhisper(m.PollQuestion)
 
 	if m.Choices == nil || len(m.Choices) == 0 {
 		return http.StatusBadRequest,
-			errors.New("You must supply choices for the poll")
-	} else {
-		for ii := 0; ii < len(m.Choices); ii++ {
-			m.Choices[ii].Choice = SanitiseText(m.Choices[ii].Choice)
+			fmt.Errorf("You must supply choices for the poll")
+	}
 
-			if strings.Trim(m.Choices[ii].Choice, " ") == "" {
-				return http.StatusBadRequest,
-					errors.New("Your poll choices must be populated")
-			}
+	for ii := 0; ii < len(m.Choices); ii++ {
+		m.Choices[ii].Choice = SanitiseText(m.Choices[ii].Choice)
 
-			m.Choices[ii].Choice = ShoutToWhisper(m.Choices[ii].Choice)
+		if strings.Trim(m.Choices[ii].Choice, " ") == "" {
+			return http.StatusBadRequest,
+				fmt.Errorf("Your poll choices must be populated")
 		}
+
+		m.Choices[ii].Choice = ShoutToWhisper(m.Choices[ii].Choice)
 	}
 
 	if strings.Trim(m.VotingEnds, " ") != "" {
 		votingEnds, err := time.Parse(time.RFC3339, m.VotingEnds)
 		if err != nil {
 			return http.StatusBadRequest, err
-		} else {
-			if !exists && votingEnds.Unix() < time.Now().Unix() {
-				return http.StatusBadRequest,
-					errors.New("Voting cannot close in the past")
-			}
-
-			m.VotingEndsNullable = pq.NullTime{Time: votingEnds, Valid: true}
 		}
+
+		if !exists && votingEnds.Unix() < time.Now().Unix() {
+			return http.StatusBadRequest,
+				fmt.Errorf("Voting cannot close in the past")
+		}
+
+		m.VotingEndsNullable = pq.NullTime{Time: votingEnds, Valid: true}
 	}
 
 	// Set defaults on child nodes
@@ -149,9 +153,10 @@ func (m *PollType) Validate(
 	return http.StatusOK, nil
 }
 
-func (m *PollType) FetchProfileSummaries(siteId int64) (int, error) {
+// FetchProfileSummaries populates a partially populated struct
+func (m *PollType) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteId, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		return status, err
 	}
@@ -159,7 +164,7 @@ func (m *PollType) FetchProfileSummaries(siteId int64) (int, error) {
 
 	if m.Meta.EditedByNullable.Valid {
 		profile, status, err :=
-			GetProfileSummary(siteId, m.Meta.EditedByNullable.Int64)
+			GetProfileSummary(siteID, m.Meta.EditedByNullable.Int64)
 		if err != nil {
 			return status, err
 		}
@@ -169,9 +174,10 @@ func (m *PollType) FetchProfileSummaries(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
-func (m *PollSummaryType) FetchProfileSummaries(siteId int64) (int, error) {
+// FetchProfileSummaries populates a partially populated struct
+func (m *PollSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteId, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		return status, err
 	}
@@ -180,9 +186,10 @@ func (m *PollSummaryType) FetchProfileSummaries(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
-func (m *PollType) Insert(siteId int64, profileId int64) (int, error) {
+// Insert saves the poll to the database
+func (m *PollType) Insert(siteID int64, profileID int64) (int, error) {
 
-	status, err := m.Validate(siteId, profileId, false)
+	status, err := m.Validate(siteID, profileID, false)
 	if err != nil {
 		return status, err
 	}
@@ -212,14 +219,13 @@ INSERT INTO polls (
 		m.Multi,
 	)
 
-	var insertId int64
-	err = row.Scan(&insertId)
+	var insertID int64
+	err = row.Scan(&insertID)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error inserting data and returning ID: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Error inserting data and returning ID: %v", err.Error())
 	}
-	m.Id = insertId
+	m.Id = insertID
 
 	for ii := 0; ii < len(m.Choices); ii++ {
 		_, err := tx.Exec(`
@@ -228,14 +234,13 @@ INSERT INTO choices (
 ) VALUES (
        $1, $2, $3
 )`,
-			insertId,
+			insertID,
 			m.Choices[ii].Choice,
 			m.Choices[ii].Order,
 		)
 		if err != nil {
-			return http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Insert failed: %v", err.Error()),
-			)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Insert failed: %v", err.Error())
 		}
 	}
 
@@ -246,9 +251,8 @@ INSERT INTO choices (
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypePoll], m.Id)
@@ -257,9 +261,10 @@ INSERT INTO choices (
 	return http.StatusOK, nil
 }
 
-func (m *PollType) Update(siteId int64, profileId int64) (int, error) {
+// Update saves changes to a poll
+func (m *PollType) Update(siteID int64, profileID int64) (int, error) {
 
-	status, err := m.Validate(siteId, profileId, true)
+	status, err := m.Validate(siteID, profileID, true)
 	if err != nil {
 		return status, err
 	}
@@ -271,35 +276,34 @@ func (m *PollType) Update(siteId int64, profileId int64) (int, error) {
 	}
 	defer tx.Rollback()
 
-	choiceIds := make([]string, len(m.Choices))
+	choiceIDs := make([]string, len(m.Choices))
 	seen := 0
 	for ii := 0; ii < len(m.Choices); ii++ {
-		if m.Choices[ii].Id > 0 {
-			choiceIds[seen] = strconv.FormatInt(m.Choices[ii].Id, 10)
+		if m.Choices[ii].ID > 0 {
+			choiceIDs[seen] = strconv.FormatInt(m.Choices[ii].ID, 10)
 			seen++
 		}
 	}
-	choiceIds = choiceIds[0:seen]
+	choiceIDs = choiceIDs[0:seen]
 
-	if len(choiceIds) > 0 {
+	if len(choiceIDs) > 0 {
 
 		_, err = tx.Exec(fmt.Sprintf(`
 DELETE FROM choices
  WHERE poll_id = $1
    AND choice_id NOT IN (%s)`,
-			strings.Join(choiceIds[0:seen], ","),
+			strings.Join(choiceIDs[0:seen], ","),
 		),
 			m.Id,
 		)
 		if err != nil {
-			return http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Delete of choices failed: %v", err.Error()),
-			)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Delete of choices failed: %v", err.Error())
 		}
 	}
 
 	for ii := 0; ii < len(m.Choices); ii++ {
-		if m.Choices[ii].Id > 0 {
+		if m.Choices[ii].ID > 0 {
 			_, err = tx.Exec(`
 UPDATE choices
    SET title = $1,
@@ -309,7 +313,7 @@ UPDATE choices
 				m.Choices[ii].Choice,
 				m.Choices[ii].Order,
 				m.Choices[ii].Votes,
-				m.Choices[ii].Id,
+				m.Choices[ii].ID,
 			)
 		} else {
 			_, err = tx.Exec(`
@@ -325,9 +329,8 @@ INSERT INTO choices (
 		}
 
 		if err != nil {
-			return http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Insert or Update of choices failed: %v", err.Error()),
-			)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Insert or Update of choices failed: %v", err.Error())
 		}
 	}
 
@@ -355,16 +358,14 @@ UPDATE polls
 		m.Multi,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update of poll failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update of poll failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypePoll], m.Id)
@@ -373,6 +374,7 @@ UPDATE polls
 	return http.StatusOK, nil
 }
 
+// Patch allows for partial updates to the poll
 func (m *PollType) Patch(ac AuthContext, patches []h.PatchType) (int, error) {
 
 	// Update resource
@@ -412,7 +414,7 @@ func (m *PollType) Patch(ac AuthContext, patches []h.PatchType) (int, error) {
 				fmt.Sprintf("Set moderated to %t", m.Meta.Flags.Moderated)
 		default:
 			return http.StatusBadRequest,
-				errors.New("Unsupported path in patch replace operation")
+				fmt.Errorf("Unsupported path in patch replace operation")
 		}
 
 		m.Meta.Flags.SetVisible()
@@ -432,17 +434,15 @@ UPDATE polls
 			m.Meta.EditReason,
 		)
 		if err != nil {
-			return http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Update failed: %v", err.Error()),
-			)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Update failed: %v", err.Error())
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.Id)
@@ -451,6 +451,7 @@ UPDATE polls
 	return http.StatusOK, nil
 }
 
+// Delete removes a poll from the database
 func (m *PollType) Delete() (int, error) {
 
 	// Delete resource
@@ -468,7 +469,7 @@ UPDATE polls
 		m.Id,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
+		return http.StatusInternalServerError, fmt.Errorf(
 			fmt.Sprintf("Delete failed: %v", err.Error()),
 		)
 	}
@@ -480,7 +481,7 @@ UPDATE polls
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
+		return http.StatusInternalServerError, fmt.Errorf(
 			fmt.Sprintf("Transaction failed: %v", err.Error()),
 		)
 	}
@@ -491,13 +492,14 @@ UPDATE polls
 	return http.StatusOK, nil
 }
 
-func GetPoll(siteId int64, id int64, profileId int64) (PollType, int, error) {
+// GetPoll fetches a poll
+func GetPoll(siteID int64, id int64, profileID int64) (PollType, int, error) {
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcPollKeys[c.CacheDetail], id)
 	if val, ok := c.CacheGet(mcKey, PollType{}); ok {
 		m := val.(PollType)
-		m.FetchProfileSummaries(siteId)
+		m.FetchProfileSummaries(siteID)
 		return m, http.StatusOK, nil
 	}
 
@@ -537,7 +539,7 @@ SELECT p.poll_id
    AND p.poll_id = $2
    AND p.is_deleted IS NOT TRUE
    AND p.is_moderated IS NOT TRUE`,
-		siteId,
+		siteID,
 		id,
 	).Scan(
 		&m.Id,
@@ -560,13 +562,12 @@ SELECT p.poll_id
 		&m.Multi,
 	)
 	if err == sql.ErrNoRows {
-		return PollType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Resource with ID %d not found", id),
-		)
+		return PollType{}, http.StatusNotFound,
+			fmt.Errorf("Resource with ID %d not found", id)
+
 	} else if err != nil {
-		return PollType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return PollType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	if m.Meta.EditReasonNullable.Valid {
@@ -591,9 +592,8 @@ SELECT choice_id,
 		m.Id,
 	)
 	if err != nil {
-		return PollType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return PollType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows2.Close()
 
@@ -602,7 +602,7 @@ SELECT choice_id,
 	for rows2.Next() {
 		choice := PollChoiceType{}
 		err = rows2.Scan(
-			&choice.Id,
+			&choice.ID,
 			&choice.Choice,
 			&choice.Votes,
 			&choice.VoterCount,
@@ -610,16 +610,14 @@ SELECT choice_id,
 		)
 		choices = append(choices, choice)
 		if err != nil {
-			return PollType{}, http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Row parsing error: %v", err.Error()),
-			)
+			return PollType{}, http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 	}
 	err = rows2.Err()
 	if err != nil {
-		return PollType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error fetching rows2: %v", err.Error()),
-		)
+		return PollType{}, http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows2: %v", err.Error())
 	}
 	rows2.Close()
 
@@ -638,14 +636,15 @@ SELECT choice_id,
 	// Update cache
 	c.CacheSet(mcKey, m, mcTtl)
 
-	m.FetchProfileSummaries(siteId)
+	m.FetchProfileSummaries(siteID)
 	return m, http.StatusOK, nil
 }
 
+// GetPollSummary fetches a summary of a poll
 func GetPollSummary(
-	siteId int64,
+	siteID int64,
 	id int64,
-	profileId int64,
+	profileID int64,
 ) (
 	PollSummaryType,
 	int,
@@ -656,11 +655,11 @@ func GetPollSummary(
 	mcKey := fmt.Sprintf(mcPollKeys[c.CacheSummary], id)
 	if val, ok := c.CacheGet(mcKey, PollSummaryType{}); ok {
 		m := val.(PollSummaryType)
-		_, status, err := GetMicrocosmSummary(siteId, m.MicrocosmId, profileId)
+		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmId, profileID)
 		if err != nil {
 			return PollSummaryType{}, status, err
 		}
-		m.FetchProfileSummaries(siteId)
+		m.FetchProfileSummaries(siteID)
 		return m, 0, nil
 	}
 
@@ -717,13 +716,12 @@ SELECT poll_id
 		&m.ViewCount,
 	)
 	if err == sql.ErrNoRows {
-		return PollSummaryType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Resource with ID %d not found", id),
-		)
+		return PollSummaryType{}, http.StatusNotFound,
+			fmt.Errorf("Resource with ID %d not found", id)
+
 	} else if err != nil {
-		return PollSummaryType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return PollSummaryType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	if m.VotingEndsNullable.Valid {
@@ -743,13 +741,14 @@ SELECT poll_id
 	// Update cache
 	c.CacheSet(mcKey, m, mcTtl)
 
-	m.FetchProfileSummaries(siteId)
+	m.FetchProfileSummaries(siteID)
 	return m, http.StatusOK, nil
 }
 
+// GetPolls returns a collection of polls
 func GetPolls(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -780,15 +779,13 @@ SELECT COUNT(*) OVER() AS total
  ORDER BY p.created ASC
  LIMIT $2
 OFFSET $3`,
-		siteId,
+		siteID,
 		limit,
 		offset,
 	)
 	if err != nil {
 		return []PollSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -803,12 +800,10 @@ OFFSET $3`,
 		)
 		if err != nil {
 			return []PollSummaryType{}, 0, 0, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
-		m, status, err := GetPollSummary(siteId, id, profileId)
+		m, status, err := GetPollSummary(siteID, id, profileID)
 		if err != nil {
 			return []PollSummaryType{}, 0, 0, status, err
 		}
@@ -818,9 +813,7 @@ OFFSET $3`,
 	err = rows.Err()
 	if err != nil {
 		return []PollSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -829,10 +822,8 @@ OFFSET $3`,
 
 	if offset > maxOffset {
 		return []PollSummaryType{}, 0, 0, http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf("not enough records, "+
-					"offset (%d) would return an empty page.", offset),
-			)
+			fmt.Errorf("not enough records, "+
+				"offset (%d) would return an empty page.", offset)
 	}
 
 	return ems, total, pages, http.StatusOK, nil

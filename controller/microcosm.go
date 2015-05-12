@@ -70,7 +70,7 @@ func (ctl *MicrocosmController) Read(c *models.Context) {
 	}
 
 	// Get Items
-	m.Items, status, err = models.GetItems(c.Site.ID, m.Id, c.Auth.ProfileId, c.Request.URL)
+	m.Items, status, err = models.GetItems(c.Site.ID, m.ID, c.Auth.ProfileId, c.Request.URL)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -80,7 +80,7 @@ func (ctl *MicrocosmController) Read(c *models.Context) {
 	if c.Auth.ProfileId > 0 {
 		// Get watcher status
 		watcherId, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeMicrocosm], m.Id, c.Auth.ProfileId,
+			h.ItemTypes[h.ItemTypeMicrocosm], m.ID, c.Auth.ProfileId,
 		)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
@@ -136,7 +136,7 @@ func (ctl *MicrocosmController) Update(c *models.Context) {
 	// End Authorisation
 
 	// Populate where applicable from auth and context
-	m.SiteId = c.Site.ID
+	m.SiteID = c.Site.ID
 	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
 	m.Meta.EditedNullable = pq.NullTime{Time: time.Now(), Valid: true}
 
@@ -149,7 +149,7 @@ func (ctl *MicrocosmController) Update(c *models.Context) {
 	audit.Replace(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -159,7 +159,7 @@ func (ctl *MicrocosmController) Update(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypeMicrocosm,
-			m.Id,
+			m.ID,
 		),
 	)
 }
@@ -262,7 +262,7 @@ func (ctl *MicrocosmController) Patch(c *models.Context) {
 	audit.Update(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -304,7 +304,7 @@ func (ctl *MicrocosmController) Delete(c *models.Context) {
 	audit.Delete(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,

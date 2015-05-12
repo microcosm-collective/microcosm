@@ -59,10 +59,10 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 	// End : Authorisation
 
 	// Populate where applicable from auth and context
-	m.SiteId = c.Site.ID
+	m.SiteID = c.Site.ID
 	m.Meta.CreatedById = c.Auth.ProfileId
 	m.Meta.Created = time.Now()
-	m.OwnedById = c.Auth.ProfileId
+	m.OwnedByID = c.Auth.ProfileId
 
 	status, err := m.Insert()
 	if err != nil {
@@ -73,7 +73,7 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 	audit.Create(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -83,7 +83,7 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypeMicrocosm,
-			m.Id,
+			m.ID,
 		),
 	)
 }
