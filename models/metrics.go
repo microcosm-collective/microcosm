@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -15,8 +14,9 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
-var defaultLogoUrl string = "https://meta.microco.sm/static/themes/1/logo.png"
+var defaultLogoURL = "https://meta.microco.sm/static/themes/1/logo.png"
 
+// MetricType describes the attributes of all sites on Microcosm
 type MetricType struct {
 	Timestamp      time.Time
 	Pageviews      int32
@@ -32,8 +32,8 @@ type MetricType struct {
 	TotalForums    int32
 }
 
+// GetMetrics fetchs the latest metrics
 func GetMetrics() ([]MetricType, int, error) {
-
 	db, err := h.GetConnection()
 	if err != nil {
 		return []MetricType{}, http.StatusInternalServerError, err
@@ -83,25 +83,23 @@ SELECT job_timestamp
 			&metric.TotalForums,
 		)
 		if err != nil {
-			return []MetricType{}, http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Row parsing error: %v", err.Error()),
-			)
+			return []MetricType{}, http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 		ems = append(ems, metric)
 	}
 	err = rows.Err()
 	if err != nil {
-		return []MetricType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error fetching rows: %v", err.Error()),
-		)
+		return []MetricType{}, http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
 	return ems, http.StatusOK, nil
 }
 
+// UpdateMetrics builds a new set of metrics
 func UpdateMetrics() error {
-
 	if conf.CONFIG_STRING[conf.KEY_ENVIRONMENT] != `prod` {
 		glog.Info("dev environment, skipping creation of metrics")
 		return nil
@@ -205,6 +203,7 @@ UPDATE metrics
 	return nil
 }
 
+// ProfileMetrics builds metrics about profiles
 func ProfileMetrics(start time.Time) (created int, edited int, total int, err error) {
 
 	db, err := h.GetConnection()
@@ -218,8 +217,7 @@ func ProfileMetrics(start time.Time) (created int, edited int, total int, err er
 		return
 	}
 
-	err = db.QueryRow(`
-SELECT COUNT(*) FROM profiles WHERE created >= $1`,
+	err = db.QueryRow(`SELECT COUNT(*) FROM profiles WHERE created >= $1`,
 		start,
 	).Scan(
 		&created,
@@ -240,6 +238,7 @@ SELECT COUNT(*)
 	return
 }
 
+// GoogleAnalytics fetches metrics from Google
 func GoogleAnalytics(
 	start time.Time,
 	end time.Time,
@@ -349,8 +348,8 @@ func GoogleAnalytics(
 	return pageviews, sessions, users, nil
 }
 
+// ForumMetrics builds metrics about sites
 func ForumMetrics() (total int, engaged int, err error) {
-
 	db, err := h.GetConnection()
 	if err != nil {
 		glog.Errorf("ForumMetrics: %s", err.Error())
@@ -383,7 +382,7 @@ SELECT COUNT(*) FROM (
                   ) > 1
             GROUP BY s.site_id
        ) AS t`,
-		defaultLogoUrl,
+		defaultLogoURL,
 	).Scan(
 		&engaged,
 	)
@@ -391,6 +390,7 @@ SELECT COUNT(*) FROM (
 	return
 }
 
+// UserGenMetrics builds metrics about user activity
 func UserGenMetrics(
 	start time.Time,
 ) (
