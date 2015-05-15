@@ -35,10 +35,10 @@ func (m *affWinLink) getDestination() (bool, string) {
 
 	// Hijack an existing affiliate link
 	if m.Link.Domain == "www.awin1.com" {
-		u, err := url.Parse(m.Link.Url)
+		u, err := url.Parse(m.Link.URL)
 		if err != nil {
-			glog.Errorf("url.Parse(`%s`) %+v", m.Link.Url, err)
-			return false, m.Link.Url
+			glog.Errorf("url.Parse(`%s`) %+v", m.Link.URL, err)
+			return false, m.Link.URL
 		}
 
 		q := u.Query()
@@ -98,15 +98,15 @@ func (m *affWinLink) getDestination() (bool, string) {
 		programID = 1857
 
 	default:
-		return false, m.Link.Url
+		return false, m.Link.URL
 	}
 
 	if programID == 3977 {
-		u, _ := url.Parse(m.Link.Url)
+		u, _ := url.Parse(m.Link.URL)
 		q := u.Query()
 		q.Del("affil")
 		u.RawQuery = q.Encode()
-		m.Link.Url = u.String()
+		m.Link.URL = u.String()
 	}
 
 	u, _ := url.Parse("http://www.awin1.com/cread.php")
@@ -114,7 +114,7 @@ func (m *affWinLink) getDestination() (bool, string) {
 	q.Add("awinaffid", affWinAffiliateID)
 	q.Add("awinmid", strconv.Itoa(programID))
 	q.Add("clickref", "")
-	q.Add("p", m.Link.Url)
+	q.Add("p", m.Link.URL)
 	u.RawQuery = q.Encode()
 
 	return true, u.String()

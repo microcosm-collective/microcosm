@@ -78,13 +78,13 @@ SELECT l.link_id
 	for rows.Next() {
 		link := Link{}
 		err = rows.Scan(
-			&link.Id,
-			&link.ShortUrl,
+			&link.ID,
+			&link.ShortURL,
 			&link.Domain,
-			&link.Url,
+			&link.URL,
 			&link.Text,
 			&link.Created,
-			&link.ResolvedUrl,
+			&link.ResolvedURL,
 			&link.Resolved,
 			&link.Hits,
 		)
@@ -211,7 +211,7 @@ SELECT r.rule_id
 	rows.Close()
 
 	for _, rule := range rules {
-		matched, err := regexp.Match(`(?i)`+rule.RegexMatch, []byte(m.Url))
+		matched, err := regexp.Match(`(?i)`+rule.RegexMatch, []byte(m.URL))
 		if err != nil {
 			glog.Errorf("%s %+v", "regexp.Compile(rule.RegexMatch)", err)
 			continue
@@ -268,10 +268,10 @@ func (m *Link) embedMediaUsingRule(
 			errors.New(fmt.Sprintf("Could not compile match URL: %+v", err))
 	}
 
-	embedHtml := matchURL.ReplaceAllString(m.Url, rule.RegexReplace)
+	embedHtml := matchURL.ReplaceAllString(m.URL, rule.RegexReplace)
 
 	// Use string manipulation to insert the embed
-	shortUrl := h.JumpUrl + m.ShortUrl
+	shortUrl := h.JumpUrl + m.ShortURL
 
 	return m.embedMedia(revisionId, shortUrl, embedHtml)
 }

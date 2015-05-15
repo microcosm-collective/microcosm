@@ -49,5 +49,5 @@ func (ctl *RedirectController) Read(c *models.Context) {
 		}
 	}
 
-	c.RespondWithLocation(redirect.Url)
+	c.RespondWithLocation(redirect.URL)
 }

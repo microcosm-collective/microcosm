@@ -28,10 +28,10 @@ func (m *webgainsLink) getDestination() (bool, string) {
 
 	// Hijack an existing affiliate link
 	if m.Link.Domain == "track.webgains.com" {
-		u, err := url.Parse(m.Link.Url)
+		u, err := url.Parse(m.Link.URL)
 		if err != nil {
-			glog.Errorf("url.Parse(`%s`) %+v", m.Link.Url, err)
-			return false, m.Link.Url
+			glog.Errorf("url.Parse(`%s`) %+v", m.Link.URL, err)
+			return false, m.Link.URL
 		}
 
 		q := u.Query()
@@ -58,7 +58,7 @@ func (m *webgainsLink) getDestination() (bool, string) {
 	case "www.westbrookcycles.co.uk":
 		programID = 7793
 	default:
-		return false, m.Link.Url
+		return false, m.Link.URL
 	}
 
 	// Create our affiliate link
@@ -66,7 +66,7 @@ func (m *webgainsLink) getDestination() (bool, string) {
 	q := u.Query()
 	q.Add("wgcampaignid", webGainsAffiliateID)
 	q.Add("wgprogramid", strconv.Itoa(programID))
-	q.Add("wgtarget", m.Link.Url)
+	q.Add("wgtarget", m.Link.URL)
 	u.RawQuery = q.Encode()
 
 	return true, u.String()

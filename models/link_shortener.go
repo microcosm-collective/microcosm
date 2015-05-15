@@ -272,7 +272,7 @@ func ShortenLink(
 	)
 	// Get the shortened version
 	for _, l := range *links {
-		if l.Url == fullUrl {
+		if l.URL == fullUrl {
 			link = l
 			found = true
 		}
@@ -290,7 +290,7 @@ func ShortenLink(
 		*links = append(*links, l)
 	}
 
-	return fmt.Sprintf("%s%s", h.JumpUrl, link.ShortUrl), text, title, nil
+	return fmt.Sprintf("%s%s", h.JumpUrl, link.ShortURL), text, title, nil
 }
 
 func GetOrCreateLink(
@@ -331,13 +331,13 @@ SELECT link_id
 	for rows.Next() {
 		tmpLink := Link{}
 		err = rows.Scan(
-			&tmpLink.Id,
-			&tmpLink.ShortUrl,
+			&tmpLink.ID,
+			&tmpLink.ShortURL,
 			&tmpLink.Domain,
-			&tmpLink.Url,
+			&tmpLink.URL,
 			&tmpLink.Text,
 			&tmpLink.Created,
-			&tmpLink.ResolvedUrl,
+			&tmpLink.ResolvedURL,
 			&tmpLink.Resolved,
 			&tmpLink.Hits,
 		)
@@ -350,7 +350,7 @@ SELECT link_id
 	rows.Close()
 
 	if len(links) > 0 {
-		err = CreateRevisionLink(db, revisionId, links[0].Id)
+		err = CreateRevisionLink(db, revisionId, links[0].ID)
 		if err != nil {
 			return Link{}, err
 		}
@@ -359,17 +359,17 @@ SELECT link_id
 	}
 
 	link := Link{}
-	link.Id, err = getNextLinkId(db)
+	link.ID, err = getNextLinkId(db)
 	if err != nil {
 		return Link{}, err
 	}
 
-	link.ShortUrl = createShortUrl(
-		link.Id,
+	link.ShortURL = createShortUrl(
+		link.ID,
 		toSafeBase(int64(getRandomByte(1))%BASE_LEN),
 	)
 	link.Domain = host
-	link.Url = fullUrl
+	link.URL = fullUrl
 	link.Text = text
 
 	_, err = db.Exec(`
@@ -386,19 +386,19 @@ INSERT INTO links(
        $4,
        $5
 )`,
-		link.Id,
-		link.ShortUrl,
+		link.ID,
+		link.ShortURL,
 		link.Domain,
-		link.Url,
+		link.URL,
 		link.Text,
 	)
 	if err != nil {
 		return Link{}, errors.New(
-			fmt.Sprintf("Could not create link (%s): %+v", link.Url, err),
+			fmt.Sprintf("Could not create link (%s): %+v", link.URL, err),
 		)
 	}
 
-	err = CreateRevisionLink(db, revisionId, link.Id)
+	err = CreateRevisionLink(db, revisionId, link.ID)
 	if err != nil {
 		return Link{}, err
 	}

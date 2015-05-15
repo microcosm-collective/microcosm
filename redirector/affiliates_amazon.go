@@ -34,13 +34,13 @@ func (m *amazonLink) getDestination() (bool, string) {
 	}
 
 	if !isAmazonLink {
-		return false, m.Link.Url
+		return false, m.Link.URL
 	}
 
-	u, err := url.Parse(m.Link.Url)
+	u, err := url.Parse(m.Link.URL)
 	if err != nil {
-		glog.Errorf("url.Parse(`%s`) %+v", m.Link.Url, err)
-		return false, m.Link.Url
+		glog.Errorf("url.Parse(`%s`) %+v", m.Link.URL, err)
+		return false, m.Link.URL
 	}
 
 	// Create our affiliate link

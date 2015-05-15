@@ -55,13 +55,13 @@ RETURNING
 	for rows.Next() {
 		m = models.Link{}
 		err = rows.Scan(
-			&m.Id,
-			&m.ShortUrl,
+			&m.ID,
+			&m.ShortURL,
 			&m.Domain,
-			&m.Url,
+			&m.URL,
 			&m.Text,
 			&m.Created,
-			&m.ResolvedUrl,
+			&m.ResolvedURL,
 			&m.Resolved,
 			&m.Hits,
 		)
@@ -78,14 +78,14 @@ RETURNING
 			errors.New("Error fetching rows")
 	}
 
-	if m.Id == 0 {
+	if m.ID == 0 {
 		glog.Errorf("m.Id == 0 for URL %s", shortURL)
 		return models.Link{}, http.StatusNotFound,
 			fmt.Errorf("URL %s%s not found", h.JumpUrl, shortURL)
 	}
 
 	if affiliateMayExist(m.Domain) {
-		m.Url = getAffiliateLink(m)
+		m.URL = getAffiliateLink(m)
 	}
 
 	//glog.Infof("Found models.link %s redirecting to %s", shortURL, m.Url)

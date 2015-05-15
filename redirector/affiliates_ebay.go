@@ -29,10 +29,10 @@ func (m *ebayLink) getDestination() (bool, string) {
 
 	// Hijack an existing affiliate link
 	if m.Link.Domain == "rover.ebay.com" {
-		u, err := url.Parse(m.Link.Url)
+		u, err := url.Parse(m.Link.URL)
 		if err != nil {
-			glog.Errorf("url.Parse(`%s`) %+v", m.Link.Url, err)
-			return false, m.Link.Url
+			glog.Errorf("url.Parse(`%s`) %+v", m.Link.URL, err)
+			return false, m.Link.URL
 		}
 
 		q := u.Query()
@@ -82,14 +82,14 @@ func (m *ebayLink) getDestination() (bool, string) {
 	}
 
 	if !isEbayLink && !isHalfLink {
-		return false, m.Link.Url
+		return false, m.Link.URL
 	}
 
 	// Determine if we have an itemID, which is a 64-bit integer currently at
 	// least 10 digits long, in the URL.
 	// If so, we will want to link directly to the item rather than use the
 	// custom url link.
-	itemID := ebayItemIDRegexp.FindString(m.Link.Url)
+	itemID := ebayItemIDRegexp.FindString(m.Link.URL)
 	if isEbayLink && itemID != "" {
 		u, _ := url.Parse("http://rover.ebay.com/rover/1/710-53481-19255-0/1")
 		q := u.Query()
@@ -124,7 +124,7 @@ func (m *ebayLink) getDestination() (bool, string) {
 	// These vary
 	q.Add("campid", ebayCampaignID)
 	q.Add("pub", ebayPublisherID)
-	q.Add("mpre", m.Link.Url)
+	q.Add("mpre", m.Link.URL)
 
 	u.RawQuery = q.Encode()
 

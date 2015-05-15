@@ -63,5 +63,5 @@ func getAffiliateLink(link models.Link) string {
 		}
 	}
 
-	return link.Url
+	return link.URL
 }
