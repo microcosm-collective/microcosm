@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	UrlProfile         string = "/profiles/"
+	// URLProfile is the web interface URL to profiles
+	URLProfile         string = "/profiles/"
 	mentionPunctuation string = `,.:?!-`
 )
 
@@ -32,7 +33,7 @@ var (
 //
 // In other words: preserves usernames during the markdown process.
 //
-// NOTE (buro9 2014-09-15): This unfortunately applies to code that is processed
+// NOTE (buro9 2014-09-15): This unfortunately applies to <code> that is processed
 // too, and results in text in code blocks being escaped, but not being
 // unescaped by the Markdown processor... it is *not* aware of code blocks and
 // is therefore buggy.
@@ -49,19 +50,21 @@ func PreProcessMentions(md []byte) []byte {
 	return md
 }
 
+// ProcessMentions will find + and @ mentions in a revision and linkify them
+// whilst also notifying the people mentioned (if applicable)
 func ProcessMentions(
 	tx *sql.Tx,
-	revisionId int64,
+	revisionID int64,
 	src []byte,
-	siteId int64,
-	itemTypeId int64,
-	itemId int64,
+	siteID int64,
+	itemTypeID int64,
+	itemID int64,
 	sendUpdates bool,
 ) (
 	[]byte,
 	error,
 ) {
-
+	// If we have no mentions, do no work
 	if !(bytes.Contains(src, []byte(`+`)) || bytes.Contains(src, []byte(`@`))) {
 		return src, nil
 	}
@@ -120,9 +123,9 @@ func ProcessMentions(
 	if len(profileNames) > 0 {
 		// Fetch knowledge of existing mentions in older comment revisions
 		type Mention struct {
-			CommentId   int64
+			CommentID   int64
 			MentionedBy int64
-			ProfileId   sql.NullInt64
+			ProfileID   sql.NullInt64
 		}
 
 		rows, err := tx.Query(`
@@ -137,7 +140,7 @@ SELECT c.comment_id
         AND u.created_by = c.profile_id
         AND u.update_type_id = 3 -- mention
  WHERE r.revision_id = $1`,
-			revisionId,
+			revisionID,
 		)
 		if err != nil {
 			glog.Errorf("%s %+v", "tx.Query()", err)
@@ -149,9 +152,9 @@ SELECT c.comment_id
 		for rows.Next() {
 			mention := Mention{}
 			err = rows.Scan(
-				&mention.CommentId,
+				&mention.CommentID,
 				&mention.MentionedBy,
-				&mention.ProfileId,
+				&mention.ProfileID,
 			)
 			existingMentions = append(existingMentions, mention)
 		}
@@ -168,14 +171,14 @@ SELECT c.comment_id
 		}
 
 		// Save all new mentions
-		for profileName, _ := range profileNames {
-			profileNames[profileName] = FetchProfileId(tx, profileName, revisionId)
+		for profileName := range profileNames {
+			profileNames[profileName] = FetchProfileID(tx, profileName, revisionID)
 
 			if profileNames[profileName] > 0 {
 				var found bool
 				for _, m := range existingMentions {
-					if m.ProfileId.Valid &&
-						m.ProfileId.Int64 == profileNames[profileName] {
+					if m.ProfileID.Valid &&
+						m.ProfileID.Int64 == profileNames[profileName] {
 
 						found = true
 					}
@@ -183,13 +186,13 @@ SELECT c.comment_id
 				if !found {
 					err = ProcessMention(
 						tx,
-						existingMentions[0].CommentId,
-						revisionId,
+						existingMentions[0].CommentID,
+						revisionID,
 						existingMentions[0].MentionedBy,
 						profileNames[profileName],
-						siteId,
-						itemTypeId,
-						itemId,
+						siteID,
+						itemTypeID,
+						itemID,
 						sendUpdates,
 					)
 					if err != nil {
@@ -204,8 +207,9 @@ SELECT c.comment_id
 							[]byte(mkey),
 							[]byte(
 								fmt.Sprintf(
-									`<a href="%s%d">%s</a>`,
-									UrlProfile,
+									`<a
+									// The web interface URL to profiles href="%s%d">%s</a>`,
+									URLProfile,
 									profileNames[profileName],
 									mkey,
 								),
@@ -221,9 +225,10 @@ SELECT c.comment_id
 	return src, nil
 }
 
-// Returns 0 if profile does not exist
-func FetchProfileId(tx *sql.Tx, profileName string, revisionId int64) int64 {
-	var profileId int64
+// FetchProfileID returns 0 if profile does not exist. Revision is used to
+// ensure the profile exists on the same site as the revision
+func FetchProfileID(tx *sql.Tx, profileName string, revisionID int64) int64 {
+	var profileID int64
 	rows, err := tx.Query(`
 SELECT profile_id
   FROM profiles
@@ -238,12 +243,12 @@ SELECT profile_id
  LIMIT 1
 OFFSET 0`,
 		strings.ToLower(profileName),
-		revisionId,
+		revisionID,
 	)
 	defer rows.Close()
 
 	for rows.Next() {
-		err = rows.Scan(&profileId)
+		err = rows.Scan(&profileID)
 		if err != nil {
 			return 0
 		}
@@ -254,20 +259,20 @@ OFFSET 0`,
 	}
 	rows.Close()
 
-	return profileId
+	return profileID
 }
 
 // ProcessMention processes username mentions using the `+username` syntax and generates
 // alerts for the mentioned user if they have are enabled in their preferences.
 func ProcessMention(
 	tx *sql.Tx,
-	commentId int64,
-	revisionId int64,
+	commentID int64,
+	revisionID int64,
 	createdBy int64,
-	profileId int64,
-	siteId int64,
-	itemTypeId int64,
-	itemId int64,
+	profileID int64,
+	siteID int64,
+	itemTypeID int64,
+	itemID int64,
 	sendUpdates bool,
 ) error {
 
@@ -283,11 +288,11 @@ func ProcessMention(
 
 	// Send the update
 	var update = UpdateType{}
-	update.SiteID = siteId
+	update.SiteID = siteID
 	update.UpdateTypeID = h.UpdateTypes[h.UpdateTypeMentioned]
-	update.ForProfileID = profileId
+	update.ForProfileID = profileID
 	update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
-	update.ItemID = commentId
+	update.ItemID = commentID
 	update.Meta.CreatedById = createdBy
 	_, err := update.insert(tx)
 	if err != nil {
@@ -296,7 +301,7 @@ func ProcessMention(
 	}
 
 	go SendUpdatesForNewMentionInComment(
-		siteId,
+		siteID,
 		update.ForProfileID,
 		update.ItemID,
 	)
