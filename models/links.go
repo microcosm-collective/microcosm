@@ -7,15 +7,16 @@ import (
 	"github.com/lib/pq"
 )
 
+// Link describes a link within user generated content
 type Link struct {
-	Id          int64
+	ID          int64
 	Rand        string
-	ShortUrl    string
+	ShortURL    string
 	Domain      string
-	Url         string
+	URL         string
 	Text        string
 	Created     time.Time
-	ResolvedUrl sql.NullString
+	ResolvedURL sql.NullString
 	Resolved    pq.NullTime
 	Hits        int64
 }
