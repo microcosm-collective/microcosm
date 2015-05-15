@@ -507,7 +507,7 @@ SELECT microcosm_id,
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	m.FetchSummaries(siteID, profileID)
 	return m, http.StatusOK, nil
@@ -640,7 +640,7 @@ SELECT microcosm_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	m.FetchSummaries(siteID)
 
@@ -678,7 +678,7 @@ SELECT title
 	}
 
 	// Update cache
-	c.CacheSetString(mcKey, title, mcTtl)
+	c.CacheSetString(mcKey, title, mcTTL)
 
 	return title
 }

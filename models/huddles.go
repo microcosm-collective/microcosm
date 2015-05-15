@@ -378,7 +378,7 @@ SELECT h.huddle_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteId)
 
@@ -415,7 +415,7 @@ SELECT title
 	}
 
 	// Update cache
-	c.CacheSetString(mcKey, title, mcTtl)
+	c.CacheSetString(mcKey, title, mcTTL)
 
 	return title
 }
@@ -564,7 +564,7 @@ SELECT h.huddle_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteId)
 

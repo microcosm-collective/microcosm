@@ -143,7 +143,7 @@ SELECT profile_id
 	}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }

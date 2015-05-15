@@ -255,7 +255,7 @@ SELECT profile_id
 			attendeeIds = append(attendeeIds, attendeeId)
 		}
 
-		c.CacheSetInt64Slice(key, attendeeIds, mcTtl)
+		c.CacheSetInt64Slice(key, attendeeIds, mcTTL)
 	}
 
 	for _, Id := range attendeeIds {
@@ -795,7 +795,7 @@ SELECT e.event_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	status, err := m.FetchProfileSummaries(siteId)
 	if err != nil {
@@ -967,7 +967,7 @@ WHERE event_id = $1
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	status, err = m.FetchProfileSummaries(siteId)
 	if err != nil {

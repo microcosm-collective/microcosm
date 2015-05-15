@@ -484,7 +484,7 @@ WHERE attendee_id = $1`,
 	}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 	m.FetchProfileSummaries(siteId)
 
 	return m, http.StatusOK, nil

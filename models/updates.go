@@ -302,7 +302,7 @@ SELECT update_id
 	m.ItemType = itemType
 	m.FetchSummaries(siteID)
 
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 	return m, http.StatusOK, nil
 }
 

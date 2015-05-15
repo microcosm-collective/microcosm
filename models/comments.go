@@ -905,7 +905,7 @@ func GetCommentSummary(
 	//
 	// This is what commentTtl stores... the default TTL to be over-ridden
 	// with a shorter TTL is we cannot parse the Markdown.
-	commentTtl := mcTtl
+	commentTtl := mcTTL
 
 	db, err := h.GetConnection()
 	if err != nil {

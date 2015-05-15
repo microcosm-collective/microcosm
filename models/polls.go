@@ -634,7 +634,7 @@ SELECT choice_id,
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteID)
 	return m, http.StatusOK, nil
@@ -739,7 +739,7 @@ SELECT poll_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteID)
 	return m, http.StatusOK, nil

@@ -753,7 +753,7 @@ SELECT p.profile_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }
@@ -864,7 +864,7 @@ SELECT unread_huddles
 		h.StatType{Metric: "unreadHuddles", Value: unreadHuddles},
 	)
 
-	c.CacheSetInt64(mcKey, unreadHuddles, mcTtl)
+	c.CacheSetInt64(mcKey, unreadHuddles, mcTTL)
 
 	return http.StatusOK, nil
 }
@@ -967,7 +967,7 @@ SELECT profile_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }
@@ -1021,7 +1021,7 @@ SELECT profile_id
 			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
-	c.CacheSetInt64(mcKey, profileID, mcTtl)
+	c.CacheSetInt64(mcKey, profileID, mcTTL)
 
 	return profileID, http.StatusOK, nil
 }

@@ -65,7 +65,7 @@ SELECT update_type_id
 			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }

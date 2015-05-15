@@ -1,7 +1,3 @@
-// This file contains setup and helper functions for caching
-// model objects with memcache. It should only contain functions
-// specifically for dealing with models; anything else should go in
-// the cache package.
 package models
 
 import (
@@ -12,6 +8,11 @@ import (
 	c "github.com/microcosm-cc/microcosm/cache"
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
+
+// This file contains setup and helper functions for caching
+// model objects with memcache. It should only contain functions
+// specifically for dealing with models; anything else should go in
+// the cache package.
 
 var (
 	mcAccessTokenKeys = map[int]string{
@@ -81,10 +82,11 @@ var (
 	}
 )
 
-const mcTtl int32 = 60 * 60 * 24 * 7 // 1 Week
+const mcTTL int32 = 60 * 60 * 24 * 7 // 1 Week
 
-func PurgeCache(itemTypeId int64, itemId int64) {
-	switch itemTypeId {
+// PurgeCache removes an item from the cache
+func PurgeCache(itemTypeID int64, itemID int64) {
+	switch itemTypeID {
 
 	case h.ItemTypes[h.ItemTypeAlbum]:
 
@@ -92,44 +94,44 @@ func PurgeCache(itemTypeId int64, itemId int64) {
 
 	case h.ItemTypes[h.ItemTypeAttendee]:
 		for _, mcKeyFmt := range mcAttendeeKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	case h.ItemTypes[h.ItemTypeClassified]:
 
 	case h.ItemTypes[h.ItemTypeComment]:
 		for _, mcKeyFmt := range mcCommentKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	case h.ItemTypes[h.ItemTypeConversation]:
 		for _, mcKeyFmt := range mcConversationKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	case h.ItemTypes[h.ItemTypeEvent]:
 		for _, mcKeyFmt := range mcEventKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	case h.ItemTypes[h.ItemTypeHuddle]:
 		for _, mcKeyFmt := range mcHuddleKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	case h.ItemTypes[h.ItemTypeMicrocosm]:
 		for _, mcKeyFmt := range mcMicrocosmKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	case h.ItemTypes[h.ItemTypePoll]:
 		for _, mcKeyFmt := range mcPollKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	case h.ItemTypes[h.ItemTypeProfile]:
 		for _, mcKeyFmt := range mcProfileKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	case h.ItemTypes[h.ItemTypeQuestion]:
@@ -145,7 +147,7 @@ func PurgeCache(itemTypeId int64, itemId int64) {
 		}
 		defer tx.Rollback()
 
-		_, err = FlushRoleMembersCacheByRoleID(tx, itemId)
+		_, err = FlushRoleMembersCacheByRoleID(tx, itemID)
 		if err != nil {
 			glog.Errorf("+%v", err)
 			return
@@ -158,30 +160,31 @@ func PurgeCache(itemTypeId int64, itemId int64) {
 		}
 
 		for _, mcKeyFmt := range mcRoleKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	case h.ItemTypes[h.ItemTypeSite]:
 		for _, mcKeyFmt := range mcSiteKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	case h.ItemTypes[h.ItemTypeUpdate]:
 		for _, mcKeyFmt := range mcUpdateKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	case h.ItemTypes[h.ItemTypeWatcher]:
 		for _, mcKeyFmt := range mcWatcherKeys {
-			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+			c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 		}
 
 	default:
 	}
 }
 
-func PurgeCacheByScope(scope int, itemTypeId int64, itemId int64) {
-	switch itemTypeId {
+// PurgeCacheByScope removes part of an item from the cache
+func PurgeCacheByScope(scope int, itemTypeID int64, itemID int64) {
+	switch itemTypeID {
 
 	case h.ItemTypes[h.ItemTypeAlbum]:
 
@@ -190,7 +193,7 @@ func PurgeCacheByScope(scope int, itemTypeId int64, itemId int64) {
 	case h.ItemTypes[h.ItemTypeAttendee]:
 		for mcKey, mcKeyFmt := range mcAttendeeKeys {
 			if mcKey == scope {
-				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 			}
 		}
 
@@ -199,49 +202,49 @@ func PurgeCacheByScope(scope int, itemTypeId int64, itemId int64) {
 	case h.ItemTypes[h.ItemTypeComment]:
 		for mcKey, mcKeyFmt := range mcCommentKeys {
 			if mcKey == scope {
-				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 			}
 		}
 
 	case h.ItemTypes[h.ItemTypeConversation]:
 		for mcKey, mcKeyFmt := range mcConversationKeys {
 			if mcKey == scope {
-				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 			}
 		}
 
 	case h.ItemTypes[h.ItemTypeEvent]:
 		for mcKey, mcKeyFmt := range mcEventKeys {
 			if mcKey == scope {
-				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 			}
 		}
 
 	case h.ItemTypes[h.ItemTypeHuddle]:
 		for mcKey, mcKeyFmt := range mcHuddleKeys {
 			if mcKey == scope {
-				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 			}
 		}
 
 	case h.ItemTypes[h.ItemTypeMicrocosm]:
 		for mcKey, mcKeyFmt := range mcMicrocosmKeys {
 			if mcKey == scope {
-				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 			}
 		}
 
 	case h.ItemTypes[h.ItemTypePoll]:
 		for mcKey, mcKeyFmt := range mcPollKeys {
 			if mcKey == scope {
-				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 			}
 		}
 
 	case h.ItemTypes[h.ItemTypeProfile]:
 		for mcKey, mcKeyFmt := range mcProfileKeys {
 			if mcKey == scope {
-				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 			}
 		}
 
@@ -250,14 +253,14 @@ func PurgeCacheByScope(scope int, itemTypeId int64, itemId int64) {
 	case h.ItemTypes[h.ItemTypeRole]:
 		for mcKey, mcKeyFmt := range mcRoleKeys {
 			if mcKey == scope {
-				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 			}
 		}
 
 	case h.ItemTypes[h.ItemTypeSite]:
 		for mcKey, mcKeyFmt := range mcSiteKeys {
 			if mcKey == scope {
-				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemId))
+				c.CacheDelete(fmt.Sprintf(mcKeyFmt, itemID))
 			}
 		}
 
@@ -265,11 +268,10 @@ func PurgeCacheByScope(scope int, itemTypeId int64, itemId int64) {
 	}
 }
 
-// Used by Items.go as everything else knows what it is
-// Only need to handle commentable types that exist as
-// child items in microcosms
-func GetItemCacheKeys(itemTypeId int64) map[int]string {
-	switch itemTypeId {
+// GetItemCacheKeys is used by Items.go as everything else knows what it is
+// Only need to handle commentable types that exist as child items in microcosms
+func GetItemCacheKeys(itemTypeID int64) map[int]string {
+	switch itemTypeID {
 
 	case h.ItemTypes[h.ItemTypeAlbum]:
 

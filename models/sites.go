@@ -311,7 +311,7 @@ func (m *SiteType) FetchProfileSummaries() (int, error) {
 			glog.Error(err)
 		} else {
 			m.Meta.Stats = stats
-			c.CacheSet(mcKey, m.Meta.Stats, mcTtl)
+			c.CacheSet(mcKey, m.Meta.Stats, mcTTL)
 		}
 	}
 
@@ -633,7 +633,7 @@ SELECT title
 	}
 
 	// Update cache
-	c.CacheSetString(mcKey, title, mcTtl)
+	c.CacheSetString(mcKey, title, mcTTL)
 
 	return title
 }
@@ -741,7 +741,7 @@ SELECT s.site_id
 		}
 	m.FetchProfileSummaries()
 
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }
@@ -1033,7 +1033,7 @@ SELECT site_id
 	}
 
 	// Update cache
-	c.CacheSetInt64(mcKey, siteID, mcTtl)
+	c.CacheSetInt64(mcKey, siteID, mcTTL)
 
 	return GetSite(siteID)
 }
@@ -1078,7 +1078,7 @@ SELECT site_id
 	}
 
 	// Update cache
-	c.CacheSetInt64(mcKey, siteID, mcTtl)
+	c.CacheSetInt64(mcKey, siteID, mcTTL)
 
 	return GetSite(siteID)
 }

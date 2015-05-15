@@ -50,7 +50,7 @@ SELECT 1
 		return false
 	}
 
-	c.CacheSetBool(mcKey, isBanned, mcTtl)
+	c.CacheSetBool(mcKey, isBanned, mcTTL)
 
 	return isBanned
 }

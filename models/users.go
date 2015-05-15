@@ -191,7 +191,7 @@ SELECT user_id
 			h.GetLink("self", "", h.ItemTypeUser, m.ID),
 		}
 
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }

@@ -515,7 +515,7 @@ SELECT c.conversation_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	m.FetchSummaries(siteId)
 	return m, http.StatusOK, nil
@@ -625,7 +625,7 @@ SELECT conversation_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteId)
 	return m, http.StatusOK, nil

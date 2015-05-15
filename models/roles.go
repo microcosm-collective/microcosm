@@ -583,7 +583,7 @@ SELECT role_id
 	}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTtl)
+	c.CacheSet(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteID)
 
