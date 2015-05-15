@@ -2,7 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,43 +12,45 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// MenuType describes a menu item
 type MenuType struct {
-	SiteId   int64
+	SiteID   int64
 	Href     string
 	Text     string
 	Title    sql.NullString
 	Sequence int
 }
 
+// Validate returns true if the menu item is valid
 func (m *MenuType) Validate() (int, error) {
 
-	// SiteId
-	if m.SiteId == 0 {
-		return http.StatusBadRequest, errors.New("SiteId is a required field")
+	// SiteID
+	if m.SiteID == 0 {
+		return http.StatusBadRequest, fmt.Errorf("SiteID is a required field")
 	}
 
 	// Href
 	m.Href = strings.Trim(m.Href, " ")
 	if m.Href == "" {
-		return http.StatusBadRequest, errors.New("Href is a required field")
+		return http.StatusBadRequest, fmt.Errorf("Href is a required field")
 	}
 
 	u, err := url.Parse(m.Href)
 	if err != nil {
-		return http.StatusBadRequest, errors.New("Href is not a valid URL")
+		return http.StatusBadRequest, fmt.Errorf("Href is not a valid URL")
 	}
 	m.Href = u.String()
 
 	// Text
 	m.Text = strings.Trim(m.Text, " ")
 	if m.Href == "" {
-		return http.StatusBadRequest, errors.New("Text is a required field")
+		return http.StatusBadRequest, fmt.Errorf("Text is a required field")
 	}
 
 	m.Text = SanitiseText(m.Text)
 	m.Text = strings.Trim(m.Text, " ")
 	if m.Href == "" {
-		return http.StatusBadRequest, errors.New("Text is a required field")
+		return http.StatusBadRequest, fmt.Errorf("Text is a required field")
 	}
 
 	// Title
@@ -63,16 +65,17 @@ func (m *MenuType) Validate() (int, error) {
 
 	if m.Sequence > 10 {
 		return http.StatusBadRequest,
-			errors.New("Menus are limited to 10 links")
+			fmt.Errorf("Menus are limited to 10 links")
 	}
 
 	return http.StatusOK, nil
 }
 
-func UpdateMenu(siteId int64, ems []h.LinkType) (int, error) {
+// UpdateMenu saves the full menu
+func UpdateMenu(siteID int64, ems []h.LinkType) (int, error) {
 	if len(ems) == 0 {
 		return http.StatusBadRequest,
-			errors.New("A menu without links is not a menu that is of any use." +
+			fmt.Errorf("A menu without links is not a menu that is of any use." +
 				" Have you tried DELETE?")
 	}
 
@@ -80,7 +83,7 @@ func UpdateMenu(siteId int64, ems []h.LinkType) (int, error) {
 	menu := []MenuType{}
 	for ii, link := range ems {
 		m := MenuType{}
-		m.SiteId = siteId
+		m.SiteID = siteID
 		m.Href = link.Href
 		m.Text = link.Text
 		if link.Title != "" {
@@ -101,18 +104,18 @@ func UpdateMenu(siteId int64, ems []h.LinkType) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		glog.Errorf("h.GetTransaction() %+v", err)
-		return http.StatusInternalServerError, errors.New("Could not get transaction")
+		return http.StatusInternalServerError, fmt.Errorf("Could not get transaction")
 	}
 	defer tx.Rollback()
 
 	_, err = tx.Exec(`
 DELETE FROM menus
  WHERE site_id = $1`,
-		siteId,
+		siteID,
 	)
 	if err != nil {
-		glog.Errorf("stmt1.Exec(%d) %+v", siteId, err)
-		return http.StatusInternalServerError, errors.New("Failed to delete existing menu")
+		glog.Errorf("stmt1.Exec(%d) %+v", siteID, err)
+		return http.StatusInternalServerError, fmt.Errorf("Failed to delete existing menu")
 	}
 
 	for _, m := range menu {
@@ -131,7 +134,7 @@ INSERT INTO menus (
    ,$4
    ,$5
 )`,
-			m.SiteId,
+			m.SiteID,
 			m.Href,
 			m.Title,
 			m.Text,
@@ -140,7 +143,7 @@ INSERT INTO menus (
 		if err != nil {
 			glog.Errorf(
 				"stmt2.Exec(%d, %s, %v, %s, %d) %+v",
-				m.SiteId,
+				m.SiteID,
 				m.Href,
 				m.Title,
 				m.Text,
@@ -148,22 +151,23 @@ INSERT INTO menus (
 				err,
 			)
 			return http.StatusInternalServerError,
-				errors.New("Failed to delete existing menu")
+				fmt.Errorf("Failed to delete existing menu")
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, errors.New("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeSite], siteId)
+	go PurgeCache(h.ItemTypes[h.ItemTypeSite], siteID)
 
 	return http.StatusOK, nil
 }
 
-func DeleteMenu(siteId int64) (int, error) {
+// DeleteMenu removes the entire menu
+func DeleteMenu(siteID int64) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		glog.Errorf("h.GetTransaction() %+v", err)
@@ -174,27 +178,28 @@ func DeleteMenu(siteId int64) (int, error) {
 	_, err = tx.Exec(`
 DELETE FROM menus
  WHERE site_id = $1`,
-		siteId,
+		siteID,
 	)
 	if err != nil {
-		glog.Errorf("stmt1.Exec(%d) %+v", siteId, err)
+		glog.Errorf("stmt1.Exec(%d) %+v", siteID, err)
 		return http.StatusInternalServerError,
-			errors.New("Failed to delete existing menu")
+			fmt.Errorf("Failed to delete existing menu")
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
 		return http.StatusInternalServerError,
-			errors.New("Transaction failed")
+			fmt.Errorf("Transaction failed")
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeSite], siteId)
+	go PurgeCache(h.ItemTypes[h.ItemTypeSite], siteID)
 
 	return http.StatusOK, nil
 }
 
-func GetMenu(siteId int64) ([]h.LinkType, int, error) {
+// GetMenu returns a menu for a site
+func GetMenu(siteID int64) ([]h.LinkType, int, error) {
 	db, err := h.GetConnection()
 	if err != nil {
 		return []h.LinkType{}, http.StatusInternalServerError, err
@@ -207,12 +212,12 @@ SELECT href
   FROM menus
  WHERE site_id = $1
  ORDER BY sequence ASC`,
-		siteId,
+		siteID,
 	)
 	if err != nil {
-		glog.Errorf("tx.Query(%d) %+v", siteId, err)
+		glog.Errorf("tx.Query(%d) %+v", siteID, err)
 		return []h.LinkType{}, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 	defer rows.Close()
 
@@ -228,7 +233,7 @@ SELECT href
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return []h.LinkType{}, http.StatusInternalServerError,
-				errors.New("Row parsing error")
+				fmt.Errorf("Row parsing error")
 		}
 
 		if s.Valid {
@@ -241,7 +246,7 @@ SELECT href
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return []h.LinkType{}, http.StatusInternalServerError,
-			errors.New("Error fetching rows")
+			fmt.Errorf("Error fetching rows")
 	}
 	rows.Close()
 
