@@ -20,13 +20,14 @@ var (
 	linkURLs       = []byte(`${1}http://${2}`)
 )
 
+// ProcessCommentMarkdown will turn the latest revision markdown into HTML
 func ProcessCommentMarkdown(
 	tx *sql.Tx,
-	revisionId int64,
+	revisionID int64,
 	markdown string,
-	siteId int64,
-	itemTypeId int64,
-	itemId int64,
+	siteID int64,
+	itemTypeID int64,
+	itemID int64,
 	sendUpdates bool,
 ) (
 	string,
@@ -46,29 +47,29 @@ func ProcessCommentMarkdown(
 	src = ProcessBBCode(src)
 
 	// Find and link hashtags
-	src = ProcessHashtags(siteId, src)
+	src = ProcessHashtags(siteID, src)
 
 	// Use blackfriday to convert MarkDown to HTML
 	src = MarkdownToHTML(src)
 
 	// Convert all links to shortened URLs and record which links are in
 	// which revisions (of a comment)
-	src, err := ProcessLinks(revisionId, src, siteId)
+	src, err := ProcessLinks(revisionID, src, siteID)
 	if err != nil {
 		return "", err
 	}
 
 	// Parse mentions in the form of +Velocio or @Velocio
-	if itemTypeId == h.ItemTypes[h.ItemTypeHuddle] {
+	if itemTypeID == h.ItemTypes[h.ItemTypeHuddle] {
 		sendUpdates = false
 	}
 	src, err = ProcessMentions(
 		tx,
-		revisionId,
+		revisionID,
 		src,
-		siteId,
-		itemTypeId,
-		itemId,
+		siteID,
+		itemTypeID,
+		itemID,
 		sendUpdates,
 	)
 	if err != nil {
@@ -88,6 +89,7 @@ func ProcessCommentMarkdown(
 	return string(src), nil
 }
 
+// MarkdownToHTML wraps Black Friday and provides default settings for Black Friday
 func MarkdownToHTML(src []byte) []byte {
 
 	extensions := 0
