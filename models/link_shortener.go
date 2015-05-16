@@ -4,7 +4,6 @@ import (
 	"bytes"
 	crand "crypto/rand"
 	"database/sql"
-	"errors"
 	"fmt"
 	"math"
 	mrand "math/rand"
@@ -20,18 +19,20 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
-var regUrlHead = regexp.MustCompile(`^(https?:\/\/)(www\.)?`)
+var regURLHead = regexp.MustCompile(`^(https?:\/\/)(www\.)?`)
 
+// ProcessLinks will fetch the HTML for a revision and extract and shorten all
+// hyperlinks
 func ProcessLinks(
-	revisionId int64,
+	revisionID int64,
 	src []byte,
-	siteId int64,
+	siteID int64,
 ) (
 	[]byte,
 	error,
 ) {
 
-	site, _, _ := GetSite(siteId)
+	site, _, _ := GetSite(siteID)
 
 	if !bytes.Contains(src, []byte(`<a `)) {
 		return src, nil
@@ -45,7 +46,7 @@ func ProcessLinks(
 
 	// Start the tree walk
 	links := []Link{}
-	err = ParseLinks(revisionId, site, doc, &links)
+	err = ParseLinks(revisionID, site, doc, &links)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -62,8 +63,9 @@ func ProcessLinks(
 	return b.Bytes(), nil
 }
 
+// ParseLinks will recursively walk the DOM and find the links
 func ParseLinks(
-	revisionId int64,
+	revisionID int64,
 	site SiteType,
 	element *html.Node,
 	links *[]Link,
@@ -87,7 +89,7 @@ func ParseLinks(
 						// It's not a valid URL, so let's not link it
 						break
 					}
-					fullUrl := u.String()
+					fullURL := u.String()
 					host := u.Host
 					if host == "" {
 						break
@@ -99,9 +101,9 @@ func ParseLinks(
 						break
 					}
 
-					shortUrl, text, title, err := ShortenLink(
-						revisionId,
-						fullUrl,
+					shortURL, text, title, err := ShortenLink(
+						revisionID,
+						fullURL,
 						host,
 						site,
 						element.FirstChild.Data,
@@ -115,7 +117,7 @@ func ParseLinks(
 					titleAttr = title
 
 					// Write our new link and text to the anchor
-					attribute.Val = shortUrl
+					attribute.Val = shortURL
 					attributes[ii] = attribute
 
 					element.FirstChild.Data = text
@@ -152,7 +154,7 @@ func ParseLinks(
 
 	// Walk the tree
 	for child := element.FirstChild; child != nil; child = child.NextSibling {
-		err := ParseLinks(revisionId, site, child, links)
+		err := ParseLinks(revisionID, site, child, links)
 		if err != nil {
 			return err
 		}
@@ -161,9 +163,10 @@ func ParseLinks(
 	return nil
 }
 
+// ShortenLink shortens a single link
 func ShortenLink(
-	revisionId int64,
-	fullUrl string,
+	revisionID int64,
+	fullURL string,
 	host string,
 	site SiteType,
 	text string,
@@ -174,16 +177,14 @@ func ShortenLink(
 	string,
 	error,
 ) {
-
 	// For the text...
 	// strip URLs of protocol (to encourage clicking on the link and to make
 	// it prettier)
-
 	var addTitle bool
 	if text == "" {
-		text = fullUrl
+		text = fullURL
 	} else {
-		if text != fullUrl {
+		if text != fullURL {
 			addTitle = true
 		}
 	}
@@ -196,73 +197,73 @@ func ShortenLink(
 		// If site.Domain were not blank this would cause issues as it would
 		// break /api/v1/files/* links.
 		prefix := "https://" + site.SubdomainKey + conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN]
-		if strings.HasPrefix(fullUrl, prefix) {
-			if len(fullUrl) > len(prefix) {
-				fullUrl = fullUrl[len(prefix):]
-				if fullUrl == "." {
-					fullUrl = "/"
+		if strings.HasPrefix(fullURL, prefix) {
+			if len(fullURL) > len(prefix) {
+				fullURL = fullURL[len(prefix):]
+				if fullURL == "." {
+					fullURL = "/"
 				}
-				return fullUrl, text, "", nil
-			} else {
-				return "/", text, "", nil
+				return fullURL, text, "", nil
 			}
+
+			return "/", text, "", nil
 		}
 	} else {
 		// We should not shortern this... it's a link to a file we know about,
 		// an attachment or something.
 		prefix := "https://" + site.SubdomainKey + conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN]
-		if strings.HasPrefix(fullUrl, prefix) {
-			return fullUrl, text, "", nil
+		if strings.HasPrefix(fullURL, prefix) {
+			return fullURL, text, "", nil
 		}
 
 		// We handle both the http and https as we cannot know what how it will
 		// be displayed in future.
 		prefix = "http://" + site.Domain
-		if strings.HasPrefix(fullUrl, prefix) {
-			if len(fullUrl) > len(prefix) {
-				fullUrl = fullUrl[len(prefix):]
-				if fullUrl == "." {
-					fullUrl = "/"
+		if strings.HasPrefix(fullURL, prefix) {
+			if len(fullURL) > len(prefix) {
+				fullURL = fullURL[len(prefix):]
+				if fullURL == "." {
+					fullURL = "/"
 				}
-				return fullUrl, text, "", nil
-			} else {
-				return "/", text, "", nil
+				return fullURL, text, "", nil
 			}
+
+			return "/", text, "", nil
 		}
 		prefix = "https://" + site.Domain
-		if strings.HasPrefix(fullUrl, prefix) {
-			if len(fullUrl) > len(prefix) {
-				fullUrl = fullUrl[len(prefix):]
-				if fullUrl == "." {
-					fullUrl = "/"
+		if strings.HasPrefix(fullURL, prefix) {
+			if len(fullURL) > len(prefix) {
+				fullURL = fullURL[len(prefix):]
+				if fullURL == "." {
+					fullURL = "/"
 				}
-				return fullUrl, text, "", nil
-			} else {
-				return "/", text, "", nil
+				return fullURL, text, "", nil
 			}
+
+			return "/", text, "", nil
 		}
 	}
 
 	// If host is empty then this is a local (absolute or relative) link
 	if host == "" {
-		return fullUrl, text, "", nil
+		return fullURL, text, "", nil
 	}
 
 	var b bytes.Buffer
-	b.Write(regUrlHead.ReplaceAll([]byte(text), []byte("")))
+	b.Write(regURLHead.ReplaceAll([]byte(text), []byte("")))
 	text = string(b.Bytes())
 
 	// Provide a meaningful title only if the contents of the anchor is not
-	// the fullUrl
+	// the fullURL
 	var title string
 	if addTitle {
-		upperBound := int(math.Ceil((float64(len(fullUrl)) / 100) * 80))
-		title = fullUrl[0:upperBound]
-		if len(fullUrl) > upperBound {
+		upperBound := int(math.Ceil((float64(len(fullURL)) / 100) * 80))
+		title = fullURL[0:upperBound]
+		if len(fullURL) > upperBound {
 			title += "..."
 		}
 		var b2 bytes.Buffer
-		b2.Write(regUrlHead.ReplaceAll([]byte(title), []byte("")))
+		b2.Write(regURLHead.ReplaceAll([]byte(title), []byte("")))
 		title = string(b2.Bytes())
 	}
 
@@ -272,19 +273,19 @@ func ShortenLink(
 	)
 	// Get the shortened version
 	for _, l := range *links {
-		if l.URL == fullUrl {
+		if l.URL == fullURL {
 			link = l
 			found = true
 		}
 	}
 
 	if !found {
-		l, err := GetOrCreateLink(revisionId, fullUrl, host, text)
+		l, err := GetOrCreateLink(revisionID, fullURL, host, text)
 		if err != nil {
-			glog.Warningf("Failed to shorten %s: %+v", fullUrl, err)
+			glog.Warningf("Failed to shorten %s: %+v", fullURL, err)
 			// We don't care so much about failures to create short URLs, just
 			// return a working URL and don't fail
-			return fullUrl, text, "", nil
+			return fullURL, text, "", nil
 		}
 		link = l
 		*links = append(*links, l)
@@ -293,9 +294,10 @@ func ShortenLink(
 	return fmt.Sprintf("%s%s", h.JumpUrl, link.ShortURL), text, title, nil
 }
 
+// GetOrCreateLink fetches a link from the database or creates a new short link
 func GetOrCreateLink(
-	revisionId int64,
-	fullUrl string,
+	revisionID int64,
+	fullURL string,
 	host string,
 	text string,
 ) (
@@ -320,7 +322,7 @@ SELECT link_id
       ,hits
   FROM links
  WHERE url = $1`,
-		fullUrl,
+		fullURL,
 	)
 	if err != nil {
 		return Link{}, err
@@ -350,7 +352,7 @@ SELECT link_id
 	rows.Close()
 
 	if len(links) > 0 {
-		err = CreateRevisionLink(db, revisionId, links[0].ID)
+		err = CreateRevisionLink(db, revisionID, links[0].ID)
 		if err != nil {
 			return Link{}, err
 		}
@@ -359,17 +361,17 @@ SELECT link_id
 	}
 
 	link := Link{}
-	link.ID, err = getNextLinkId(db)
+	link.ID, err = getNextLinkID(db)
 	if err != nil {
 		return Link{}, err
 	}
 
-	link.ShortURL = createShortUrl(
+	link.ShortURL = createShortURL(
 		link.ID,
-		toSafeBase(int64(getRandomByte(1))%BASE_LEN),
+		toSafeBase(int64(getRandomByte(1))%baseLen),
 	)
 	link.Domain = host
-	link.URL = fullUrl
+	link.URL = fullURL
 	link.Text = text
 
 	_, err = db.Exec(`
@@ -393,12 +395,11 @@ INSERT INTO links(
 		link.Text,
 	)
 	if err != nil {
-		return Link{}, errors.New(
-			fmt.Sprintf("Could not create link (%s): %+v", link.URL, err),
-		)
+		return Link{},
+			fmt.Errorf("Could not create link (%s): %+v", link.URL, err)
 	}
 
-	err = CreateRevisionLink(db, revisionId, link.ID)
+	err = CreateRevisionLink(db, revisionID, link.ID)
 	if err != nil {
 		return Link{}, err
 	}
@@ -406,7 +407,8 @@ INSERT INTO links(
 	return link, nil
 }
 
-func CreateRevisionLink(db *sql.DB, revisionId int64, linkId int64) error {
+// CreateRevisionLink saves knowledge that this link appears in this revision
+func CreateRevisionLink(db *sql.DB, revisionID int64, linkID int64) error {
 
 	_, err := db.Exec(`
 INSERT INTO revision_links(
@@ -416,38 +418,36 @@ INSERT INTO revision_links(
        $1,
        $2
 )`,
-		revisionId,
-		linkId,
+		revisionID,
+		linkID,
 	)
 	if err != nil {
-		return errors.New(
-			fmt.Sprintf(
-				"Could not create revision_link (%d, %d): %v",
-				revisionId,
-				linkId,
-				err.Error(),
-			),
+		return fmt.Errorf(
+			"Could not create revision_link (%d, %d): %v",
+			revisionID,
+			linkID,
+			err.Error(),
 		)
 	}
 
 	return nil
 }
 
-func getNextLinkId(db *sql.DB) (int64, error) {
-	var insertId int64
+func getNextLinkID(db *sql.DB) (int64, error) {
+	var insertID int64
 	err := db.QueryRow(
 		`SELECT NEXTVAL('links_link_id_seq') AS link_id`,
 	).Scan(
-		&insertId,
+		&insertID,
 	)
 	if err != nil {
-		return 0, errors.New(fmt.Sprintf("Error fetching nextval: %+v", err))
+		return 0, fmt.Errorf("Error fetching nextval: %+v", err)
 	}
 
-	return insertId, nil
+	return insertID, nil
 }
 
-func createShortUrl(id int64, r string) string {
+func createShortURL(id int64, r string) string {
 	return r + toSafeBase(id)
 }
 
@@ -460,20 +460,20 @@ var baseChars = []byte{
 	'U', 'V', 'W', 'X', 'Y', 'Z',
 }
 
-const BASE_LEN int64 = int64(56)
+const baseLen int64 = int64(56)
 
 // toSafeBase converts a decimal number (base 10) to the safe base
 // representation
 func toSafeBase(n int64) string {
-	if n < BASE_LEN {
+	if n < baseLen {
 		return string(baseChars[n])
 	}
 
 	var buff bytes.Buffer
 
 	for n != 0 {
-		buff.WriteByte(baseChars[n%BASE_LEN])
-		n /= BASE_LEN
+		buff.WriteByte(baseChars[n%baseLen])
+		n /= baseLen
 	}
 
 	return buff.String()
