@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -13,8 +12,9 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// RewriteRule describes a matching HTML string and a regex replacement
 type RewriteRule struct {
-	Id           int64
+	ID           int64
 	Title        string
 	RegexMatch   string
 	RegexReplace string
@@ -24,8 +24,8 @@ type RewriteRule struct {
 	Valid        bool
 }
 
-// Used when we have new media definitions (i.e. for YouTube) or we learn that
-// a site has added open graph
+// UpdateEmbedsForDomain is used when we have new media definitions
+// (i.e. for YouTube)
 func UpdateEmbedsForDomain(domain string) (int, error) {
 	// 1. Find all revisions that have links to the given domain
 	// 2. Iterate
@@ -33,9 +33,9 @@ func UpdateEmbedsForDomain(domain string) (int, error) {
 	return http.StatusOK, nil
 }
 
-// Called after a revision has been created to perform media embedding
-// Gets all links in the revision and processes them all
-func EmbedAllMedia(revisionId int64) (int, error) {
+// EmbedAllMedia is called after a revision has been created to perform media
+// embedding and gets all links in the revision and processes them all
+func EmbedAllMedia(revisionID int64) (int, error) {
 
 	db, err := h.GetConnection()
 	if err != nil {
@@ -66,11 +66,11 @@ SELECT l.link_id
          ,l.resolved
          ,l.hits
 `,
-		revisionId,
+		revisionID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Get links failed: %v", err.Error()))
+		return http.StatusInternalServerError,
+			fmt.Errorf("Get links failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -89,30 +89,30 @@ SELECT l.link_id
 			&link.Hits,
 		)
 		if err != nil {
-			return http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Row parsing error: %v", err.Error()))
+			return http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
 		links = append(links, link)
 	}
 	err = rows.Err()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error fetching rows: %v", err.Error()))
+		return http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
 	// Now process each one
 	for _, link := range links {
-		embedMediaForLink(link, revisionId)
+		embedMediaForLink(link, revisionID)
 	}
 
 	return http.StatusOK, nil
 }
 
-// For a single link in a revision, fetch it and see whether we can embed it
-func embedMediaForLink(m Link, revisionId int64) (int, error) {
-
+// embedMediaForLink takes a single link in a revision, fetch it and sees
+// whether we can embed it
+func embedMediaForLink(m Link, revisionID int64) (int, error) {
 	rule, status, err := m.fetchRewriteRule()
 	if err != nil {
 		glog.Errorf("%s %+v", "m.FetchRewriteRule()", err)
@@ -121,20 +121,20 @@ func embedMediaForLink(m Link, revisionId int64) (int, error) {
 
 	if rule.Valid {
 		glog.Infof("%s %t", "rule.Valid", rule.Valid)
-		return m.embedMediaUsingRule(revisionId, rule)
+		return m.embedMediaUsingRule(revisionID, rule)
 	}
 
 	// TODO fetch destination and poke around the HTML
 
-	// m.EmbedMediaUsingOpenGraph(revisionId)
+	// m.EmbedMediaUsingOpenGraph(revisionID)
 
-	// m.EmbedMediaUsingTwitterCard(revisionId)
+	// m.EmbedMediaUsingTwitterCard(revisionID)
 
 	return http.StatusOK, nil
 }
 
 // Fetch the end point of the link, and make sense of the file... is it
-//something we can embed?
+// something we can embed?
 func (m *Link) fetchDestination() (int, error) {
 
 	// 1. Update mimetypes
@@ -146,7 +146,6 @@ func (m *Link) fetchDestination() (int, error) {
 }
 
 func (m *Link) fetchRewriteRule() (RewriteRule, int, error) {
-
 	rewriteRule := RewriteRule{}
 
 	if !m.rewriteRuleMayExist() {
@@ -175,9 +174,7 @@ SELECT r.rule_id
 	)
 	if err != nil {
 		return rewriteRule, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Get links failed: %+v", err),
-			)
+			fmt.Errorf("Get links failed: %+v", err)
 	}
 	defer rows.Close()
 
@@ -185,7 +182,7 @@ SELECT r.rule_id
 	for rows.Next() {
 		rule := RewriteRule{}
 		err = rows.Scan(
-			&rule.Id,
+			&rule.ID,
 			&rule.Title,
 			&rule.RegexMatch,
 			&rule.RegexReplace,
@@ -194,9 +191,7 @@ SELECT r.rule_id
 		)
 		if err != nil {
 			return rewriteRule, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %+v", err),
-				)
+				fmt.Errorf("Row parsing error: %+v", err)
 		}
 
 		rules = append(rules, rule)
@@ -204,9 +199,7 @@ SELECT r.rule_id
 	err = rows.Err()
 	if err != nil {
 		return rewriteRule, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %+v", err),
-			)
+			fmt.Errorf("Error fetching rows: %+v", err)
 	}
 	rows.Close()
 
@@ -228,7 +221,6 @@ SELECT r.rule_id
 }
 
 func (m *Link) rewriteRuleMayExist() bool {
-
 	// A super-quick pre-check for determining whether we are likely to have a
 	// rewrite rule in the database. This is hard-coded for speed, when you add
 	// a new unique domain rule, add the domain keyword here. This is string
@@ -253,7 +245,7 @@ func (m *Link) rewriteRuleMayExist() bool {
 }
 
 func (m *Link) embedMediaUsingRule(
-	revisionId int64,
+	revisionID int64,
 	rule RewriteRule,
 ) (
 	int,
@@ -265,21 +257,21 @@ func (m *Link) embedMediaUsingRule(
 	if err != nil {
 		glog.Errorf("%s %+v", "regexp.Compile(rule.RegexMatch)", err)
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Could not compile match URL: %+v", err))
+			fmt.Errorf("Could not compile match URL: %+v", err)
 	}
 
-	embedHtml := matchURL.ReplaceAllString(m.URL, rule.RegexReplace)
+	embedHTML := matchURL.ReplaceAllString(m.URL, rule.RegexReplace)
 
 	// Use string manipulation to insert the embed
-	shortUrl := h.JumpUrl + m.ShortURL
+	shortURL := h.JumpUrl + m.ShortURL
 
-	return m.embedMedia(revisionId, shortUrl, embedHtml)
+	return m.embedMedia(revisionID, shortURL, embedHTML)
 }
 
 func (m *Link) embedMedia(
-	revisionId int64,
-	shortUrl string,
-	embedHtml string,
+	revisionID int64,
+	shortURL string,
+	embedHTML string,
 ) (
 	int,
 	error,
@@ -292,7 +284,7 @@ func (m *Link) embedMedia(
 	defer tx.Rollback()
 
 	var (
-		commentId int64
+		commentID int64
 		html      string
 	)
 	err = tx.QueryRow(`
@@ -300,16 +292,14 @@ SELECT comment_id
       ,html
   FROM revisions
  WHERE revision_id = $1`,
-		revisionId,
+		revisionID,
 	).Scan(
-		&commentId,
+		&commentID,
 		&html,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching HTML for revision: %+v", err),
-			)
+			fmt.Errorf("Error fetching HTML for revision: %+v", err)
 	}
 
 	// Use string manipulation to insert the embed
@@ -327,7 +317,7 @@ SELECT comment_id
 	htmlOut := []string{}
 
 	replacementsMade := false
-	htmlIn := strings.Split(html, shortUrl)
+	htmlIn := strings.Split(html, shortURL)
 	for i, part := range htmlIn {
 		if i == 0 {
 			htmlOut = append(htmlOut, part)
@@ -340,14 +330,14 @@ SELECT comment_id
 			continue
 		}
 
-		new := closeAnchor + "<br />\n" + embedHtml + "<br />\n"
+		new := closeAnchor + "<br />\n" + embedHTML + "<br />\n"
 
 		part = strings.Replace(`" `+done+part[1:], closeAnchor, new, 1)
 
 		htmlOut = append(htmlOut, part)
 		replacementsMade = true
 	}
-	html = strings.Join(htmlOut, shortUrl)
+	html = strings.Join(htmlOut, shortURL)
 
 	if !replacementsMade {
 		// No embeds were made, so this must have been processed already
@@ -360,23 +350,21 @@ SELECT comment_id
 UPDATE revisions
    SET html = $2
  WHERE revision_id = $1`,
-		revisionId,
+		revisionID,
 		html,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not save HTML: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not save HTML: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeComment], commentId)
+	PurgeCache(h.ItemTypes[h.ItemTypeComment], commentID)
 
 	return http.StatusOK, nil
 }
