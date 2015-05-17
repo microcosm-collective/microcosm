@@ -138,48 +138,57 @@ func GetIgnored(
 	// to pacify angry people ignoring things, then unignoring on updates and
 	// subsequently getting in to fights.
 	sqlQuery := `--Get Ignores
+WITH m AS (
+    SELECT m.microcosm_id
+      FROM microcosms m
+      LEFT JOIN permissions_cache p ON p.site_id = m.site_id
+                                   AND p.item_type_id = 2
+                                   AND p.item_id = m.microcosm_id
+                                   AND p.profile_id = $2
+     WHERE m.site_id = $1
+       AND m.is_deleted IS NOT TRUE
+       AND m.is_moderated IS NOT TRUE
+       AND (
+               (p.can_read IS NOT NULL AND p.can_read IS TRUE)
+            OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$2)).can_read IS TRUE
+           )
+)
 SELECT COUNT(*) OVER() AS total
-      ,profile_id
-      ,item_type_id
-      ,item_id
+      ,a.profile_id
+      ,a.item_type_id
+      ,a.item_id
   FROM (
            SELECT i.profile_id
                  ,i.item_type_id
                  ,i.item_id
-                 ,m.title
              FROM ignores i
-             JOIN microcosms m ON m.microcosm_id = i.item_id
-            WHERE i.profile_id = $1
-              AND i.item_type_id = 2
-            UNION
-           SELECT i.profile_id
-                 ,i.item_type_id
-                 ,i.item_id
-                 ,p.profile_name AS title
-             FROM ignores i
-             JOIN profiles p ON p.profile_id = i.item_id
-            WHERE i.profile_id = $1
-              AND i.item_type_id = 3
-            UNION
-           SELECT i.profile_id
-                 ,i.item_type_id
-                 ,i.item_id
-                 ,si.title_text AS title
-             FROM ignores i
-             JOIN search_index si ON si.item_type_id = i.item_type_id
-                                 AND si.item_id = i.item_id
-            WHERE i.profile_id = $1
-              AND i.item_type_id NOT IN (2,3)
+            INNER JOIN flags f ON f.item_type_id = i.item_type_id
+                              AND f.item_id = i.item_id
+            WHERE i.profile_id = $2
+              AND f.site_id = $1
+              AND (
+                      f.microcosm_id IS NULL
+                   OR f.microcosm_id IN (SELECT microcosm_id FROM m)
+                  )
+              AND f.microcosm_is_deleted IS NOT TRUE
+              AND f.microcosm_is_moderated IS NOT TRUE
+              AND f.parent_is_deleted IS NOT TRUE
+              AND f.parent_is_moderated IS NOT TRUE
+              AND f.item_is_deleted IS NOT TRUE
+              AND f.item_is_moderated IS NOT TRUE
        ) a
- ORDER BY item_type_id ASC
-         ,title ASC
- LIMIT $2
-OFFSET $3`
+ INNER JOIN search_index si ON si.item_type_id = a.item_type_id
+                           AND si.item_id = a.item_id
+ ORDER BY a.item_type_id ASC
+         ,si.title_text ASC
+ LIMIT $3
+OFFSET $4`
 
-	rows, err := db.Query(sqlQuery, profileID, limit, offset)
+	rows, err := db.Query(sqlQuery, siteID, profileID, limit, offset)
 	if err != nil {
 		glog.Errorf(
-			"db.Query(%d, %d, %d) %+v",
+			"db.Query(%d, %d, %d, %d) %+v",
+			siteID,
 			profileID,
 			limit,
 			offset,
