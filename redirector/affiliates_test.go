@@ -10,7 +10,7 @@ func TestAffiliatesMatching(t *testing.T) {
 
 	m := models.Link{
 		Domain: "www.chainreactioncycles.com",
-		Url:    "http://www.chainreactioncycles.com/michelin-pro4-service-course-road-bike-tyre/rp-prod73626",
+		URL:    "http://www.chainreactioncycles.com/michelin-pro4-service-course-road-bike-tyre/rp-prod73626",
 	}
 
 	if !affiliateMayExist(m.Domain) {
