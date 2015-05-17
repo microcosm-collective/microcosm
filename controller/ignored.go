@@ -100,7 +100,7 @@ func (ctl *IgnoredController) Update(c *models.Context) {
 		return
 	}
 
-	m.ProfileId = c.Auth.ProfileId
+	m.ProfileID = c.Auth.ProfileId
 	status, err := m.Update()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
@@ -127,7 +127,7 @@ func (ctl *IgnoredController) Delete(c *models.Context) {
 		return
 	}
 
-	m.ProfileId = c.Auth.ProfileId
+	m.ProfileID = c.Auth.ProfileId
 	status, err := m.Delete()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
