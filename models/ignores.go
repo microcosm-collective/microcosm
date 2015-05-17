@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -12,48 +11,48 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// IgnoredType is a collection of ignored items
 type IgnoredType struct {
 	Ignored h.ArrayType    `json:"ignored"`
 	Meta    h.CoreMetaType `json:"meta"`
 }
 
+// IgnoreType is an ignored item
 type IgnoreType struct {
-	ProfileId  int64       `json:"-"`
-	ItemTypeId int64       `json:"-"`
+	ProfileID  int64       `json:"-"`
+	ItemTypeID int64       `json:"-"`
 	ItemType   string      `json:"itemType,omitempty"`
-	ItemId     int64       `json:"itemId,omitempty"`
+	ItemID     int64       `json:"itemId,omitempty"`
 	Item       interface{} `json:"item,omitempty"`
 }
 
+// Validate returns true if the item is valid
 func (m *IgnoreType) Validate() (int, error) {
 
-	if m.ProfileId <= 0 {
+	if m.ProfileID <= 0 {
 		return http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf(
-					"profileId ('%d') must be a positive integer.",
-					m.ProfileId,
-				),
+			fmt.Errorf(
+				"profileID ('%d') must be a positive integer",
+				m.ProfileID,
 			)
 	}
 
 	if _, inMap := h.ItemTypes[m.ItemType]; !inMap {
 		return http.StatusBadRequest,
-			errors.New("You must specify a valid item type")
-	} else {
-		m.ItemTypeId = h.ItemTypes[m.ItemType]
+			fmt.Errorf("You must specify a valid item type")
 	}
+	m.ItemTypeID = h.ItemTypes[m.ItemType]
 
-	if m.ItemId <= 0 {
+	if m.ItemID <= 0 {
 		return http.StatusBadRequest,
-			errors.New("You must specify an Item ID this comment belongs to")
+			fmt.Errorf("You must specify an Item ID this comment belongs to")
 	}
 
 	return http.StatusOK, nil
 }
 
+// Update saves the ignore to the database
 func (m *IgnoreType) Update() (int, error) {
-
 	status, err := m.Validate()
 	if err != nil {
 		return status, err
@@ -73,9 +72,9 @@ INSERT INTO ignores (
 ) VALUES (
     $1, $2, $3
 )`,
-		m.ProfileId,
-		m.ItemTypeId,
-		m.ItemId,
+		m.ProfileID,
+		m.ItemTypeID,
+		m.ItemID,
 	)
 	if err == nil {
 		tx.Commit()
@@ -84,6 +83,7 @@ INSERT INTO ignores (
 	return http.StatusOK, nil
 }
 
+// Delete removes an ignore
 func (m *IgnoreType) Delete() (int, error) {
 	status, err := m.Validate()
 	if err != nil {
@@ -104,9 +104,9 @@ DELETE
  WHERE profile_id = $1
    AND item_type_id = $2
    AND item_id = $3`,
-		m.ProfileId,
-		m.ItemTypeId,
-		m.ItemId,
+		m.ProfileID,
+		m.ItemTypeID,
+		m.ItemID,
 	)
 	if err == nil {
 		tx.Commit()
@@ -115,9 +115,10 @@ DELETE
 	return http.StatusOK, nil
 }
 
+// GetIgnored returns a collection of ignored items
 func GetIgnored(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -127,7 +128,6 @@ func GetIgnored(
 	int,
 	error,
 ) {
-
 	db, err := h.GetConnection()
 	if err != nil {
 		glog.Errorf("h.GetConnection() %+v", err)
@@ -176,17 +176,17 @@ SELECT COUNT(*) OVER() AS total
  LIMIT $2
 OFFSET $3`
 
-	rows, err := db.Query(sqlQuery, profileId, limit, offset)
+	rows, err := db.Query(sqlQuery, profileID, limit, offset)
 	if err != nil {
 		glog.Errorf(
 			"db.Query(%d, %d, %d) %+v",
-			profileId,
+			profileID,
 			limit,
 			offset,
 			err,
 		)
 		return []IgnoreType{}, 0, 0, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 	defer rows.Close()
 
@@ -196,19 +196,19 @@ OFFSET $3`
 		m := IgnoreType{}
 		err = rows.Scan(
 			&total,
-			&m.ProfileId,
-			&m.ItemTypeId,
-			&m.ItemId,
+			&m.ProfileID,
+			&m.ItemTypeID,
+			&m.ItemID,
 		)
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return []IgnoreType{}, 0, 0, http.StatusInternalServerError,
-				errors.New("Row parsing error")
+				fmt.Errorf("Row parsing error")
 		}
 
-		itemType, err := h.GetItemTypeFromInt(m.ItemTypeId)
+		itemType, err := h.GetItemTypeFromInt(m.ItemTypeID)
 		if err != nil {
-			glog.Errorf("h.GetItemTypeFromInt(%d) %+v", m.ItemTypeId, err)
+			glog.Errorf("h.GetItemTypeFromInt(%d) %+v", m.ItemTypeID, err)
 			return []IgnoreType{}, 0, 0, http.StatusInternalServerError, err
 		}
 		m.ItemType = itemType
@@ -219,7 +219,7 @@ OFFSET $3`
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return []IgnoreType{}, 0, 0, http.StatusInternalServerError,
-			errors.New("Error fetching rows")
+			fmt.Errorf("Error fetching rows")
 	}
 	rows.Close()
 
@@ -229,10 +229,8 @@ OFFSET $3`
 	if offset > maxOffset {
 		glog.Infoln("offset > maxOffset")
 		return []IgnoreType{}, 0, 0, http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf("not enough records, "+
-					"offset (%d) would return an empty page.", offset),
-			)
+			fmt.Errorf("not enough records, "+
+				"offset (%d) would return an empty page", offset)
 	}
 
 	// Get the first round of summaries
@@ -243,10 +241,10 @@ OFFSET $3`
 	seq := 0
 	for i := 0; i < len(ems); i++ {
 		go HandleSummaryContainerRequest(
-			siteId,
-			ems[i].ItemTypeId,
-			ems[i].ItemId,
-			ems[i].ProfileId,
+			siteID,
+			ems[i].ItemTypeID,
+			ems[i].ItemID,
+			ems[i].ProfileID,
 			seq,
 			chan1,
 		)
