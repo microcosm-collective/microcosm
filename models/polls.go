@@ -75,7 +75,7 @@ func (m *PollType) Validate(
 
 	// Does the Microcosm specified exist on this site?
 	if !exists {
-		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmId, profileID)
+		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmID, profileID)
 		if err != nil {
 			return status, err
 		}
@@ -92,7 +92,7 @@ func (m *PollType) Validate(
 		m.Meta.EditReason = ShoutToWhisper(m.Meta.EditReason)
 	}
 
-	if m.MicrocosmId <= 0 {
+	if m.MicrocosmID <= 0 {
 		return http.StatusBadRequest,
 			fmt.Errorf("You must specify a Microcosm ID")
 	}
@@ -209,7 +209,7 @@ INSERT INTO polls (
     $1, $2, $3, $4, $5,
     $6, $7, $8
 ) RETURNING poll_id`,
-		m.MicrocosmId,
+		m.MicrocosmID,
 		m.Title,
 		m.PollQuestion,
 		m.Meta.Created,
@@ -225,7 +225,7 @@ INSERT INTO polls (
 		return http.StatusInternalServerError,
 			fmt.Errorf("Error inserting data and returning ID: %v", err.Error())
 	}
-	m.Id = insertID
+	m.ID = insertID
 
 	for ii := 0; ii < len(m.Choices); ii++ {
 		_, err := tx.Exec(`
@@ -244,7 +244,7 @@ INSERT INTO choices (
 		}
 	}
 
-	err = IncrementMicrocosmItemCount(tx, m.MicrocosmId)
+	err = IncrementMicrocosmItemCount(tx, m.MicrocosmID)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -255,8 +255,8 @@ INSERT INTO choices (
 			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypePoll], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypePoll], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -294,7 +294,7 @@ DELETE FROM choices
    AND choice_id NOT IN (%s)`,
 			strings.Join(choiceIDs[0:seen], ","),
 		),
-			m.Id,
+			m.ID,
 		)
 		if err != nil {
 			return http.StatusInternalServerError,
@@ -322,7 +322,7 @@ INSERT INTO choices (
 ) VALUES (
     $1, $2, $3
 )`,
-				m.Id,
+				m.ID,
 				m.Choices[ii].Choice,
 				m.Choices[ii].Order,
 			)
@@ -346,8 +346,8 @@ UPDATE polls
       ,is_poll_open = $9
       ,is_multiple_choice = $10
  WHERE poll_id = $1`,
-		m.Id,
-		m.MicrocosmId,
+		m.ID,
+		m.MicrocosmID,
 		m.Title,
 		m.PollQuestion,
 		m.Meta.EditedNullable,
@@ -368,8 +368,8 @@ UPDATE polls
 			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypePoll], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypePoll], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -426,7 +426,7 @@ UPDATE polls
       ,edited_by = $5
       ,edit_reason = $6
  WHERE poll_id = $1`,
-			m.Id,
+			m.ID,
 			patch.Bool.Bool,
 			m.Meta.Flags.Visible,
 			m.Meta.EditedNullable,
@@ -445,8 +445,8 @@ UPDATE polls
 			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -466,28 +466,26 @@ UPDATE polls
    SET is_deleted = true
       ,is_visible = false
  WHERE poll_id = $1`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf(
-			fmt.Sprintf("Delete failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
-	err = DecrementMicrocosmItemCount(tx, m.MicrocosmId)
+	err = DecrementMicrocosmItemCount(tx, m.MicrocosmID)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypePoll], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypePoll], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -542,8 +540,8 @@ SELECT p.poll_id
 		siteID,
 		id,
 	).Scan(
-		&m.Id,
-		&m.MicrocosmId,
+		&m.ID,
+		&m.MicrocosmID,
 		&m.Title,
 		&m.PollQuestion,
 		&m.Meta.Created,
@@ -589,7 +587,7 @@ SELECT choice_id,
   FROM choices
  WHERE poll_id = $1
  ORDER BY sequence ASC`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
 		return PollType{}, http.StatusInternalServerError,
@@ -624,12 +622,12 @@ SELECT choice_id,
 	m.Choices = choices
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypePoll, m.Id),
+			h.GetLink("self", "", h.ItemTypePoll, m.ID),
 			h.GetLink(
 				"microcosm",
-				GetMicrocosmTitle(m.MicrocosmId),
+				GetMicrocosmTitle(m.MicrocosmID),
 				h.ItemTypeMicrocosm,
-				m.MicrocosmId,
+				m.MicrocosmID,
 			),
 		}
 
@@ -655,7 +653,7 @@ func GetPollSummary(
 	mcKey := fmt.Sprintf(mcPollKeys[c.CacheSummary], id)
 	if val, ok := c.CacheGet(mcKey, PollSummaryType{}); ok {
 		m := val.(PollSummaryType)
-		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmId, profileID)
+		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmID, profileID)
 		if err != nil {
 			return PollSummaryType{}, status, err
 		}
@@ -698,8 +696,8 @@ SELECT poll_id
    AND is_deleted(7, poll_id) IS FALSE`,
 		id,
 	).Scan(
-		&m.Id,
-		&m.MicrocosmId,
+		&m.ID,
+		&m.MicrocosmID,
 		&m.Title,
 		&m.PollQuestion,
 		&m.Meta.Created,
@@ -729,12 +727,12 @@ SELECT poll_id
 	}
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypePoll, m.Id),
+			h.GetLink("self", "", h.ItemTypePoll, m.ID),
 			h.GetLink(
 				"microcosm",
-				GetMicrocosmTitle(m.MicrocosmId),
+				GetMicrocosmTitle(m.MicrocosmID),
 				h.ItemTypeMicrocosm,
-				m.MicrocosmId,
+				m.MicrocosmID,
 			),
 		}
 

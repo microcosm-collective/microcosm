@@ -70,7 +70,14 @@ func (ctl *EventController) Read(c *models.Context) {
 	}
 
 	// Get Comments
-	m.Comments, status, err = models.GetComments(c.Site.ID, h.ItemTypeEvent, m.Id, c.Request.URL, c.Auth.ProfileId, m.Meta.Created)
+	m.Comments, status, err = models.GetComments(
+		c.Site.ID,
+		h.ItemTypeEvent,
+		m.ID,
+		c.Request.URL,
+		c.Auth.ProfileId,
+		m.Meta.Created,
+	)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -95,11 +102,11 @@ func (ctl *EventController) Read(c *models.Context) {
 		default:
 		}
 
-		go models.MarkAsRead(h.ItemTypes[h.ItemTypeEvent], m.Id, c.Auth.ProfileId, read)
+		go models.MarkAsRead(h.ItemTypes[h.ItemTypeEvent], m.ID, c.Auth.ProfileId, read)
 
 		// Get watcher status
 		watcherId, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeEvent], m.Id, c.Auth.ProfileId,
+			h.ItemTypes[h.ItemTypeEvent], m.ID, c.Auth.ProfileId,
 		)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
@@ -117,7 +124,7 @@ func (ctl *EventController) Read(c *models.Context) {
 		}
 	}
 
-	go models.IncrementViewCount(h.ItemTypes[h.ItemTypeEvent], m.Id)
+	go models.IncrementViewCount(h.ItemTypes[h.ItemTypeEvent], m.ID)
 
 	c.RespondWithData(m)
 }
@@ -168,7 +175,7 @@ func (ctl *EventController) Update(c *models.Context) {
 	audit.Replace(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeEvent],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -178,7 +185,7 @@ func (ctl *EventController) Update(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypeEvent,
-			m.Id,
+			m.ID,
 		),
 	)
 }
@@ -280,7 +287,7 @@ func (ctl *EventController) Patch(c *models.Context) {
 	audit.Update(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeEvent],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -328,7 +335,7 @@ func (ctl *EventController) Delete(c *models.Context) {
 	audit.Delete(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeEvent],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,

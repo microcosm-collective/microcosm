@@ -1041,21 +1041,21 @@ func SendUpdatesForNewItemInAMicrocosm(
 		conversation = item.(ConversationType)
 		itemTypeID = h.ItemTypes[h.ItemTypeConversation]
 		itemType = h.ItemTypeConversation
-		itemID = conversation.Id
+		itemID = conversation.ID
 		createdByID = conversation.Meta.CreatedById
 
 	case EventType:
 		event = item.(EventType)
 		itemTypeID = h.ItemTypes[h.ItemTypeEvent]
 		itemType = h.ItemTypeEvent
-		itemID = event.Id
+		itemID = event.ID
 		createdByID = event.Meta.CreatedById
 
 	case PollType:
 		poll = item.(PollType)
 		itemTypeID = h.ItemTypes[h.ItemTypePoll]
 		itemType = h.ItemTypePoll
-		itemID = poll.Id
+		itemID = poll.ID
 		createdByID = poll.Meta.CreatedById
 
 	default:

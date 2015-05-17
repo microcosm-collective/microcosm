@@ -55,7 +55,7 @@ func (ctl *PollsController) Create(c *models.Context) {
 	// Start : Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, m.MicrocosmId, 0, 0),
+			c, m.MicrocosmID, 0, 0),
 	)
 	if !perms.CanCreate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -76,7 +76,7 @@ func (ctl *PollsController) Create(c *models.Context) {
 	audit.Create(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypePoll],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -87,7 +87,7 @@ func (ctl *PollsController) Create(c *models.Context) {
 	go models.RegisterWatcher(
 		c.Auth.ProfileId,
 		h.UpdateTypes[h.UpdateTypeNewComment],
-		m.Id,
+		m.ID,
 		h.ItemTypes[h.ItemTypePoll],
 		c.Site.ID,
 	)
@@ -96,7 +96,7 @@ func (ctl *PollsController) Create(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypePoll,
-			m.Id,
+			m.ID,
 		),
 	)
 }

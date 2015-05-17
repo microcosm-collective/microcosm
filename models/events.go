@@ -90,7 +90,7 @@ func (m *EventType) Validate(
 
 	// Does the Microcosm specified exist on this site?
 	if !exists {
-		_, status, err := GetMicrocosmSummary(siteId, m.MicrocosmId, profileId)
+		_, status, err := GetMicrocosmSummary(siteId, m.MicrocosmID, profileId)
 		if err != nil {
 			glog.Infof(`GetMicrocosmSummary error %+v`, err)
 			return status, err
@@ -107,8 +107,8 @@ func (m *EventType) Validate(
 		}
 	}
 
-	if m.MicrocosmId <= 0 {
-		glog.Infof(`Microcosm ID (%d) <= zero`, m.MicrocosmId)
+	if m.MicrocosmID <= 0 {
+		glog.Infof(`Microcosm ID (%d) <= zero`, m.MicrocosmID)
 		return http.StatusBadRequest,
 			errors.New("You must specify a Microcosm ID")
 	}
@@ -272,7 +272,7 @@ func (m *EventType) GetAttending(profileId int64) (int, error) {
 		return http.StatusOK, nil
 	}
 
-	attending, err := IsAttending(profileId, m.Id)
+	attending, err := IsAttending(profileId, m.ID)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -285,7 +285,7 @@ func (m *EventSummaryType) GetAttending(profileId int64) (int, error) {
 		return http.StatusOK, nil
 	}
 
-	attending, err := IsAttending(profileId, m.Id)
+	attending, err := IsAttending(profileId, m.ID)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -313,7 +313,7 @@ func (m *EventType) Insert(siteId int64, profileId int64) (int, error) {
 	}
 
 	dupeKey := "dupe_" + h.Md5sum(
-		strconv.FormatInt(m.MicrocosmId, 10)+
+		strconv.FormatInt(m.MicrocosmID, 10)+
 			m.Title+
 			when+
 			where+
@@ -330,7 +330,7 @@ func (m *EventType) Insert(siteId int64, profileId int64) (int, error) {
 
 	v, ok := c.CacheGetInt64(dupeKey)
 	if ok {
-		m.Id = v
+		m.ID = v
 		return http.StatusOK, nil
 	}
 
@@ -354,7 +354,7 @@ INSERT INTO events (
     $11, $12, $13, $14, $15,
     $16
 ) RETURNING event_id`,
-		m.MicrocosmId,
+		m.MicrocosmID,
 		m.Title,
 		m.Meta.Created,
 		m.Meta.CreatedById,
@@ -378,9 +378,9 @@ INSERT INTO events (
 		return http.StatusInternalServerError,
 			fmt.Errorf("Error inserting data and returning ID: %+v", err)
 	}
-	m.Id = insertId
+	m.ID = insertId
 
-	err = IncrementMicrocosmItemCount(tx, m.MicrocosmId)
+	err = IncrementMicrocosmItemCount(tx, m.MicrocosmID)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -393,10 +393,10 @@ INSERT INTO events (
 	}
 
 	// 5 minute dupe check
-	c.CacheSetInt64(dupeKey, m.Id, 60*5)
+	c.CacheSetInt64(dupeKey, m.ID, 60*5)
 
-	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -435,8 +435,8 @@ UPDATE events
       ,rsvp_limit = $17
  WHERE event_id = $1`,
 
-		m.Id,
-		m.MicrocosmId,
+		m.ID,
+		m.MicrocosmID,
 		m.Title,
 		m.Meta.EditedNullable,
 		m.Meta.EditedByNullable,
@@ -476,8 +476,8 @@ UPDATE events
 		)
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -503,7 +503,7 @@ UPDATE events
                  ,a.state_id
        ) AS att
  WHERE events.event_id = att.event_id`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
 		tx.Rollback()
@@ -566,7 +566,7 @@ UPDATE events
       ,edited_by = $5
       ,edit_reason = $6
  WHERE event_id = $1`,
-			m.Id,
+			m.ID,
 			patch.Bool.Bool,
 			m.Meta.Flags.Visible,
 			m.Meta.EditedNullable,
@@ -587,8 +587,8 @@ UPDATE events
 		)
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -607,7 +607,7 @@ UPDATE events
    SET is_deleted = true
       ,is_visible = false
  WHERE event_id = $1`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New(
@@ -615,7 +615,7 @@ UPDATE events
 		)
 	}
 
-	err = DecrementMicrocosmItemCount(tx, m.MicrocosmId)
+	err = DecrementMicrocosmItemCount(tx, m.MicrocosmID)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -627,8 +627,8 @@ UPDATE events
 		)
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -717,8 +717,8 @@ SELECT e.event_id
 		id,
 		siteId,
 	).Scan(
-		&m.Id,
-		&m.MicrocosmId,
+		&m.ID,
+		&m.MicrocosmID,
 		&m.Title,
 		&m.Meta.Created,
 		&m.Meta.CreatedById,
@@ -773,24 +773,24 @@ SELECT e.event_id
 
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeEvent, m.Id),
+			h.GetLink("self", "", h.ItemTypeEvent, m.ID),
 			h.GetLink(
 				"microcosm",
-				GetMicrocosmTitle(m.MicrocosmId),
+				GetMicrocosmTitle(m.MicrocosmID),
 				h.ItemTypeMicrocosm,
-				m.MicrocosmId,
+				m.MicrocosmID,
 			),
 		}
 
 	// Add meta links
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeEvent, m.Id),
+			h.GetLink("self", "", h.ItemTypeEvent, m.ID),
 			h.GetLink(
 				"microcosm",
-				GetMicrocosmTitle(m.MicrocosmId),
+				GetMicrocosmTitle(m.MicrocosmID),
 				h.ItemTypeMicrocosm,
-				m.MicrocosmId,
+				m.MicrocosmID,
 			),
 		}
 
@@ -895,8 +895,8 @@ WHERE event_id = $1
   AND is_deleted(9, event_id) IS FALSE`,
 		id,
 	).Scan(
-		&m.Id,
-		&m.MicrocosmId,
+		&m.ID,
+		&m.MicrocosmID,
 		&m.Title,
 		&m.Meta.Created,
 		&m.Meta.CreatedById,
@@ -944,7 +944,7 @@ WHERE event_id = $1
 	}
 
 	lastComment, status, err :=
-		GetLastComment(h.ItemTypes[h.ItemTypeEvent], m.Id)
+		GetLastComment(h.ItemTypes[h.ItemTypeEvent], m.ID)
 	if err != nil {
 		return EventSummaryType{}, status, errors.New(
 			fmt.Sprintf("Error fetching last comment: %v", err.Error()),
@@ -958,11 +958,11 @@ WHERE event_id = $1
 	// Add meta links
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeEvent, m.Id),
+			h.GetLink("self", "", h.ItemTypeEvent, m.ID),
 			h.GetLink(
 				"microcosm",
-				GetMicrocosmTitle(m.MicrocosmId),
-				h.ItemTypeMicrocosm, m.MicrocosmId,
+				GetMicrocosmTitle(m.MicrocosmID),
+				h.ItemTypeMicrocosm, m.MicrocosmID,
 			),
 		}
 

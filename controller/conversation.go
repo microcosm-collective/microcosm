@@ -72,7 +72,14 @@ func (ctl *ConversationController) Read(c *models.Context) {
 	}
 
 	// Get Comments
-	m.Comments, status, err = models.GetComments(c.Site.ID, h.ItemTypeConversation, m.Id, c.Request.URL, c.Auth.ProfileId, m.Meta.Created)
+	m.Comments, status, err = models.GetComments(
+		c.Site.ID,
+		h.ItemTypeConversation,
+		m.ID,
+		c.Request.URL,
+		c.Auth.ProfileId,
+		m.Meta.Created,
+	)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -97,11 +104,11 @@ func (ctl *ConversationController) Read(c *models.Context) {
 		default:
 		}
 
-		go models.MarkAsRead(h.ItemTypes[h.ItemTypeConversation], m.Id, c.Auth.ProfileId, read)
+		go models.MarkAsRead(h.ItemTypes[h.ItemTypeConversation], m.ID, c.Auth.ProfileId, read)
 
 		// Get watcher status
 		watcherId, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeConversation], m.Id, c.Auth.ProfileId,
+			h.ItemTypes[h.ItemTypeConversation], m.ID, c.Auth.ProfileId,
 		)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
@@ -118,7 +125,7 @@ func (ctl *ConversationController) Read(c *models.Context) {
 			m.Meta.Flags.SendSms = sendSms
 		}
 	}
-	go models.IncrementViewCount(h.ItemTypes[h.ItemTypeConversation], m.Id)
+	go models.IncrementViewCount(h.ItemTypes[h.ItemTypeConversation], m.ID)
 
 	c.RespondWithData(m)
 }
@@ -171,7 +178,7 @@ func (ctl *ConversationController) Update(c *models.Context) {
 	audit.Replace(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeConversation],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -181,7 +188,7 @@ func (ctl *ConversationController) Update(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypeConversation,
-			m.Id,
+			m.ID,
 		),
 	)
 }
@@ -285,7 +292,7 @@ func (ctl *ConversationController) Patch(c *models.Context) {
 	audit.Update(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeConversation],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -333,7 +340,7 @@ func (ctl *ConversationController) Delete(c *models.Context) {
 	audit.Delete(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeConversation],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,

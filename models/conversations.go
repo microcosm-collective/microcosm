@@ -51,18 +51,18 @@ func (m *ConversationType) Validate(
 
 	if !exists {
 		// Does the Microcosm specified exist on this site?
-		_, status, err := GetMicrocosmSummary(siteId, m.MicrocosmId, profileId)
+		_, status, err := GetMicrocosmSummary(siteId, m.MicrocosmID, profileId)
 		if err != nil {
 			return status, err
 		}
 	}
 
 	if exists && !isImport {
-		if m.Id < 1 {
+		if m.ID < 1 {
 			return http.StatusBadRequest, errors.New(
 				fmt.Sprintf(
 					"The supplied ID ('%d') cannot be zero or negative.",
-					m.Id,
+					m.ID,
 				),
 			)
 		}
@@ -78,7 +78,7 @@ func (m *ConversationType) Validate(
 		}
 	}
 
-	if m.MicrocosmId <= 0 {
+	if m.MicrocosmID <= 0 {
 		return http.StatusBadRequest,
 			errors.New("You must specify a Microcosm ID")
 	}
@@ -145,20 +145,20 @@ func (m *ConversationType) Insert(siteId int64, profileId int64) (int, error) {
 	}
 
 	dupeKey := "dupe_" + h.Md5sum(
-		strconv.FormatInt(m.MicrocosmId, 10)+
+		strconv.FormatInt(m.MicrocosmID, 10)+
 			m.Title+
 			strconv.FormatInt(m.Meta.CreatedById, 10),
 	)
 	v, ok := c.CacheGetInt64(dupeKey)
 	if ok {
-		m.Id = v
+		m.ID = v
 		return http.StatusOK, nil
 	}
 
 	status, err = m.insert(siteId, profileId)
 	if status == http.StatusOK {
 		// 5 minute dupe check
-		c.CacheSetInt64(dupeKey, m.Id, 60*5)
+		c.CacheSetInt64(dupeKey, m.ID, 60*5)
 	}
 
 	return status, err
@@ -190,7 +190,7 @@ INSERT INTO conversations (
     $1, $2, $3, $4, $5,
     $6, $7, $8, $9
 ) RETURNING conversation_id`,
-		m.MicrocosmId,
+		m.MicrocosmID,
 		m.Title,
 		m.Meta.Created,
 		m.Meta.CreatedById,
@@ -212,9 +212,9 @@ INSERT INTO conversations (
 		)
 	}
 
-	m.Id = insertId
+	m.ID = insertId
 
-	err = IncrementMicrocosmItemCount(tx, m.MicrocosmId)
+	err = IncrementMicrocosmItemCount(tx, m.MicrocosmID)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -226,8 +226,8 @@ INSERT INTO conversations (
 		)
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -253,8 +253,8 @@ UPDATE conversations
        edited_by = $5,
        edit_reason = $6
  WHERE conversation_id = $1`,
-		m.Id,
-		m.MicrocosmId,
+		m.ID,
+		m.MicrocosmID,
 		m.Title,
 		m.Meta.EditedNullable,
 		m.Meta.EditedByNullable,
@@ -273,8 +273,8 @@ UPDATE conversations
 		)
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -336,7 +336,7 @@ UPDATE conversations
       ,edited_by = $5
       ,edit_reason = $6
  WHERE conversation_id = $1`,
-			m.Id,
+			m.ID,
 			patch.Bool.Bool,
 			m.Meta.Flags.Visible,
 			m.Meta.EditedNullable,
@@ -357,8 +357,8 @@ UPDATE conversations
 		)
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -376,7 +376,7 @@ UPDATE conversations
    SET is_deleted = true
       ,is_visible = false
  WHERE conversation_id = $1`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New(
@@ -384,7 +384,7 @@ UPDATE conversations
 		)
 	}
 
-	err = DecrementMicrocosmItemCount(tx, m.MicrocosmId)
+	err = DecrementMicrocosmItemCount(tx, m.MicrocosmID)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -396,8 +396,8 @@ UPDATE conversations
 		)
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.Id)
-	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId)
+	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
+	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
 
 	return http.StatusOK, nil
 }
@@ -467,8 +467,8 @@ SELECT c.conversation_id
 		id,
 		siteId,
 	).Scan(
-		&m.Id,
-		&m.MicrocosmId,
+		&m.ID,
+		&m.MicrocosmID,
 		&m.Title,
 		&m.Meta.Created,
 		&m.Meta.CreatedById,
@@ -505,12 +505,12 @@ SELECT c.conversation_id
 
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeConversation, m.Id),
+			h.GetLink("self", "", h.ItemTypeConversation, m.ID),
 			h.GetLink(
 				"microcosm",
-				GetMicrocosmTitle(m.MicrocosmId),
+				GetMicrocosmTitle(m.MicrocosmID),
 				h.ItemTypeMicrocosm,
-				m.MicrocosmId,
+				m.MicrocosmID,
 			),
 		}
 
@@ -575,8 +575,8 @@ SELECT conversation_id
    AND is_deleted(6, $1) IS FALSE`,
 		id,
 	).Scan(
-		&m.Id,
-		&m.MicrocosmId,
+		&m.ID,
+		&m.MicrocosmID,
 		&m.Title,
 		&m.Meta.Created,
 		&m.Meta.CreatedById,
@@ -602,7 +602,7 @@ SELECT conversation_id
 	}
 
 	lastComment, status, err :=
-		GetLastComment(h.ItemTypes[h.ItemTypeConversation], m.Id)
+		GetLastComment(h.ItemTypes[h.ItemTypeConversation], m.ID)
 	if err != nil {
 		return ConversationSummaryType{}, status, errors.New(
 			fmt.Sprintf("Error fetching last comment: %v", err.Error()),
@@ -615,12 +615,12 @@ SELECT conversation_id
 
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeConversation, m.Id),
+			h.GetLink("self", "", h.ItemTypeConversation, m.ID),
 			h.GetLink(
 				"microcosm",
-				GetMicrocosmTitle(m.MicrocosmId),
+				GetMicrocosmTitle(m.MicrocosmID),
 				h.ItemTypeMicrocosm,
-				m.MicrocosmId,
+				m.MicrocosmID,
 			),
 		}
 

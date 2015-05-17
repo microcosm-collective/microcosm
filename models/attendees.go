@@ -185,7 +185,7 @@ func UpdateManyAttendees(siteId int64, ems []AttendeeType) (int, error) {
 		return http.StatusInternalServerError, errors.New("Transaction failed")
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeEvent], event.Id)
+	go PurgeCache(h.ItemTypes[h.ItemTypeEvent], event.ID)
 
 	return http.StatusOK, nil
 }

@@ -340,17 +340,17 @@ INSERT INTO comments (
 		case ConversationSummaryType:
 			PurgeCache(
 				h.ItemTypes[h.ItemTypeMicrocosm],
-				summary.(ConversationSummaryType).MicrocosmId,
+				summary.(ConversationSummaryType).MicrocosmID,
 			)
 		case EventSummaryType:
 			PurgeCache(
 				h.ItemTypes[h.ItemTypeMicrocosm],
-				summary.(EventSummaryType).MicrocosmId,
+				summary.(EventSummaryType).MicrocosmID,
 			)
 		case PollSummaryType:
 			PurgeCache(
 				h.ItemTypes[h.ItemTypeMicrocosm],
-				summary.(PollSummaryType).MicrocosmId,
+				summary.(PollSummaryType).MicrocosmID,
 			)
 		default:
 		}
@@ -501,17 +501,17 @@ func (m *CommentSummaryType) Update(siteId int64) (int, error) {
 	case ConversationSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(ConversationSummaryType).MicrocosmId,
+			summary.(ConversationSummaryType).MicrocosmID,
 		)
 	case EventSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(EventSummaryType).MicrocosmId,
+			summary.(EventSummaryType).MicrocosmID,
 		)
 	case PollSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(PollSummaryType).MicrocosmId,
+			summary.(PollSummaryType).MicrocosmID,
 		)
 	default:
 	}
@@ -597,17 +597,17 @@ UPDATE comments
 	case ConversationSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(ConversationSummaryType).MicrocosmId,
+			summary.(ConversationSummaryType).MicrocosmID,
 		)
 	case EventSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(EventSummaryType).MicrocosmId,
+			summary.(EventSummaryType).MicrocosmID,
 		)
 	case PollSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(PollSummaryType).MicrocosmId,
+			summary.(PollSummaryType).MicrocosmID,
 		)
 	default:
 	}
@@ -705,17 +705,17 @@ SELECT c1.item_type_id
 	case ConversationSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(ConversationSummaryType).MicrocosmId,
+			summary.(ConversationSummaryType).MicrocosmID,
 		)
 	case EventSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(EventSummaryType).MicrocosmId,
+			summary.(EventSummaryType).MicrocosmID,
 		)
 	case PollSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(PollSummaryType).MicrocosmId,
+			summary.(PollSummaryType).MicrocosmID,
 		)
 	default:
 	}
@@ -1648,7 +1648,7 @@ SELECT c.comment_id
 
 	for rows.Next() {
 		err = rows.Scan(
-			&lastComment.Id,
+			&lastComment.ID,
 			&lastComment.CreatedById,
 			&lastComment.Created,
 		)

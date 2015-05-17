@@ -108,7 +108,7 @@ func (ctl *ConversationsController) Create(c *models.Context) {
 	// Start : Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmId),
+			c, 0, h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID),
 	)
 	if !perms.CanCreate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -129,7 +129,7 @@ func (ctl *ConversationsController) Create(c *models.Context) {
 	audit.Create(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeConversation],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -140,7 +140,7 @@ func (ctl *ConversationsController) Create(c *models.Context) {
 	go models.RegisterWatcher(
 		c.Auth.ProfileId,
 		h.UpdateTypes[h.UpdateTypeNewComment],
-		m.Id,
+		m.ID,
 		h.ItemTypes[h.ItemTypeConversation],
 		c.Site.ID,
 	)
@@ -149,7 +149,7 @@ func (ctl *ConversationsController) Create(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypeConversation,
-			m.Id,
+			m.ID,
 		),
 	)
 }

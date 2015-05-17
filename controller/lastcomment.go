@@ -75,7 +75,7 @@ func (ctl *LastCommentController) Read(c *models.Context) {
 	// Construct location of the last comment on the item.
 	if lastComment.Valid {
 		_, _, offset, _, err := models.GetPageNumber(
-			lastComment.Id,
+			lastComment.ID,
 			limit,
 			c.Auth.ProfileId,
 		)
@@ -85,7 +85,7 @@ func (ctl *LastCommentController) Read(c *models.Context) {
 				query.Set("offset", strconv.FormatInt(offset, 10))
 			}
 			query.Del("comment_id")
-			query.Set("comment_id", strconv.FormatInt(lastComment.Id, 10))
+			query.Set("comment_id", strconv.FormatInt(lastComment.ID, 10))
 
 			parsed.RawQuery = query.Encode()
 			c.RespondWithLocation(parsed.String())

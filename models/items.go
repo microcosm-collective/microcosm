@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -16,20 +15,21 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
-// Abstract row from the database ITEMS table
+// Item is a set of minimal and common fields used by items that exist on the
+// site, usually things that exist within a microcosm
 type Item struct {
-	MicrocosmId int64  `json:"microcosmId"`
-	ItemTypeId  int64  `json:"-"`
+	MicrocosmID int64  `json:"microcosmId"`
+	ItemTypeID  int64  `json:"-"`
 	ItemType    string `json:"itemType"`
 
-	Id    int64  `json:"id"`
+	ID    int64  `json:"id"`
 	Title string `json:"title"`
 
 	CommentCount int64 `json:"totalComments"`
 	ViewCount    int64 `json:"totalViews"`
 
-	LastCommentIdNullable        sql.NullInt64 `json:"-"`
-	LastCommentId                int64         `json:"lastCommentId,omitempty"`
+	LastCommentIDNullable        sql.NullInt64 `json:"-"`
+	LastCommentID                int64         `json:"lastCommentId,omitempty"`
 	LastCommentCreatedByNullable sql.NullInt64 `json:"-"`
 	LastCommentCreatedBy         interface{}   `json:"lastCommentCreatedBy,omitempty"`
 	LastCommentCreatedNullable   pq.NullTime   `json:"-"`
@@ -38,6 +38,7 @@ type Item struct {
 	Meta h.DefaultMetaType `json:"meta"`
 }
 
+// ItemRequest is an envelope to request an item via a channel
 type ItemRequest struct {
 	Item   Item
 	Err    error
@@ -45,20 +46,27 @@ type ItemRequest struct {
 	Seq    int
 }
 
+// ItemRequestBySeq it a sorted collection of ItemRequests
 type ItemRequestBySeq []ItemRequest
 
-func (v ItemRequestBySeq) Len() int           { return len(v) }
-func (v ItemRequestBySeq) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
+// Len returns the length of the collection
+func (v ItemRequestBySeq) Len() int { return len(v) }
+
+// Swap exchanges two adjacent items in the collection
+func (v ItemRequestBySeq) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+
+// Less determines whether an item is greater in sequence than another
 func (v ItemRequestBySeq) Less(i, j int) bool { return v[i].Seq < v[j].Seq }
 
-// Core item types used by all things that can be a child of a Microcosm
+// ItemSummary is used by all things that can be a child of a microcosm
 type ItemSummary struct {
 	// Common Fields
-	Id          int64  `json:"id"`
-	MicrocosmId int64  `json:"microcosmId,omitempty"`
+	ID          int64  `json:"id"`
+	MicrocosmID int64  `json:"microcosmId,omitempty"`
 	Title       string `json:"title"`
 }
 
+// ItemSummaryMeta is the meta object for an ItemSummary
 type ItemSummaryMeta struct {
 	CommentCount int64             `json:"totalComments"`
 	ViewCount    int64             `json:"totalViews"`
@@ -66,22 +74,25 @@ type ItemSummaryMeta struct {
 	Meta         h.SummaryMetaType `json:"meta"`
 }
 
+// LastComment encapsulates the last common on an item within a microcosm
 type LastComment struct {
-	Id int64 `json:"id"`
+	ID int64 `json:"id"`
 	h.CreatedType
 	Valid bool `json:"-"`
 }
 
+// ItemDetail describes an item and the microcosm it belongs to
 type ItemDetail struct {
 	// Common Fields
-	Id          int64  `json:"id"`
-	MicrocosmId int64  `json:"microcosmId,omitempty"`
+	ID          int64  `json:"id"`
+	MicrocosmID int64  `json:"microcosmId,omitempty"`
 	Title       string `json:"title"`
 
 	// Used during import to set the view count
 	ViewCount int64 `json:"-"`
 }
 
+// ItemDetailCommentsAndMeta provides the comments for an item
 type ItemDetailCommentsAndMeta struct {
 	// Comments
 	Comments h.ArrayType `json:"comments"`
@@ -90,9 +101,10 @@ type ItemDetailCommentsAndMeta struct {
 	Meta h.DefaultMetaType `json:"meta"`
 }
 
-func (m *Item) FetchProfileSummaries(siteId int64) (int, error) {
+// FetchProfileSummaries populates a partially populated Item
+func (m *Item) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteId, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		return status, err
 	}
@@ -100,7 +112,7 @@ func (m *Item) FetchProfileSummaries(siteId int64) (int, error) {
 
 	if m.LastCommentCreatedByNullable.Valid {
 		profile, status, err :=
-			GetProfileSummary(siteId, m.LastCommentCreatedByNullable.Int64)
+			GetProfileSummary(siteID, m.LastCommentCreatedByNullable.Int64)
 		if err != nil {
 			return status, err
 		}
@@ -110,7 +122,8 @@ func (m *Item) FetchProfileSummaries(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
-func IncrementViewCount(itemTypeId int64, itemId int64) {
+// IncrementViewCount increments the views of an item
+func IncrementViewCount(itemTypeID int64, itemID int64) {
 
 	// No transaction as we don't care for accuracy on these updates
 	// Note: This function doesn't even return errors, we don't even care
@@ -124,8 +137,8 @@ func IncrementViewCount(itemTypeId int64, itemId int64) {
 	// Integrity insert, gets rolled up and updated on cron
 	_, err = db.Exec(
 		`INSERT INTO views(item_type_id, item_id) VALUES ($1, $2)`,
-		itemTypeId,
-		itemId,
+		itemTypeID,
+		itemID,
 	)
 	if err != nil {
 		glog.Error(err)
@@ -133,11 +146,12 @@ func IncrementViewCount(itemTypeId int64, itemId int64) {
 	}
 }
 
-func IncrementItemCommentCount(itemTypeId int64, itemId int64) {
+// IncrementItemCommentCount increments the comments of an item
+func IncrementItemCommentCount(itemTypeID int64, itemID int64) {
 
-	if itemTypeId != h.ItemTypes[h.ItemTypeConversation] &&
-		itemTypeId != h.ItemTypes[h.ItemTypeEvent] &&
-		itemTypeId != h.ItemTypes[h.ItemTypePoll] {
+	if itemTypeID != h.ItemTypes[h.ItemTypeConversation] &&
+		itemTypeID != h.ItemTypes[h.ItemTypeEvent] &&
+		itemTypeID != h.ItemTypes[h.ItemTypePoll] {
 		return
 	}
 
@@ -147,13 +161,13 @@ func IncrementItemCommentCount(itemTypeId int64, itemId int64) {
 		return
 	}
 
-	switch itemTypeId {
+	switch itemTypeID {
 	case h.ItemTypes[h.ItemTypeConversation]:
 		_, err = db.Exec(`--Update Conversation Comment Count
 UPDATE conversations
    SET comment_count = comment_count + 1
  WHERE conversation_id = $1`,
-			itemId,
+			itemID,
 		)
 		if err != nil {
 			glog.Error(err)
@@ -164,7 +178,7 @@ UPDATE conversations
 UPDATE events
    SET comment_count = comment_count + 1
  WHERE event_id = $1`,
-			itemId,
+			itemID,
 		)
 		if err != nil {
 			glog.Error(err)
@@ -175,7 +189,7 @@ UPDATE events
 UPDATE polls
    SET comment_count = comment_count + 1
  WHERE poll_id = $1`,
-			itemId,
+			itemID,
 		)
 		if err != nil {
 			glog.Error(err)
@@ -185,26 +199,27 @@ UPDATE polls
 		return
 	}
 
-	PurgeCache(itemTypeId, itemId)
+	PurgeCache(itemTypeID, itemID)
 
-	microcosmId := GetMicrocosmIDForItem(itemTypeId, itemId)
-	if microcosmId > 0 {
+	microcosmID := GetMicrocosmIDForItem(itemTypeID, itemID)
+	if microcosmID > 0 {
 		_, err = db.Exec(`--Update Microcosm Comment Count
 UPDATE microcosms
    SET comment_count = comment_count + 1
  WHERE microcosm_id = $1`,
-			microcosmId,
+			microcosmID,
 		)
 		if err != nil {
 			glog.Error(err)
 			return
 		}
 
-		PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], microcosmId)
+		PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], microcosmID)
 	}
 }
 
-func DecrementItemCommentCount(itemTypeId int64, itemId int64) {
+// DecrementItemCommentCount is called when a comment is deleted from an item
+func DecrementItemCommentCount(itemTypeID int64, itemID int64) {
 
 	db, err := h.GetConnection()
 	if err != nil {
@@ -212,13 +227,13 @@ func DecrementItemCommentCount(itemTypeId int64, itemId int64) {
 		return
 	}
 
-	switch itemTypeId {
+	switch itemTypeID {
 	case h.ItemTypes[h.ItemTypeConversation]:
 		_, err = db.Exec(`--Update Conversation Comment Count
 UPDATE conversations
    SET comment_count = comment_count - 1
  WHERE conversation_id = $1`,
-			itemId,
+			itemID,
 		)
 		if err != nil {
 			glog.Error(err)
@@ -229,7 +244,7 @@ UPDATE conversations
 UPDATE events
    SET comment_count = comment_count - 1
  WHERE event_id = $1`,
-			itemId,
+			itemID,
 		)
 		if err != nil {
 			glog.Error(err)
@@ -240,7 +255,7 @@ UPDATE events
 UPDATE polls
    SET comment_count = comment_count - 1
  WHERE poll_id = $1`,
-			itemId,
+			itemID,
 		)
 		if err != nil {
 			glog.Error(err)
@@ -251,29 +266,30 @@ UPDATE polls
 		return
 	}
 
-	PurgeCache(itemTypeId, itemId)
+	PurgeCache(itemTypeID, itemID)
 
-	microcosmId := GetMicrocosmIDForItem(itemTypeId, itemId)
-	if microcosmId > 0 {
+	microcosmID := GetMicrocosmIDForItem(itemTypeID, itemID)
+	if microcosmID > 0 {
 		_, err = db.Exec(`--Update Microcosm Comment Count
 UPDATE microcosms
    SET comment_count = comment_count - 1
  WHERE microcosm_id = $1`,
-			microcosmId,
+			microcosmID,
 		)
 		if err != nil {
 			glog.Error(err)
 			return
 		}
 
-		PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], microcosmId)
+		PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], microcosmID)
 	}
 }
 
+// GetAllItems fetches items within a microcosm
 func GetAllItems(
-	siteId int64,
-	microcosmId int64,
-	profileId int64,
+	siteID int64,
+	microcosmID int64,
+	profileID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -283,7 +299,6 @@ func GetAllItems(
 	int,
 	error,
 ) {
-
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
@@ -312,18 +327,16 @@ func GetAllItems(
 	var total int64
 	err = db.QueryRow(`
 SELECT COUNT(*) AS total`+sqlFromWhere,
-		siteId,
-		microcosmId,
-		profileId,
+		siteID,
+		microcosmID,
+		profileID,
 	).Scan(
 		&total,
 	)
 	if err != nil {
 		glog.Error(err)
 		return []SummaryContainer{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	rows, err := db.Query(`
@@ -342,18 +355,16 @@ SELECT item_type_id
          LIMIT $4
         OFFSET $5
        ) r`,
-		siteId,
-		microcosmId,
-		profileId,
+		siteID,
+		microcosmID,
+		profileID,
 		limit,
 		offset,
 	)
 	if err != nil {
 		glog.Error(err)
 		return []SummaryContainer{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -368,37 +379,35 @@ SELECT item_type_id
 	seq := 0
 	for rows.Next() {
 		var (
-			itemTypeId  int64
-			itemId      int64
+			itemTypeID  int64
+			itemID      int64
 			hasUnread   bool
 			isAttending bool
 		)
 
 		err = rows.Scan(
-			&itemTypeId,
-			&itemId,
+			&itemTypeID,
+			&itemID,
 			&hasUnread,
 			&isAttending,
 		)
 		if err != nil {
 			return []SummaryContainer{}, 0, 0, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
-		unread[strconv.FormatInt(itemTypeId, 10)+`_`+
-			strconv.FormatInt(itemId, 10)] = hasUnread
+		unread[strconv.FormatInt(itemTypeID, 10)+`_`+
+			strconv.FormatInt(itemID, 10)] = hasUnread
 
-		if itemTypeId == h.ItemTypes[h.ItemTypeEvent] {
-			attending[itemId] = isAttending
+		if itemTypeID == h.ItemTypes[h.ItemTypeEvent] {
+			attending[itemID] = isAttending
 		}
 
 		go HandleSummaryContainerRequest(
-			siteId,
-			itemTypeId,
-			itemId,
-			profileId,
+			siteID,
+			itemTypeID,
+			itemID,
+			profileID,
 			seq,
 			req,
 		)
@@ -408,9 +417,7 @@ SELECT item_type_id
 	err = rows.Err()
 	if err != nil {
 		return []SummaryContainer{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -471,27 +478,25 @@ SELECT item_type_id
 
 	if offset > maxOffset {
 		return []SummaryContainer{}, 0, 0, http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf("Not enough records, "+
-					"offset (%d) would return an empty page.",
-					offset,
-				),
+			fmt.Errorf("Not enough records, "+
+				"offset (%d) would return an empty page",
+				offset,
 			)
 	}
 
 	return ems, total, pages, http.StatusOK, nil
 }
 
+// GetMostRecentItem fetches the most recently updated item within a microcosm
 func GetMostRecentItem(
-	siteId int64,
-	microcosmId int64,
-	profileId int64,
+	siteID int64,
+	microcosmID int64,
+	profileID int64,
 ) (
 	SummaryContainer,
 	int,
 	error,
 ) {
-
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
@@ -514,43 +519,43 @@ SELECT item_type_id
     OR item_type_id = 9)
  ORDER BY last_modified DESC
  LIMIT 1`,
-		microcosmId,
+		microcosmID,
 	)
 	if err != nil {
-		glog.Errorf("db.Query(%d) %+v", microcosmId, err)
+		glog.Errorf("db.Query(%d) %+v", microcosmID, err)
 		return SummaryContainer{},
 			http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 	defer rows.Close()
 
 	var (
 		m          SummaryContainer
 		status     int
-		itemTypeId int64
-		itemId     int64
+		itemTypeID int64
+		itemID     int64
 	)
 	for rows.Next() {
 		err = rows.Scan(
-			&itemTypeId,
-			&itemId,
+			&itemTypeID,
+			&itemID,
 		)
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return SummaryContainer{},
 				http.StatusInternalServerError,
-				errors.New("Row parsing error")
+				fmt.Errorf("Row parsing error")
 		}
 
 		m, status, err =
-			GetSummaryContainer(siteId, itemTypeId, itemId, profileId)
+			GetSummaryContainer(siteID, itemTypeID, itemID, profileID)
 		if err != nil {
 			glog.Errorf(
 				"GetSummaryContainer(%d, %d, %d, %d) %+v",
-				siteId,
-				itemTypeId,
-				itemId,
-				profileId,
+				siteID,
+				itemTypeID,
+				itemID,
+				profileID,
 				err,
 			)
 			return SummaryContainer{}, status, err
@@ -561,11 +566,11 @@ SELECT item_type_id
 		glog.Errorf("rows.Err() %+v", err)
 		return SummaryContainer{},
 			http.StatusInternalServerError,
-			errors.New("Error fetching rows")
+			fmt.Errorf("Error fetching rows")
 	}
 	rows.Close()
 
-	if itemId == 0 {
+	if itemID == 0 {
 		glog.Info("itemId == 0")
 		return SummaryContainer{}, http.StatusNotFound, nil
 	}
@@ -573,25 +578,25 @@ SELECT item_type_id
 	return m, http.StatusOK, nil
 }
 
+// GetItems fetches items for a microcosm
 func GetItems(
-	siteId int64,
-	microcosmId int64,
-	profileId int64,
-	reqUrl *url.URL,
+	siteID int64,
+	microcosmID int64,
+	profileID int64,
+	reqURL *url.URL,
 ) (
 	h.ArrayType,
 	int,
 	error,
 ) {
-
-	query := reqUrl.Query()
+	query := reqURL.Query()
 	limit, offset, status, err := h.GetLimitAndOffset(query)
 	if err != nil {
 		return h.ArrayType{}, status, err
 	}
 
 	ems, total, pages, status, err :=
-		GetAllItems(siteId, microcosmId, profileId, limit, offset)
+		GetAllItems(siteID, microcosmID, profileID, limit, offset)
 	if err != nil {
 		return h.ArrayType{}, status, err
 	}
@@ -603,7 +608,7 @@ func GetItems(
 		limit,
 		offset,
 		pages,
-		reqUrl,
+		reqURL,
 	)
 
 	return m, http.StatusOK, nil
