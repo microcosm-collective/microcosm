@@ -116,7 +116,7 @@ func (ctl *HuddlesController) Create(c *models.Context) {
 	audit.Create(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeHuddle],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,
@@ -126,7 +126,7 @@ func (ctl *HuddlesController) Create(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypeHuddle,
-			m.Id,
+			m.ID,
 		),
 	)
 }

@@ -63,7 +63,7 @@ func (ctl *HuddleController) Read(c *models.Context) {
 	}
 
 	// Get Comments
-	m.Comments, status, err = models.GetComments(c.Site.ID, h.ItemTypeHuddle, m.Id, c.Request.URL, c.Auth.ProfileId, m.Meta.Created)
+	m.Comments, status, err = models.GetComments(c.Site.ID, h.ItemTypeHuddle, m.ID, c.Request.URL, c.Auth.ProfileId, m.Meta.Created)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -88,12 +88,12 @@ func (ctl *HuddleController) Read(c *models.Context) {
 		default:
 		}
 
-		models.MarkAsRead(h.ItemTypes[h.ItemTypeHuddle], m.Id, c.Auth.ProfileId, read)
+		models.MarkAsRead(h.ItemTypes[h.ItemTypeHuddle], m.ID, c.Auth.ProfileId, read)
 		models.UpdateUnreadHuddleCount(c.Auth.ProfileId)
 
 		// Get watcher status
 		watcherId, sendEmail, sendSms, _, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeHuddle], m.Id, c.Auth.ProfileId,
+			h.ItemTypes[h.ItemTypeHuddle], m.ID, c.Auth.ProfileId,
 		)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
@@ -149,7 +149,7 @@ func (ctl *HuddleController) Delete(c *models.Context) {
 	audit.Delete(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeHuddle],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileId,
 		time.Now(),
 		c.IP,

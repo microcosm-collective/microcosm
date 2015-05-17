@@ -236,7 +236,7 @@ func (m *CommentSummaryType) Insert(siteId int64) (int, error) {
 		}
 
 		for _, em := range ems {
-			p, _, err := GetProfileSummary(siteId, em.Id)
+			p, _, err := GetProfileSummary(siteId, em.ID)
 			if err != nil {
 				glog.Error(err)
 				continue

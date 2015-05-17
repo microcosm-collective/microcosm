@@ -114,7 +114,7 @@ func (ctl *HuddleParticipantController) Update(c *models.Context) {
 	// End Authorisation
 
 	m := models.HuddleParticipantType{}
-	m.Id = profileId
+	m.ID = profileId
 
 	status, err = m.Update(c.Site.ID, huddleId)
 	if err != nil {
@@ -163,7 +163,7 @@ func (ctl *HuddleParticipantController) Delete(c *models.Context) {
 	}
 
 	m := models.HuddleParticipantType{}
-	m.Id = profileId
+	m.ID = profileId
 
 	status, err = m.Delete(huddleId)
 	if err != nil {

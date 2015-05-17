@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -11,27 +10,32 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// HuddleParticipantsType is a collection of huddle participants
 type HuddleParticipantsType struct {
 	HuddleParticipants h.ArrayType    `json:"participants"`
 	Meta               h.CoreMetaType `json:"meta"`
 }
 
+// HuddleParticipantType describes a person who is able to view and interact
+// with a huddle
 type HuddleParticipantType struct {
-	Id      int64       `json:"id,omitempty"`
+	ID      int64       `json:"id,omitempty"`
 	Profile interface{} `json:"participant"`
 }
 
+// GetLink returns the API link to a participant
 func (m *HuddleParticipantType) GetLink(link string) string {
-	return fmt.Sprintf("%s/participants/%d", link, m.Id)
+	return fmt.Sprintf("%s/participants/%d", link, m.ID)
 }
 
-func (m *HuddleParticipantType) Validate(siteId int64) (int, error) {
-	if m.Id < 1 {
+// Validate returns true if the huddle participant is valid
+func (m *HuddleParticipantType) Validate(siteID int64) (int, error) {
+	if m.ID < 1 {
 		return http.StatusBadRequest,
-			errors.New("profile id needs to be a positive integer")
+			fmt.Errorf("profile id needs to be a positive integer")
 	}
 
-	profileSummary, status, err := GetProfileSummary(siteId, m.Id)
+	profileSummary, status, err := GetProfileSummary(siteID, m.ID)
 	if err != nil {
 		return status, err
 	}
@@ -40,15 +44,15 @@ func (m *HuddleParticipantType) Validate(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
+// UpdateManyHuddleParticipants saves many participants
 func UpdateManyHuddleParticipants(
-	siteId int64,
-	huddleId int64,
+	siteID int64,
+	huddleID int64,
 	ems []HuddleParticipantType,
 ) (
 	int,
 	error,
 ) {
-
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -56,7 +60,7 @@ func UpdateManyHuddleParticipants(
 	defer tx.Rollback()
 
 	for _, m := range ems {
-		status, err := m.insert(tx, siteId, huddleId)
+		status, err := m.insert(tx, siteID, huddleID)
 		if err != nil {
 			return status, err
 		}
@@ -65,29 +69,29 @@ func UpdateManyHuddleParticipants(
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %+v", err))
+			fmt.Errorf(fmt.Sprintf("Transaction failed: %+v", err))
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeHuddle], huddleId)
+	go PurgeCache(h.ItemTypes[h.ItemTypeHuddle], huddleID)
 
 	return http.StatusOK, nil
 }
 
+// Update saves a single participant
 func (m *HuddleParticipantType) Update(
-	siteId int64,
-	huddleId int64,
+	siteID int64,
+	huddleID int64,
 ) (
 	int,
 	error,
 ) {
-
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	defer tx.Rollback()
 
-	status, err := m.insert(tx, siteId, huddleId)
+	status, err := m.insert(tx, siteID, huddleID)
 	if err != nil {
 		return status, err
 	}
@@ -95,22 +99,22 @@ func (m *HuddleParticipantType) Update(
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %v", err.Error()))
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
+// insert saves a participant
 func (m *HuddleParticipantType) insert(
 	tx *sql.Tx,
-	siteId int64,
-	huddleId int64,
+	siteID int64,
+	huddleID int64,
 ) (
 	int,
 	error,
 ) {
-
-	status, err := m.Validate(siteId)
+	status, err := m.Validate(siteID)
 	if err != nil {
 		return status, err
 	}
@@ -126,29 +130,29 @@ SELECT $1, $2
         WHERE huddle_id = $1
           AND profile_id = $2
        )`,
-		huddleId,
-		m.Id,
+		huddleID,
+		m.ID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Error executing upsert: %v", err.Error()))
+			fmt.Errorf("Error executing upsert: %v", err.Error())
 	}
 
-	go RegisterWatcher(m.Id, 4, huddleId, h.ItemTypes[h.ItemTypeHuddle], siteId)
-	go UpdateUnreadHuddleCount(m.Id)
+	go RegisterWatcher(m.ID, 4, huddleID, h.ItemTypes[h.ItemTypeHuddle], siteID)
+	go UpdateUnreadHuddleCount(m.ID)
 
 	return http.StatusOK, nil
 }
 
-func (m *HuddleParticipantType) Delete(huddleId int64) (int, error) {
-
+// Delete removes a participant from a huddle
+func (m *HuddleParticipantType) Delete(huddleID int64) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	defer tx.Rollback()
 
-	status, err := m.delete(tx, huddleId)
+	status, err := m.delete(tx, huddleID)
 	if err != nil {
 		return status, err
 	}
@@ -156,7 +160,7 @@ func (m *HuddleParticipantType) Delete(huddleId int64) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %v", err.Error()))
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -164,7 +168,7 @@ func (m *HuddleParticipantType) Delete(huddleId int64) (int, error) {
 
 func (m *HuddleParticipantType) delete(
 	tx *sql.Tx,
-	huddleId int64,
+	huddleID int64,
 ) (
 	int,
 	error,
@@ -174,29 +178,29 @@ func (m *HuddleParticipantType) delete(
 DELETE FROM huddle_profiles
  WHERE huddle_id = $1
    AND profile_id = $2`,
-		huddleId,
-		m.Id,
+		huddleID,
+		m.ID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Error executing delete: %+v", err))
+			fmt.Errorf("Error executing delete: %+v", err)
 	}
 
-	go UpdateUnreadHuddleCount(m.Id)
+	go UpdateUnreadHuddleCount(m.ID)
 
 	return http.StatusOK, nil
 }
 
+// GetHuddleParticipant fetches a huddle participant
 func GetHuddleParticipant(
-	siteId int64,
-	huddleId int64,
-	profileId int64,
+	siteID int64,
+	huddleID int64,
+	profileID int64,
 ) (
 	HuddleParticipantType,
 	int,
 	error,
 ) {
-
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
@@ -208,34 +212,30 @@ SELECT profile_id
   FROM huddle_profiles
  WHERE huddle_id = $1
    AND profile_id = $2`,
-		huddleId,
-		profileId,
+		huddleID,
+		profileID,
 	)
 	if err != nil {
 		return HuddleParticipantType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
 	m := HuddleParticipantType{}
 	for rows.Next() {
 		err = rows.Scan(
-			&m.Id,
+			&m.ID,
 		)
 		if err != nil {
 			return HuddleParticipantType{}, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Error fetching row: %v", err.Error()),
-				)
+				fmt.Errorf("Error fetching row: %v", err.Error())
 		}
 
 		// Make a request the profile summary
 		req := make(chan ProfileSummaryRequest)
 		defer close(req)
 
-		go HandleProfileSummaryRequest(siteId, m.Id, 0, req)
+		go HandleProfileSummaryRequest(siteID, m.ID, 0, req)
 
 		// Receive the response
 		resp := <-req
@@ -248,18 +248,17 @@ SELECT profile_id
 	err = rows.Err()
 	if err != nil {
 		return HuddleParticipantType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
 	return m, http.StatusOK, nil
 }
 
+// GetHuddleParticipants returns a collection of huddle participants
 func GetHuddleParticipants(
-	siteId int64,
-	huddleId int64,
+	siteID int64,
+	huddleID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -269,7 +268,6 @@ func GetHuddleParticipants(
 	int,
 	error,
 ) {
-
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
@@ -285,15 +283,14 @@ SELECT COUNT(*) OVER() AS total
  ORDER BY profile_id ASC
  LIMIT $2
 OFFSET $3`,
-		huddleId,
+		huddleID,
 		limit,
 		offset,
 	)
 	if err != nil {
 		return []HuddleParticipantType{}, 0, 0,
-			http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -308,9 +305,8 @@ OFFSET $3`,
 		)
 		if err != nil {
 			return []HuddleParticipantType{}, 0, 0,
-				http.StatusInternalServerError, errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
 		ids = append(ids, id)
@@ -318,9 +314,8 @@ OFFSET $3`,
 	err = rows.Err()
 	if err != nil {
 		return []HuddleParticipantType{}, 0, 0,
-			http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -330,7 +325,7 @@ OFFSET $3`,
 	defer close(req)
 
 	for seq, id := range ids {
-		go HandleProfileSummaryRequest(siteId, id, seq, req)
+		go HandleProfileSummaryRequest(siteID, id, seq, req)
 		wg1.Add(1)
 	}
 
@@ -356,7 +351,7 @@ OFFSET $3`,
 	ems := []HuddleParticipantType{}
 	for _, resp := range resps {
 		rp := HuddleParticipantType{}
-		rp.Id = resp.Item.ID
+		rp.ID = resp.Item.ID
 		rp.Profile = resp.Item
 
 		ems = append(ems, rp)
@@ -368,11 +363,9 @@ OFFSET $3`,
 	if offset > maxOffset {
 		return []HuddleParticipantType{}, 0, 0,
 			http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf(
-					"not enough records, offset (%d) would return an empty page.",
-					offset,
-				),
+			fmt.Errorf(
+				"not enough records, offset (%d) would return an empty page",
+				offset,
 			)
 	}
 
