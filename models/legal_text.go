@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const YYYY_MM_DD string = "2006-01-02"
+const isoDateFormat string = "2006-01-02"
 
 var (
 	legalServiceAgreement = template.Must(template.New("serviceAgreement").Parse(GetRawTermsOfServiceText()))
@@ -14,8 +14,9 @@ var (
 	legalCookiePolicy     = template.Must(template.New("cookiePolicy").Parse(GetRawCookiePolicyText()))
 )
 
-var legalServiceAgreementLastModified, _ = time.Parse(YYYY_MM_DD, "2014-03-06")
+var legalServiceAgreementLastModified, _ = time.Parse(isoDateFormat, "2014-03-06")
 
+// GetRawTermsOfServiceText returns the terms of service
 func GetRawTermsOfServiceText() string {
 	const doc string = `<h2>Terms and Conditions for the Provision of Forum Services to Administrators</h2>
 
@@ -479,8 +480,9 @@ issuing of a warning to you;</li>
 	return doc
 }
 
-var legalTermsOfUseLastModified, _ = time.Parse(YYYY_MM_DD, "2014-03-06")
+var legalTermsOfUseLastModified, _ = time.Parse(isoDateFormat, "2014-03-06")
 
+// GetRawTermsOfUseText returns the terms of use
 func GetRawTermsOfUseText() string {
 	const doc string = `<h2>{{.CustomerName}}</h2>
 
@@ -710,8 +712,9 @@ func GetRawTermsOfUseText() string {
 	return doc
 }
 
-var legalPrivacyPolicyLastModified, _ = time.Parse(YYYY_MM_DD, "2014-03-06")
+var legalPrivacyPolicyLastModified, _ = time.Parse(isoDateFormat, "2014-03-06")
 
+// GetRawPrivacyPolicyText returns the privacy policy
 func GetRawPrivacyPolicyText() string {
 	const doc string = `<h2>{{.CustomerName}}</h2>
 
@@ -870,8 +873,9 @@ func GetRawPrivacyPolicyText() string {
 	return doc
 }
 
-var legalCookiePolicyLastModified, _ = time.Parse(YYYY_MM_DD, "2014-03-06")
+var legalCookiePolicyLastModified, _ = time.Parse(isoDateFormat, "2014-03-06")
 
+// GetRawCookiePolicyText returns the cookie policy
 func GetRawCookiePolicyText() string {
 	const doc string = `<h2>{{.CustomerName}}</h2>
 
