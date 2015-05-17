@@ -2,20 +2,23 @@ package models
 
 import (
 	"bytes"
-	"errors"
+	"fmt"
 	"net/http"
 	"time"
 )
 
+// LegalDoc describes a legal document
 type LegalDoc struct {
 	Link         interface{} `json:"link,omitempty"`
-	Html         string      `json:"html,omitempty"`
+	HTML         string      `json:"html,omitempty"`
 	LastModified time.Time   `json:"lastModified,omitempty"`
 }
 
+// LegalData is used by the HTML template and provides the values of the strings
+// to be inserted into the HTML templates
 type LegalData struct {
 	CustomerName  string
-	CustomerUrl   string
+	CustomerURL   string
 	CustomerEmail string
 
 	LinkToAccountDeactivation string
@@ -36,6 +39,7 @@ type LegalData struct {
 	MicrocosmAddress string
 }
 
+// GetLegalDocument returns a legal document according to the type requested
 func GetLegalDocument(
 	site SiteType,
 	documentRequested string,
@@ -44,7 +48,6 @@ func GetLegalDocument(
 	int,
 	error,
 ) {
-
 	doc := LegalDoc{}
 
 	data, status, err := GetLegalDataForSite(site)
@@ -68,24 +71,25 @@ func GetLegalDocument(
 		err = legalTermsOfUse.Execute(&buff, data)
 		doc.LastModified = legalTermsOfUseLastModified
 	default:
-		return doc, http.StatusBadRequest, errors.New("Document does not exist")
+		return doc, http.StatusBadRequest, fmt.Errorf("Document does not exist")
 	}
 
 	if err != nil {
 		return doc, http.StatusInternalServerError, err
 	}
 
-	doc.Html = buff.String()
+	doc.HTML = buff.String()
 
 	return doc, http.StatusOK, nil
 }
 
+// GetLegalDataForSite returns the template vars used by the legal docs
 func GetLegalDataForSite(site SiteType) (LegalData, int, error) {
 	data := LegalData{}
 
 	// Customer info
 	data.CustomerName = site.Title
-	data.CustomerUrl = site.GetURL()
+	data.CustomerURL = site.GetURL()
 
 	profile, status, err := GetProfile(site.ID, site.OwnedByID)
 	if err != nil {
@@ -112,11 +116,11 @@ func GetLegalDataForSite(site SiteType) (LegalData, int, error) {
 	data.MicrocosmAddress = "74 Fraser House, Green Dragon Lane, London TW8 0DQ"
 
 	// Links
-	data.LinkToCookiePolicy = data.CustomerUrl + "/legal/cookies"
+	data.LinkToCookiePolicy = data.CustomerURL + "/legal/cookies"
 	data.LinkToFees = "http://microco.sm/compare"
 	data.LinkToOpenSourceLicenses =
 		"https://github.com/microcosm-cc/microweb/blob/master/OPENSOURCE.md"
-	data.LinkToPrivacyPolicy = data.CustomerUrl + "/legal/privacy"
+	data.LinkToPrivacyPolicy = data.CustomerURL + "/legal/privacy"
 
 	// Links in forum content
 	data.LinkToAccountDeactivation = "http://meta.microco.sm"
