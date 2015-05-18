@@ -150,8 +150,37 @@ func MakeContext(
 	return c, http.StatusOK, nil
 }
 
-func GetRequestIP(request *http.Request) net.IP {
-	host, _, _ := net.SplitHostPort(request.RemoteAddr)
+func GetRequestIP(req *http.Request) net.IP {
+	// CloudFlare gives us the Cf_Connecting_Ip, so if we are behind CloudFlare
+	// we need to use that IP address
+	cf := req.Header.Get("CF-Connecting-IP")
+	if cf != "" {
+		cfIP := net.ParseIP(strings.TrimSpace(cf))
+		if cfIP != nil {
+			return cfIP
+		}
+	}
+
+	// Return X-Forwarded-For if we have one
+	//
+	// NOTE: We are trusting this, but we shouldn't. When you set up your
+	// environment it is assumed that you are running microcosm from behind
+	// an Nginx reverse proxy. That proxy *MUST* unset any value, and apply a
+	// new one.
+	xff := req.Header.Get("X-Forwarded-For")
+	if xff != "" {
+		// XFF are comma-delimited
+		xffIPs := strings.Split(xff, ",")
+
+		// The leftmost IP (index 0 after the split) is the client IP
+		xffIP := net.ParseIP(strings.TrimSpace(xffIPs[0]))
+		if xffIP != nil {
+			return xffIP
+		}
+	}
+
+	// Return network IP address as we have no other IP information
+	host, _, _ := net.SplitHostPort(req.RemoteAddr)
 	return net.ParseIP(host)
 }
 
