@@ -77,7 +77,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 		}
 	}
 
-	attachment.AttachmentMetaId = metadata.AttachmentMetaId
+	attachment.AttachmentMetaId = metadata.AttachmentMetaID
 
 	// Determine whether this is an attachment to a profile or comment, and if the
 	// user is authorised to do so

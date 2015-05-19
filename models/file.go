@@ -3,7 +3,6 @@ package models
 import (
 	"bytes"
 	"database/sql"
-	"errors"
 	"fmt"
 	"image"
 	"image/gif"
@@ -26,18 +25,31 @@ import (
 )
 
 const (
-	AvatarMaxWidth    int64  = 100
-	AvatarMaxHeight   int64  = 100
-	MaxFileSize       int32  = 5242880 * 2 // 10MB
-	ImageGifMimeType  string = "image/gif"
+	// AvatarMaxWidth is the maximum width of an avatar
+	AvatarMaxWidth int64 = 100
+
+	// AvatarMaxHeight is the maximum height of an avatar
+	AvatarMaxHeight int64 = 100
+
+	// MaxFileSize is the maximum size (in bytes) of an attachment
+	MaxFileSize int32 = 5242880 * 2 // 10MB
+
+	// ImageGifMimeType is the mime type for GIF images
+	ImageGifMimeType string = "image/gif"
+
+	// ImageJpegMimeType is the mime type for JPG images
 	ImageJpegMimeType string = "image/jpeg"
-	ImagePngMimeType  string = "image/png"
-	ImageSvgMimeType  string = "image/svg+xml"
+
+	// ImagePngMimeType is the mime type for PNG images
+	ImagePngMimeType string = "image/png"
+
+	// ImageSvgMimeType is the mime type for SVG images
+	ImageSvgMimeType string = "image/svg+xml"
 )
 
-// Represents the 'attachment_meta' table
+// FileMetadataType represents the 'attachment_meta' table
 type FileMetadataType struct {
-	AttachmentMetaId        int64         `json:"-"`
+	AttachmentMetaID        int64         `json:"-"`
 	Created                 time.Time     `json:"created"`
 	FileName                string        `json:"fileName"`
 	FileExt                 string        `json:"fileExt"`
@@ -56,60 +68,62 @@ type FileMetadataType struct {
 	Content                 []byte        `json:"-"`
 }
 
+// Validate returns true of the file metadata is valid
 func (f *FileMetadataType) Validate() (int, error) {
 
 	if f.Created.IsZero() {
-		return http.StatusBadRequest, errors.New("Created time must be set")
+		return http.StatusBadRequest, fmt.Errorf("Created time must be set")
 	}
 
 	if f.FileSize < 1 {
 		return http.StatusBadRequest,
-			errors.New("File size (in bytes) must be set")
+			fmt.Errorf("File size (in bytes) must be set")
 	}
 
 	if f.FileSize > MaxFileSize {
 		return http.StatusBadRequest,
-			errors.New("Files must be below 5MB in size")
+			fmt.Errorf("Files must be below 5MB in size")
 	}
 
 	// SHA-1 output encoded as string is 40 characters
 	if f.FileHash == "" || len(f.FileHash) != 40 {
 		return http.StatusBadRequest,
-			errors.New("File hash (SHA-1) must be set")
+			fmt.Errorf("File hash (SHA-1) must be set")
 	}
 
 	if f.MimeType == "" {
-		return http.StatusBadRequest, errors.New("File mime type must be set")
+		return http.StatusBadRequest, fmt.Errorf("File mime type must be set")
 	}
 
 	if f.Width < 0 {
 		return http.StatusBadRequest,
-			errors.New("Width must be a positive integer, if set")
+			fmt.Errorf("Width must be a positive integer, if set")
 	}
 
 	if f.Height < 0 {
 		return http.StatusBadRequest,
-			errors.New("Height must be a positive integer, if set")
+			fmt.Errorf("Height must be a positive integer, if set")
 	}
 
 	if f.ThumbnailWidth < 0 {
 		return http.StatusBadRequest,
-			errors.New("Thumbnail width must be a positive integer, if set")
+			fmt.Errorf("Thumbnail width must be a positive integer, if set")
 	}
 
 	if f.ThumbnailHeight < 0 {
 		return http.StatusBadRequest,
-			errors.New("Thumbnail height must be a positive integer, if set")
+			fmt.Errorf("Thumbnail height must be a positive integer, if set")
 	}
 
 	if f.AttachCount < 0 {
 		return http.StatusBadRequest,
-			errors.New("Attach count must be a positive integer, if set")
+			fmt.Errorf("Attach count must be a positive integer, if set")
 	}
 
 	return http.StatusOK, nil
 }
 
+// Insert saves a file metadata to the database
 func (f *FileMetadataType) Insert(
 	maxWidth int64,
 	maxHeight int64,
@@ -120,6 +134,7 @@ func (f *FileMetadataType) Insert(
 	return f.insert(maxWidth, maxHeight, false)
 }
 
+// Import saves a file metadata to the database without validating it
 func (f *FileMetadataType) Import(
 	maxWidth int64,
 	maxHeight int64,
@@ -130,7 +145,7 @@ func (f *FileMetadataType) Import(
 	return f.insert(maxWidth, maxHeight, true)
 }
 
-// Uploads the file to S3 and inserts the metadata into attachment_meta
+// Insert uploads the file to S3 and inserts the metadata into attachment_meta
 func (f *FileMetadataType) insert(
 	maxWidth int64,
 	maxHeight int64,
@@ -139,13 +154,11 @@ func (f *FileMetadataType) insert(
 	int,
 	error,
 ) {
-
 	// Validation has to be performed on images that have already been processed
 	// according to their EXIF info (rotated if necessary), so we have to do a
 	// load of work to determine info about the file to upload to figure out
 	// whether we have an image and can process it, before we are able to call
 	// the validate method.
-
 	fileNameBits := strings.Split(f.FileName, ".")
 	f.FileExt = "unk"
 	if len(fileNameBits) > 0 {
@@ -185,7 +198,6 @@ func (f *FileMetadataType) insert(
 	}
 
 	if isImage {
-
 		// See image format imports above for supported image types
 		// If a match is not made, we assume the upload is bad
 		im, format, err := image.DecodeConfig(bytes.NewReader(f.Content))
@@ -245,14 +257,14 @@ func (f *FileMetadataType) insert(
 	// File metadata exists, since this upload is
 	// idempotent, simply return 'OK'
 	if err == nil {
-		f.AttachmentMetaId = meta.AttachmentMetaId
+		f.AttachmentMetaID = meta.AttachmentMetaID
 		return http.StatusOK, nil
-	} else {
-		// An error other than 404 occurred
-		if status != http.StatusNotFound {
-			glog.Errorf("GetMetadata(`%s`) %+v", f.FileHash, err)
-			return status, err
-		}
+	}
+
+	// An error other than 404 occurred
+	if status != http.StatusNotFound {
+		glog.Errorf("GetMetadata(`%s`) %+v", f.FileHash, err)
+		return status, err
 	}
 
 	// Check whether we've already uploaded this image as we can save ourselves
@@ -295,7 +307,7 @@ func (f *FileMetadataType) insert(
 	}
 	defer tx.Rollback()
 
-	var insertId int64
+	var insertID int64
 	err = tx.QueryRow(`
 INSERT INTO attachment_meta (
     created, file_size, file_sha1, mime_type, width,
@@ -318,26 +330,26 @@ INSERT INTO attachment_meta (
 		f.FileName,
 		f.FileExt,
 	).Scan(
-		&insertId,
+		&insertID,
 	)
 	if err != nil {
 		glog.Errorf("row.Scan() %+v", err)
 		return http.StatusInternalServerError,
-			errors.New("Error inserting data and returning ID")
+			fmt.Errorf("Error inserting data and returning ID")
 	}
-	f.AttachmentMetaId = insertId
+	f.AttachmentMetaID = insertID
 
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, errors.New("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
 	}
 
 	return http.StatusOK, nil
 }
 
+// Update saves changes to to a file
 func (f *FileMetadataType) Update() (int, error) {
-
 	status, err := f.Validate()
 	if err != nil {
 		return status, err
@@ -374,28 +386,25 @@ UPDATE attachment_meta
 		f.AttachCount,
 		f.FileName,
 		f.FileExt,
-		f.AttachmentMetaId,
+		f.AttachmentMetaID,
 	)
 	if err != nil {
 		tx.Rollback()
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Could not update attachment metadata: %+v", err),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not update attachment metadata: %+v", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %+v", err),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %+v", err)
 	}
 
 	return http.StatusOK, nil
 }
 
-// Retrieve a file by its file hash
+// GetFile retrieves a file by its file hash
 func GetFile(fileHash string) ([]byte, map[string]string, int, error) {
-
 	headersOut := map[string]string{}
 
 	auth := aws.Auth{
@@ -436,8 +445,8 @@ func GetFile(fileHash string) ([]byte, map[string]string, int, error) {
 	return data, headersOut, http.StatusOK, nil
 }
 
+// GetMetadata returns a file's metadata by it's hash
 func GetMetadata(fileHash string) (FileMetadataType, int, error) {
-
 	db, err := h.GetConnection()
 	if err != nil {
 		return FileMetadataType{}, http.StatusInternalServerError, err
@@ -461,7 +470,7 @@ SELECT m.attachment_meta_id
  WHERE m.file_sha1 = $1`,
 		fileHash,
 	).Scan(
-		&m.AttachmentMetaId,
+		&m.AttachmentMetaID,
 		&m.Created,
 		&m.FileSize,
 		&m.FileHash,
@@ -475,14 +484,13 @@ SELECT m.attachment_meta_id
 		&m.FileExt,
 	)
 	if err == sql.ErrNoRows {
-		return FileMetadataType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("File metadata with hash %s not found", fileHash),
-		)
+		return FileMetadataType{}, http.StatusNotFound,
+			fmt.Errorf("File metadata with hash %s not found", fileHash)
 
-	} else if err != nil {
-		return FileMetadataType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+	}
+	if err != nil {
+		return FileMetadataType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	if m.WidthNullable.Valid {
@@ -504,6 +512,8 @@ SELECT m.attachment_meta_id
 	return m, http.StatusOK, nil
 }
 
+// ResizeImage will resize an image (usually an avatar) to fit within the given
+// constraints whilst preserving the aspect ratio
 func (f *FileMetadataType) ResizeImage(
 	maxWidth int64,
 	maxHeight int64,
@@ -511,7 +521,6 @@ func (f *FileMetadataType) ResizeImage(
 	int,
 	error,
 ) {
-
 	var (
 		width  int
 		height int
@@ -577,7 +586,7 @@ func (f *FileMetadataType) ResizeImage(
 	if err != nil {
 		glog.Errorf("h.Sha1(f.Content) %+v", err)
 		return http.StatusInternalServerError,
-			errors.New("Couldn't generate SHA-1")
+			fmt.Errorf("Couldn't generate SHA-1")
 	}
 	f.FileHash = sha1
 	f.FileSize = int32(len(f.Content))
@@ -601,7 +610,6 @@ func (f *FileMetadataType) ResizeImage(
 // may continue to be uploaded. If there is an error encoding the image after
 // modification, this is returned to the caller.
 func (f *FileMetadataType) processExif() error {
-
 	// Decode exif.
 	ex, err := exif.Decode(bytes.NewReader(f.Content))
 	if err != nil {

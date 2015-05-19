@@ -1309,7 +1309,7 @@ func AttachAvatar(
 ) {
 
 	attachment := AttachmentType{}
-	attachment.AttachmentMetaId = fileMetadata.AttachmentMetaId
+	attachment.AttachmentMetaId = fileMetadata.AttachmentMetaID
 	attachment.FileHash = fileMetadata.FileHash
 	attachment.Created = time.Now()
 	attachment.ItemTypeId = h.ItemTypes[h.ItemTypeProfile]
