@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -17,18 +16,29 @@ import (
 )
 
 const (
-	EventStatusProposed  string = "proposed"
-	EventStatusUpcoming  string = "upcoming"
+	// EventStatusProposed is for a proposed event
+	EventStatusProposed string = "proposed"
+
+	// EventStatusUpcoming is for a upcoming event
+	EventStatusUpcoming string = "upcoming"
+
+	// EventStatusPostponed is for a postponed event
 	EventStatusPostponed string = "postponed"
+
+	// EventStatusCancelled is for a cancelled event
 	EventStatusCancelled string = "cancelled"
-	EventStatusPast      string = "past"
+
+	// EventStatusPast is for a past event
+	EventStatusPast string = "past"
 )
 
+// EventsType is a collection of events
 type EventsType struct {
 	Events h.ArrayType    `json:"events"`
 	Meta   h.CoreMetaType `json:"meta"`
 }
 
+// EventSummaryType is a summary of an event
 type EventSummaryType struct {
 	ItemSummary
 
@@ -52,6 +62,7 @@ type EventSummaryType struct {
 	ItemSummaryMeta
 }
 
+// EventType is an event
 type EventType struct {
 	ItemDetail
 
@@ -75,22 +86,22 @@ type EventType struct {
 	ItemDetailCommentsAndMeta
 }
 
+// Validate returns true if the event is valid
 func (m *EventType) Validate(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 	exists bool,
 ) (
 	int,
 	error,
 ) {
-
 	m.Title = SanitiseText(m.Title)
 	m.Where = SanitiseText(m.Where)
 	m.Meta.EditReason = SanitiseText(m.Meta.EditReason)
 
 	// Does the Microcosm specified exist on this site?
 	if !exists {
-		_, status, err := GetMicrocosmSummary(siteId, m.MicrocosmID, profileId)
+		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmID, profileID)
 		if err != nil {
 			glog.Infof(`GetMicrocosmSummary error %+v`, err)
 			return status, err
@@ -101,21 +112,21 @@ func (m *EventType) Validate(
 		if m.Meta.EditReason == `` {
 			glog.Info(`No edit reason given`)
 			return http.StatusBadRequest,
-				errors.New("You must provide a reason for the update")
-		} else {
-			m.Meta.EditReason = ShoutToWhisper(m.Meta.EditReason)
+				fmt.Errorf("You must provide a reason for the update")
 		}
+
+		m.Meta.EditReason = ShoutToWhisper(m.Meta.EditReason)
 	}
 
 	if m.MicrocosmID <= 0 {
 		glog.Infof(`Microcosm ID (%d) <= zero`, m.MicrocosmID)
 		return http.StatusBadRequest,
-			errors.New("You must specify a Microcosm ID")
+			fmt.Errorf("You must specify a Microcosm ID")
 	}
 
 	if m.Title == `` {
 		glog.Info(`Title is a required field`)
-		return http.StatusBadRequest, errors.New("Title is a required field")
+		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
 	m.Title = ShoutToWhisper(m.Title)
 
@@ -150,7 +161,7 @@ func (m *EventType) Validate(
 	if m.RSVPLimit < 0 {
 		glog.Infof(`RSVPLimit (%d) below zero`, m.RSVPLimit)
 		return http.StatusBadRequest,
-			errors.New("RSVPLimit must be 0 (unlimited) or greater")
+			fmt.Errorf("RSVPLimit must be 0 (unlimited) or greater")
 	}
 
 	// If a limit is specified, there are initially the same number of
@@ -163,9 +174,9 @@ func (m *EventType) Validate(
 	return http.StatusOK, nil
 }
 
-func (m *EventType) FetchProfileSummaries(siteId int64) (int, error) {
-
-	profile, status, err := GetProfileSummary(siteId, m.Meta.CreatedById)
+// FetchProfileSummaries populates a partially populated struct
+func (m *EventType) FetchProfileSummaries(siteID int64) (int, error) {
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		return status, err
 	}
@@ -173,7 +184,7 @@ func (m *EventType) FetchProfileSummaries(siteId int64) (int, error) {
 
 	if m.Meta.EditedByNullable.Valid {
 		profile, status, err :=
-			GetProfileSummary(siteId, m.Meta.EditedByNullable.Int64)
+			GetProfileSummary(siteID, m.Meta.EditedByNullable.Int64)
 		if err != nil {
 			return status, err
 		}
@@ -183,13 +194,13 @@ func (m *EventType) FetchProfileSummaries(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
-func (m *EventSummaryType) FetchProfileSummaries(siteId int64) (int, error) {
-
-	profile, status, err := GetProfileSummary(siteId, m.Meta.CreatedById)
+// FetchProfileSummaries populates a partially populated struct
+func (m *EventSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		glog.Errorf(
 			"GetProfileSummary(%d, %d) %+v",
-			siteId,
+			siteID,
 			m.Meta.CreatedById,
 			err,
 		)
@@ -202,12 +213,12 @@ func (m *EventSummaryType) FetchProfileSummaries(siteId int64) (int, error) {
 		lastComment := m.LastComment.(LastComment)
 
 		profile, status, err =
-			GetProfileSummary(siteId, lastComment.CreatedById)
+			GetProfileSummary(siteID, lastComment.CreatedById)
 		if err != nil {
 			glog.Errorf("%+v", lastComment)
 			glog.Errorf(
 				"GetProfileSummary(%d, %d) %+v",
-				siteId,
+				siteID,
 				lastComment.CreatedById,
 				err,
 			)
@@ -221,16 +232,16 @@ func (m *EventSummaryType) FetchProfileSummaries(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
-func IsAttending(profileId int64, eventId int64) (bool, error) {
-
-	if profileId == 0 || eventId == 0 {
+// IsAttending indicates whether the given profile is attending the event
+func IsAttending(profileID int64, eventID int64) (bool, error) {
+	if profileID == 0 || eventID == 0 {
 		return false, nil
 	}
 
-	var attendeeIds []int64
+	var attendeeIDs []int64
 
-	key := fmt.Sprintf(mcEventKeys[c.CacheProfileIds], eventId)
-	attendeeIds, ok := c.CacheGetInt64Slice(key)
+	key := fmt.Sprintf(mcEventKeys[c.CacheProfileIds], eventID)
+	attendeeIDs, ok := c.CacheGetInt64Slice(key)
 
 	if !ok {
 		db, err := h.GetConnection()
@@ -243,23 +254,23 @@ SELECT profile_id
   FROM attendees
  WHERE event_id = $1
    AND state_id = 1`,
-			eventId,
+			eventID,
 		)
 		if err != nil {
 			return false, err
 		}
 
 		for rows.Next() {
-			var attendeeId int64
-			err = rows.Scan(&attendeeId)
-			attendeeIds = append(attendeeIds, attendeeId)
+			var attendeeID int64
+			err = rows.Scan(&attendeeID)
+			attendeeIDs = append(attendeeIDs, attendeeID)
 		}
 
-		c.CacheSetInt64Slice(key, attendeeIds, mcTTL)
+		c.CacheSetInt64Slice(key, attendeeIDs, mcTTL)
 	}
 
-	for _, Id := range attendeeIds {
-		if profileId == Id {
+	for _, id := range attendeeIDs {
+		if profileID == id {
 			return true, nil
 		}
 	}
@@ -267,35 +278,39 @@ SELECT profile_id
 	return false, nil
 }
 
-func (m *EventType) GetAttending(profileId int64) (int, error) {
-	if profileId == 0 {
+// GetAttending populates the attending list of an event
+func (m *EventType) GetAttending(profileID int64) (int, error) {
+	if profileID == 0 {
 		return http.StatusOK, nil
 	}
 
-	attending, err := IsAttending(profileId, m.ID)
+	attending, err := IsAttending(profileID, m.ID)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	m.Meta.Flags.Attending = attending
+
 	return http.StatusOK, nil
 }
 
-func (m *EventSummaryType) GetAttending(profileId int64) (int, error) {
-	if profileId == 0 {
+// GetAttending populates the attending list of an event summary
+func (m *EventSummaryType) GetAttending(profileID int64) (int, error) {
+	if profileID == 0 {
 		return http.StatusOK, nil
 	}
 
-	attending, err := IsAttending(profileId, m.ID)
+	attending, err := IsAttending(profileID, m.ID)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	m.Meta.Flags.Attending = attending
+
 	return http.StatusOK, nil
 }
 
-func (m *EventType) Insert(siteId int64, profileId int64) (int, error) {
-
-	status, err := m.Validate(siteId, profileId, false)
+// Insert saves an event
+func (m *EventType) Insert(siteID int64, profileID int64) (int, error) {
+	status, err := m.Validate(siteID, profileID, false)
 	if err != nil {
 		return status, err
 	}
@@ -340,7 +355,7 @@ func (m *EventType) Insert(siteId int64, profileId int64) (int, error) {
 	}
 	defer tx.Rollback()
 
-	var insertId int64
+	var insertID int64
 
 	err = tx.QueryRow(`
 INSERT INTO events (
@@ -371,14 +386,14 @@ INSERT INTO events (
 		m.RSVPLimit,
 		m.RSVPSpaces,
 	).Scan(
-		&insertId,
+		&insertID,
 	)
 	if err != nil {
 		glog.Errorf(`Could not create event: %+v`, err)
 		return http.StatusInternalServerError,
 			fmt.Errorf("Error inserting data and returning ID: %+v", err)
 	}
-	m.ID = insertId
+	m.ID = insertID
 
 	err = IncrementMicrocosmItemCount(tx, m.MicrocosmID)
 	if err != nil {
@@ -401,9 +416,9 @@ INSERT INTO events (
 	return http.StatusOK, nil
 }
 
-func (m *EventType) Update(siteId int64, profileId int64) (int, error) {
-
-	status, err := m.Validate(siteId, profileId, true)
+// Update saves an event
+func (m *EventType) Update(siteID int64, profileID int64) (int, error) {
+	status, err := m.Validate(siteID, profileID, true)
 	if err != nil {
 		return status, err
 	}
@@ -458,9 +473,8 @@ UPDATE events
 	)
 	if err != nil {
 		tx.Rollback()
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update of event failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update of event failed: %v", err.Error())
 	}
 
 	//Recalculate attendees
@@ -471,9 +485,8 @@ UPDATE events
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.ID)
@@ -482,8 +495,8 @@ UPDATE events
 	return http.StatusOK, nil
 }
 
+// UpdateAttendees updates the number of attendees for an event
 func (m *EventType) UpdateAttendees(tx *sql.Tx) (int, error) {
-
 	_, err := tx.Exec(`
 UPDATE events
    SET rsvp_attending = att.attending
@@ -507,16 +520,15 @@ UPDATE events
 	)
 	if err != nil {
 		tx.Rollback()
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update of event attendees failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update of event attendees failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
+// Patch partially saves an update
 func (m *EventType) Patch(ac AuthContext, patches []h.PatchType) (int, error) {
-
 	// Update resource
 	tx, err := h.GetTransaction()
 	if err != nil {
@@ -525,7 +537,6 @@ func (m *EventType) Patch(ac AuthContext, patches []h.PatchType) (int, error) {
 	defer tx.Rollback()
 
 	for _, patch := range patches {
-
 		m.Meta.EditedNullable = pq.NullTime{Time: time.Now(), Valid: true}
 		m.Meta.EditedByNullable = sql.NullInt64{Int64: ac.ProfileId, Valid: true}
 
@@ -554,7 +565,7 @@ func (m *EventType) Patch(ac AuthContext, patches []h.PatchType) (int, error) {
 				fmt.Sprintf("Set moderated to %t", m.Meta.Flags.Moderated)
 		default:
 			return http.StatusBadRequest,
-				errors.New("Unsupported path in patch replace operation")
+				fmt.Errorf("Unsupported path in patch replace operation")
 		}
 
 		m.Meta.Flags.SetVisible()
@@ -574,17 +585,15 @@ UPDATE events
 			m.Meta.EditReason,
 		)
 		if err != nil {
-			return http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Update failed: %v", err.Error()),
-			)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Update failed: %v", err.Error())
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.ID)
@@ -593,9 +602,8 @@ UPDATE events
 	return http.StatusOK, nil
 }
 
+// Delete nukes an event
 func (m *EventType) Delete() (int, error) {
-
-	// Connect to DB
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -610,9 +618,8 @@ UPDATE events
 		m.ID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Delete failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
 	err = DecrementMicrocosmItemCount(tx, m.MicrocosmID)
@@ -622,9 +629,8 @@ UPDATE events
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.ID)
@@ -633,30 +639,28 @@ UPDATE events
 	return http.StatusOK, nil
 }
 
-func GetEvent(siteId int64, id int64, profileId int64) (EventType, int, error) {
-
+// GetEvent returns an event
+func GetEvent(siteID int64, id int64, profileID int64) (EventType, int, error) {
 	if id == 0 {
-		return EventType{}, http.StatusNotFound, errors.New("Event not found")
+		return EventType{}, http.StatusNotFound, fmt.Errorf("Event not found")
 	}
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcEventKeys[c.CacheDetail], id)
 	if val, ok := c.CacheGet(mcKey, EventType{}); ok {
-
 		m := val.(EventType)
 
 		// TODO(buro9) 2014-05-05: We are not verifying that the cached
 		// event belongs to this siteId
-
-		status, err := m.FetchProfileSummaries(siteId)
+		status, err := m.FetchProfileSummaries(siteID)
 		if err != nil {
-			glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteId, err)
+			glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteID, err)
 			return EventType{}, status, err
 		}
 
-		status, err = m.GetAttending(profileId)
+		status, err = m.GetAttending(profileID)
 		if err != nil {
-			glog.Errorf("m.GetAttending(%d) %+v", profileId, err)
+			glog.Errorf("m.GetAttending(%d) %+v", profileID, err)
 			return EventType{}, status, err
 		}
 
@@ -715,7 +719,7 @@ SELECT e.event_id
    AND f.item_is_deleted IS NOT TRUE
    AND f.item_is_moderated IS NOT TRUE`,
 		id,
-		siteId,
+		siteID,
 	).Scan(
 		&m.ID,
 		&m.MicrocosmID,
@@ -751,11 +755,11 @@ SELECT e.event_id
 	)
 	if err == sql.ErrNoRows {
 		return EventType{}, http.StatusNotFound,
-			errors.New("Event not found")
+			fmt.Errorf("Event not found")
 	} else if err != nil {
 		glog.Errorf("db.QueryRow(%d) %+v", id, err)
 		return EventType{}, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 
 	if m.Meta.EditReasonNullable.Valid {
@@ -797,33 +801,33 @@ SELECT e.event_id
 	// Update cache
 	c.CacheSet(mcKey, m, mcTTL)
 
-	status, err := m.FetchProfileSummaries(siteId)
+	status, err := m.FetchProfileSummaries(siteID)
 	if err != nil {
-		glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteId, err)
+		glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteID, err)
 		return EventType{}, status, err
 	}
-	status, err = m.GetAttending(profileId)
+	status, err = m.GetAttending(profileID)
 	if err != nil {
-		glog.Errorf("m.GetAttending(%d) %+v", profileId, err)
+		glog.Errorf("m.GetAttending(%d) %+v", profileID, err)
 		return EventType{}, status, err
 	}
 
 	return m, http.StatusOK, nil
 }
 
+// GetEventSummary returns a summary of an event
 func GetEventSummary(
-	siteId int64,
+	siteID int64,
 	id int64,
-	profileId int64,
+	profileID int64,
 ) (
 	EventSummaryType,
 	int,
 	error,
 ) {
-
 	if id == 0 {
 		return EventSummaryType{}, http.StatusNotFound,
-			errors.New("Event not found")
+			fmt.Errorf("Event not found")
 	}
 
 	// Get from cache if it's available
@@ -832,15 +836,15 @@ func GetEventSummary(
 
 		m := val.(EventSummaryType)
 
-		status, err := m.FetchProfileSummaries(siteId)
+		status, err := m.FetchProfileSummaries(siteID)
 		if err != nil {
-			glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteId, err)
+			glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteID, err)
 			return EventSummaryType{}, status, err
 		}
 
-		status, err = m.GetAttending(profileId)
+		status, err = m.GetAttending(profileID)
 		if err != nil {
-			glog.Errorf("m.GetAttending(%d) %+v", profileId, err)
+			glog.Errorf("m.GetAttending(%d) %+v", profileID, err)
 			return EventSummaryType{}, status, err
 		}
 
@@ -927,12 +931,12 @@ WHERE event_id = $1
 	)
 	if err == sql.ErrNoRows {
 		return EventSummaryType{}, http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Event with ID %d not found", id))
+			fmt.Errorf("Event with ID %d not found", id)
 
 	} else if err != nil {
-		glog.Errorf("db.QueryRow(%d, %d) %+v", siteId, id, err)
+		glog.Errorf("db.QueryRow(%d, %d) %+v", siteID, id, err)
 		return EventSummaryType{}, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 
 	if m.WhenNullable.Valid {
@@ -946,9 +950,8 @@ WHERE event_id = $1
 	lastComment, status, err :=
 		GetLastComment(h.ItemTypes[h.ItemTypeEvent], m.ID)
 	if err != nil {
-		return EventSummaryType{}, status, errors.New(
-			fmt.Sprintf("Error fetching last comment: %v", err.Error()),
-		)
+		return EventSummaryType{}, status,
+			fmt.Errorf("Error fetching last comment: %v", err.Error())
 	}
 
 	if lastComment.Valid {
@@ -969,24 +972,25 @@ WHERE event_id = $1
 	// Update cache
 	c.CacheSet(mcKey, m, mcTTL)
 
-	status, err = m.FetchProfileSummaries(siteId)
+	status, err = m.FetchProfileSummaries(siteID)
 	if err != nil {
-		glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteId, err)
+		glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteID, err)
 		return EventSummaryType{}, status, err
 	}
 
-	status, err = m.GetAttending(profileId)
+	status, err = m.GetAttending(profileID)
 	if err != nil {
-		glog.Errorf("m.GetAttending(%d) %+v", profileId, err)
+		glog.Errorf("m.GetAttending(%d) %+v", profileID, err)
 		return EventSummaryType{}, status, err
 	}
 
 	return m, http.StatusOK, nil
 }
 
+// GetEvents returns a collection of events
 func GetEvents(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 	attending bool,
 	limit int64,
 	offset int64,
@@ -997,8 +1001,6 @@ func GetEvents(
 	int,
 	error,
 ) {
-
-	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
 		return []EventSummaryType{}, 0, 0, http.StatusInternalServerError, err
@@ -1041,17 +1043,15 @@ SELECT COUNT(*) OVER() AS total
          ,f.last_modified DESC
  LIMIT $4
 OFFSET $5`,
-		siteId,
+		siteID,
 		h.ItemTypes[h.ItemTypeEvent],
-		profileId,
+		profileID,
 		limit,
 		offset,
 	)
 	if err != nil {
 		return []EventSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -1070,12 +1070,10 @@ OFFSET $5`,
 		)
 		if err != nil {
 			return []EventSummaryType{}, 0, 0, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
-		m, status, err := GetEventSummary(siteId, id, profileId)
+		m, status, err := GetEventSummary(siteID, id, profileID)
 		if err != nil {
 			return []EventSummaryType{}, 0, 0, status, err
 		}
@@ -1086,7 +1084,7 @@ OFFSET $5`,
 	err = rows.Err()
 	if err != nil {
 		return []EventSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
+			fmt.Errorf(
 				fmt.Sprintf("Error fetching rows: %v", err.Error()),
 			)
 	}
@@ -1096,12 +1094,11 @@ OFFSET $5`,
 	maxOffset := h.GetMaxOffset(total, limit)
 
 	if offset > maxOffset {
-		return []EventSummaryType{}, 0, 0, http.StatusBadRequest, errors.New(
-			fmt.Sprintf(
-				"not enough records, offset (%d) would return an empty page.",
+		return []EventSummaryType{}, 0, 0, http.StatusBadRequest,
+			fmt.Errorf(
+				"not enough records, offset (%d) would return an empty page",
 				offset,
-			),
-		)
+			)
 	}
 
 	return ems, total, pages, http.StatusOK, nil
