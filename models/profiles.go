@@ -371,7 +371,7 @@ INSERT INTO profiles (
 				fmt.Errorf("Could not attach avatar to profile: %+v", err)
 		}
 		m.AvatarIDNullable = sql.NullInt64{
-			Int64: attachment.AttachmentId,
+			Int64: attachment.AttachmentID,
 			Valid: true,
 		}
 		filePath := fm.FileHash
@@ -1309,12 +1309,12 @@ func AttachAvatar(
 ) {
 
 	attachment := AttachmentType{}
-	attachment.AttachmentMetaId = fileMetadata.AttachmentMetaID
+	attachment.AttachmentMetaID = fileMetadata.AttachmentMetaID
 	attachment.FileHash = fileMetadata.FileHash
 	attachment.Created = time.Now()
-	attachment.ItemTypeId = h.ItemTypes[h.ItemTypeProfile]
-	attachment.ItemId = profileID
-	attachment.ProfileId = profileID
+	attachment.ItemTypeID = h.ItemTypes[h.ItemTypeProfile]
+	attachment.ItemID = profileID
+	attachment.ProfileID = profileID
 
 	_, err := attachment.Insert()
 	if err != nil {

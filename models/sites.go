@@ -465,7 +465,7 @@ SELECT new_ids.new_site_id,
 		Valid:  true,
 	}
 	profile.AvatarIDNullable = sql.NullInt64{
-		Int64: attachment.AttachmentId,
+		Int64: attachment.AttachmentID,
 		Valid: true,
 	}
 	status, err = profile.Update()

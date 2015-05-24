@@ -77,7 +77,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 		}
 	}
 
-	attachment.AttachmentMetaId = metadata.AttachmentMetaID
+	attachment.AttachmentMetaID = metadata.AttachmentMetaID
 
 	// Determine whether this is an attachment to a profile or comment, and if the
 	// user is authorised to do so
@@ -119,8 +119,8 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			return
 		}
 
-		attachment.ItemId = profileId
-		attachment.ItemTypeId = h.ItemTypes[h.ItemTypeProfile]
+		attachment.ItemID = profileId
+		attachment.ItemTypeID = h.ItemTypes[h.ItemTypeProfile]
 		path_prefix = h.ApiTypeProfile
 
 	} else if c.RouteVars["comment_id"] != "" {
@@ -165,8 +165,8 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			return
 		}
 
-		attachment.ItemId = commentId
-		attachment.ItemTypeId = h.ItemTypes[h.ItemTypeComment]
+		attachment.ItemID = commentId
+		attachment.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
 		path_prefix = h.ApiTypeComment
 
 	} else {
@@ -180,8 +180,8 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 	// Check that this file hasn't already been attached to this item
 	oldattachment := models.AttachmentType{}
 	oldattachment, status, err = models.GetAttachment(
-		attachment.ItemTypeId,
-		attachment.ItemId,
+		attachment.ItemTypeID,
+		attachment.ItemID,
 		attachment.FileHash,
 		false,
 	)
@@ -194,9 +194,9 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 		return
 	}
 
-	if status != http.StatusNotFound && attachment.ItemTypeId != h.ItemTypes[h.ItemTypeProfile] {
+	if status != http.StatusNotFound && attachment.ItemTypeID != h.ItemTypes[h.ItemTypeProfile] {
 		c.RespondWithSeeOther(
-			fmt.Sprintf("%s/%d/%s", path_prefix, oldattachment.ItemId, h.ApiTypeAttachment),
+			fmt.Sprintf("%s/%d/%s", path_prefix, oldattachment.ItemID, h.ApiTypeAttachment),
 		)
 		return
 	}
@@ -210,7 +210,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			return
 		}
 
-		attachment.ProfileId = c.Auth.ProfileID
+		attachment.ProfileID = c.Auth.ProfileID
 		attachment.Created = time.Now()
 
 		status, err = attachment.Insert()
@@ -230,8 +230,8 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 	}
 
 	// If attaching to a profile, update the profile with new avatar URL
-	if attachment.ItemTypeId == h.ItemTypes[h.ItemTypeProfile] {
-		profile, _, err := models.GetProfile(c.Site.ID, attachment.ItemId)
+	if attachment.ItemTypeID == h.ItemTypes[h.ItemTypeProfile] {
+		profile, _, err := models.GetProfile(c.Site.ID, attachment.ItemID)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
 			return
@@ -245,7 +245,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			Valid:  true,
 		}
 		profile.AvatarIDNullable = sql.NullInt64{
-			Int64: attachment.AttachmentId,
+			Int64: attachment.AttachmentID,
 			Valid: true,
 		}
 		status, err = profile.Update()
@@ -259,7 +259,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 	}
 
 	c.RespondWithSeeOther(
-		fmt.Sprintf("%s/%d/%s", path_prefix, attachment.ItemId, h.ApiTypeAttachment),
+		fmt.Sprintf("%s/%d/%s", path_prefix, attachment.ItemID, h.ApiTypeAttachment),
 	)
 }
 
