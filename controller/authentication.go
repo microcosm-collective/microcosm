@@ -204,8 +204,8 @@ func (ctl *AuthController) Create(c *models.Context) {
 
 	m := models.AccessTokenType{}
 	m.TokenValue = tokenValue
-	m.UserId = user.ID
-	m.ClientId = client.ClientId
+	m.UserID = user.ID
+	m.ClientID = client.ClientID
 
 	status, err = m.Insert()
 	if err != nil {
@@ -266,7 +266,7 @@ func (ctl *AuthController) Delete(c *models.Context) {
 	audit.Delete(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAuth],
-		m.UserId,
+		m.UserID,
 		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,

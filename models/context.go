@@ -232,7 +232,7 @@ func (c *Context) authenticate() (int, error) {
 		}
 
 		c.Auth.AccessToken = storedToken
-		c.Auth.UserID = c.Auth.AccessToken.UserId
+		c.Auth.UserID = c.Auth.AccessToken.UserID
 
 		// Fetch user profile
 		profile, status, err :=
@@ -262,7 +262,7 @@ func (c *Context) authenticate() (int, error) {
 		if !(c.Request.URL.Path == `/api/v1/site` ||
 			c.Request.URL.Path == `/api/v1/whoami` ||
 			c.Request.URL.Path == fmt.Sprintf(`/api/v1/profiles/%d`, profile.ID)) &&
-			IsBanned(c.Site.ID, storedToken.UserId) {
+			IsBanned(c.Site.ID, storedToken.UserID) {
 
 			c.Auth.IsBanned = true
 			c.Auth.UserID = -1

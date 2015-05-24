@@ -6,15 +6,18 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// AuthContext describes the context for which authorisation is sought
 type AuthContext struct {
-	SiteId      int64
-	ProfileId   int64
+	SiteID      int64
+	ProfileID   int64
 	IsSiteOwner bool
-	MicrocosmId int64
-	ItemTypeId  int64
-	ItemId      int64
+	MicrocosmID int64
+	ItemTypeID  int64
+	ItemID      int64
 }
 
+// PermissionType describes the permissions against the current authorisation
+// context
 type PermissionType struct {
 	CanCreate     bool        `json:"create"`
 	CanRead       bool        `json:"read"`
@@ -32,26 +35,26 @@ type PermissionType struct {
 	Valid         bool        `json:"-"`
 }
 
+// MakeAuthorisationContext creates an auth context from a request context
 func MakeAuthorisationContext(
 	c *Context,
 	m int64,
 	t int64,
 	i int64,
 ) AuthContext {
-
 	return AuthContext{
-		SiteId:      c.Site.ID,
-		ProfileId:   c.Auth.ProfileID,
+		SiteID:      c.Site.ID,
+		ProfileID:   c.Auth.ProfileID,
 		IsSiteOwner: c.Auth.IsSiteOwner,
-		MicrocosmId: m,
-		ItemTypeId:  t,
-		ItemId:      i,
+		MicrocosmID: m,
+		ItemTypeID:  t,
+		ItemID:      i,
 	}
 }
 
+// GetPermission returns a permission set for a given auth context
 func GetPermission(ac AuthContext) PermissionType {
-
-	if ac.ProfileId == 0 && ac.ItemTypeId == h.ItemTypes[h.ItemTypeSite] {
+	if ac.ProfileID == 0 && ac.ItemTypeID == h.ItemTypes[h.ItemTypeSite] {
 		// Guests can read site description, we can save a query
 		m := PermissionType{Context: ac, Valid: true}
 		m.CanRead = true
@@ -88,11 +91,11 @@ SELECT can_create
       ,is_superuser AS is_moderator
       ,is_site_owner
   FROM get_effective_permissions($1,$2,$3,$4,$5)`,
-		ac.SiteId,
-		ac.MicrocosmId,
-		ac.ItemTypeId,
-		ac.ItemId,
-		ac.ProfileId,
+		ac.SiteID,
+		ac.MicrocosmID,
+		ac.ItemTypeID,
+		ac.ItemID,
+		ac.ProfileID,
 	).Scan(
 		&m.CanCreate,
 		&m.CanRead,
@@ -115,11 +118,11 @@ SELECT can_create
 
 		glog.Errorf(
 			"stmt.QueryRow(%d, %d, %d, %d, %d).Scan() %+v\n",
-			ac.SiteId,
-			ac.MicrocosmId,
-			ac.ItemTypeId,
-			ac.ItemId,
-			ac.ProfileId,
+			ac.SiteID,
+			ac.MicrocosmID,
+			ac.ItemTypeID,
+			ac.ItemID,
+			ac.ProfileID,
 			err,
 		)
 
@@ -131,11 +134,11 @@ SELECT can_create
 
 		glog.Errorf(
 			"tx.Commit() after stmt.QueryRow(%d, %d, %d, %d, %d) %+v\n",
-			ac.SiteId,
-			ac.MicrocosmId,
-			ac.ItemTypeId,
-			ac.ItemId,
-			ac.ProfileId,
+			ac.SiteID,
+			ac.MicrocosmID,
+			ac.ItemTypeID,
+			ac.ItemID,
+			ac.ProfileID,
 			err,
 		)
 

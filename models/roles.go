@@ -286,7 +286,7 @@ func (m *RoleType) Patch(ac AuthContext, patches []h.PatchType) (int, error) {
 
 		m.Meta.EditedNullable = pq.NullTime{Time: time.Now(), Valid: true}
 		m.Meta.EditedByNullable =
-			sql.NullInt64{Int64: ac.ProfileId, Valid: true}
+			sql.NullInt64{Int64: ac.ProfileID, Valid: true}
 
 		var column string
 		patch.ScanRawValue()
