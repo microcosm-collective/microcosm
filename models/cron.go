@@ -7,9 +7,9 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
-// Finds huddles that no longer have participants and deletes them
+// DeleteOrphanedHuddles finds huddles that no longer have participants and
+// deletes them
 func DeleteOrphanedHuddles() {
-
 	tx, err := h.GetTransaction()
 	if err != nil {
 		glog.Error(err)
@@ -18,12 +18,11 @@ func DeleteOrphanedHuddles() {
 	defer tx.Rollback()
 
 	// Identify orphaned huddles
-	rows, err := tx.Query(
-		`SELECT h.huddle_id
+	rows, err := tx.Query(`--DeleteOrphanedHuddles
+SELECT h.huddle_id
   FROM huddles h
-       LEFT OUTER JOIN huddle_profiles hp ON h.huddle_id = hp.huddle_id
- GROUP BY h.huddle_id, hp.huddle_id
-HAVING COUNT(hp.huddle_id) = 0`)
+  LEFT JOIN huddle_profiles hp ON h.huddle_id = hp.huddle_id
+ WHERE hp.huddle_id IS NULL`)
 	if err != nil {
 		glog.Error(err)
 		return
@@ -32,13 +31,13 @@ HAVING COUNT(hp.huddle_id) = 0`)
 
 	ids := []int64{}
 	for rows.Next() {
-		var huddleId int64
-		err = rows.Scan(&huddleId)
+		var huddleID int64
+		err = rows.Scan(&huddleID)
 		if err != nil {
 			glog.Error(err)
 			return
 		}
-		ids = append(ids, huddleId)
+		ids = append(ids, huddleID)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -51,8 +50,8 @@ HAVING COUNT(hp.huddle_id) = 0`)
 		return
 	}
 
-	revisionsStmt, err := tx.Prepare(
-		`DELETE
+	revisionsStmt, err := tx.Prepare(`--DeleteOrphanedHuddles
+DELETE
   FROM revisions
  WHERE comment_id IN (
        SELECT comment_id
@@ -64,8 +63,8 @@ HAVING COUNT(hp.huddle_id) = 0`)
 		return
 	}
 
-	commentsStmt, err := tx.Prepare(
-		`DELETE
+	commentsStmt, err := tx.Prepare(`--DeleteOrphanedHuddles
+DELETE
   FROM comments
  WHERE item_type_id = 5
    AND item_id = $1`)
@@ -74,8 +73,8 @@ HAVING COUNT(hp.huddle_id) = 0`)
 		return
 	}
 
-	huddleStmt, err := tx.Prepare(
-		`DELETE
+	huddleStmt, err := tx.Prepare(`--DeleteOrphanedHuddles
+DELETE
   FROM huddles
  WHERE huddle_id = $1`)
 	if err != nil {
@@ -83,24 +82,24 @@ HAVING COUNT(hp.huddle_id) = 0`)
 		return
 	}
 
-	for _, huddleId := range ids {
+	for _, huddleID := range ids {
 		// delete comment + revisions that belong to this huddle
 		// May well be best to expand the above SQL rather than execute lots
 		// of single delete commands.
 
-		_, err = revisionsStmt.Exec(huddleId)
+		_, err = revisionsStmt.Exec(huddleID)
 		if err != nil {
 			glog.Error(err)
 			return
 		}
 
-		_, err = commentsStmt.Exec(huddleId)
+		_, err = commentsStmt.Exec(huddleID)
 		if err != nil {
 			glog.Error(err)
 			return
 		}
 
-		_, err = huddleStmt.Exec(huddleId)
+		_, err = huddleStmt.Exec(huddleID)
 		if err != nil {
 			glog.Error(err)
 			return
@@ -111,9 +110,8 @@ HAVING COUNT(hp.huddle_id) = 0`)
 	tx.Commit()
 }
 
-// Updates the site stats across all sites.
+// UpdateAllSiteStats updates the site stats across all sites
 func UpdateAllSiteStats() {
-
 	db, err := h.GetConnection()
 	if err != nil {
 		glog.Error(err)
@@ -133,14 +131,14 @@ func UpdateAllSiteStats() {
 	ids := []int64{}
 	for rows.Next() {
 
-		var siteId int64
-		err = rows.Scan(&siteId)
+		var siteID int64
+		err = rows.Scan(&siteID)
 		if err != nil {
 			glog.Error(err)
 			return
 		}
 
-		ids = append(ids, siteId)
+		ids = append(ids, siteID)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -149,8 +147,8 @@ func UpdateAllSiteStats() {
 	}
 	rows.Close()
 
-	for _, siteId := range ids {
-		err = UpdateSiteStats(siteId)
+	for _, siteID := range ids {
+		err = UpdateSiteStats(siteID)
 		if err != nil {
 			glog.Error(err)
 			return
@@ -158,14 +156,15 @@ func UpdateAllSiteStats() {
 	}
 }
 
-// Updates the metrics used by the internal dashboard by the admins. This
-// includes counts of the number of items, changes in active sites, etc.
+// UpdateMetricsCron updates the metrics used by the internal dashboard by the
+// admins. This includes counts of the number of items, changes in active
+// sites, etc.
 func UpdateMetricsCron() {
 	UpdateMetrics()
 }
 
-// Updates the count of items for microcosms, which is used to order the
-// microcosms
+// UpdateMicrocosmItemCounts updates the count of items for microcosms, which is
+// used to order the microcosms
 //
 // This is pure housekeeping, the numbers are maintained through increments and
 // decrements as stuff is added and deleted, but there are edge cases that may
@@ -175,11 +174,12 @@ func UpdateMetricsCron() {
 // This function is designed to calculate the real numbers and only update rows
 // where the numbers are not the real numbers.
 func UpdateMicrocosmItemCounts() {
-
 	// No transaction as we don't care for accuracy on these updates
+	//
 	// Note: This function doesn't even return errors, we don't even care
 	// if the occasional UPDATE fails. All this effects are the ordering of
-	// Microcosms on a page... this is fairly non-critical
+	// Microcosms on a page... this is fairly non-critical as it seldom changes
+	// in established sites
 	db, err := h.GetConnection()
 	if err != nil {
 		glog.Error(err)
@@ -238,8 +238,8 @@ func UpdateMicrocosmItemCounts() {
 	}
 }
 
+// UpdateProfileCounts updates the count of profiles per site
 func UpdateProfileCounts() {
-
 	db, err := h.GetConnection()
 	if err != nil {
 		glog.Error(err)
@@ -259,14 +259,14 @@ func UpdateProfileCounts() {
 	ids := []int64{}
 	for rows.Next() {
 
-		var siteId int64
-		err = rows.Scan(&siteId)
+		var siteID int64
+		err = rows.Scan(&siteID)
 		if err != nil {
 			glog.Error(err)
 			return
 		}
 
-		ids = append(ids, siteId)
+		ids = append(ids, siteID)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -275,8 +275,8 @@ func UpdateProfileCounts() {
 	}
 	rows.Close()
 
-	for _, siteId := range ids {
-		_, err = UpdateCommentCountForAllProfiles(siteId)
+	for _, siteID := range ids {
+		_, err = UpdateCommentCountForAllProfiles(siteID)
 		if err != nil {
 			glog.Error(err)
 			return
@@ -284,12 +284,12 @@ func UpdateProfileCounts() {
 	}
 }
 
-// UpdateViewsCounts reads from the views table and will SUM the number of views
+// UpdateViewCounts reads from the views table and will SUM the number of views
 // and update all of the associated conversations and events with the new view
 // count.
 func UpdateViewCounts() {
-
 	// No transaction as we don't care for accuracy on these updates
+	//
 	// Note: This function doesn't even return errors, we don't even care
 	// if the occasional UPDATE fails.
 	tx, err := h.GetTransaction()
@@ -300,8 +300,8 @@ func UpdateViewCounts() {
 	defer tx.Rollback()
 
 	type View struct {
-		ItemTypeId int64
-		ItemId     int64
+		ItemTypeID int64
+		ItemID     int64
 	}
 
 	rows, err := tx.Query(`--UpdateViewCounts
@@ -324,15 +324,15 @@ SELECT item_type_id
 	for rows.Next() {
 		var view View
 		err = rows.Scan(
-			&view.ItemTypeId,
-			&view.ItemId,
+			&view.ItemTypeID,
+			&view.ItemID,
 		)
 		if err != nil {
 			glog.Error(err)
 			return
 		}
 
-		switch view.ItemTypeId {
+		switch view.ItemTypeID {
 		case h.ItemTypes[h.ItemTypeConversation]:
 			updateConversations = true
 		case h.ItemTypes[h.ItemTypeEvent]:
@@ -425,13 +425,14 @@ UPDATE polls p
 	tx.Commit()
 
 	for _, view := range views {
-		PurgeCacheByScope(c.CacheItem, view.ItemTypeId, view.ItemId)
+		PurgeCacheByScope(c.CacheItem, view.ItemTypeID, view.ItemID)
 	}
 
 	return
 }
 
-// Updates the site_stats with the current number of people online on a site
+// UpdateWhosOnline updates the site_stats with the current number of people
+// online on a site
 func UpdateWhosOnline() {
 	db, err := h.GetConnection()
 	if err != nil {
@@ -469,15 +470,14 @@ UPDATE site_stats s
 	// For each site, fetch stats and purge cache.
 	ids := []int64{}
 	for rows.Next() {
-
-		var siteId int64
-		err = rows.Scan(&siteId)
+		var siteID int64
+		err = rows.Scan(&siteID)
 		if err != nil {
 			glog.Error(err)
 			return
 		}
 
-		ids = append(ids, siteId)
+		ids = append(ids, siteID)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -486,11 +486,12 @@ UPDATE site_stats s
 	}
 	rows.Close()
 
-	for _, siteId := range ids {
-		go PurgeCacheByScope(c.CacheCounts, h.ItemTypes[h.ItemTypeSite], siteId)
+	for _, siteID := range ids {
+		go PurgeCacheByScope(c.CacheCounts, h.ItemTypes[h.ItemTypeSite], siteID)
 	}
 }
 
+// DeleteOldUpdates purges old updates from the updates table
 func DeleteOldUpdates() {
 	db, err := h.GetConnection()
 	if err != nil {
