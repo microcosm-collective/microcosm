@@ -85,24 +85,24 @@ func (m *UpdateType) FetchSummaries(siteID int64) (int, error) {
 		comment := itemSummary.(CommentSummaryType)
 		parent, status, err := GetSummary(
 			siteID,
-			comment.ItemTypeId,
-			comment.ItemId,
+			comment.ItemTypeID,
+			comment.ItemID,
 			m.ForProfileID,
 		)
 		if err != nil {
 			return status, err
 		}
 		m.ParentItem = parent
-		m.ParentItemTypeID = comment.ItemTypeId
+		m.ParentItemTypeID = comment.ItemTypeID
 		parentItemType, err := h.GetMapStringFromInt(
 			h.ItemTypes,
-			comment.ItemTypeId,
+			comment.ItemTypeID,
 		)
 		if err != nil {
 			return http.StatusInternalServerError, err
 		}
 		m.ParentItemType = parentItemType
-		m.ParentItemID = comment.ItemId
+		m.ParentItemID = comment.ItemID
 	}
 
 	updateType, status, err := GetUpdateType(m.UpdateTypeID)
@@ -641,8 +641,8 @@ SELECT total
 
 			go HandleSummaryContainerRequest(
 				siteID,
-				comment.ItemTypeId,
-				comment.ItemId,
+				comment.ItemTypeID,
+				comment.ItemID,
 				ems[i].ForProfileID,
 				seq,
 				chan2,
@@ -683,8 +683,8 @@ SELECT total
 
 			go HandleSummaryContainerRequest(
 				siteID,
-				comment.ItemTypeId,
-				comment.ItemId,
+				comment.ItemTypeID,
+				comment.ItemID,
 				ems[i].ForProfileID,
 				commentItemSeq,
 				chan3,
@@ -693,16 +693,16 @@ SELECT total
 			commentItemSeq++
 			wg3.Add(1)
 
-			ems[i].ParentItemTypeID = comment.ItemTypeId
+			ems[i].ParentItemTypeID = comment.ItemTypeID
 			parentItemType, err := h.GetMapStringFromInt(
 				h.ItemTypes,
-				comment.ItemTypeId,
+				comment.ItemTypeID,
 			)
 			if err != nil {
 				return []UpdateType{}, 0, 0, http.StatusInternalServerError, err
 			}
 			ems[i].ParentItemType = parentItemType
-			ems[i].ParentItemID = comment.ItemId
+			ems[i].ParentItemID = comment.ItemID
 		}
 	}
 

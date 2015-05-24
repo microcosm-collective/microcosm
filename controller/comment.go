@@ -78,7 +78,7 @@ func (ctl *CommentController) Read(c *models.Context) {
 	m.Meta.Permissions = perms
 
 	if c.Auth.ProfileID > 0 {
-		go models.MarkAsRead(m.ItemTypeId, m.ItemId, c.Auth.ProfileID, m.Meta.Created)
+		go models.MarkAsRead(m.ItemTypeID, m.ItemID, c.Auth.ProfileID, m.Meta.Created)
 	}
 
 	c.RespondWithData(m)
@@ -135,7 +135,7 @@ func (ctl *CommentController) Update(c *models.Context) {
 	audit.Replace(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
@@ -146,7 +146,7 @@ func (ctl *CommentController) Update(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypeComment,
-			m.Id,
+			m.ID,
 		),
 	)
 }
@@ -215,7 +215,7 @@ func (ctl *CommentController) Patch(c *models.Context) {
 	// End Authorisation
 
 	m := models.CommentSummaryType{}
-	m.Id = itemId
+	m.ID = itemId
 	status, err = m.Patch(c.Site.ID, ac, patches)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
@@ -225,7 +225,7 @@ func (ctl *CommentController) Patch(c *models.Context) {
 	audit.Update(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
@@ -275,7 +275,7 @@ func (ctl *CommentController) Delete(c *models.Context) {
 	audit.Delete(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,

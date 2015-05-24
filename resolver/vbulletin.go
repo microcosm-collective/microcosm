@@ -421,7 +421,7 @@ func resolveVbulletinURL(redirect Redirect, profileID int64) Redirect {
 					return redirect
 				}
 
-				commentID, _, err := models.GetNextOrLastCommentId(
+				commentID, _, err := models.GetNextOrLastCommentID(
 					h.ItemTypes[h.ItemTypeConversation],
 					redirect.ItemID,
 					t,

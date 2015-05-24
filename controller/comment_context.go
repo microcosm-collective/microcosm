@@ -78,7 +78,7 @@ func (ctl *CommentContextController) Read(c *models.Context) {
 	}
 
 	queryString := pageUrl.Query()
-	queryString.Add("comment_id", strconv.FormatInt(m.Id, 10))
+	queryString.Add("comment_id", strconv.FormatInt(m.ID, 10))
 	pageUrl.RawQuery = queryString.Encode()
 
 	c.RespondWithLocation(pageUrl.String())

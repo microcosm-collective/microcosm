@@ -63,11 +63,17 @@ func (ctl *CommentsController) Create(c *models.Context) {
 	// Start : Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, m.ItemTypeId, m.ItemId),
+			c, 0, m.ItemTypeID, m.ItemID),
 	)
 	if !perms.CanCreate {
 		c.RespondWithErrorDetail(
-			e.New(c.Site.ID, c.Auth.ProfileID, "comments.go::Create", e.NoCreate, "Not authorized to create comment: CanCreate false"),
+			e.New(
+				c.Site.ID,
+				c.Auth.ProfileID,
+				"comments.go::Create",
+				e.NoCreate,
+				"Not authorized to create comment: CanCreate false",
+			),
 			http.StatusForbidden,
 		)
 		return
@@ -84,31 +90,31 @@ func (ctl *CommentsController) Create(c *models.Context) {
 	go audit.Create(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
 
 	// Send updates and register watcher
-	if m.ItemTypeId == h.ItemTypes[h.ItemTypeHuddle] {
+	if m.ItemTypeID == h.ItemTypes[h.ItemTypeHuddle] {
 		models.RegisterWatcher(
 			c.Auth.ProfileID,
 			h.UpdateTypes[h.UpdateTypeNewCommentInHuddle],
-			m.ItemId,
-			m.ItemTypeId,
+			m.ItemID,
+			m.ItemTypeID,
 			c.Site.ID,
 		)
 
 		go models.SendUpdatesForNewCommentInHuddle(c.Site.ID, m)
-		models.MarkAsRead(h.ItemTypes[h.ItemTypeHuddle], m.ItemId, c.Auth.ProfileID, time.Now())
+		models.MarkAsRead(h.ItemTypes[h.ItemTypeHuddle], m.ItemID, c.Auth.ProfileID, time.Now())
 		models.UpdateUnreadHuddleCount(c.Auth.ProfileID)
 	} else {
 		models.RegisterWatcher(
 			c.Auth.ProfileID,
 			h.UpdateTypes[h.UpdateTypeNewComment],
-			m.ItemId,
-			m.ItemTypeId,
+			m.ItemID,
+			m.ItemTypeID,
 			c.Site.ID,
 		)
 
@@ -124,7 +130,7 @@ func (ctl *CommentsController) Create(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.ApiTypeComment,
-			m.Id,
+			m.ID,
 		),
 	)
 }

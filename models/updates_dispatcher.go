@@ -54,8 +54,8 @@ func SendUpdatesForNewCommentInItem(
 	// the comment is attached to
 	recipients, status, err := GetUpdateRecipients(
 		siteID,
-		comment.ItemTypeId,
-		comment.ItemId,
+		comment.ItemTypeID,
+		comment.ItemID,
 		updateType.ID,
 		comment.Meta.CreatedById,
 	)
@@ -104,7 +104,7 @@ func SendUpdatesForNewCommentInItem(
 		update.UpdateTypeID = updateType.ID
 		update.ForProfileID = recipient.ForProfile.ID
 		update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
-		update.ItemID = comment.Id
+		update.ItemID = comment.ID
 		update.Meta.CreatedById = comment.Meta.CreatedById
 		status, err := update.insert(tx)
 		if err != nil {
@@ -142,13 +142,13 @@ func SendUpdatesForNewCommentInItem(
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/comments/%d/incontext/",
 			mergeData.ProtoAndHost,
-			comment.Id,
+			comment.ID,
 		)
 
 		itemTitle, status, err := GetTitle(
 			siteID,
-			comment.ItemTypeId,
-			comment.ItemId,
+			comment.ItemTypeID,
+			comment.ItemID,
 			0,
 		)
 		if err != nil {
@@ -184,8 +184,8 @@ func SendUpdatesForNewCommentInItem(
 			// 3) if this comment is a reply to another, the parent comment
 			//    author as that is handled by the NewReplyToYourComment thing
 			lastRead, status, err := GetLastReadTime(
-				comment.ItemTypeId,
-				comment.ItemId,
+				comment.ItemTypeID,
+				comment.ItemID,
 				recipient.ForProfile.ID,
 			)
 			if err != nil {
@@ -304,7 +304,7 @@ func SendUpdatesForNewReplyToYourComment(
 	update.UpdateTypeID = updateType.ID
 	update.ForProfileID = forProfile.ID
 	update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
-	update.ItemID = comment.Id
+	update.ItemID = comment.ID
 	update.Meta.CreatedById = comment.Meta.CreatedById
 	status, err = update.insert(tx)
 	if err != nil {
@@ -329,7 +329,7 @@ func SendUpdatesForNewReplyToYourComment(
 		profileID,
 		updateType.ID,
 		h.ItemTypes[h.ItemTypeComment],
-		comment.Id,
+		comment.ID,
 	)
 	if err != nil {
 		glog.Errorf("%s %+v", "GetUpdateOptionForUpdateType()", err)
@@ -352,13 +352,13 @@ func SendUpdatesForNewReplyToYourComment(
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/comments/%d/incontext/",
 			mergeData.ProtoAndHost,
-			comment.Id,
+			comment.ID,
 		)
 
 		itemTitle, status, err := GetTitle(
 			siteID,
-			comment.ItemTypeId,
-			comment.ItemId,
+			comment.ItemTypeID,
+			comment.ItemID,
 			0,
 		)
 		if err != nil {
@@ -491,13 +491,13 @@ func SendUpdatesForNewMentionInComment(
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/comments/%d/incontext/",
 			mergeData.ProtoAndHost,
-			comment.Id,
+			comment.ID,
 		)
 
 		itemTitle, status, err := GetTitle(
 			siteID,
-			comment.ItemTypeId,
-			comment.ItemId,
+			comment.ItemTypeID,
+			comment.ItemID,
 			0,
 		)
 		if err != nil {
@@ -589,8 +589,8 @@ func SendUpdatesForNewCommentInHuddle(
 	// the comment is attached to
 	recipients, status, err := GetUpdateRecipients(
 		siteID,
-		comment.ItemTypeId,
-		comment.ItemId,
+		comment.ItemTypeID,
+		comment.ItemID,
 		updateType.ID,
 		comment.Meta.CreatedById,
 	)
@@ -639,7 +639,7 @@ func SendUpdatesForNewCommentInHuddle(
 		update.UpdateTypeID = updateType.ID
 		update.ForProfileID = recipient.ForProfile.ID
 		update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
-		update.ItemID = comment.Id
+		update.ItemID = comment.ID
 		update.Meta.CreatedById = comment.Meta.CreatedById
 		status, err := update.insert(tx)
 		if err != nil {
@@ -678,13 +678,13 @@ func SendUpdatesForNewCommentInHuddle(
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/comments/%d/incontext/",
 			mergeData.ProtoAndHost,
-			comment.Id,
+			comment.ID,
 		)
 
 		itemTitle, status, err := GetTitle(
 			siteID,
-			comment.ItemTypeId,
-			comment.ItemId,
+			comment.ItemTypeID,
+			comment.ItemID,
 			0,
 		)
 		if err != nil {
@@ -720,8 +720,8 @@ func SendUpdatesForNewCommentInHuddle(
 			// 3) if this comment is a reply to another, the parent comment
 			//    author as that is handled by the NewReplyToYourComment thing
 			lastRead, status, err := GetLastReadTime(
-				comment.ItemTypeId,
-				comment.ItemId,
+				comment.ItemTypeID,
+				comment.ItemID,
 				recipient.ForProfile.ID,
 			)
 			if err != nil {

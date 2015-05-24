@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -19,19 +18,21 @@ import (
 )
 
 const (
-	MinimumPostLength int = 0
+	minimumPostLength int = 0
 )
 
+// CommentsType is a collection of comments
 type CommentsType struct {
 	Comments h.ArrayType    `json:"comments"`
 	Meta     h.CoreMetaType `json:"meta"`
 }
 
+// CommentType encapsulates a comment
 type CommentType struct {
-	Id         int64  `json:"id"`
-	ItemTypeId int64  `json:"-"`
+	ID         int64  `json:"id"`
+	ItemTypeID int64  `json:"-"`
 	ItemType   string `json:"itemType"`
-	ItemId     int64  `json:"itemId"`
+	ItemID     int64  `json:"itemId"`
 	Revisions  int64  `json:"revisions"`
 
 	InReplyToNullable sql.NullInt64  `json:"-"`
@@ -46,11 +47,12 @@ type CommentType struct {
 	Meta  CommentFlagsMetaType `json:"meta"`
 }
 
+// CommentSummaryType is a summary of a comment
 type CommentSummaryType struct {
-	Id         int64  `json:"id"`
-	ItemTypeId int64  `json:"-"`
+	ID         int64  `json:"id"`
+	ItemTypeID int64  `json:"-"`
 	ItemType   string `json:"itemType"`
-	ItemId     int64  `json:"itemId"`
+	ItemID     int64  `json:"itemId"`
 	Revisions  int64  `json:"revisions"`
 
 	InReplyToNullable sql.NullInt64  `json:"-"`
@@ -65,6 +67,7 @@ type CommentSummaryType struct {
 	Meta  CommentMetaType    `json:"meta"`
 }
 
+// CommentMetaType is the meta struct of a comment
 type CommentMetaType struct {
 	h.CreatedType
 	h.EditedType
@@ -72,6 +75,7 @@ type CommentMetaType struct {
 	h.CoreMetaType
 }
 
+// CommentFlagsType is the flags meta struct of a comment
 type CommentFlagsType struct {
 	Deleted   bool `json:"deleted"`
 	Moderated bool `json:"moderated"`
@@ -79,18 +83,21 @@ type CommentFlagsType struct {
 	Unread    bool `json:"unread"`
 }
 
+// ThreadedMetaType encapsulates a threaded part of a comment tree
 type ThreadedMetaType struct {
 	InReplyTo interface{}   `json:"inReplyTo,omitempty"`
 	Replies   []interface{} `json:"replies,omitempty"`
 	CommentMetaType
 }
 
+// CommentFlagsMetaType is a flags meta struct for comments
 type CommentFlagsMetaType struct {
 	h.CreatedType
 	h.EditedType
 	ThreadedMetaType
 }
 
+// CommentSummaryRequest is an envelope for a comment summary request
 type CommentSummaryRequest struct {
 	Item   CommentSummaryType
 	Err    error
@@ -98,46 +105,51 @@ type CommentSummaryRequest struct {
 	Seq    int
 }
 
+// CommentRequestBySeq is a collection of comment summary requests
 type CommentRequestBySeq []CommentSummaryRequest
 
-func (v CommentRequestBySeq) Len() int           { return len(v) }
-func (v CommentRequestBySeq) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
+// Len is the length of the comment requests
+func (v CommentRequestBySeq) Len() int { return len(v) }
+
+// Swap exchanges two items in the collection
+func (v CommentRequestBySeq) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+
+// Less determines which of the two items is less by sequence
 func (v CommentRequestBySeq) Less(i, j int) bool { return v[i].Seq < v[j].Seq }
 
-func (m *CommentSummaryType) Validate(siteId int64, exists bool) (int, error) {
+// Validate returns true if a comment is valid
+func (m *CommentSummaryType) Validate(siteID int64, exists bool) (int, error) {
 	if _, inMap := h.ItemTypesCommentable[m.ItemType]; !inMap {
 		return http.StatusBadRequest,
-			errors.New("You must specify a valid item type")
-	} else {
-		m.ItemTypeId = h.ItemTypesCommentable[m.ItemType]
+			fmt.Errorf("You must specify a valid item type")
 	}
+	m.ItemTypeID = h.ItemTypesCommentable[m.ItemType]
+
 	if !exists && m.InReplyTo > 0 {
-		parent, _, err := GetCommentSummary(siteId, m.InReplyTo)
+		parent, _, err := GetCommentSummary(siteID, m.InReplyTo)
 		if err != nil {
 			m.InReplyTo = 0
 		}
 
-		if m.ItemTypeId == parent.ItemTypeId && m.ItemId == parent.ItemId {
+		if m.ItemTypeID == parent.ItemTypeID && m.ItemID == parent.ItemID {
 			m.InReplyToNullable = sql.NullInt64{Int64: m.InReplyTo, Valid: true}
 		} else {
 			m.InReplyTo = 0
 		}
 	}
 
-	if m.ItemId <= 0 {
+	if m.ItemID <= 0 {
 		return http.StatusBadRequest,
-			errors.New("You must specify an Item ID this comment belongs to")
+			fmt.Errorf("You must specify an Item ID this comment belongs to")
 	}
 
 	if strings.Trim(m.Markdown, " ") == "" ||
-		len(m.Markdown) < MinimumPostLength {
+		len(m.Markdown) < minimumPostLength {
 
-		return http.StatusBadRequest, errors.New(
-			fmt.Sprintf(
-				"Markdown is a required field and "+
-					"must be of decent length (more than %d chars)",
-				MinimumPostLength,
-			),
+		return http.StatusBadRequest, fmt.Errorf(
+			"Markdown is a required field and "+
+				"must be of decent length (more than %d chars)",
+			minimumPostLength,
 		)
 	}
 
@@ -147,9 +159,10 @@ func (m *CommentSummaryType) Validate(siteId int64, exists bool) (int, error) {
 	return http.StatusOK, nil
 }
 
-func (m *CommentSummaryType) FetchProfileSummaries(siteId int64) (int, error) {
+// FetchProfileSummaries populates a partially populated struct
+func (m *CommentSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteId, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		return status, err
 	}
@@ -157,7 +170,7 @@ func (m *CommentSummaryType) FetchProfileSummaries(siteId int64) (int, error) {
 
 	if m.Meta.EditedByNullable.Valid {
 		profile, status, err := GetProfileSummary(
-			siteId,
+			siteID,
 			m.Meta.EditedByNullable.Int64,
 		)
 		if err != nil {
@@ -170,13 +183,13 @@ func (m *CommentSummaryType) FetchProfileSummaries(siteId int64) (int, error) {
 
 		// Replies are only valid when they come from the site item as that
 		// implies the same site, same microcosm/huddle and the same permissions
-		parent, status, _ := GetCommentSummary(siteId, m.InReplyTo)
+		parent, status, _ := GetCommentSummary(siteID, m.InReplyTo)
 		if status == http.StatusOK &&
 			parent.ItemType == m.ItemType &&
-			parent.ItemId == m.ItemId {
+			parent.ItemID == m.ItemID {
 
 			inReplyToProfileTitle, _, _ := GetTitle(
-				siteId,
+				siteID,
 				h.ItemTypes[h.ItemTypeProfile],
 				parent.Meta.CreatedById,
 				0,
@@ -184,7 +197,7 @@ func (m *CommentSummaryType) FetchProfileSummaries(siteId int64) (int, error) {
 
 			m.Meta.Links = append(
 				m.Meta.Links,
-				h.GetLink("inReplyTo", "", h.ItemTypeComment, parent.Id),
+				h.GetLink("inReplyTo", "", h.ItemTypeComment, parent.ID),
 			)
 			m.Meta.Links = append(
 				m.Meta.Links,
@@ -199,44 +212,43 @@ func (m *CommentSummaryType) FetchProfileSummaries(siteId int64) (int, error) {
 	}
 
 	return http.StatusOK, nil
-
 }
 
-func (m *CommentSummaryType) Insert(siteId int64) (int, error) {
-
-	status, err := m.Validate(siteId, false)
+// Insert saves a comment
+func (m *CommentSummaryType) Insert(siteID int64) (int, error) {
+	status, err := m.Validate(siteID, false)
 	if err != nil {
 		return status, err
 	}
 
 	// Dupe checking
 	dupeKey := "dupe_" + h.Md5sum(
-		strconv.FormatInt(m.ItemTypeId, 10)+
-			strconv.FormatInt(m.ItemId, 10)+
+		strconv.FormatInt(m.ItemTypeID, 10)+
+			strconv.FormatInt(m.ItemID, 10)+
 			m.Markdown+
 			strconv.FormatInt(m.Meta.CreatedById, 10),
 	)
 
 	v, ok := c.CacheGetInt64(dupeKey)
 	if ok {
-		m.Id = v
+		m.ID = v
 		return http.StatusOK, nil
 	}
 
-	status, err = m.insert(siteId, false)
+	status, err = m.insert(siteID, false)
 	// 5 minute dupe check
-	c.CacheSetInt64(dupeKey, m.Id, 60*5)
+	c.CacheSetInt64(dupeKey, m.ID, 60*5)
 
 	// If we're posting to a huddle, purge the counts for the users in the
 	// huddle
-	if m.ItemTypeId == h.ItemTypes[h.ItemTypeHuddle] {
-		ems, _, _, _, err2 := GetHuddleParticipants(siteId, m.ItemId, 9999, 0)
+	if m.ItemTypeID == h.ItemTypes[h.ItemTypeHuddle] {
+		ems, _, _, _, err2 := GetHuddleParticipants(siteID, m.ItemID, 9999, 0)
 		if err2 != nil {
 			return status, err
 		}
 
 		for _, em := range ems {
-			p, _, err := GetProfileSummary(siteId, em.ID)
+			p, _, err := GetProfileSummary(siteID, em.ID)
 			if err != nil {
 				glog.Error(err)
 				continue
@@ -248,16 +260,16 @@ func (m *CommentSummaryType) Insert(siteId int64) (int, error) {
 	return status, err
 }
 
-func (m *CommentSummaryType) Import(siteId int64) (int, error) {
-	status, err := m.Validate(siteId, true)
+// Import saves a cumment without performing a dupe check
+func (m *CommentSummaryType) Import(siteID int64) (int, error) {
+	status, err := m.Validate(siteID, true)
 	if err != nil {
 		return status, err
 	}
-	return m.insert(siteId, true)
+	return m.insert(siteID, true)
 }
 
-func (m *CommentSummaryType) insert(siteId int64, isImport bool) (int, error) {
-
+func (m *CommentSummaryType) insert(siteID int64, isImport bool) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		glog.Error(err)
@@ -265,7 +277,7 @@ func (m *CommentSummaryType) insert(siteId int64, isImport bool) (int, error) {
 	}
 	defer tx.Rollback()
 
-	var insertId int64
+	var insertID int64
 	err = tx.QueryRow(`
 INSERT INTO comments (
     item_type_id, item_id, profile_id, created, is_visible,
@@ -276,8 +288,8 @@ INSERT INTO comments (
     $6, $7, $8, 0, 0,
     0, 0
 ) RETURNING comment_id`,
-		m.ItemTypeId,
-		m.ItemId,
+		m.ItemTypeID,
+		m.ItemID,
 		m.Meta.CreatedById,
 		m.Meta.Created,
 		m.Meta.Flags.Visible,
@@ -285,23 +297,21 @@ INSERT INTO comments (
 		m.Meta.Flags.Deleted,
 		m.InReplyToNullable,
 	).Scan(
-		&insertId,
+		&insertID,
 	)
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error inserting data and returning ID: %+v", err),
-			)
+			fmt.Errorf("Error inserting data and returning ID: %+v", err)
 	}
-	m.Id = insertId
+	m.ID = insertID
 
-	revisionId, status, err := m.CreateCommentRevision(
+	revisionID, status, err := m.CreateCommentRevision(
 		tx,
 		true,
-		siteId,
-		m.ItemTypeId,
-		m.ItemId,
+		siteID,
+		m.ItemTypeID,
+		m.ItemID,
 		isImport,
 	)
 	if err != nil {
@@ -313,22 +323,22 @@ INSERT INTO comments (
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %v", err.Error()))
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	EmbedAllMedia(revisionId)
+	EmbedAllMedia(revisionID)
 
-	PurgeCache(h.ItemTypes[h.ItemTypeComment], m.Id)
-	PurgeCache(m.ItemTypeId, m.ItemId)
+	PurgeCache(h.ItemTypes[h.ItemTypeComment], m.ID)
+	PurgeCache(m.ItemTypeID, m.ItemID)
 
 	if !isImport {
 		go IncrementProfileCommentCount(m.Meta.CreatedById)
-		go IncrementItemCommentCount(m.ItemTypeId, m.ItemId)
+		go IncrementItemCommentCount(m.ItemTypeID, m.ItemID)
 
 		summary, status, err := GetSummary(
-			siteId,
-			m.ItemTypeId,
-			m.ItemId,
+			siteID,
+			m.ItemTypeID,
+			m.ItemID,
 			m.Meta.CreatedById,
 		)
 		if err != nil {
@@ -359,29 +369,29 @@ INSERT INTO comments (
 	return http.StatusOK, nil
 }
 
+// CreateCommentRevision saves a version of the comment text
 func (m *CommentSummaryType) CreateCommentRevision(
 	tx *sql.Tx,
 	isFirst bool,
-	siteId int64,
-	itemTypeId int64,
-	itemId int64,
+	siteID int64,
+	itemTypeID int64,
+	itemID int64,
 	isImport bool,
 ) (
 	int64,
 	int,
 	error,
 ) {
-
 	_, err := tx.Exec(`
 UPDATE revisions
    SET is_current = false
  WHERE comment_id = $1
    AND is_current IS NOT FALSE`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
 		return 0, http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Update 'is_current = false' failed: %v", err.Error()))
+			fmt.Errorf("Update 'is_current = false' failed: %v", err.Error())
 	}
 
 	sqlQuery := `
@@ -397,7 +407,7 @@ INSERT INTO revisions (
 	if isFirst {
 		row = tx.QueryRow(
 			sqlQuery,
-			m.Id,
+			m.ID,
 			m.Meta.CreatedById,
 			m.Markdown,
 			m.Meta.Created,
@@ -405,31 +415,31 @@ INSERT INTO revisions (
 	} else {
 		row = tx.QueryRow(
 			sqlQuery,
-			m.Id,
+			m.ID,
 			m.Meta.EditedByNullable,
 			m.Markdown,
 			m.Meta.EditedNullable,
 		)
 	}
 
-	var revisionId int64
-	err = row.Scan(&revisionId)
+	var revisionID int64
+	err = row.Scan(&revisionID)
 	if err != nil {
 		return 0, http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Insert failed: %v", err.Error()))
+			fmt.Errorf("Insert failed: %v", err.Error())
 	}
 
 	html, err := ProcessCommentMarkdown(
 		tx,
-		revisionId,
+		revisionID,
 		m.Markdown,
-		siteId,
-		itemTypeId,
-		itemId,
+		siteID,
+		itemTypeID,
+		itemID,
 		!isImport,
 	)
 	if err != nil {
-		return revisionId, http.StatusInternalServerError, err
+		return revisionID, http.StatusInternalServerError, err
 	}
 
 	m.HTML = html
@@ -438,21 +448,20 @@ INSERT INTO revisions (
 UPDATE revisions
    SET html = $2
  WHERE revision_id = $1`,
-		revisionId,
+		revisionID,
 		m.HTML,
 	)
 	if err != nil {
-		return revisionId, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error updating HTML: %v", err.Error()),
-		)
+		return revisionID, http.StatusInternalServerError,
+			fmt.Errorf("Error updating HTML: %v", err.Error())
 	}
 
-	return revisionId, http.StatusOK, nil
+	return revisionID, http.StatusOK, nil
 }
 
-func (m *CommentSummaryType) Update(siteId int64) (int, error) {
-
-	status, err := m.Validate(siteId, true)
+// Update saves a comment
+func (m *CommentSummaryType) Update(siteID int64) (int, error) {
+	status, err := m.Validate(siteID, true)
 	if err != nil {
 		return status, err
 	}
@@ -464,12 +473,12 @@ func (m *CommentSummaryType) Update(siteId int64) (int, error) {
 	}
 	defer tx.Rollback()
 
-	revisionId, status, err := m.CreateCommentRevision(
+	revisionID, status, err := m.CreateCommentRevision(
 		tx,
 		false,
-		siteId,
-		m.ItemTypeId,
-		m.ItemId,
+		siteID,
+		m.ItemTypeID,
+		m.ItemID,
 		false,
 	)
 	if err != nil {
@@ -479,18 +488,18 @@ func (m *CommentSummaryType) Update(siteId int64) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %+v", err))
+			fmt.Errorf("Transaction failed: %+v", err)
 	}
 
-	EmbedAllMedia(revisionId)
+	EmbedAllMedia(revisionID)
 
-	PurgeCache(h.ItemTypes[h.ItemTypeComment], m.Id)
-	PurgeCache(h.ItemTypes[m.ItemType], m.ItemId)
+	PurgeCache(h.ItemTypes[h.ItemTypeComment], m.ID)
+	PurgeCache(h.ItemTypes[m.ItemType], m.ItemID)
 
 	summary, status, err := GetSummary(
-		siteId,
-		m.ItemTypeId,
-		m.ItemId,
+		siteID,
+		m.ItemTypeID,
+		m.ItemID,
 		m.Meta.CreatedById,
 	)
 	if err != nil {
@@ -519,17 +528,17 @@ func (m *CommentSummaryType) Update(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
-func (ct *CommentSummaryType) Patch(
-	siteId int64,
+// Patch saves a partially updated comment
+func (m *CommentSummaryType) Patch(
+	siteID int64,
 	ac AuthContext,
 	patches []h.PatchType,
 ) (
 	int,
 	error,
 ) {
-
 	// Update resource
-	m, status, err := GetCommentSummary(siteId, ct.Id)
+	cst, status, err := GetCommentSummary(siteID, m.ID)
 	if err != nil {
 		return status, err
 	}
@@ -541,53 +550,50 @@ func (ct *CommentSummaryType) Patch(
 	defer tx.Rollback()
 
 	for _, patch := range patches {
-
 		var column string
 		patch.ScanRawValue()
 		switch patch.Path {
 		case "/meta/flags/deleted":
 			column = "is_deleted"
-			m.Meta.Flags.Deleted = patch.Bool.Bool
+			cst.Meta.Flags.Deleted = patch.Bool.Bool
 		case "/meta/flags/moderated":
 			column = "is_moderated"
-			m.Meta.Flags.Moderated = patch.Bool.Bool
+			cst.Meta.Flags.Moderated = patch.Bool.Bool
 		default:
 			return http.StatusBadRequest,
-				errors.New("Unsupported path in patch replace operation")
+				fmt.Errorf("Unsupported path in patch replace operation")
 		}
 
-		m.Meta.Flags.Visible = !(m.Meta.Flags.Moderated || m.Meta.Flags.Deleted)
+		cst.Meta.Flags.Visible = !(cst.Meta.Flags.Moderated || cst.Meta.Flags.Deleted)
 		_, err = tx.Exec(`
 UPDATE comments
    SET `+column+` = $2
       ,is_visible = $3
  WHERE comment_id = $1`,
-			m.Id,
+			cst.ID,
 			patch.Bool.Bool,
-			m.Meta.Flags.Visible,
+			cst.Meta.Flags.Visible,
 		)
 		if err != nil {
-			return http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Update failed: %v", err.Error()),
-			)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Update failed: %v", err.Error())
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
-	PurgeCache(h.ItemTypes[h.ItemTypeComment], m.Id)
-	PurgeCache(m.ItemTypeId, m.ItemId)
+	PurgeCache(h.ItemTypes[h.ItemTypeComment], cst.ID)
+	PurgeCache(cst.ItemTypeID, cst.ItemID)
 
 	summary, status, err := GetSummary(
-		siteId,
-		m.ItemTypeId,
-		m.ItemId,
-		m.Meta.CreatedById,
+		siteID,
+		cst.ItemTypeID,
+		cst.ItemID,
+		cst.Meta.CreatedById,
 	)
 	if err != nil {
 		return status, err
@@ -615,9 +621,9 @@ UPDATE comments
 	return http.StatusOK, nil
 }
 
-func (ct *CommentSummaryType) Delete(siteId int64) (int, error) {
-
-	m, status, err := GetCommentSummary(siteId, ct.Id)
+// Delete removes a comment
+func (m *CommentSummaryType) Delete(siteID int64) (int, error) {
+	cst, status, err := GetCommentSummary(siteID, m.ID)
 	if err != nil {
 		if status == http.StatusNotFound {
 			return http.StatusOK, nil
@@ -638,12 +644,12 @@ func (ct *CommentSummaryType) Delete(siteId int64) (int, error) {
 UPDATE comments
    SET is_deleted = true
  WHERE comment_id = $1`,
-		m.Id,
+		cst.ID,
 	)
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Delete failed: %+v", err))
+			fmt.Errorf("Delete failed: %+v", err)
 	}
 
 	_, err = tx.Exec(`
@@ -662,24 +668,24 @@ SELECT c1.item_type_id
        ) item
  WHERE f.item_type_id = item.item_type_id
    AND f.item_id = item.item_id`,
-		m.Id,
+		cst.ID,
 	)
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Delete failed: %+v", err))
+			fmt.Errorf("Delete failed: %+v", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %+v", err))
+			fmt.Errorf("Transaction failed: %+v", err)
 	}
 
-	go DecrementProfileCommentCount(m.Meta.CreatedById)
-	go DecrementItemCommentCount(m.ItemTypeId, m.ItemId)
-	PurgeCache(h.ItemTypes[h.ItemTypeComment], m.Id)
+	go DecrementProfileCommentCount(cst.Meta.CreatedById)
+	go DecrementItemCommentCount(cst.ItemTypeID, cst.ItemID)
+	PurgeCache(h.ItemTypes[h.ItemTypeComment], cst.ID)
 
 	tx2, err := h.GetTransaction()
 	if err != nil {
@@ -688,13 +694,13 @@ SELECT c1.item_type_id
 	}
 	defer tx2.Rollback()
 
-	PurgeCache(m.ItemTypeId, m.ItemId)
+	PurgeCache(cst.ItemTypeID, cst.ItemID)
 
 	summary, status, err := GetSummary(
-		siteId,
-		m.ItemTypeId,
-		m.ItemId,
-		m.Meta.CreatedById,
+		siteID,
+		cst.ItemTypeID,
+		cst.ItemID,
+		cst.Meta.CreatedById,
 	)
 	if err != nil {
 		glog.Error(err)
@@ -723,10 +729,13 @@ SELECT c1.item_type_id
 	return http.StatusOK, nil
 }
 
+// GetPageNumber returns the page of an item upon which a comment exists. This
+// accounts for the viewer having ignored comments by others as well as
+// comments marked as deleted.
 func GetPageNumber(
-	commentId int64,
+	commentID int64,
 	limit int64,
-	profileId int64,
+	profileID int64,
 ) (
 	int64,
 	int64,
@@ -734,7 +743,6 @@ func GetPageNumber(
 	int,
 	error,
 ) {
-
 	db, err := h.GetConnection()
 	if err != nil {
 		return 0, 0, 0, http.StatusInternalServerError, err
@@ -767,72 +775,70 @@ SELECT oc.item_type_id
    AND oc.created <= ic.created
  GROUP BY oc.item_type_id
          ,oc.item_id`,
-		commentId,
+		commentID,
 		limit,
-		profileId,
+		profileID,
 	)
 	if err != nil {
 		return 0, 0, 0, http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Get page link failed: %v", err.Error()))
+			fmt.Errorf("Get page link failed: %v", err.Error())
 	}
 	defer rows.Close()
 
 	var (
-		itemTypeId int64
-		itemId     int64
+		itemTypeID int64
+		itemID     int64
 		offset     int64
 	)
 	for rows.Next() {
 		err = rows.Scan(
-			&itemTypeId,
-			&itemId,
+			&itemTypeID,
+			&itemID,
 			&offset,
 		)
 		if err != nil {
-			return 0, 0, 0, http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Row parsing error: %v", err.Error()),
-			)
+			return 0, 0, 0, http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 	}
 	err = rows.Err()
 	if err != nil {
-		return 0, 0, 0, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error fetching rows: %v", err.Error()),
-		)
+		return 0, 0, 0, http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
-	if itemTypeId < 1 || itemId < 1 {
-		return 0, 0, 0, http.StatusNotFound, errors.New("Comment not found")
+	if itemTypeID < 1 || itemID < 1 {
+		return 0, 0, 0, http.StatusNotFound, fmt.Errorf("Comment not found")
 	}
 
-	return itemTypeId, itemId, offset, http.StatusOK, nil
+	return itemTypeID, itemID, offset, http.StatusOK, nil
 }
 
+// GetPageLink returns a link to a page for a comment
 func (m *CommentSummaryType) GetPageLink(
 	limit int64,
-	profileId int64,
+	profileID int64,
 ) (
 	h.LinkType,
 	int,
 	error,
 ) {
-
-	itemTypeId, itemId, offset, status, err := GetPageNumber(
-		m.Id,
+	itemTypeID, itemID, offset, status, err := GetPageNumber(
+		m.ID,
 		limit,
-		profileId,
+		profileID,
 	)
 	if err != nil {
 		return h.LinkType{}, status, err
 	}
 
-	itemType, err := h.GetItemTypeFromInt(itemTypeId)
+	itemType, err := h.GetItemTypeFromInt(itemTypeID)
 	if err != nil {
 		return h.LinkType{}, http.StatusInternalServerError, err
 	}
 
-	link := h.GetLink("commentPage", "", itemType, itemId)
+	link := h.GetLink("commentPage", "", itemType, itemID)
 
 	href, err := url.Parse(link.Href)
 	if err != nil {
@@ -856,15 +862,14 @@ func (m *CommentSummaryType) GetPageLink(
 	return link, http.StatusOK, nil
 }
 
+// HandleCommentRequest fetches a comment given a request for one
 func HandleCommentRequest(
-	siteId int64,
-	commentId int64,
+	siteID int64,
+	commentID int64,
 	seq int,
 	out chan<- CommentSummaryRequest,
 ) {
-
-	item, status, err := GetCommentSummary(siteId, commentId)
-
+	item, status, err := GetCommentSummary(siteID, commentID)
 	response := CommentSummaryRequest{
 		Item:   item,
 		Status: status,
@@ -874,26 +879,26 @@ func HandleCommentRequest(
 	out <- response
 }
 
+// GetCommentSummary returns a comment
 func GetCommentSummary(
-	siteId int64,
-	commentId int64,
+	siteID int64,
+	commentID int64,
 ) (
 	CommentSummaryType,
 	int,
 	error,
 ) {
-
-	if commentId == 0 {
+	if commentID == 0 {
 		return CommentSummaryType{}, http.StatusNotFound,
-			errors.New("Comment not found")
+			fmt.Errorf("Comment not found")
 	}
 
 	// Get from cache if it's available
-	mcKey := fmt.Sprintf(mcCommentKeys[c.CacheDetail], commentId)
+	mcKey := fmt.Sprintf(mcCommentKeys[c.CacheDetail], commentID)
 	if val, ok := c.CacheGet(mcKey, CommentSummaryType{}); ok {
 		m := val.(CommentSummaryType)
 
-		m.FetchProfileSummaries(siteId)
+		m.FetchProfileSummaries(siteID)
 
 		return m, http.StatusOK, nil
 	}
@@ -903,9 +908,9 @@ func GetCommentSummary(
 	// ensure we don't thrash the system resources. What this means is that
 	// instead of a 1 week time-to-live we *may* need a much shorter TTL.
 	//
-	// This is what commentTtl stores... the default TTL to be over-ridden
-	// with a shorter TTL is we cannot parse the Markdown.
-	commentTtl := mcTTL
+	// This is what commentTTL stores... the default TTL to be over-ridden
+	// with a shorter TTL if we cannot parse the Markdown.
+	commentTTL := mcTTL
 
 	db, err := h.GetConnection()
 	if err != nil {
@@ -916,7 +921,7 @@ func GetCommentSummary(
 	// TODO(buro9): admins and mods could see this with isDeleted=true in the
 	// querystring
 
-	var revisionId int64
+	var revisionID int64
 	m := CommentSummaryType{}
 	err = db.QueryRow(`
 SELECT c.comment_id
@@ -949,15 +954,15 @@ SELECT c.comment_id
  ORDER BY r.created DESC
  LIMIT 1
 OFFSET 0`,
-		commentId,
+		commentID,
 	).Scan(
-		&m.Id,
-		&m.ItemTypeId,
-		&m.ItemId,
+		&m.ID,
+		&m.ItemTypeID,
+		&m.ItemID,
 		&m.Meta.Created,
 		&m.Meta.CreatedById,
 		&m.Revisions,
-		&revisionId,
+		&revisionID,
 		&m.Meta.EditedNullable,
 		&m.Meta.EditedByNullable,
 		&m.InReplyToNullable,
@@ -969,14 +974,12 @@ OFFSET 0`,
 		&m.HTMLNullable,
 	)
 	if err == sql.ErrNoRows {
-		return CommentSummaryType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Comment with ID %d not found", commentId),
-		)
-
+		return CommentSummaryType{}, http.StatusNotFound,
+			fmt.Errorf("Comment with ID %d not found", commentID)
 	} else if err != nil {
-		glog.Errorf("db.QueryRow(%d) %+v", commentId, err)
+		glog.Errorf("db.QueryRow(%d) %+v", commentID, err)
 		return CommentSummaryType{}, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 
 	if m.Meta.EditedNullable.Valid &&
@@ -988,9 +991,9 @@ OFFSET 0`,
 		}
 	}
 
-	m.ItemType, err = h.GetItemTypeFromInt(m.ItemTypeId)
+	m.ItemType, err = h.GetItemTypeFromInt(m.ItemTypeID)
 	if err != nil {
-		glog.Errorf("h.GetItemTypeFromInt(%d) %+v", m.ItemTypeId, err)
+		glog.Errorf("h.GetItemTypeFromInt(%d) %+v", m.ItemTypeID, err)
 		return CommentSummaryType{}, http.StatusInternalServerError, err
 	}
 
@@ -1003,11 +1006,10 @@ OFFSET 0`,
 		m.HTML = m.HTMLNullable.String
 
 	} else {
-
 		if strings.Trim(m.Markdown, " ") == "" {
 			glog.Errorln(`strings.Trim(m.Markdown, " ") == ""`)
 			return CommentSummaryType{}, http.StatusInternalServerError,
-				errors.New("Markdown is empty")
+				fmt.Errorf("Markdown is empty")
 		}
 
 		tx, err := h.GetTransaction()
@@ -1019,18 +1021,18 @@ OFFSET 0`,
 
 		html, err := ProcessCommentMarkdown(
 			tx,
-			revisionId,
+			revisionID,
 			m.Markdown,
-			siteId,
-			m.ItemTypeId,
-			m.ItemId,
+			siteID,
+			m.ItemTypeID,
+			m.ItemID,
 			false,
 		)
 		if err != nil {
 			glog.Errorf(
 				"ProcessCommentMarkdown(tx, %d, m.Markdown, siteId, "+
 					"m.ItemTypeId, m.ItemId, false) %+v",
-				revisionId,
+				revisionID,
 				err,
 			)
 			return CommentSummaryType{}, http.StatusInternalServerError, err
@@ -1043,97 +1045,96 @@ OFFSET 0`,
 UPDATE revisions
    SET html = $2
  WHERE revision_id = $1`,
-				revisionId,
+				revisionID,
 				m.HTML,
 			)
 			if err != nil {
 				tx.Rollback()
 
-				glog.Errorf("tx.Exec(%d, m.HTML) %+v", revisionId, err)
+				glog.Errorf("tx.Exec(%d, m.HTML) %+v", revisionID, err)
 				return CommentSummaryType{}, http.StatusInternalServerError,
-					errors.New("Error updating HTML")
+					fmt.Errorf("Error updating HTML")
 			}
 
 			err = tx.Commit()
 			if err != nil {
 				glog.Errorf("tx.Commit() %+v", err)
 				return CommentSummaryType{}, http.StatusInternalServerError,
-					errors.New("Transaction failed")
+					fmt.Errorf("Transaction failed")
 			}
 
-			EmbedAllMedia(revisionId)
+			EmbedAllMedia(revisionID)
 
 		} else {
 
-			glog.Errorf(`m.HTML == "" for commentId %d`, commentId)
+			glog.Errorf(`m.HTML == "" for commentId %d`, commentID)
 
 			// A friendly error message
 			m.HTML = "<em>Microcosm error: Comment not rendered, " +
 				"please try again later</em>."
 
-			commentTtl = 60 * 5 // 5 minutes
+			commentTTL = 60 * 5 // 5 minutes
 		}
 	}
 
-	if m.Id == 0 {
-		glog.Warningf("m.Id == 0 (expected %d)", commentId)
-		return CommentSummaryType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Resource with ID %d not found", commentId),
-		)
+	if m.ID == 0 {
+		glog.Warningf("m.Id == 0 (expected %d)", commentID)
+		return CommentSummaryType{}, http.StatusNotFound,
+			fmt.Errorf("Resource with ID %d not found", commentID)
 	}
 
-	itemTitle, _, err := GetTitle(siteId, h.ItemTypes[m.ItemType], m.ItemId, 0)
+	itemTitle, _, err := GetTitle(siteID, h.ItemTypes[m.ItemType], m.ItemID, 0)
 	if err != nil {
 		glog.Warningf(
 			"GetTitle(%d, %d, %d, 0) %+v",
-			siteId,
+			siteID,
 			h.ItemTypes[m.ItemType],
-			m.ItemId,
+			m.ItemID,
 			err,
 		)
 	}
 	m.Meta.Links =
 		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeComment, m.Id),
-			h.GetLink(m.ItemType, itemTitle, m.ItemType, m.ItemId),
-			h.GetLink("up", itemTitle, m.ItemType, m.ItemId),
+			h.GetLink("self", "", h.ItemTypeComment, m.ID),
+			h.GetLink(m.ItemType, itemTitle, m.ItemType, m.ItemID),
+			h.GetLink("up", itemTitle, m.ItemType, m.ItemID),
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, commentTtl)
+	c.CacheSet(mcKey, m, commentTTL)
 
 	// Profiles should be fetched after the item is cached.
-	m.FetchProfileSummaries(siteId)
+	m.FetchProfileSummaries(siteID)
 
 	return m, http.StatusOK, nil
 }
 
+// GetComments returns a collection of comments
 func GetComments(
-	siteId int64,
+	siteID int64,
 	itemType string,
-	itemId int64,
-	reqUrl *url.URL,
-	profileId int64,
+	itemID int64,
+	reqURL *url.URL,
+	profileID int64,
 	itemCreated time.Time,
 ) (
 	h.ArrayType,
 	int,
 	error,
 ) {
-
-	query := reqUrl.Query()
+	query := reqURL.Query()
 	limit, offset, status, err := h.GetLimitAndOffset(query)
 	if err != nil {
 		return h.ArrayType{}, status, err
 	}
 
 	ems, total, pages, status, err := GetItemComments(
-		siteId,
+		siteID,
 		itemType,
-		itemId,
+		itemID,
 		limit,
 		offset,
-		profileId,
+		profileID,
 		itemCreated,
 	)
 	if err != nil {
@@ -1147,17 +1148,18 @@ func GetComments(
 		limit,
 		offset,
 		pages,
-		reqUrl,
+		reqURL,
 	)
 
 	return commentArray, http.StatusOK, nil
 }
 
+// GetLatestComments returns the latest comments for an item
 func GetLatestComments(
-	siteId int64,
+	siteID int64,
 	itemType string,
-	itemId int64,
-	profileId int64,
+	itemID int64,
+	profileID int64,
 	limit int64,
 ) (
 	int64,
@@ -1165,35 +1167,35 @@ func GetLatestComments(
 	int,
 	error,
 ) {
-
 	lastRead, status, err :=
-		GetLastReadTime(h.ItemTypes[itemType], itemId, profileId)
+		GetLastReadTime(h.ItemTypes[itemType], itemID, profileID)
 	if err != nil {
 		return 0, 0, status, err
 	}
 
-	commentId, status, err :=
-		GetNextOrLastCommentId(h.ItemTypes[itemType], itemId, lastRead, profileId)
+	commentID, status, err :=
+		GetNextOrLastCommentID(h.ItemTypes[itemType], itemID, lastRead, profileID)
 	if err != nil {
 		return 0, 0, status, err
 	}
 
 	_, _, offset, status, err :=
-		GetPageNumber(commentId, limit, profileId)
+		GetPageNumber(commentID, limit, profileID)
 	if err != nil {
 		return 0, 0, status, err
 	}
 
-	return offset, commentId, http.StatusOK, nil
+	return offset, commentID, http.StatusOK, nil
 }
 
+// GetItemComments fetches a page of comments on an item
 func GetItemComments(
-	siteId int64,
+	siteID int64,
 	itemType string,
-	itemId int64,
+	itemID int64,
 	limit int64,
 	offset int64,
-	profileId int64,
+	profileID int64,
 	itemCreated time.Time,
 ) (
 	[]CommentSummaryType,
@@ -1202,18 +1204,17 @@ func GetItemComments(
 	int,
 	error,
 ) {
-
 	// Comments may be fetched for an individual item, or without that filter.
 	var fetchForItem = false
 	if itemType != "" {
 		if _, exists := h.ItemTypesCommentable[itemType]; !exists {
 			return []CommentSummaryType{}, 0, 0, http.StatusBadRequest,
-				errors.New("You must specify a valid item type")
+				fmt.Errorf("You must specify a valid item type")
 		}
 
-		if itemId <= 0 {
+		if itemID <= 0 {
 			return []CommentSummaryType{}, 0, 0, http.StatusBadRequest,
-				errors.New("If you provide an itemType, then you must " +
+				fmt.Errorf("If you provide an itemType, then you must " +
 					"provide a non-zero and not negative itemId")
 		}
 		fetchForItem = true
@@ -1273,21 +1274,20 @@ SELECT total
 		rows, err = db.Query(
 			sqlQuery,
 			h.ItemTypesCommentable[itemType],
-			itemId,
-			profileId,
+			itemID,
+			profileID,
 			limit,
 			offset,
 		)
 	} else {
 		// Comment IDs.
-		rows, err = db.Query(sqlQuery, limit, offset, profileId)
+		rows, err = db.Query(sqlQuery, limit, offset, profileID)
 	}
 
 	defer rows.Close()
 	if err != nil {
-		return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	// Get a list of the identifiers of the items to return
@@ -1306,9 +1306,7 @@ SELECT total
 		)
 		if err != nil {
 			return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
 		unread[id] = isUnread
@@ -1317,9 +1315,7 @@ SELECT total
 	err = rows.Err()
 	if err != nil {
 		return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -1329,7 +1325,7 @@ SELECT total
 	defer close(req)
 
 	for seq, id := range ids {
-		go HandleCommentRequest(siteId, id, seq, req)
+		go HandleCommentRequest(siteID, id, seq, req)
 		wg1.Add(1)
 	}
 
@@ -1355,7 +1351,7 @@ SELECT total
 	ems := []CommentSummaryType{}
 	for _, resp := range resps {
 		m := resp.Item
-		m.Meta.Flags.Unread = unread[m.Id]
+		m.Meta.Flags.Unread = unread[m.ID]
 		ems = append(ems, m)
 	}
 
@@ -1364,45 +1360,43 @@ SELECT total
 
 	if offset > maxOffset {
 		return []CommentSummaryType{}, 0, 0, http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf("Not enough records, "+
-					"offset (%d) would return an empty page.",
-					offset,
-				),
+			fmt.Errorf("Not enough records, "+
+				"offset (%d) would return an empty page",
+				offset,
 			)
 	}
 
 	return ems, total, pages, http.StatusOK, nil
 }
 
+// GetComment fetches a comment
 func GetComment(
-	siteId int64,
-	commentId int64,
-	profileId int64,
+	siteID int64,
+	commentID int64,
+	profileID int64,
 	limit int64,
 ) (
 	CommentType,
 	int,
 	error,
 ) {
-
-	if commentId == 0 {
+	if commentID == 0 {
 		return CommentType{}, http.StatusNotFound,
-			errors.New("Comment not found")
+			fmt.Errorf("Comment not found")
 	}
 
 	var m CommentType
-	commentsummary, status, err := GetCommentSummary(siteId, commentId)
+	commentsummary, status, err := GetCommentSummary(siteID, commentID)
 	if err != nil {
 		return CommentType{}, status, err
 	}
 
 	// We are cheating by fetch stuff from an existing in-memory object and
 	// mapping it now to the new data structure
-	m.Id = commentsummary.Id
-	m.ItemTypeId = commentsummary.ItemTypeId
+	m.ID = commentsummary.ID
+	m.ItemTypeID = commentsummary.ItemTypeID
 	m.ItemType = commentsummary.ItemType
-	m.ItemId = commentsummary.ItemId
+	m.ItemID = commentsummary.ItemID
 	m.Revisions = commentsummary.Revisions
 	m.InReplyToNullable = commentsummary.InReplyToNullable
 	m.InReplyTo = commentsummary.InReplyTo
@@ -1426,7 +1420,7 @@ func GetComment(
 	m.Meta.Links = commentsummary.Meta.Links
 	m.Meta.Permissions = commentsummary.Meta.Permissions
 
-	link, status, err := commentsummary.GetPageLink(limit, profileId)
+	link, status, err := commentsummary.GetPageLink(limit, profileID)
 	if err != nil {
 		return CommentType{}, status, err
 	}
@@ -1434,7 +1428,7 @@ func GetComment(
 
 	// We only fetch the immediate parent
 	if m.InReplyTo != 0 {
-		commentsummary, status, _ = GetCommentSummary(siteId, m.InReplyTo)
+		commentsummary, status, _ = GetCommentSummary(siteID, m.InReplyTo)
 		if status == http.StatusOK {
 			m.Meta.InReplyTo = commentsummary
 		}
@@ -1457,13 +1451,12 @@ SELECT c.comment_id
    AND c.is_moderated IS NOT TRUE
    AND c.is_deleted IS NOT TRUE
  ORDER BY c.created ASC`,
-		commentId,
-		profileId,
+		commentID,
+		profileID,
 	)
 	if err != nil {
-		return CommentType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return CommentType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -1475,17 +1468,15 @@ SELECT c.comment_id
 			&id,
 		)
 		if err != nil {
-			return CommentType{}, http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Row parsing error: %v", err.Error()),
-			)
+			return CommentType{}, http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 		ids = append(ids, id)
 	}
 	err = rows.Err()
 	if err != nil {
-		return CommentType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error fetching rows: %v", err.Error()),
-		)
+		return CommentType{}, http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -1494,7 +1485,7 @@ SELECT c.comment_id
 	defer close(req)
 
 	for seq, id := range ids {
-		go HandleCommentRequest(siteId, id, seq, req)
+		go HandleCommentRequest(siteID, id, seq, req)
 		wg1.Add(1)
 	}
 
@@ -1524,17 +1515,17 @@ SELECT c.comment_id
 	return m, http.StatusOK, nil
 }
 
-func GetNextOrLastCommentId(
-	itemTypeId int64,
-	itemId int64,
+// GetNextOrLastCommentID returns the next or last comment identifier
+func GetNextOrLastCommentID(
+	itemTypeID int64,
+	itemID int64,
 	timestamp time.Time,
-	profileId int64,
+	profileID int64,
 ) (
 	int64,
 	int,
 	error,
 ) {
-
 	// Gets the id for the first comment after the given timestamp
 	// If no such comment, give the id for the last comment
 	db, err := h.GetConnection()
@@ -1542,7 +1533,7 @@ func GetNextOrLastCommentId(
 		return 0, http.StatusInternalServerError, err
 	}
 
-	var commentId int64
+	var commentID int64
 
 	err = db.QueryRow(`--GetNextOrLastCommentId
 SELECT comment_id
@@ -1594,24 +1585,23 @@ SELECT comment_id
        ) AS nextandlast
  ORDER BY created ASC
  FETCH FIRST 1 ROWS ONLY`,
-		itemTypeId,
-		itemId,
+		itemTypeID,
+		itemID,
 		timestamp,
-		profileId,
+		profileID,
 	).Scan(
-		&commentId,
+		&commentID,
 	)
 	if err != nil {
-		return 0, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error getting next commentid for item: %+v", err),
-		)
+		return 0, http.StatusInternalServerError,
+			fmt.Errorf("Error getting next commentid for item: %+v", err)
 	}
 
-	return commentId, http.StatusOK, nil
+	return commentID, http.StatusOK, nil
 }
 
-func GetLastComment(itemTypeId int64, itemId int64) (LastComment, int, error) {
-
+// GetLastComment fetches the last comment on an item
+func GetLastComment(itemTypeID int64, itemID int64) (LastComment, int, error) {
 	db, err := h.GetConnection()
 	if err != nil {
 		glog.Errorf("h.GetConnection() %+v", err)
@@ -1635,11 +1625,11 @@ SELECT c.comment_id
    AND f.item_is_moderated IS NOT TRUE
  ORDER BY f.last_modified DESC
  LIMIT 1`,
-		itemTypeId,
-		itemId,
+		itemTypeID,
+		itemID,
 	)
 	if err != nil {
-		glog.Errorf("db.Query(%d, %d) %+v", itemTypeId, itemId, err)
+		glog.Errorf("db.Query(%d, %d) %+v", itemTypeID, itemID, err)
 		return LastComment{}, http.StatusInternalServerError, err
 	}
 	defer rows.Close()
@@ -1672,9 +1662,8 @@ SELECT c.comment_id
 // SetCommentInReplyTo updates the in_reply_to value of a comment. This is
 // only for imports as it is never anticipated that this value will change once
 // it has been set.
-func SetCommentInReplyTo(siteId int64, commentId int64, inReplyTo int64) error {
-
-	if siteId == 0 || commentId == 0 || inReplyTo == 0 {
+func SetCommentInReplyTo(siteID int64, commentID int64, inReplyTo int64) error {
+	if siteID == 0 || commentID == 0 || inReplyTo == 0 {
 		return fmt.Errorf("Cannot accept zero input value")
 	}
 
@@ -1685,7 +1674,7 @@ func SetCommentInReplyTo(siteId int64, commentId int64, inReplyTo int64) error {
 	defer tx.Rollback()
 
 	_, err = tx.Exec(`UPDATE comments SET in_reply_to = $2 WHERE comment_id = $1`,
-		commentId,
+		commentID,
 		inReplyTo,
 	)
 	if err != nil {
@@ -1697,7 +1686,7 @@ func SetCommentInReplyTo(siteId int64, commentId int64, inReplyTo int64) error {
 		return err
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeComment], commentId)
+	go PurgeCache(h.ItemTypes[h.ItemTypeComment], commentID)
 
 	return nil
 }
