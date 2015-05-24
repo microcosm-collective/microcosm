@@ -110,6 +110,7 @@ func bbcodeQuoteToMarkdown(input []byte) []byte {
 	return input
 }
 
+// ProcessBBCode replaces BBCode with Markdown
 func ProcessBBCode(src []byte) []byte {
 
 	testSrc := bytes.ToLower(src)

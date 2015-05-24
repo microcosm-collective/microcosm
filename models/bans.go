@@ -10,18 +10,19 @@ import (
 
 const banCacheKey = `ban_s%d_u%d`
 
-func IsBanned(siteId int64, userId int64) bool {
+// IsBanned returns true if the user is banned for the given site
+func IsBanned(siteID int64, userID int64) bool {
 
-	if siteId == 0 || userId == 0 {
+	if siteID == 0 || userID == 0 {
 		return false
 	}
 
 	// Get from cache if it's available
 	//
-	// This map of siteId+userId = profileId is never expected to change, so
+	// This map of siteID+userID = profileId is never expected to change, so
 	// this cache key is unique and does not conform to the cache flushing
 	// mechanism
-	mcKey := fmt.Sprintf(banCacheKey, siteId, userId)
+	mcKey := fmt.Sprintf(banCacheKey, siteID, userID)
 	if val, ok := c.CacheGetBool(mcKey); ok {
 		return val
 	}
@@ -39,8 +40,8 @@ SELECT 1
  WHERE site_id = $1
    AND user_id = $2
 )`,
-		siteId,
-		userId,
+		siteID,
+		userID,
 	).Scan(
 		&isBanned,
 	)
