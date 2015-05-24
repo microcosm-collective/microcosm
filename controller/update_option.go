@@ -17,7 +17,7 @@ func UpdateOptionHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := UpdateOptionController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT"})
 		return
@@ -37,18 +37,18 @@ type UpdateOptionController struct{}
 
 func (ctl *UpdateOptionController) Read(c *models.Context) {
 
-	if c.Auth.ProfileId < 1 {
+	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
 
-	_, _, itemId, status, err := c.GetItemTypeAndItemId()
+	_, _, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	m, status, err := models.GetUpdateOptionByUpdateType(c.Auth.ProfileId, itemId)
+	m, status, err := models.GetUpdateOptionByUpdateType(c.Auth.ProfileID, itemId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -59,7 +59,7 @@ func (ctl *UpdateOptionController) Read(c *models.Context) {
 
 func (ctl *UpdateOptionController) Update(c *models.Context) {
 
-	_, _, itemId, status, err := c.GetItemTypeAndItemId()
+	_, _, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -67,7 +67,7 @@ func (ctl *UpdateOptionController) Update(c *models.Context) {
 
 	var exists bool
 
-	m, status, err := models.GetUpdateOptionByUpdateType(c.Auth.ProfileId, itemId)
+	m, status, err := models.GetUpdateOptionByUpdateType(c.Auth.ProfileID, itemId)
 	if err != nil && status != http.StatusNotFound {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -87,7 +87,7 @@ func (ctl *UpdateOptionController) Update(c *models.Context) {
 
 	// Profile ID cannot be changed
 	m.UpdateTypeID = itemId
-	m.ProfileID = c.Auth.ProfileId
+	m.ProfileID = c.Auth.ProfileID
 
 	if exists {
 		// Update

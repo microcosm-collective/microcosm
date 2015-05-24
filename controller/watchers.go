@@ -18,7 +18,7 @@ func WatchersHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := WatchersController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "PUT", "POST"})
 		return
@@ -38,7 +38,7 @@ type WatchersController struct{}
 
 func (ctl *WatchersController) ReadMany(c *models.Context) {
 
-	if c.Auth.ProfileId < 1 {
+	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
@@ -52,7 +52,7 @@ func (ctl *WatchersController) ReadMany(c *models.Context) {
 	}
 
 	ems, total, pages, status, err := models.GetProfileWatchers(
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		c.Site.ID,
 		limit,
 		offset,
@@ -123,7 +123,7 @@ func (ctl *WatchersController) Create(c *models.Context) {
 	}
 
 	sendEmail, status, err := models.RegisterWatcher(
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		m.UpdateTypeID,
 		m.ItemID,
 		m.ItemTypeID,

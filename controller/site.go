@@ -21,7 +21,7 @@ func SiteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ctl := SiteController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT"})
 		return
@@ -81,7 +81,7 @@ func (ctl *SiteController) Read(c *models.Context) {
 
 func (ctl *SiteController) Update(c *models.Context) {
 
-	_, _, itemId, status, err := c.GetItemTypeAndItemId()
+	_, _, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -101,7 +101,7 @@ func (ctl *SiteController) Update(c *models.Context) {
 		return
 	}
 
-	if owner.UserID != c.Auth.UserId {
+	if owner.UserID != c.Auth.UserID {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("You must be the owner of the site to update it"),
 			http.StatusForbidden,
@@ -128,7 +128,7 @@ func (ctl *SiteController) Update(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeSite],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

@@ -22,7 +22,7 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := CommentsController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "POST"})
 		return
@@ -51,7 +51,7 @@ func (ctl *CommentsController) Create(c *models.Context) {
 	}
 
 	// Populate where applicable from auth and context
-	m.Meta.CreatedById = c.Auth.ProfileId
+	m.Meta.CreatedById = c.Auth.ProfileID
 	m.Meta.Created = time.Now()
 
 	status, err := m.Validate(c.Site.ID, false)
@@ -67,7 +67,7 @@ func (ctl *CommentsController) Create(c *models.Context) {
 	)
 	if !perms.CanCreate {
 		c.RespondWithErrorDetail(
-			e.New(c.Site.ID, c.Auth.ProfileId, "comments.go::Create", e.NoCreate, "Not authorized to create comment: CanCreate false"),
+			e.New(c.Site.ID, c.Auth.ProfileID, "comments.go::Create", e.NoCreate, "Not authorized to create comment: CanCreate false"),
 			http.StatusForbidden,
 		)
 		return
@@ -85,7 +85,7 @@ func (ctl *CommentsController) Create(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
 		m.Id,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -93,7 +93,7 @@ func (ctl *CommentsController) Create(c *models.Context) {
 	// Send updates and register watcher
 	if m.ItemTypeId == h.ItemTypes[h.ItemTypeHuddle] {
 		models.RegisterWatcher(
-			c.Auth.ProfileId,
+			c.Auth.ProfileID,
 			h.UpdateTypes[h.UpdateTypeNewCommentInHuddle],
 			m.ItemId,
 			m.ItemTypeId,
@@ -101,11 +101,11 @@ func (ctl *CommentsController) Create(c *models.Context) {
 		)
 
 		go models.SendUpdatesForNewCommentInHuddle(c.Site.ID, m)
-		models.MarkAsRead(h.ItemTypes[h.ItemTypeHuddle], m.ItemId, c.Auth.ProfileId, time.Now())
-		models.UpdateUnreadHuddleCount(c.Auth.ProfileId)
+		models.MarkAsRead(h.ItemTypes[h.ItemTypeHuddle], m.ItemId, c.Auth.ProfileID, time.Now())
+		models.UpdateUnreadHuddleCount(c.Auth.ProfileID)
 	} else {
 		models.RegisterWatcher(
-			c.Auth.ProfileId,
+			c.Auth.ProfileID,
 			h.UpdateTypes[h.UpdateTypeNewComment],
 			m.ItemId,
 			m.ItemTypeId,

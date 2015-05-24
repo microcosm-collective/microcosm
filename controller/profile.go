@@ -19,7 +19,7 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := ProfileController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "DELETE"})
 		return
@@ -73,7 +73,7 @@ func (ctl *ProfileController) Create(c *models.Context) {
 
 	// Populate site and user ID from goweb context
 	m.SiteID = c.Site.ID
-	m.UserID = c.Auth.UserId
+	m.UserID = c.Auth.UserID
 
 	status, err := m.Insert()
 	if err != nil {
@@ -85,7 +85,7 @@ func (ctl *ProfileController) Create(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -100,7 +100,7 @@ func (ctl *ProfileController) Create(c *models.Context) {
 }
 
 func (ctl *ProfileController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -112,7 +112,7 @@ func (ctl *ProfileController) Read(c *models.Context) {
 			c, 0, itemTypeId, itemId),
 	)
 	if c.Site.ID == 1 {
-		if c.Auth.ProfileId != itemId {
+		if c.Auth.ProfileID != itemId {
 			perms.CanRead = false
 		}
 	}
@@ -129,10 +129,10 @@ func (ctl *ProfileController) Read(c *models.Context) {
 	}
 	m.Meta.Permissions = perms
 
-	if c.Auth.ProfileId > 0 {
+	if c.Auth.ProfileID > 0 {
 		// Get watcher status
 		watcherId, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeProfile], m.ID, c.Auth.ProfileId,
+			h.ItemTypes[h.ItemTypeProfile], m.ID, c.Auth.ProfileID,
 		)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
@@ -149,13 +149,13 @@ func (ctl *ProfileController) Read(c *models.Context) {
 			m.Meta.Flags.SendSms = sendSms
 		}
 
-		if c.Auth.ProfileId == m.ID {
+		if c.Auth.ProfileID == m.ID {
 			// Get counts of things
 			m.GetUnreadHuddleCount()
 		}
 
 		if perms.IsOwner {
-			user, status, err := models.GetUser(c.Auth.UserId)
+			user, status, err := models.GetUser(c.Auth.UserID)
 			if err != nil {
 				c.RespondWithErrorDetail(err, status)
 				return
@@ -168,7 +168,7 @@ func (ctl *ProfileController) Read(c *models.Context) {
 }
 
 func (ctl *ProfileController) Update(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -213,7 +213,7 @@ func (ctl *ProfileController) Update(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -235,7 +235,7 @@ func (ctl *ProfileController) Delete(c *models.Context) {
 	return
 
 	/*
-		_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+		_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
 		}
@@ -253,7 +253,7 @@ func (ctl *ProfileController) Delete(c *models.Context) {
 			c.Site.ID,
 			h.ItemTypes[h.ItemTypeProfile],
 			m.Id,
-			c.Auth.ProfileId,
+			c.Auth.ProfileID,
 			time.Now(),
 			c.IP,
 		)

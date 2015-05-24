@@ -27,7 +27,7 @@ func AttendeesHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := AttendeesController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "PUT", "HEAD", "GET"})
 		return
@@ -76,7 +76,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 
 	if !perms.CanCreate {
 		c.RespondWithErrorDetail(
-			e.New(c.Site.ID, c.Auth.ProfileId, "attendees.go::UpdateMany", e.NoCreate, "Not authorized to create attendee: CanCreate false"),
+			e.New(c.Site.ID, c.Auth.ProfileID, "attendees.go::UpdateMany", e.NoCreate, "Not authorized to create attendee: CanCreate false"),
 			http.StatusForbidden,
 		)
 		return
@@ -85,7 +85,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 	// Also check that profile exists on site.
 	if perms.IsOwner || perms.IsModerator || perms.IsSiteOwner {
 		for _, m := range ems {
-			if m.ProfileId != c.Auth.ProfileId && m.RSVP == "yes" {
+			if m.ProfileId != c.Auth.ProfileID && m.RSVP == "yes" {
 				c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 				return
 			}
@@ -97,7 +97,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 		}
 	} else {
 		for _, m := range ems {
-			if m.ProfileId != c.Auth.ProfileId {
+			if m.ProfileId != c.Auth.ProfileID {
 				c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 				return
 			}
@@ -114,10 +114,10 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 	// Populate where applicable from auth and context
 	for i := range ems {
 		ems[i].EventId = eventId
-		ems[i].Meta.CreatedById = c.Auth.ProfileId
+		ems[i].Meta.CreatedById = c.Auth.ProfileID
 		ems[i].Meta.Created = t
 		ems[i].Meta.EditedNullable = pq.NullTime{Time: t, Valid: true}
-		ems[i].Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
+		ems[i].Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileID, Valid: true}
 	}
 
 	status, err := models.UpdateManyAttendees(c.Site.ID, ems)
@@ -144,7 +144,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 			c.Site.ID,
 			h.ItemTypes[h.ItemTypeAttendee],
 			m.Id,
-			c.Auth.ProfileId,
+			c.Auth.ProfileID,
 			time.Now(),
 			c.IP,
 		)

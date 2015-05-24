@@ -15,7 +15,7 @@ func LegalsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return
@@ -55,7 +55,7 @@ func LegalHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := LegalController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return

@@ -19,7 +19,7 @@ func ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := ProfilesController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "POST", "HEAD", "GET"})
 		return
@@ -71,7 +71,7 @@ func (ctl *ProfilesController) Create(c *models.Context) {
 
 	// Populate site and user ID from goweb context
 	m.SiteID = c.Site.ID
-	m.UserID = c.Auth.UserId
+	m.UserID = c.Auth.UserID
 
 	status, err := m.Insert()
 	if err != nil {
@@ -83,7 +83,7 @@ func (ctl *ProfilesController) Create(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -118,7 +118,7 @@ func (ctl *ProfilesController) ReadMany(c *models.Context) {
 	}
 
 	so := models.GetProfileSearchOptions(c.Request.URL.Query())
-	so.ProfileID = c.Auth.ProfileId
+	so.ProfileID = c.Auth.ProfileID
 
 	ems, total, pages, status, err := models.GetProfiles(
 		c.Site.ID,

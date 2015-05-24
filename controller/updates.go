@@ -16,7 +16,7 @@ func UpdatesHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := UpdatesController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET"})
 		return
@@ -34,7 +34,7 @@ type UpdatesController struct{}
 
 func (ctl *UpdatesController) ReadMany(c *models.Context) {
 
-	if c.Auth.ProfileId < 1 {
+	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
@@ -45,7 +45,7 @@ func (ctl *UpdatesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetUpdates(c.Site.ID, c.Auth.ProfileId, limit, offset)
+	ems, total, pages, status, err := models.GetUpdates(c.Site.ID, c.Auth.ProfileID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

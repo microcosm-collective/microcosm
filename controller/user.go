@@ -21,7 +21,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := UserController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "DELETE"})
 		return
@@ -40,7 +40,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ctl *UserController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -72,7 +72,7 @@ func (ctl *UserController) Read(c *models.Context) {
 }
 
 func (ctl *UserController) Update(c *models.Context) {
-	_, _, itemId, status, err := c.GetItemTypeAndItemId()
+	_, _, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -119,7 +119,7 @@ func (ctl *UserController) Update(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
 		itemId,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -134,7 +134,7 @@ func (ctl *UserController) Update(c *models.Context) {
 }
 
 func (ctl *UserController) Delete(c *models.Context) {
-	_, _, itemId, status, err := c.GetItemTypeAndItemId()
+	_, _, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -161,7 +161,7 @@ func (ctl *UserController) Delete(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeUser],
 		itemId,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

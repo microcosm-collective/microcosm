@@ -16,7 +16,7 @@ func UpdateOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := UpdateOptionsController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET"})
 		return
@@ -36,12 +36,12 @@ type UpdateOptionsController struct{}
 // they are site-specific and the AlertTypeId acts as the resource ID.
 func (ctl *UpdateOptionsController) ReadMany(c *models.Context) {
 
-	if c.Auth.ProfileId < 1 {
+	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
 
-	prefs, status, err := models.GetUpdateOptions(c.Site.ID, c.Auth.ProfileId)
+	prefs, status, err := models.GetUpdateOptions(c.Site.ID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

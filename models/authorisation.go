@@ -41,7 +41,7 @@ func MakeAuthorisationContext(
 
 	return AuthContext{
 		SiteId:      c.Site.ID,
-		ProfileId:   c.Auth.ProfileId,
+		ProfileId:   c.Auth.ProfileID,
 		IsSiteOwner: c.Auth.IsSiteOwner,
 		MicrocosmId: m,
 		ItemTypeId:  t,

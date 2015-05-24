@@ -21,7 +21,7 @@ func HuddlesHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := HuddlesController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST"})
 		return
@@ -50,7 +50,7 @@ func (ctl *HuddlesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetHuddles(c.Site.ID, c.Auth.ProfileId, limit, offset)
+	ems, total, pages, status, err := models.GetHuddles(c.Site.ID, c.Auth.ProfileID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -104,7 +104,7 @@ func (ctl *HuddlesController) Create(c *models.Context) {
 	// End : Authorisation
 
 	// Populate where applicable from auth and context
-	m.Meta.CreatedById = c.Auth.ProfileId
+	m.Meta.CreatedById = c.Auth.ProfileID
 	m.Meta.Created = time.Now()
 
 	status, err := m.Insert(c.Site.ID)
@@ -117,7 +117,7 @@ func (ctl *HuddlesController) Create(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeHuddle],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

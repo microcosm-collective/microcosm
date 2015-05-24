@@ -17,7 +17,7 @@ func EffectivePermissionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := EffectivePermissionsController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD"})
 		return

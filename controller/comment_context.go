@@ -20,7 +20,7 @@ func CommentContextHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := CommentContextController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD"})
 		return
@@ -36,7 +36,7 @@ func CommentContextHandler(w http.ResponseWriter, r *http.Request) {
 
 // Redirects to the comment within the context of the thing it is attached to
 func (ctl *CommentContextController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -65,7 +65,7 @@ func (ctl *CommentContextController) Read(c *models.Context) {
 		return
 	}
 
-	link, status, err := m.GetPageLink(limit, c.Auth.ProfileId)
+	link, status, err := m.GetPageLink(limit, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

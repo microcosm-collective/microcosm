@@ -22,7 +22,7 @@ func RolesHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := RolesController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST"})
 		return
@@ -76,7 +76,7 @@ func (ctl *RolesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetRoles(c.Site.ID, microcosmId, c.Auth.ProfileId, limit, offset)
+	ems, total, pages, status, err := models.GetRoles(c.Site.ID, microcosmId, c.Auth.ProfileID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -146,10 +146,10 @@ func (ctl *RolesController) Create(c *models.Context) {
 	// Populate where applicable from auth and context
 	m.SiteID = c.Site.ID
 	m.MicrocosmID = microcosmId
-	m.Meta.CreatedById = c.Auth.ProfileId
+	m.Meta.CreatedById = c.Auth.ProfileID
 	m.Meta.Created = time.Now()
 
-	status, err := m.Insert(c.Site.ID, c.Auth.ProfileId)
+	status, err := m.Insert(c.Site.ID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -159,7 +159,7 @@ func (ctl *RolesController) Create(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeRole],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

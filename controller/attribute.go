@@ -23,7 +23,7 @@ func AttributeHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := AttributeController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE"})
 		return
@@ -43,7 +43,7 @@ func AttributeHandler(w http.ResponseWriter, r *http.Request) {
 
 // Returns a single attribute
 func (ctl *AttributeController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -72,7 +72,7 @@ func (ctl *AttributeController) Read(c *models.Context) {
 
 // Updates a single attribute
 func (ctl *AttributeController) Update(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -114,7 +114,7 @@ func (ctl *AttributeController) Update(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttribute],
 		m.Id,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -130,7 +130,7 @@ func (ctl *AttributeController) Update(c *models.Context) {
 
 // Deletes a single attribute
 func (ctl *AttributeController) Delete(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -159,7 +159,7 @@ func (ctl *AttributeController) Delete(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttribute],
 		m.Id,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

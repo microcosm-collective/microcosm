@@ -19,7 +19,7 @@ func ProfileReadHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := ProfileReadController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "PUT"})
 		return
@@ -35,7 +35,7 @@ type ProfileReadController struct{}
 
 func (ctl *ProfileReadController) Update(c *models.Context) {
 
-	if c.Auth.ProfileId == 0 {
+	if c.Auth.ProfileID == 0 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
@@ -58,7 +58,7 @@ func (ctl *ProfileReadController) Update(c *models.Context) {
 	}
 	rs.ItemTypeID = itemTypeId
 
-	status, err := models.MarkScopeAsRead(c.Auth.ProfileId, rs)
+	status, err := models.MarkScopeAsRead(c.Auth.ProfileID, rs)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

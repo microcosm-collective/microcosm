@@ -19,7 +19,7 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := MetricsController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "PUT"})
 		return
@@ -36,9 +36,9 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request) {
 func (ctl *MetricsController) Update(c *models.Context) {
 
 	// Hard coded to only work for founders.
-	if c.Auth.UserId != 1 && c.Auth.UserId != 2 {
+	if c.Auth.UserID != 1 && c.Auth.UserID != 2 {
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("Only founders can manually update metrics: %d", c.Auth.UserId),
+			fmt.Sprintf("Only founders can manually update metrics: %d", c.Auth.UserID),
 			http.StatusForbidden,
 		)
 		return
@@ -61,7 +61,7 @@ func (ctl *MetricsController) Update(c *models.Context) {
 func (ctl *MetricsController) Read(c *models.Context) {
 
 	// Hard coded to only work for founders.
-	if c.Auth.UserId != 1 && c.Auth.UserId != 2 {
+	if c.Auth.UserID != 1 && c.Auth.UserID != 2 {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("Only founders can see metrics"),
 			http.StatusForbidden,

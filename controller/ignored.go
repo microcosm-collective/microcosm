@@ -17,7 +17,7 @@ func IgnoredHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := IgnoredController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "DELETE"})
 		return
@@ -39,7 +39,7 @@ type IgnoredController struct{}
 
 func (ctl *IgnoredController) ReadMany(c *models.Context) {
 
-	if c.Auth.ProfileId < 1 {
+	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
@@ -52,7 +52,7 @@ func (ctl *IgnoredController) ReadMany(c *models.Context) {
 
 	ems, total, pages, status, err := models.GetIgnored(
 		c.Site.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		limit,
 		offset,
 	)
@@ -95,12 +95,12 @@ func (ctl *IgnoredController) Update(c *models.Context) {
 		return
 	}
 
-	if c.Auth.ProfileId < 1 {
+	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
 
-	m.ProfileID = c.Auth.ProfileId
+	m.ProfileID = c.Auth.ProfileID
 	status, err := m.Update()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
@@ -122,12 +122,12 @@ func (ctl *IgnoredController) Delete(c *models.Context) {
 		return
 	}
 
-	if c.Auth.ProfileId < 1 {
+	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
 
-	m.ProfileID = c.Auth.ProfileId
+	m.ProfileID = c.Auth.ProfileID
 	status, err := m.Delete()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)

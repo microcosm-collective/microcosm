@@ -20,7 +20,7 @@ func HuddleHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := HuddleController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "DELETE"})
 		return
@@ -38,7 +38,7 @@ func HuddleHandler(w http.ResponseWriter, r *http.Request) {
 
 // Returns a single huddle
 func (ctl *HuddleController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -56,21 +56,21 @@ func (ctl *HuddleController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Get Huddle
-	m, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileId, itemId)
+	m, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, itemId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Get Comments
-	m.Comments, status, err = models.GetComments(c.Site.ID, h.ItemTypeHuddle, m.ID, c.Request.URL, c.Auth.ProfileId, m.Meta.Created)
+	m.Comments, status, err = models.GetComments(c.Site.ID, h.ItemTypeHuddle, m.ID, c.Request.URL, c.Auth.ProfileID, m.Meta.Created)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 	m.Meta.Permissions = perms
 
-	if c.Auth.ProfileId > 0 {
+	if c.Auth.ProfileID > 0 {
 		// Mark as read (to the last comment on this page if applicable)
 		read := m.Meta.Created
 
@@ -88,12 +88,12 @@ func (ctl *HuddleController) Read(c *models.Context) {
 		default:
 		}
 
-		models.MarkAsRead(h.ItemTypes[h.ItemTypeHuddle], m.ID, c.Auth.ProfileId, read)
-		models.UpdateUnreadHuddleCount(c.Auth.ProfileId)
+		models.MarkAsRead(h.ItemTypes[h.ItemTypeHuddle], m.ID, c.Auth.ProfileID, read)
+		models.UpdateUnreadHuddleCount(c.Auth.ProfileID)
 
 		// Get watcher status
 		watcherId, sendEmail, sendSms, _, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeHuddle], m.ID, c.Auth.ProfileId,
+			h.ItemTypes[h.ItemTypeHuddle], m.ID, c.Auth.ProfileID,
 		)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
@@ -112,7 +112,7 @@ func (ctl *HuddleController) Read(c *models.Context) {
 
 // Deletes a single huddle
 func (ctl *HuddleController) Delete(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -129,7 +129,7 @@ func (ctl *HuddleController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileId, itemId)
+	m, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, itemId)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithOK()
@@ -140,7 +140,7 @@ func (ctl *HuddleController) Delete(c *models.Context) {
 		return
 	}
 
-	status, err = m.Delete(c.Site.ID, c.Auth.ProfileId)
+	status, err = m.Delete(c.Site.ID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -150,7 +150,7 @@ func (ctl *HuddleController) Delete(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeHuddle],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

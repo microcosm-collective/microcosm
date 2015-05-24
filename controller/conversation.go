@@ -24,7 +24,7 @@ func ConversationHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := ConversationController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "PUT", "PATCH", "DELETE"})
 		return
@@ -47,7 +47,7 @@ func ConversationHandler(w http.ResponseWriter, r *http.Request) {
 // Returns a single conversation
 func (ctl *ConversationController) Read(c *models.Context) {
 
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -65,7 +65,7 @@ func (ctl *ConversationController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Get Conversation
-	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -77,7 +77,7 @@ func (ctl *ConversationController) Read(c *models.Context) {
 		h.ItemTypeConversation,
 		m.ID,
 		c.Request.URL,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		m.Meta.Created,
 	)
 	if err != nil {
@@ -86,7 +86,7 @@ func (ctl *ConversationController) Read(c *models.Context) {
 	}
 	m.Meta.Permissions = perms
 
-	if c.Auth.ProfileId > 0 {
+	if c.Auth.ProfileID > 0 {
 		// Mark as read (to the last comment on this page if applicable)
 		read := m.Meta.Created
 
@@ -104,11 +104,11 @@ func (ctl *ConversationController) Read(c *models.Context) {
 		default:
 		}
 
-		go models.MarkAsRead(h.ItemTypes[h.ItemTypeConversation], m.ID, c.Auth.ProfileId, read)
+		go models.MarkAsRead(h.ItemTypes[h.ItemTypeConversation], m.ID, c.Auth.ProfileID, read)
 
 		// Get watcher status
 		watcherId, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeConversation], m.ID, c.Auth.ProfileId,
+			h.ItemTypes[h.ItemTypeConversation], m.ID, c.Auth.ProfileID,
 		)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
@@ -132,14 +132,14 @@ func (ctl *ConversationController) Read(c *models.Context) {
 
 // Updates (replaces) a single conversation
 func (ctl *ConversationController) Update(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Validate inputs
-	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -166,10 +166,10 @@ func (ctl *ConversationController) Update(c *models.Context) {
 	// End Authorisation
 
 	// Populate where applicable from auth and context
-	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
+	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileID, Valid: true}
 	m.Meta.EditedNullable = pq.NullTime{Time: time.Now(), Valid: true}
 
-	status, err = m.Update(c.Site.ID, c.Auth.ProfileId)
+	status, err = m.Update(c.Site.ID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -179,7 +179,7 @@ func (ctl *ConversationController) Update(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeConversation],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -195,7 +195,7 @@ func (ctl *ConversationController) Update(c *models.Context) {
 
 // Partially updates a conversation. Limited to modifying boolean properties
 func (ctl *ConversationController) Patch(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -277,7 +277,7 @@ func (ctl *ConversationController) Patch(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -293,7 +293,7 @@ func (ctl *ConversationController) Patch(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeConversation],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -303,7 +303,7 @@ func (ctl *ConversationController) Patch(c *models.Context) {
 
 // Deletes a single conversation
 func (ctl *ConversationController) Delete(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -320,7 +320,7 @@ func (ctl *ConversationController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetConversation(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithOK()
@@ -341,7 +341,7 @@ func (ctl *ConversationController) Delete(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeConversation],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

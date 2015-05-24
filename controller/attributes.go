@@ -22,7 +22,7 @@ func AttributesHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := AttributesController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE"})
 		return
@@ -42,7 +42,7 @@ func AttributesHandler(w http.ResponseWriter, r *http.Request) {
 
 // Returns an array of attributes associated with the given entity
 func (ctl *AttributesController) ReadMany(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -84,7 +84,7 @@ func (ctl *AttributesController) ReadMany(c *models.Context) {
 
 // Updates one or more attributes on the given entity
 func (ctl *AttributesController) UpdateMany(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -128,7 +128,7 @@ func (ctl *AttributesController) UpdateMany(c *models.Context) {
 			c.Site.ID,
 			h.ItemTypes[h.ItemTypeAttribute],
 			m.Id,
-			c.Auth.ProfileId,
+			c.Auth.ProfileID,
 			time.Now(),
 			c.IP,
 		)
@@ -139,7 +139,7 @@ func (ctl *AttributesController) UpdateMany(c *models.Context) {
 
 // Deletes one or more attributes associated to a given entityt
 func (ctl *AttributesController) DeleteMany(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -183,7 +183,7 @@ func (ctl *AttributesController) DeleteMany(c *models.Context) {
 			c.Site.ID,
 			h.ItemTypes[h.ItemTypeAttribute],
 			m.Id,
-			c.Auth.ProfileId,
+			c.Auth.ProfileID,
 			time.Now(),
 			c.IP,
 		)

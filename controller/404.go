@@ -18,7 +18,7 @@ func Redirect404Handler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := Redirect404Controller{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return
@@ -53,5 +53,5 @@ func (ctl *Redirect404Controller) Read(c *models.Context) {
 		return
 	}
 
-	c.RespondWithData(resolver.Resolve(c.Site.ID, inUrl, c.Auth.ProfileId))
+	c.RespondWithData(resolver.Resolve(c.Site.ID, inUrl, c.Auth.ProfileID))
 }

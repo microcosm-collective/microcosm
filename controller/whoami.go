@@ -18,7 +18,7 @@ func WhoAmIHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := WhoAmIController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return
@@ -39,7 +39,7 @@ func (wc *WhoAmIController) Read(c *models.Context) {
 		return
 	}
 
-	if c.Auth.UserId < 0 {
+	if c.Auth.UserID < 0 {
 		c.RespondWithErrorMessage(
 			"Bad access token supplied",
 			http.StatusForbidden,
@@ -47,7 +47,7 @@ func (wc *WhoAmIController) Read(c *models.Context) {
 		return
 	}
 
-	if c.Auth.UserId == 0 {
+	if c.Auth.UserID == 0 {
 		c.RespondWithErrorMessage(
 			"You must be authenticated to ask 'who am I?'",
 			http.StatusForbidden,
@@ -55,7 +55,7 @@ func (wc *WhoAmIController) Read(c *models.Context) {
 		return
 	}
 
-	m, status, err := models.GetProfileSummary(c.Site.ID, c.Auth.ProfileId)
+	m, status, err := models.GetProfileSummary(c.Site.ID, c.Auth.ProfileID)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithErrorMessage(
@@ -78,7 +78,7 @@ func (wc *WhoAmIController) Read(c *models.Context) {
 		m.ID,
 	)
 
-	if c.Auth.ProfileId > 0 && c.Auth.Method == "query" {
+	if c.Auth.ProfileID > 0 && c.Auth.Method == "query" {
 		u, _ := url.Parse(location)
 		qs := u.Query()
 		qs.Del("access_token")

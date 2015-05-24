@@ -22,7 +22,7 @@ func MicrocosmHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := MicrocosmController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "PATCH", "DELETE"})
 		return
@@ -45,7 +45,7 @@ func MicrocosmHandler(w http.ResponseWriter, r *http.Request) {
 type MicrocosmController struct{}
 
 func (ctl *MicrocosmController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -63,24 +63,24 @@ func (ctl *MicrocosmController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Get Microcosm
-	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Get Items
-	m.Items, status, err = models.GetItems(c.Site.ID, m.ID, c.Auth.ProfileId, c.Request.URL)
+	m.Items, status, err = models.GetItems(c.Site.ID, m.ID, c.Auth.ProfileID, c.Request.URL)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 	m.Meta.Permissions = perms
 
-	if c.Auth.ProfileId > 0 {
+	if c.Auth.ProfileID > 0 {
 		// Get watcher status
 		watcherId, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeMicrocosm], m.ID, c.Auth.ProfileId,
+			h.ItemTypes[h.ItemTypeMicrocosm], m.ID, c.Auth.ProfileID,
 		)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
@@ -102,14 +102,14 @@ func (ctl *MicrocosmController) Read(c *models.Context) {
 }
 
 func (ctl *MicrocosmController) Update(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Validate inputs
-	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -137,7 +137,7 @@ func (ctl *MicrocosmController) Update(c *models.Context) {
 
 	// Populate where applicable from auth and context
 	m.SiteID = c.Site.ID
-	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
+	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileID, Valid: true}
 	m.Meta.EditedNullable = pq.NullTime{Time: time.Now(), Valid: true}
 
 	status, err = m.Update()
@@ -150,7 +150,7 @@ func (ctl *MicrocosmController) Update(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -165,7 +165,7 @@ func (ctl *MicrocosmController) Update(c *models.Context) {
 }
 
 func (ctl *MicrocosmController) Patch(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -247,7 +247,7 @@ func (ctl *MicrocosmController) Patch(c *models.Context) {
 	// End Authorisation
 
 	// Populate where applicable from auth and context
-	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -263,7 +263,7 @@ func (ctl *MicrocosmController) Patch(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -272,7 +272,7 @@ func (ctl *MicrocosmController) Patch(c *models.Context) {
 }
 
 func (ctl *MicrocosmController) Delete(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -289,7 +289,7 @@ func (ctl *MicrocosmController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetMicrocosm(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -305,7 +305,7 @@ func (ctl *MicrocosmController) Delete(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

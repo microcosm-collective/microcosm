@@ -20,7 +20,7 @@ func WatcherHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := WatcherController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "PATCH":
 		ctl.Update(c)
 	case "OPTIONS":
@@ -38,7 +38,7 @@ type WatcherController struct{}
 
 func (ctl *WatcherController) Delete(c *models.Context) {
 
-	_, _, itemId, status, err := c.GetItemTypeAndItemId()
+	_, _, itemId, status, err := c.GetItemTypeAndItemID()
 	if itemId != 0 {
 		m, status, err := models.GetWatcher(itemId, c.Site.ID)
 		if err != nil {
@@ -47,7 +47,7 @@ func (ctl *WatcherController) Delete(c *models.Context) {
 		}
 
 		// Check ownership
-		if c.Auth.ProfileId != m.ProfileID {
+		if c.Auth.ProfileID != m.ProfileID {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 			return
 		}
@@ -80,7 +80,7 @@ func (ctl *WatcherController) Delete(c *models.Context) {
 	m.ID, _, _, _, status, err = models.GetWatcherAndIgnoreStatus(
 		m.ItemTypeID,
 		itemId,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 	)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
@@ -138,7 +138,7 @@ func (ctl *WatcherController) Update(c *models.Context) {
 	m.ID, _, _, _, status, err = models.GetWatcherAndIgnoreStatus(
 		m.ItemTypeID,
 		m.ItemID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 	)
 	if err != nil {
 		glog.Error(err)

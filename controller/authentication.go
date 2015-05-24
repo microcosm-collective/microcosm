@@ -29,7 +29,7 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := AuthController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "POST", "HEAD", "GET", "DELETE"})
 		return
@@ -267,7 +267,7 @@ func (ctl *AuthController) Delete(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAuth],
 		m.UserId,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

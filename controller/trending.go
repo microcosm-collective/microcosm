@@ -16,7 +16,7 @@ func TrendingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctl := TrendingController{}
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD"})
 		return
@@ -38,7 +38,7 @@ func (ctl *TrendingController) ReadMany(c *models.Context) {
 		return
 	}
 
-	trending, total, pages, status, err := models.GetTrending(c.Site.ID, c.Auth.ProfileId, limit, offset)
+	trending, total, pages, status, err := models.GetTrending(c.Site.ID, c.Auth.ProfileID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

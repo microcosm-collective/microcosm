@@ -24,7 +24,7 @@ func CommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := CommentController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "PUT", "PATCH", "DELETE"})
 		return
@@ -46,7 +46,7 @@ func CommentHandler(w http.ResponseWriter, r *http.Request) {
 
 // Reads a single comment
 func (ctl *CommentController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -69,7 +69,7 @@ func (ctl *CommentController) Read(c *models.Context) {
 		return
 	}
 
-	m, status, err := models.GetComment(c.Site.ID, itemId, c.Auth.ProfileId, limit)
+	m, status, err := models.GetComment(c.Site.ID, itemId, c.Auth.ProfileID, limit)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -77,8 +77,8 @@ func (ctl *CommentController) Read(c *models.Context) {
 
 	m.Meta.Permissions = perms
 
-	if c.Auth.ProfileId > 0 {
-		go models.MarkAsRead(m.ItemTypeId, m.ItemId, c.Auth.ProfileId, m.Meta.Created)
+	if c.Auth.ProfileID > 0 {
+		go models.MarkAsRead(m.ItemTypeId, m.ItemId, c.Auth.ProfileID, m.Meta.Created)
 	}
 
 	c.RespondWithData(m)
@@ -87,7 +87,7 @@ func (ctl *CommentController) Read(c *models.Context) {
 
 // Updates (replaces) a single comment
 func (ctl *CommentController) Update(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -122,7 +122,7 @@ func (ctl *CommentController) Update(c *models.Context) {
 	// End Authorisation
 
 	// Populate where applicable from auth and context
-	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
+	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileID, Valid: true}
 	m.Meta.EditedNullable = pq.NullTime{Time: time.Now(), Valid: true}
 
 	// Update
@@ -136,7 +136,7 @@ func (ctl *CommentController) Update(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
 		m.Id,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -153,7 +153,7 @@ func (ctl *CommentController) Update(c *models.Context) {
 
 // Partially updates a comment, this is limited to changing the boolean flags only
 func (ctl *CommentController) Patch(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -226,7 +226,7 @@ func (ctl *CommentController) Patch(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
 		m.Id,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -236,7 +236,7 @@ func (ctl *CommentController) Patch(c *models.Context) {
 
 // Deletes a single comment
 func (ctl *CommentController) Delete(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -276,7 +276,7 @@ func (ctl *CommentController) Delete(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeComment],
 		m.Id,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

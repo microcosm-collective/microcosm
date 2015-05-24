@@ -20,7 +20,7 @@ func AttachmentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := AttachmentsController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "POST", "HEAD", "GET"})
 		return
@@ -210,7 +210,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			return
 		}
 
-		attachment.ProfileId = c.Auth.ProfileId
+		attachment.ProfileId = c.Auth.ProfileID
 		attachment.Created = time.Now()
 
 		status, err = attachment.Insert()

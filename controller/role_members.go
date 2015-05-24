@@ -20,7 +20,7 @@ func RoleMembersHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := RoleMembersController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD"})
 		return
@@ -56,7 +56,7 @@ func (ctl *RoleMembersController) ReadMany(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
+	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

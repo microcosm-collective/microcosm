@@ -21,7 +21,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := UsersController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "POST"})
 		return
@@ -83,7 +83,7 @@ func (ctl *UsersController) Create(c *models.Context) {
 				c.Site.ID,
 				h.ItemTypes[h.ItemTypeUser],
 				user.ID,
-				c.Auth.ProfileId,
+				c.Auth.ProfileID,
 				time.Now(),
 				c.IP,
 			)
@@ -110,7 +110,7 @@ func (ctl *UsersController) Create(c *models.Context) {
 			c.Site.ID,
 			h.ItemTypes[h.ItemTypeProfile],
 			profile.ID,
-			c.Auth.ProfileId,
+			c.Auth.ProfileID,
 			time.Now(),
 			c.IP,
 		)

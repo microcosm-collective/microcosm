@@ -21,7 +21,7 @@ func NewCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := NewCommentController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return
@@ -35,7 +35,7 @@ func NewCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 func (ctl *NewCommentController) Read(c *models.Context) {
 
-	itemType, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	itemType, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -54,7 +54,7 @@ func (ctl *NewCommentController) Read(c *models.Context) {
 		return
 	}
 
-	offset, commentId, _, err := models.GetLatestComments(c.Site.ID, itemType, itemId, c.Auth.ProfileId, limit)
+	offset, commentId, _, err := models.GetLatestComments(c.Site.ID, itemType, itemId, c.Auth.ProfileID, limit)
 	if err != nil {
 		//Go to to the first page
 		parsed, _ := url.Parse(c.Request.URL.String())

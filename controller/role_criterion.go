@@ -20,7 +20,7 @@ func RoleCriterionHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := RoleCriterionController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "PUT", "DELETE"})
 		return
@@ -58,7 +58,7 @@ func (ctl *RoleCriterionController) Read(c *models.Context) {
 		return
 	}
 
-	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
+	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -117,7 +117,7 @@ func (ctl *RoleCriterionController) Update(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
+	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -191,7 +191,7 @@ func (ctl *RoleCriterionController) Delete(c *models.Context) {
 		return
 	}
 
-	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileId)
+	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

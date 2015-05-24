@@ -22,7 +22,7 @@ func EventHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := EventController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "PATCH", "DELETE"})
 		return
@@ -45,7 +45,7 @@ func EventHandler(w http.ResponseWriter, r *http.Request) {
 type EventController struct{}
 
 func (ctl *EventController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -63,7 +63,7 @@ func (ctl *EventController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Read Event
-	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -75,7 +75,7 @@ func (ctl *EventController) Read(c *models.Context) {
 		h.ItemTypeEvent,
 		m.ID,
 		c.Request.URL,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		m.Meta.Created,
 	)
 	if err != nil {
@@ -85,7 +85,7 @@ func (ctl *EventController) Read(c *models.Context) {
 	m.Meta.Permissions = perms
 
 	// Mark as read (to the last comment on this page if applicable)
-	if c.Auth.ProfileId > 0 {
+	if c.Auth.ProfileID > 0 {
 		read := m.Meta.Created
 
 		switch m.Comments.Items.(type) {
@@ -102,11 +102,11 @@ func (ctl *EventController) Read(c *models.Context) {
 		default:
 		}
 
-		go models.MarkAsRead(h.ItemTypes[h.ItemTypeEvent], m.ID, c.Auth.ProfileId, read)
+		go models.MarkAsRead(h.ItemTypes[h.ItemTypeEvent], m.ID, c.Auth.ProfileID, read)
 
 		// Get watcher status
 		watcherId, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeEvent], m.ID, c.Auth.ProfileId,
+			h.ItemTypes[h.ItemTypeEvent], m.ID, c.Auth.ProfileID,
 		)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
@@ -130,14 +130,14 @@ func (ctl *EventController) Read(c *models.Context) {
 }
 
 func (ctl *EventController) Update(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Validate inputs
-	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -163,10 +163,10 @@ func (ctl *EventController) Update(c *models.Context) {
 	// End Authorisation
 
 	// Populate where applicable from auth and context
-	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
+	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileID, Valid: true}
 	m.Meta.EditedNullable = pq.NullTime{Time: time.Now(), Valid: true}
 
-	status, err = m.Update(c.Site.ID, c.Auth.ProfileId)
+	status, err = m.Update(c.Site.ID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -176,7 +176,7 @@ func (ctl *EventController) Update(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeEvent],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -191,7 +191,7 @@ func (ctl *EventController) Update(c *models.Context) {
 }
 
 func (ctl *EventController) Patch(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -272,7 +272,7 @@ func (ctl *EventController) Patch(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -288,7 +288,7 @@ func (ctl *EventController) Patch(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeEvent],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -297,7 +297,7 @@ func (ctl *EventController) Patch(c *models.Context) {
 }
 
 func (ctl *EventController) Delete(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -314,7 +314,7 @@ func (ctl *EventController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileId)
+	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileID)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithOK()
@@ -336,7 +336,7 @@ func (ctl *EventController) Delete(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeEvent],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

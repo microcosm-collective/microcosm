@@ -20,7 +20,7 @@ func AttendeesCSVHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := AttendeesCSVController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET"})
 		return
@@ -59,7 +59,7 @@ func (ctl *AttendeesCSVController) ReadMany(c *models.Context) {
 	}
 	// End Authorisation
 
-	attendees, status, err := models.GetAttendeesCSV(c.Site.ID, eventId, c.Auth.ProfileId)
+	attendees, status, err := models.GetAttendeesCSV(c.Site.ID, eventId, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

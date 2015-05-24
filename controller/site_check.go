@@ -19,7 +19,7 @@ func SiteCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ctl := SiteCheckController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET"})
 		return
@@ -35,7 +35,7 @@ func SiteCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 func (ctl *SiteCheckController) Read(c *models.Context) {
 
-	_, _, itemId, status, err := c.GetItemTypeAndItemId()
+	_, _, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -55,7 +55,7 @@ func (ctl *SiteCheckController) Read(c *models.Context) {
 		return
 	}
 
-	if owner.UserID != c.Auth.UserId {
+	if owner.UserID != c.Auth.UserID {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("You must be the owner of the site to view its status"),
 			http.StatusForbidden,

@@ -55,7 +55,7 @@ func (ctl *GeoCodeController) Read(c *models.Context) {
 		ctl.Error(c, "query needed", http.StatusBadRequest)
 		return
 	}
-	if c.Auth.ProfileId <= 0 {
+	if c.Auth.ProfileID <= 0 {
 		ctl.Error(c, "no auth", http.StatusForbidden)
 		return
 	}

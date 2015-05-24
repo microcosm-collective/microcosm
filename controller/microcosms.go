@@ -19,7 +19,7 @@ func MicrocosmsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := MicrocosmsController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "POST", "HEAD", "GET"})
 		return
@@ -60,9 +60,9 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 
 	// Populate where applicable from auth and context
 	m.SiteID = c.Site.ID
-	m.Meta.CreatedById = c.Auth.ProfileId
+	m.Meta.CreatedById = c.Auth.ProfileID
 	m.Meta.Created = time.Now()
-	m.OwnedByID = c.Auth.ProfileId
+	m.OwnedByID = c.Auth.ProfileID
 
 	status, err := m.Insert()
 	if err != nil {
@@ -74,7 +74,7 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeMicrocosm],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -102,7 +102,7 @@ func (ctl *MicrocosmsController) ReadMany(c *models.Context) {
 	}
 
 	// Fetch list of microcosms
-	ems, total, pages, status, err := models.GetMicrocosms(c.Site.ID, c.Auth.ProfileId, limit, offset)
+	ems, total, pages, status, err := models.GetMicrocosms(c.Site.ID, c.Auth.ProfileID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

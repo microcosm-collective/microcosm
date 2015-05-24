@@ -25,7 +25,7 @@ func AttendeeHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := AttendeeController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "DELETE"})
 		return
@@ -127,12 +127,12 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 	}
 
 	if perms.IsOwner || perms.IsModerator || perms.IsSiteOwner {
-		if m.ProfileId != c.Auth.ProfileId && m.RSVP == "yes" {
+		if m.ProfileId != c.Auth.ProfileID && m.RSVP == "yes" {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 			return
 		}
 	} else {
-		if m.ProfileId != c.Auth.ProfileId {
+		if m.ProfileId != c.Auth.ProfileID {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 			return
 		}
@@ -147,9 +147,9 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 	// Populate where applicable from auth and context
 	t := time.Now()
 	m.EventId = eventId
-	m.Meta.CreatedById = c.Auth.ProfileId
+	m.Meta.CreatedById = c.Auth.ProfileID
 	m.Meta.Created = t
-	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileId, Valid: true}
+	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileID, Valid: true}
 	m.Meta.EditedNullable = pq.NullTime{Time: t, Valid: true}
 
 	status, err = m.Update(c.Site.ID)
@@ -166,7 +166,7 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttendee],
 		m.Id,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -231,7 +231,7 @@ func (ctl *AttendeeController) Delete(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttendee],
 		attendeeId,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

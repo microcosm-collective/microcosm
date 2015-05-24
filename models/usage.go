@@ -65,7 +65,7 @@ func SendUsage(
 
 	m := Usage{}
 
-	m.Method = c.GetHttpMethod()
+	m.Method = c.GetHTTPMethod()
 	m.URL = c.Request.URL.String()
 
 	// Remove querystring and replace IDs to allow grouping
@@ -106,8 +106,8 @@ func SendUsage(
 	m.Created = time.Now().Format(time.RFC3339)
 	m.TimeSpent = dur.Nanoseconds()
 	m.SiteID = c.Site.ID
-	m.UserID = c.Auth.UserId
-	m.ProfileID = c.Auth.ProfileId
+	m.UserID = c.Auth.UserID
+	m.ProfileID = c.Auth.ProfileID
 
 	if len(errors) > 0 {
 		m.Error = strings.Join(errors, ", ")

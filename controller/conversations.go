@@ -21,7 +21,7 @@ func ConversationsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := ConversationsController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST"})
 		return
@@ -58,7 +58,7 @@ func (ctl *ConversationsController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetConversations(c.Site.ID, c.Auth.ProfileId, limit, offset)
+	ems, total, pages, status, err := models.GetConversations(c.Site.ID, c.Auth.ProfileID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -117,10 +117,10 @@ func (ctl *ConversationsController) Create(c *models.Context) {
 	// End : Authorisation
 
 	// Populate where applicable from auth and context
-	m.Meta.CreatedById = c.Auth.ProfileId
+	m.Meta.CreatedById = c.Auth.ProfileID
 	m.Meta.Created = time.Now()
 
-	status, err := m.Insert(c.Site.ID, c.Auth.ProfileId)
+	status, err := m.Insert(c.Site.ID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -130,7 +130,7 @@ func (ctl *ConversationsController) Create(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeConversation],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -138,7 +138,7 @@ func (ctl *ConversationsController) Create(c *models.Context) {
 	go models.SendUpdatesForNewItemInAMicrocosm(c.Site.ID, m)
 
 	go models.RegisterWatcher(
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		h.UpdateTypes[h.UpdateTypeNewComment],
 		m.ID,
 		h.ItemTypes[h.ItemTypeConversation],

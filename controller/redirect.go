@@ -17,7 +17,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := RedirectController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return

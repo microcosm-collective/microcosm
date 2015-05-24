@@ -14,7 +14,7 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return
@@ -38,7 +38,7 @@ func ApiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return
@@ -62,7 +62,7 @@ func V1Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return

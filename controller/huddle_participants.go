@@ -20,7 +20,7 @@ func HuddleParticipantsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := HuddleParticipantsController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT"})
 		return
@@ -45,7 +45,7 @@ func (ctl *HuddleParticipantsController) ReadMany(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileId, huddleId)
+	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -98,7 +98,7 @@ func (ctl *HuddleParticipantsController) UpdateMany(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileId, huddleId)
+	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

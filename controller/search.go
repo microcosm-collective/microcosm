@@ -17,7 +17,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := SearchController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET"})
 		return
@@ -37,7 +37,7 @@ func (ctl *SearchController) Read(c *models.Context) {
 	results, status, err := models.Search(
 		c.Site.ID,
 		*c.Request.URL,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 	)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)

@@ -37,7 +37,7 @@ func MenuHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := MenuController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE"})
 		return
@@ -86,7 +86,7 @@ func (ctl *MenuController) Update(c *models.Context, siteId int64) {
 		return
 	}
 
-	if owner.UserID != c.Auth.UserId {
+	if owner.UserID != c.Auth.UserID {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
@@ -127,7 +127,7 @@ func (ctl *MenuController) Delete(c *models.Context, siteId int64) {
 		return
 	}
 
-	if owner.UserID != c.Auth.UserId {
+	if owner.UserID != c.Auth.UserID {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}

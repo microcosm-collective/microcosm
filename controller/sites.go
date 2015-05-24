@@ -23,7 +23,7 @@ func SitesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ctl := SitesController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "POST"})
 		return
@@ -49,14 +49,14 @@ func (ctl *SitesController) ReadMany(c *models.Context) {
 
 	// Passing ?filter=owned returns sites owned by logged-in user.
 	if c.Request.FormValue("filter") == "owned" {
-		if c.Auth.UserId == 0 {
+		if c.Auth.UserID == 0 {
 			c.RespondWithErrorMessage(
 				fmt.Sprintf("You must be logged in to list your own sites"),
 				http.StatusForbidden,
 			)
 			return
 		} else {
-			userId = c.Auth.UserId
+			userId = c.Auth.UserID
 		}
 	}
 
@@ -89,7 +89,7 @@ func (ctl *SitesController) ReadMany(c *models.Context) {
 
 func (ctl *SitesController) Create(c *models.Context) {
 
-	if c.Auth.ProfileId < 1 {
+	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("You must be logged in to the root site create a site"),
 			http.StatusForbidden,
@@ -121,10 +121,10 @@ func (ctl *SitesController) Create(c *models.Context) {
 	}
 
 	// Fetch full user info from context user ID
-	user, status, err := models.GetUser(c.Auth.UserId)
+	user, status, err := models.GetUser(c.Auth.UserID)
 	if err != nil {
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("Could not retrieve use associated with ID %d", c.Auth.UserId),
+			fmt.Sprintf("Could not retrieve use associated with ID %d", c.Auth.UserID),
 			status,
 		)
 		return
@@ -143,7 +143,7 @@ func (ctl *SitesController) Create(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeSite],
 		site.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -22,8 +21,9 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
-const rootSiteId int64 = 1
+const rootSiteID int64 = 1
 
+// Context is a web request and auth context wrapper
 type Context struct {
 	Request        *http.Request
 	ResponseWriter http.ResponseWriter
@@ -34,15 +34,17 @@ type Context struct {
 	IP             net.IP
 }
 
+// AuthType describes the auth knowledge of the current request
 type AuthType struct {
-	UserId      int64
-	ProfileId   int64
+	UserID      int64
+	ProfileID   int64
 	IsSiteOwner bool
 	IsBanned    bool
 	Method      string
 	AccessToken AccessTokenType
 }
 
+// StandardResponse is a sruct wrapping all API responses with a boiler-plate
 type StandardResponse struct {
 	Context string      `json:"context"`
 	Status  int         `json:"status"`
@@ -50,8 +52,8 @@ type StandardResponse struct {
 	Errors  []string    `json:"error"`
 }
 
-func (c *Context) GetItemTypeAndItemId() (string, int64, int64, int, error) {
-
+// GetItemTypeAndItemID extracts the item type and ID from the request
+func (c *Context) GetItemTypeAndItemID() (string, int64, int64, int, error) {
 	keys := []string{
 		"comment_id",
 		"conversation_id",
@@ -69,8 +71,8 @@ func (c *Context) GetItemTypeAndItemId() (string, int64, int64, int, error) {
 
 	var (
 		itemType   string
-		itemTypeId int64
-		itemId     int64
+		itemTypeID int64
+		itemID     int64
 		err        error
 		exists     bool
 	)
@@ -78,41 +80,36 @@ func (c *Context) GetItemTypeAndItemId() (string, int64, int64, int, error) {
 	for _, key := range keys {
 		if id, exists := c.RouteVars[key]; exists {
 			itemType = strings.Replace(key, "_id", "", -1)
-			itemId, err = strconv.ParseInt(id, 10, 64)
+			itemID, err = strconv.ParseInt(id, 10, 64)
 			if err != nil {
-				return itemType, itemTypeId, itemId, http.StatusBadRequest,
-					errors.New(
-						fmt.Sprintf(
-							"The supplied %s ('%s') is not a number.",
-							key,
-							id,
-						),
+				return itemType, itemTypeID, itemID, http.StatusBadRequest,
+					fmt.Errorf(
+						"The supplied %s ('%s') is not a number",
+						key,
+						id,
 					)
 			}
-
 			break
 		}
 	}
 
-	if itemId == 0 {
-		return itemType, itemTypeId, itemId, http.StatusBadRequest,
-			errors.New(
-				fmt.Sprintf(
-					"Item type not determinable from URL: %s",
-					c.RouteVars,
-				),
+	if itemID == 0 {
+		return itemType, itemTypeID, itemID, http.StatusBadRequest,
+			fmt.Errorf(
+				"Item type not determinable from URL: %s",
+				c.RouteVars,
 			)
 	}
 
-	if itemTypeId, exists = h.ItemTypes[itemType]; !exists {
-		return itemType, itemTypeId, itemId, http.StatusBadRequest, errors.New(
-			fmt.Sprintf("%s is not a valid item type", itemType),
-		)
+	if itemTypeID, exists = h.ItemTypes[itemType]; !exists {
+		return itemType, itemTypeID, itemID, http.StatusBadRequest,
+			fmt.Errorf("%s is not a valid item type", itemType)
 	}
 
-	return itemType, itemTypeId, itemId, http.StatusOK, nil
+	return itemType, itemTypeID, itemID, http.StatusOK, nil
 }
 
+// MakeContext creates a Context for the current request
 func MakeContext(
 	request *http.Request,
 	responseWriter http.ResponseWriter,
@@ -121,8 +118,7 @@ func MakeContext(
 	int,
 	error,
 ) {
-
-	var c *Context = new(Context)
+	c := &Context{}
 	c.Request = request
 	c.ResponseWriter = responseWriter
 	c.RouteVars = mux.Vars(request)
@@ -143,15 +139,16 @@ func MakeContext(
 
 	status, err := c.authenticate()
 	if err != nil {
-		c.Auth.UserId = -1
+		c.Auth.UserID = -1
 		return c, status, err
 	}
 
 	return c, http.StatusOK, nil
 }
 
+// GetRequestIP returns the IP address of the client making the request
 func GetRequestIP(req *http.Request) net.IP {
-	// CloudFlare gives us the Cf_Connecting_Ip, so if we are behind CloudFlare
+	// CloudFlare gives us the CF-Connecting-IP, so if we are behind CloudFlare
 	// we need to use that IP address
 	cf := req.Header.Get("CF-Connecting-IP")
 	if cf != "" {
@@ -185,7 +182,6 @@ func GetRequestIP(req *http.Request) net.IP {
 }
 
 func (c *Context) authenticate() (int, error) {
-
 	// Authorisation is accepted by query string or header
 	atQuery := c.Request.URL.Query().Get("access_token")
 	atHeader := c.Request.Header.Get("Authorization")
@@ -198,14 +194,14 @@ func (c *Context) authenticate() (int, error) {
 		if len(authParts) != 2 {
 			// Should be two parts, return indicator for bad token
 			glog.Warningf(`AccessToken must have two parts: %s`, atHeader)
-			return http.StatusUnauthorized, errors.New("Invalid access token")
+			return http.StatusUnauthorized, fmt.Errorf("Invalid access token")
 		}
 
 		if authParts[0] != "Bearer" {
 			// Should start with 'Bearer', return indicator for bad token
 			glog.Warningf(`AccessToken must have Bearer header: %s`, atHeader)
 			return http.StatusUnauthorized,
-				errors.New("Authorization header must be " +
+				fmt.Errorf("Authorization header must be " +
 					"in the format 'Bearer access_token'")
 		}
 
@@ -229,37 +225,36 @@ func (c *Context) authenticate() (int, error) {
 		// Verify access token by fetching it from storage
 		storedToken, _, err := GetAccessToken(accessToken)
 		if err != nil {
-			c.Auth.UserId = -1
+			c.Auth.UserID = -1
 			glog.Warningf(`Invalid access token: %s  %+v`, accessToken, err)
 			return http.StatusUnauthorized,
-				errors.New("Invalid (bad or expired) access token")
+				fmt.Errorf("Invalid (bad or expired) access token")
 		}
 
 		c.Auth.AccessToken = storedToken
-		c.Auth.UserId = c.Auth.AccessToken.UserId
+		c.Auth.UserID = c.Auth.AccessToken.UserId
 
 		// Fetch user profile
 		profile, status, err :=
 			GetOrCreateProfile(c.Site, c.Auth.AccessToken.User)
+
 		if err != nil {
-			c.Auth.UserId = -1
+			c.Auth.UserID = -1
 
 			glog.Warningf(
 				`GetOrCreateProfile: %+v  %+v`,
 				c.Auth.AccessToken.User,
 				err,
 			)
-			return status, errors.New(
-				fmt.Sprintf(
-					"%+v %+v %+v %s",
-					c.Site,
-					c.Auth.AccessToken.User,
-					profile,
-					err,
-				),
+			return status, fmt.Errorf(
+				"%+v %+v %+v %s",
+				c.Site,
+				c.Auth.AccessToken.User,
+				profile,
+				err,
 			)
 		}
-		c.Auth.ProfileId = profile.ID
+		c.Auth.ProfileID = profile.ID
 
 		// Check to see if banned before finishing the profile assignment.
 		// A banned person can never sign in.
@@ -270,18 +265,18 @@ func (c *Context) authenticate() (int, error) {
 			IsBanned(c.Site.ID, storedToken.UserId) {
 
 			c.Auth.IsBanned = true
-			c.Auth.UserId = -1
+			c.Auth.UserID = -1
 			return http.StatusForbidden, fmt.Errorf("Banned")
 		}
 
 		// Update entry for user's last activity
-		if c.Auth.ProfileId > 0 {
-			lastActiveKey := fmt.Sprintf("la_%d", c.Auth.ProfileId)
+		if c.Auth.ProfileID > 0 {
+			lastActiveKey := fmt.Sprintf("la_%d", c.Auth.ProfileID)
 			_, ok := cache.CacheGetInt64(lastActiveKey)
 			if !ok {
 				// Background as the first call to this is likely a whoami which
 				// is a blocking call
-				go UpdateLastActive(c.Auth.ProfileId, c.StartTime)
+				go UpdateLastActive(c.Auth.ProfileID, c.StartTime)
 
 				// Only update every 60 seconds at most
 				cache.CacheSetInt64(lastActiveKey, 1, 60)
@@ -297,6 +292,7 @@ func (c *Context) authenticate() (int, error) {
 	return http.StatusOK, nil
 }
 
+// MakeEmptyContext makes an empty Context for anonymous responses
 func MakeEmptyContext(
 	request *http.Request,
 	responseWriter http.ResponseWriter,
@@ -305,8 +301,7 @@ func MakeEmptyContext(
 	int,
 	error,
 ) {
-
-	var c *Context = new(Context)
+	c := &Context{}
 	c.Request = request
 	c.ResponseWriter = responseWriter
 	c.RouteVars = mux.Vars(request)
@@ -317,7 +312,6 @@ func MakeEmptyContext(
 }
 
 func (c *Context) getSiteContext() error {
-
 	// Ignore port
 	host := strings.Split(c.Request.Host, ":")[0]
 	hostParts := strings.Split(host, ".")
@@ -326,7 +320,7 @@ func (c *Context) getSiteContext() error {
 	var err error
 	if host == mcDomain {
 		// Request is for the root site (http://microco.sm) which has ID 1
-		c.Site, _, err = GetSite(rootSiteId)
+		c.Site, _, err = GetSite(rootSiteID)
 		if err != nil {
 			return err
 		}
@@ -342,24 +336,24 @@ func (c *Context) getSiteContext() error {
 		// If this is the root site, then we shouldn't be accessed via
 		// root.microco.sm and being accessed via microco.sm was already handled
 		// above. We'll claim we don't exist.
-		if c.Site.ID == rootSiteId {
-			return errors.New("Unknown site requested")
+		if c.Site.ID == rootSiteID {
+			return fmt.Errorf("Unknown site requested")
 		}
 
 		// If the site has subsequently been deleted, we should pretend that we
 		// know nothing about it.
 		if c.Site.Meta.Flags.Deleted {
-			return errors.New("Unknown site requested")
+			return fmt.Errorf("Unknown site requested")
 		}
-
 	} else {
-		return errors.New("Unknown site requested")
+		return fmt.Errorf("Unknown site requested")
 	}
 
 	return nil
 }
 
-func (c *Context) GetHttpMethod() string {
+// GetHTTPMethod returns the HTTP method, accounting for method overriding
+func (c *Context) GetHTTPMethod() string {
 	m := c.Request.Method
 
 	if m == "POST" {
@@ -390,21 +384,22 @@ func (c *Context) GetHttpMethod() string {
 	return m
 }
 
+// IsRootSite returns true if this is the root site
 func (c *Context) IsRootSite() bool {
 	if c.Site.SubdomainKey == "root" {
 		return true
-	} else {
-		return false
 	}
+
+	return false
 }
 
+// Respond prepares a response
 func (c *Context) Respond(
 	data interface{},
 	statusCode int,
 	errors []string,
 	context *Context,
 ) error {
-
 	// make the standard response object
 	obj := StandardResponse{
 		Context: c.Request.URL.Query().Get("context"),
@@ -418,9 +413,9 @@ func (c *Context) Respond(
 	c.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Cache headers
-	if c.Auth.ProfileId == 0 &&
+	if c.Auth.ProfileID == 0 &&
 		statusCode == http.StatusOK &&
-		c.GetHttpMethod() == "GET" {
+		c.GetHTTPMethod() == "GET" {
 		// Public, cache for a short while
 		c.ResponseWriter.Header().Set(`Cache-Control`, `public, max-age=300`)
 		c.ResponseWriter.Header().Set(`Vary`, `Authorization`)
@@ -431,7 +426,7 @@ func (c *Context) Respond(
 	}
 
 	// format the output
-	output, err := FormatAsJson(c, obj)
+	output, err := FormatAsJSON(c, obj)
 	if err != nil {
 		http.Error(c.ResponseWriter, err.Error(), http.StatusInternalServerError)
 		return err
@@ -448,9 +443,8 @@ func (c *Context) Respond(
 	return c.WriteResponse(output, statusCode)
 }
 
-// This ultimately does the job of writing the response
+// WriteResponse this ultimately does the job of writing the response
 func (c *Context) WriteResponse(output []byte, statusCode int) error {
-
 	// Set status and write (finalise) all headers
 	if strings.Index(c.Request.URL.String(), "always200") > -1 ||
 		c.Request.Header.Get("X-Always-200") != "" {
@@ -462,7 +456,7 @@ func (c *Context) WriteResponse(output []byte, statusCode int) error {
 
 	// HEAD requests return no body and are used to check headers for cache
 	// invalidation functions
-	if c.GetHttpMethod() == "HEAD" {
+	if c.GetHTTPMethod() == "HEAD" {
 		return nil
 	}
 
@@ -478,29 +472,29 @@ func (c *Context) WriteResponse(output []byte, statusCode int) error {
 			// Totally unexpected, definitely error
 			glog.Errorf(
 				"Error writing %s response to %s : %+v\n",
-				c.GetHttpMethod(),
+				c.GetHTTPMethod(),
 				c.Request.URL.String(),
 				err,
 			)
 			return err
 
-		} else {
-
-			// Broken pipe, which is expected, but we log as warning in case
-			// multiple clients do this at once and it hints at network issues
-			glog.Warningf(
-				"Error writing %s response to %s : %+v\n",
-				c.GetHttpMethod(),
-				c.Request.URL.String(),
-				err,
-			)
-			return err
 		}
+
+		// Broken pipe, which is expected, but we log as warning in case
+		// multiple clients do this at once and it hints at network issues
+		glog.Warningf(
+			"Error writing %s response to %s : %+v\n",
+			c.GetHTTPMethod(),
+			c.Request.URL.String(),
+			err,
+		)
+		return err
 	}
 
 	return nil
 }
 
+// RespondWithOptions returns OPTIONS
 func (c *Context) RespondWithOptions(options []string) error {
 	c.ResponseWriter.Header().Set("Allow", strings.Join(options, ","))
 	c.ResponseWriter.Header().Set("Content-Length", "0")
@@ -508,73 +502,74 @@ func (c *Context) RespondWithOptions(options []string) error {
 	return nil
 }
 
-// Responds with custom status code and an empty StandardResponse struct
+// RespondWithStatus responds with a custom status code and an empty
+// StandardResponse struct
 func (c *Context) RespondWithStatus(statusCode int) error {
 	return c.Respond(nil, statusCode, nil, c)
 }
 
-// Responds with the specified HTTP status code defined in RFC 2616
-// and adds the status description to the errors list
+// RespondWithError responds with the specified HTTP status code defined in
+// RFC2616 and adds the status description to the errors list
 // see http://golang.org/src/pkg/http/status.go for options
 func (c *Context) RespondWithError(statusCode int) error {
 	return c.RespondWithErrorMessage(http.StatusText(statusCode), statusCode)
 }
 
-// Responds with custom code and an error message
+// RespondWithErrorMessage responds with custom code and an error message
 func (c *Context) RespondWithErrorMessage(
 	message string,
 	statusCode int,
 ) error {
-
 	return c.Respond(nil, statusCode, []string{message}, c)
 }
 
 // RespondWithErrorDetail responds with detailed error code and message in the
-// "data" object.
+// data object.
 func (c *Context) RespondWithErrorDetail(err error, statusCode int) error {
 	return c.Respond(err, statusCode, []string{err.Error()}, c)
 }
 
-// Responds with the specified data
+// RespondWithData responds with the specified data
 func (c *Context) RespondWithData(data interface{}) error {
 	return c.Respond(data, http.StatusOK, nil, c)
 }
 
-// Responds with OK status (200) and no data
+// RespondWithOK responds with OK status (200) and no data
 func (c *Context) RespondWithOK() error {
 	return c.RespondWithData(nil)
 }
 
-// Responds with 301 Permanently Moved (perm redirect)
+// RespondWithMoved responds with 301 Permanently Moved (perm redirect)
 func (c *Context) RespondWithMoved(location string) error {
 	c.ResponseWriter.Header().Set("Location", location)
 	return c.RespondWithStatus(http.StatusMovedPermanently)
 }
 
-// Responds with 303 See Other (created redirect)
+// RespondWithSeeOther responds with 303 See Other (created redirect)
 func (c *Context) RespondWithSeeOther(location string) error {
 	c.ResponseWriter.Header().Set("Location", location)
-
 	return c.RespondWithStatus(http.StatusFound)
 }
 
-// Responds with 307 Temporarily Moved (temp redirect)
+// RespondWithLocation responds with 307 Temporarily Moved (temp redirect)
 func (c *Context) RespondWithLocation(location string) error {
 	c.ResponseWriter.Header().Set("Location", location)
 	return c.RespondWithStatus(http.StatusTemporaryRedirect)
 }
 
-// Responds with 404 Not Found
+// RespondWithNotFound responds with 404 Not Found
 func (c *Context) RespondWithNotFound() error {
 	return c.RespondWithError(http.StatusNotFound)
 }
 
-// Responds with 501 Not Implemented
+// RespondWithNotImplemented responds with 501 Not Implemented
 func (c *Context) RespondWithNotImplemented() error {
 	return c.RespondWithError(http.StatusNotImplemented)
 }
 
-func FormatAsJson(c *Context, input interface{}) ([]byte, error) {
+// FormatAsJSON sets the response headers to JSON and marshals the input
+// as JSON
+func FormatAsJSON(c *Context, input interface{}) ([]byte, error) {
 	// marshal json
 	var output []byte
 	var err error
@@ -626,25 +621,28 @@ func FormatAsJson(c *Context, input interface{}) ([]byte, error) {
 	return output, nil
 }
 
-// types that impliment RequestDecoder can unmarshal
-// the request body into an apropriate type/struct
+// RequestDecoder unmarshal types that implement RequestDecoder into an
+// apropriate type/struct
 type RequestDecoder interface {
 	Unmarshal(cx *Context, v interface{}) error
 }
 
-// a JSON decoder for request body (just a wrapper to json.Unmarshal)
-type JsonRequestDecoder struct{}
+// JSONRequestDecoder is a JSON decoder for request body (just a wrapper to
+// json.Unmarshal)
+type JSONRequestDecoder struct{}
 
-func (d *JsonRequestDecoder) Unmarshal(cx *Context, v interface{}) error {
+// Unmarshal decodes JSON
+func (d *JSONRequestDecoder) Unmarshal(cx *Context, v interface{}) error {
 	// read body
 	err := json.NewDecoder(cx.Request.Body).Decode(&v)
 	cx.Request.Body.Close()
 	return err
 }
 
-// a form-enc decoder for request body
+// FormRequestDecoder is a form-enc decoder for request body
 type FormRequestDecoder struct{}
 
+// Unmarshal decodes a HTTP form
 func (d *FormRequestDecoder) Unmarshal(cx *Context, v interface{}) error {
 	if cx.Request.Form == nil {
 		cx.Request.ParseForm()
@@ -653,17 +651,17 @@ func (d *FormRequestDecoder) Unmarshal(cx *Context, v interface{}) error {
 }
 
 // map of Content-Type -> RequestDecoders
-var decoders map[string]RequestDecoder = map[string]RequestDecoder{
-	"application/json":                  new(JsonRequestDecoder),
+var decoders = map[string]RequestDecoder{
+	"application/json":                  new(JSONRequestDecoder),
 	"application/x-www-form-urlencoded": new(FormRequestDecoder),
 }
 
-// context.Context Helper function to fill a variable with the contents
-// of the request body. The body will be decoded based on the
+// Fill is a context.Context Helper function to fill a variable with the
+// contents of the request body. The body will be decoded based on the
 // content-type and an apropriate RequestDecoder automatically selected
-func (cx *Context) Fill(v interface{}) error {
+func (c *Context) Fill(v interface{}) error {
 	// get content type
-	ct := cx.Request.Header.Get("Content-Type")
+	ct := c.Request.Header.Get("Content-Type")
 	// default to urlencoded
 	if strings.Trim(ct, " ") == "" {
 		ct = "application/x-www-form-urlencoded"
@@ -677,7 +675,7 @@ func (cx *Context) Fill(v interface{}) error {
 		return fmt.Errorf("Cannot decode request for %s data", ct)
 	}
 	// decode
-	err := decoder.Unmarshal(cx, v)
+	err := decoder.Unmarshal(c, v)
 	if err != nil {
 		return err
 	}
@@ -685,9 +683,8 @@ func (cx *Context) Fill(v interface{}) error {
 	return nil
 }
 
-// Fill a struct `v` from the values in `form`
+// UnmarshalForm fills a struct `v` from the values in `form`
 func UnmarshalForm(form url.Values, v interface{}) error {
-
 	// TODO(buro9) 2014-02-13: This currently uses the internal Go struct field
 	// names and therefore is liable to break in the future.
 	// We should read the existing json tags on the struct fields, and if they
@@ -729,7 +726,6 @@ func unmarshalField(
 	t reflect.StructField,
 	v reflect.Value,
 ) error {
-
 	// form field value
 	fvs := form[t.Name]
 	if len(fvs) == 0 {

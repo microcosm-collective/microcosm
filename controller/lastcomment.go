@@ -20,7 +20,7 @@ func LastCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := LastCommentController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return
@@ -34,7 +34,7 @@ func LastCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 func (ctl *LastCommentController) Read(c *models.Context) {
 
-	itemType, itemTypeId, itemId, status, err := c.GetItemTypeAndItemId()
+	itemType, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -77,7 +77,7 @@ func (ctl *LastCommentController) Read(c *models.Context) {
 		_, _, offset, _, err := models.GetPageNumber(
 			lastComment.ID,
 			limit,
-			c.Auth.ProfileId,
+			c.Auth.ProfileID,
 		)
 		if err != nil {
 			query.Del("offset")

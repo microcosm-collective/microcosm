@@ -19,7 +19,7 @@ func PollsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := PollsController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "POST", "HEAD", "GET"})
 		return
@@ -64,10 +64,10 @@ func (ctl *PollsController) Create(c *models.Context) {
 	// End : Authorisation
 
 	// Populate where applicable from auth and context
-	m.Meta.CreatedById = c.Auth.ProfileId
+	m.Meta.CreatedById = c.Auth.ProfileID
 	m.Meta.Created = time.Now()
 
-	status, err := m.Insert(c.Site.ID, c.Auth.ProfileId)
+	status, err := m.Insert(c.Site.ID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -77,7 +77,7 @@ func (ctl *PollsController) Create(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypePoll],
 		m.ID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
@@ -85,7 +85,7 @@ func (ctl *PollsController) Create(c *models.Context) {
 	go models.SendUpdatesForNewItemInAMicrocosm(c.Site.ID, m)
 
 	go models.RegisterWatcher(
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		h.UpdateTypes[h.UpdateTypeNewComment],
 		m.ID,
 		h.ItemTypes[h.ItemTypePoll],
@@ -121,7 +121,7 @@ func (ctl *PollsController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetPolls(c.Site.ID, c.Auth.ProfileId, limit, offset)
+	ems, total, pages, status, err := models.GetPolls(c.Site.ID, c.Auth.ProfileID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

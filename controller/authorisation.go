@@ -21,7 +21,7 @@ func PermissionHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := PermissionController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET"})
 		return

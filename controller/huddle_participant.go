@@ -19,7 +19,7 @@ func HuddleParticipantHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := HuddleParticipantController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE"})
 		return
@@ -45,7 +45,7 @@ func (ctl *HuddleParticipantController) Read(c *models.Context) {
 		return
 	}
 
-	_, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileId, huddleId)
+	_, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -85,7 +85,7 @@ func (ctl *HuddleParticipantController) Update(c *models.Context) {
 		return
 	}
 
-	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileId, huddleId)
+	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -134,7 +134,7 @@ func (ctl *HuddleParticipantController) Delete(c *models.Context) {
 		return
 	}
 
-	_, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileId, huddleId)
+	_, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -157,7 +157,7 @@ func (ctl *HuddleParticipantController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	if profileId != c.Auth.ProfileId {
+	if profileId != c.Auth.ProfileID {
 		c.RespondWithErrorMessage("Only the participant in question can remove a participant from a huddle", http.StatusBadRequest)
 		return
 	}

@@ -19,7 +19,7 @@ func ProfileOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := ProfileOptionsController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT"})
 		return
@@ -39,12 +39,12 @@ type ProfileOptionsController struct{}
 
 func (ctl *ProfileOptionsController) Read(c *models.Context) {
 
-	if c.Auth.ProfileId < 1 {
+	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
 
-	m, status, err := models.GetProfileOptions(c.Auth.ProfileId)
+	m, status, err := models.GetProfileOptions(c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -66,7 +66,7 @@ func (ctl *ProfileOptionsController) Update(c *models.Context) {
 	}
 
 	// Profile ID cannot be changed
-	m.ProfileID = c.Auth.ProfileId
+	m.ProfileID = c.Auth.ProfileID
 
 	status, err := m.Update()
 	if err != nil {
@@ -78,7 +78,7 @@ func (ctl *ProfileOptionsController) Update(c *models.Context) {
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
 		m.ProfileID,
-		c.Auth.ProfileId,
+		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)

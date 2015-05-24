@@ -17,7 +17,7 @@ func SiteHostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ctl := SiteHostController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET"})
 		return

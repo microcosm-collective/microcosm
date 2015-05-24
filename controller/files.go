@@ -21,7 +21,7 @@ func FilesHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := FilesController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "POST"})
 		return
@@ -43,7 +43,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctl := FileController{}
 
-	switch c.GetHttpMethod() {
+	switch c.GetHTTPMethod() {
 	case "OPTIONS":
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return
@@ -59,7 +59,7 @@ type FilesController struct{}
 
 func (ctl *FilesController) Create(c *models.Context) {
 
-	if c.Auth.UserId < 1 {
+	if c.Auth.UserID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
