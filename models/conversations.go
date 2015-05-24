@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -16,42 +15,45 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// ConversationsType is a collection of conversations
 type ConversationsType struct {
 	Conversations h.ArrayType    `json:"conversations"`
 	Meta          h.CoreMetaType `json:"meta"`
 }
 
+// ConversationSummaryType is a summary of a conversation
 type ConversationSummaryType struct {
 	ItemSummary
 	ItemSummaryMeta
 }
 
+// ConversationType is a conversation
 type ConversationType struct {
 	ItemDetail
 	ItemDetailCommentsAndMeta
 }
 
+// Validate returns true if a conversation is valid
 func (m *ConversationType) Validate(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 	exists bool,
 	isImport bool,
 ) (
 	int,
 	error,
 ) {
-
 	m.Title = SanitiseText(m.Title)
 
 	if strings.Trim(m.Title, " ") == "" {
-		return http.StatusBadRequest, errors.New("Title is a required field")
+		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
 
 	m.Title = ShoutToWhisper(m.Title)
 
 	if !exists {
 		// Does the Microcosm specified exist on this site?
-		_, status, err := GetMicrocosmSummary(siteId, m.MicrocosmID, profileId)
+		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmID, profileID)
 		if err != nil {
 			return status, err
 		}
@@ -59,11 +61,9 @@ func (m *ConversationType) Validate(
 
 	if exists && !isImport {
 		if m.ID < 1 {
-			return http.StatusBadRequest, errors.New(
-				fmt.Sprintf(
-					"The supplied ID ('%d') cannot be zero or negative.",
-					m.ID,
-				),
+			return http.StatusBadRequest, fmt.Errorf(
+				"The supplied ID ('%d') cannot be zero or negative",
+				m.ID,
 			)
 		}
 
@@ -71,16 +71,16 @@ func (m *ConversationType) Validate(
 			len(m.Meta.EditReason) == 0 {
 
 			return http.StatusBadRequest,
-				errors.New("You must provide a reason for the update")
+				fmt.Errorf("You must provide a reason for the update")
 
-		} else {
-			m.Meta.EditReason = ShoutToWhisper(m.Meta.EditReason)
 		}
+
+		m.Meta.EditReason = ShoutToWhisper(m.Meta.EditReason)
 	}
 
 	if m.MicrocosmID <= 0 {
 		return http.StatusBadRequest,
-			errors.New("You must specify a Microcosm ID")
+			fmt.Errorf("You must specify a Microcosm ID")
 	}
 
 	m.Meta.Flags.SetVisible()
@@ -88,9 +88,10 @@ func (m *ConversationType) Validate(
 	return http.StatusOK, nil
 }
 
-func (m *ConversationType) FetchSummaries(siteId int64) (int, error) {
+// FetchSummaries populates a partially populated struct
+func (m *ConversationType) FetchSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteId, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		return status, err
 	}
@@ -98,7 +99,7 @@ func (m *ConversationType) FetchSummaries(siteId int64) (int, error) {
 
 	if m.Meta.EditedByNullable.Valid {
 		profile, status, err :=
-			GetProfileSummary(siteId, m.Meta.EditedByNullable.Int64)
+			GetProfileSummary(siteID, m.Meta.EditedByNullable.Int64)
 		if err != nil {
 			return status, err
 		}
@@ -108,14 +109,14 @@ func (m *ConversationType) FetchSummaries(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
+// FetchProfileSummaries populates a partially populated struct
 func (m *ConversationSummaryType) FetchProfileSummaries(
-	siteId int64,
+	siteID int64,
 ) (
 	int,
 	error,
 ) {
-
-	profile, status, err := GetProfileSummary(siteId, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		return status, err
 	}
@@ -126,7 +127,7 @@ func (m *ConversationSummaryType) FetchProfileSummaries(
 		lastComment := m.LastComment.(LastComment)
 
 		profile, status, err =
-			GetProfileSummary(siteId, lastComment.CreatedById)
+			GetProfileSummary(siteID, lastComment.CreatedById)
 		if err != nil {
 			return status, err
 		}
@@ -138,8 +139,9 @@ func (m *ConversationSummaryType) FetchProfileSummaries(
 	return http.StatusOK, nil
 }
 
-func (m *ConversationType) Insert(siteId int64, profileId int64) (int, error) {
-	status, err := m.Validate(siteId, profileId, false, false)
+// Insert saves a conversation
+func (m *ConversationType) Insert(siteID int64, profileID int64) (int, error) {
+	status, err := m.Validate(siteID, profileID, false, false)
 	if err != nil {
 		return status, err
 	}
@@ -155,7 +157,7 @@ func (m *ConversationType) Insert(siteId int64, profileId int64) (int, error) {
 		return http.StatusOK, nil
 	}
 
-	status, err = m.insert(siteId, profileId)
+	status, err = m.insert(siteID, profileID)
 	if status == http.StatusOK {
 		// 5 minute dupe check
 		c.CacheSetInt64(dupeKey, m.ID, 60*5)
@@ -164,24 +166,24 @@ func (m *ConversationType) Insert(siteId int64, profileId int64) (int, error) {
 	return status, err
 }
 
-func (m *ConversationType) Import(siteId int64, profileId int64) (int, error) {
-	status, err := m.Validate(siteId, profileId, true, true)
+// Import saves a conversation with duplicate checking
+func (m *ConversationType) Import(siteID int64, profileID int64) (int, error) {
+	status, err := m.Validate(siteID, profileID, true, true)
 	if err != nil {
 		return status, err
 	}
 
-	return m.insert(siteId, profileId)
+	return m.insert(siteID, profileID)
 }
 
-func (m *ConversationType) insert(siteId int64, profileId int64) (int, error) {
-
+func (m *ConversationType) insert(siteID int64, profileID int64) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	defer tx.Rollback()
 
-	var insertId int64
+	var insertID int64
 	err = tx.QueryRow(`--Create Conversation
 INSERT INTO conversations (
     microcosm_id, title, created, created_by, view_count,
@@ -201,18 +203,17 @@ INSERT INTO conversations (
 		m.Meta.Flags.Open,
 		m.Meta.Flags.Sticky,
 	).Scan(
-		&insertId,
+		&insertID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf(
+		return http.StatusInternalServerError,
+			fmt.Errorf(
 				"Error inserting data and returning ID: %v",
 				err.Error(),
-			),
-		)
+			)
 	}
 
-	m.ID = insertId
+	m.ID = insertID
 
 	err = IncrementMicrocosmItemCount(tx, m.MicrocosmID)
 	if err != nil {
@@ -221,9 +222,8 @@ INSERT INTO conversations (
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
@@ -232,9 +232,10 @@ INSERT INTO conversations (
 	return http.StatusOK, nil
 }
 
-func (m *ConversationType) Update(siteId int64, profileId int64) (int, error) {
+// Update updates a conversation
+func (m *ConversationType) Update(siteID int64, profileID int64) (int, error) {
 
-	status, err := m.Validate(siteId, profileId, true, false)
+	status, err := m.Validate(siteID, profileID, true, false)
 	if err != nil {
 		return status, err
 	}
@@ -261,16 +262,14 @@ UPDATE conversations
 		m.Meta.EditReason,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Update failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Update failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
@@ -279,6 +278,7 @@ UPDATE conversations
 	return http.StatusOK, nil
 }
 
+// Patch partially updates a saved conversation
 func (m *ConversationType) Patch(
 	ac AuthContext,
 	patches []h.PatchType,
@@ -286,7 +286,6 @@ func (m *ConversationType) Patch(
 	int,
 	error,
 ) {
-
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -323,7 +322,7 @@ func (m *ConversationType) Patch(
 				fmt.Sprintf("Set moderated to %t", m.Meta.Flags.Moderated)
 		default:
 			return http.StatusBadRequest,
-				errors.New("Unsupported path in patch replace operation")
+				fmt.Errorf("Unsupported path in patch replace operation")
 		}
 
 		m.Meta.Flags.SetVisible()
@@ -344,17 +343,15 @@ UPDATE conversations
 			m.Meta.EditReason,
 		)
 		if err != nil {
-			return http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Update failed: %v", err.Error()),
-			)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Update failed: %v", err.Error())
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
@@ -363,8 +360,8 @@ UPDATE conversations
 	return http.StatusOK, nil
 }
 
+// Delete deletes a conversation
 func (m *ConversationType) Delete() (int, error) {
-
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -379,9 +376,8 @@ UPDATE conversations
 		m.ID,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Delete failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
 	err = DecrementMicrocosmItemCount(tx, m.MicrocosmID)
@@ -391,9 +387,8 @@ UPDATE conversations
 
 	err = tx.Commit()
 	if err != nil {
-		return http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Transaction failed: %v", err.Error()),
-		)
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
@@ -402,31 +397,29 @@ UPDATE conversations
 	return http.StatusOK, nil
 }
 
+// GetConversation fetches a conversation
 func GetConversation(
-	siteId int64,
+	siteID int64,
 	id int64,
-	profileId int64,
+	profileID int64,
 ) (
 	ConversationType,
 	int,
 	error,
 ) {
-
 	if id == 0 {
 		return ConversationType{}, http.StatusNotFound,
-			errors.New("Conversation not found")
+			fmt.Errorf("Conversation not found")
 	}
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcConversationKeys[c.CacheDetail], id)
 	if val, ok := c.CacheGet(mcKey, ConversationType{}); ok {
-
 		m := val.(ConversationType)
 
 		// TODO(buro9) 2014-05-05: We are not verifying that the cached
 		// conversation belongs to this siteId
-
-		m.FetchSummaries(siteId)
+		m.FetchSummaries(siteID)
 
 		return m, http.StatusOK, nil
 	}
@@ -465,7 +458,7 @@ SELECT c.conversation_id
  WHERE c.conversation_id = $1
    AND is_deleted(6, c.conversation_id) IS FALSE`,
 		id,
-		siteId,
+		siteID,
 	).Scan(
 		&m.ID,
 		&m.MicrocosmID,
@@ -486,12 +479,12 @@ SELECT c.conversation_id
 	if err == sql.ErrNoRows {
 		glog.Warningf("Conversation not found for id %d", id)
 		return ConversationType{}, http.StatusNotFound,
-			errors.New(fmt.Sprintf("Resource with ID %d not found", id))
+			fmt.Errorf("Resource with ID %d not found", id)
 
 	} else if err != nil {
 		glog.Errorf("db.Query(%d) %+v", id, err)
 		return ConversationType{}, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 
 	if m.Meta.EditReasonNullable.Valid {
@@ -517,25 +510,25 @@ SELECT c.conversation_id
 	// Update cache
 	c.CacheSet(mcKey, m, mcTTL)
 
-	m.FetchSummaries(siteId)
+	m.FetchSummaries(siteID)
 	return m, http.StatusOK, nil
 }
 
+// GetConversationSummary fetches a summary of a conversation
 func GetConversationSummary(
-	siteId int64,
+	siteID int64,
 	id int64,
-	profileId int64,
+	profileID int64,
 ) (
 	ConversationSummaryType,
 	int,
 	error,
 ) {
-
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcConversationKeys[c.CacheSummary], id)
 	if val, ok := c.CacheGet(mcKey, ConversationSummaryType{}); ok {
 		m := val.(ConversationSummaryType)
-		m.FetchProfileSummaries(siteId)
+		m.FetchProfileSummaries(siteID)
 		return m, http.StatusOK, nil
 	}
 
@@ -590,23 +583,18 @@ SELECT conversation_id
 	)
 	if err == sql.ErrNoRows {
 		return ConversationSummaryType{}, http.StatusNotFound,
-			errors.New(
-				fmt.Sprintf("Resource with ID %d not found", id),
-			)
+			fmt.Errorf("Resource with ID %d not found", id)
 
 	} else if err != nil {
 		return ConversationSummaryType{}, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
 	lastComment, status, err :=
 		GetLastComment(h.ItemTypes[h.ItemTypeConversation], m.ID)
 	if err != nil {
-		return ConversationSummaryType{}, status, errors.New(
-			fmt.Sprintf("Error fetching last comment: %v", err.Error()),
-		)
+		return ConversationSummaryType{}, status,
+			fmt.Errorf("Error fetching last comment: %v", err.Error())
 	}
 
 	if lastComment.Valid {
@@ -627,13 +615,14 @@ SELECT conversation_id
 	// Update cache
 	c.CacheSet(mcKey, m, mcTTL)
 
-	m.FetchProfileSummaries(siteId)
+	m.FetchProfileSummaries(siteID)
 	return m, http.StatusOK, nil
 }
 
+// GetConversations returns a collection of conversations
 func GetConversations(
-	siteId int64,
-	profileId int64,
+	siteID int64,
+	profileID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -643,7 +632,6 @@ func GetConversations(
 	int,
 	error,
 ) {
-
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
@@ -681,17 +669,16 @@ SELECT COUNT(*) OVER() AS total
          ,f.last_modified DESC
  LIMIT $4
 OFFSET $5`,
-		siteId,
+		siteID,
 		h.ItemTypes[h.ItemTypeConversation],
-		profileId,
+		profileID,
 		limit,
 		offset,
 	)
 	if err != nil {
 		return []ConversationSummaryType{}, 0, 0,
-			http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -706,12 +693,11 @@ OFFSET $5`,
 		)
 		if err != nil {
 			return []ConversationSummaryType{}, 0, 0,
-				http.StatusInternalServerError, errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
-		m, status, err := GetConversationSummary(siteId, id, profileId)
+		m, status, err := GetConversationSummary(siteID, id, profileID)
 		if err != nil {
 			return []ConversationSummaryType{}, 0, 0, status, err
 		}
@@ -721,9 +707,8 @@ OFFSET $5`,
 	err = rows.Err()
 	if err != nil {
 		return []ConversationSummaryType{}, 0, 0,
-			http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -732,12 +717,10 @@ OFFSET $5`,
 
 	if offset > maxOffset {
 		return []ConversationSummaryType{}, 0, 0,
-			http.StatusBadRequest, errors.New(
-				fmt.Sprintf(
-					"not enough records, "+
-						"offset (%d) would return an empty page.",
-					offset,
-				),
+			http.StatusBadRequest, fmt.Errorf(
+				"not enough records, "+
+					"offset (%d) would return an empty page",
+				offset,
 			)
 	}
 
