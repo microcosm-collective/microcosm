@@ -3,7 +3,7 @@ package models
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"html"
 	"net/http"
 	"net/url"
@@ -16,14 +16,15 @@ import (
 )
 
 const (
-	EMAIL_FROM string = `%s <notify@microco.sm>`
+	emailFrom string = `%s <notify@microco.sm>`
 
-	EMAIL_HTML_CONTAINER_HEADER string = `<!DOCTYPE html>
+	emailHTMLHeader string = `<!DOCTYPE html>
 <meta charset="utf-8"><div>`
 
-	EMAIL_HTML_CONTAINER_FOOTER string = `</div>`
+	emailHTMLFooter string = `</div>`
 )
 
+// EmailType describes an email
 type EmailType struct {
 	From     string
 	ReplyTo  string
@@ -33,8 +34,10 @@ type EmailType struct {
 	BodyHTML string
 }
 
+// MergeAndSendEmail creates both parts of an email from database stored
+// templates and then merges the metadata and sends them.
 func MergeAndSendEmail(
-	siteId int64,
+	siteID int64,
 	from string,
 	to string,
 	subjectTemplate *template.Template,
@@ -42,14 +45,14 @@ func MergeAndSendEmail(
 	htmlTemplate *template.Template,
 	data interface{},
 ) (int, error) {
-
 	// If we are not prod environment we really never want to send emails
-	// by accident as we may be spamming people. This is by whitelist, if this
-	// isn't the production environment then only @microcosm.cc recipients will
+	// by accident as we may be spamming people if the database hasn't been
+	// sanitised (which it shoud). This is by whitelist, if this isn't the
+	// production environment then only @microcosm.cc recipients will
 	// get the email.
 	//
 	// If you need to test emails to specific external email hosts then you
-	// will need to consciously do so by white-listing them
+	// will need to consciously do so by doing so outside of this code
 	if conf.CONFIG_STRING[conf.KEY_ENVIRONMENT] != `prod` &&
 		!strings.Contains(to, "@microcosm.cc") {
 
@@ -87,21 +90,20 @@ func MergeAndSendEmail(
 	}
 	email.BodyHTML = emailHTML.String()
 
-	return email.Send(siteId)
+	return email.Send(siteID)
 }
 
-//SendEmail uses mailgun to send an email and logs any errors.
-func (m *EmailType) Send(siteId int64) (int, error) {
-
+// Send uses mailgun to send an email and logs any errors.
+func (m *EmailType) Send(siteID int64) (int, error) {
 	if m.From == "" || m.To == "" {
 		return http.StatusPreconditionFailed,
-			errors.New("Cannot send an email without " +
+			fmt.Errorf("Cannot send an email without " +
 				"both from: and to: email addresses")
 	}
 
 	if m.Subject == "" && m.BodyText == "" && m.BodyHTML == "" {
 		return http.StatusPreconditionFailed,
-			errors.New("Not willing to send a blank email")
+			fmt.Errorf("Not willing to send a blank email")
 	}
 
 	formBody := url.Values{}
@@ -116,11 +118,10 @@ func (m *EmailType) Send(siteId int64) (int, error) {
 	formBody.Set("text", m.BodyText)
 	formBody.Set(
 		"html",
-		EMAIL_HTML_CONTAINER_HEADER+
-			AnchorRelativeUrls(siteId, m.BodyHTML)+
-			EMAIL_HTML_CONTAINER_FOOTER,
+		emailHTMLHeader+AnchorRelativeUrls(siteID, m.BodyHTML)+emailHTMLFooter,
 	)
 
+	// EmailType describes an email
 	req, err := http.NewRequest(
 		"POST",
 		conf.CONFIG_STRING[conf.KEY_MAILGUN_API_URL],
@@ -144,7 +145,7 @@ func (m *EmailType) Send(siteId int64) (int, error) {
 	defer resp.Body.Close()
 
 	type MailgunResp struct {
-		Id      string `json:"id"`
+		ID      string `json:"id"`
 		Message string `json:"message"`
 	}
 
@@ -155,41 +156,26 @@ func (m *EmailType) Send(siteId int64) (int, error) {
 		return http.StatusInternalServerError, err
 	}
 
-	glog.Infof("Success: %v %s", parsedResp.Id, parsedResp.Message)
+	glog.Infof("Success: %v %s", parsedResp.ID, parsedResp.Message)
 
 	return http.StatusOK, nil
 }
 
-// Takes a HTML string that contains links like: href="/profiles/" and adds the
-// given site's absolute URL so that it becomes:
-// href="https://key.microco.sm/profiles/"
-func AnchorRelativeUrls(siteId int64, bodyText string) string {
-	site, _, err := GetSite(siteId)
+// AnchorRelativeUrls takes a HTML string that contains links like:
+//   href="/profiles/"
+// and adds the given site's absolute URL so that it becomes:
+//   href="https://key.microco.sm/profiles/"
+func AnchorRelativeUrls(siteID int64, bodyText string) string {
+	site, _, err := GetSite(siteID)
 	if err != nil {
 		glog.Errorf("Failed to get site: %+v", err)
 		return bodyText
 	}
 
-	siteUrl := site.GetURL()
+	siteURL := site.GetURL()
 
-	const (
-		HREF_FIND string = `a href="/`
-		SRC_FIND  string = `img src="/`
-	)
-	var (
-		HREF_REPLACE string = `a href="` + siteUrl + `/`
-		SRC_REPLACE  string = `img src="` + siteUrl + `/`
-	)
+	bodyText = strings.Replace(bodyText, `img src="/`, `img src="`+siteURL+`/`, -1)
+	bodyText = strings.Replace(bodyText, `a href="/`, `a href="`+siteURL+`/`, -1)
 
-	return strings.Replace(
-		strings.Replace(
-			bodyText,
-			SRC_FIND,
-			SRC_REPLACE,
-			-1,
-		),
-		HREF_FIND,
-		HREF_REPLACE,
-		-1,
-	)
+	return bodyText
 }
