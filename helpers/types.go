@@ -7,11 +7,13 @@ import (
 	"github.com/lib/pq"
 )
 
+// StatType describes a statistic
 type StatType struct {
 	Metric string `json:"metric"`
 	Value  int64  `json:"value"`
 }
 
+// AttachmentType describes an attachment
 type AttachmentType struct {
 	Href      string        `json:"href"`
 	Created   int           `json:"created"`
@@ -24,6 +26,7 @@ type AttachmentType struct {
 	Thumbnail ThumbnailType `json:"thumbnail,omitempty"`
 }
 
+// ThumbnailType describes a thumbnail of an image attachment
 type ThumbnailType struct {
 	Href     string `json:"href"`
 	MimeType string `json:"mimetype"`
@@ -32,63 +35,69 @@ type ThumbnailType struct {
 	Height   int    `json:"height"`
 }
 
-// Used by single items
+// DefaultMetaType is used by single items
 type DefaultMetaType struct {
 	CreatedType
 	EditedType
 	ExtendedMetaType
 }
 
-// Used by summary of single items
+// SummaryMetaType is used by summary of single items
 type SummaryMetaType struct {
 	CreatedType
 	ExtendedMetaType
 }
 
-// Used by single items
+// DefaultNoFlagsMetaType is used by single items
 type DefaultNoFlagsMetaType struct {
 	CreatedType
 	EditedType
 	CoreMetaType
 }
 
-// Used by single items
+// DefaultReducedFlagsMetaType is used by single items
 type DefaultReducedFlagsMetaType struct {
 	CreatedType
 	EditedType
 	SimpleMetaType
 }
 
-// Used implicitly by all meta types, and explicitly by all collections
+// CoreMetaType is used implicitly by all meta types, and explicitly by all
+// collections
 type CoreMetaType struct {
 	Stats       []StatType  `json:"stats,omitempty"`
 	Links       []LinkType  `json:"links,omitempty"`
 	Permissions interface{} `json:"permissions,omitempty"`
 }
 
-// For items (such as Alerts) that cannot be edited but have a creator
+// CreatedMetaType for items (such as Alerts) that cannot be edited but have a
+// creator
 type CreatedMetaType struct {
 	CreatedType
 	ExtendedMetaType
 }
 
-// Used explicitly by comments
+// SimpleMetaType is used explicitly by comments
 type SimpleMetaType struct {
 	Flags SimpleFlagsType `json:"flags,omitempty"`
 	CoreMetaType
 }
 
-// Used implicitly by all meta types, and explicitly by all collections
+// ExtendedMetaType is used implicitly by all meta types, and explicitly by all
+// collections
 type ExtendedMetaType struct {
 	Flags FlagsType `json:"flags,omitempty"`
 	CoreMetaType
 }
 
+// CreatedType describes an author/creator
 type CreatedType struct {
 	Created     time.Time   `json:"created"`
-	CreatedById int64       `json:"-"`
+	CreatedByID int64       `json:"-"`
 	CreatedBy   interface{} `json:"createdBy"`
 }
+
+// EditedType describes edited meta data
 type EditedType struct {
 	EditedNullable     pq.NullTime    `json:"-"`
 	Edited             string         `json:"edited,omitempty"`
@@ -98,11 +107,14 @@ type EditedType struct {
 	EditReason         string         `json:"editReason,omitempty"`
 }
 
+// SimpleFlagsType describes simple flags
 type SimpleFlagsType struct {
 	Deleted   bool `json:"deleted"`
 	Moderated bool `json:"moderated"`
 	Visible   bool `json:"visible"`
 }
+
+// FlagsType describes the common flags
 type FlagsType struct {
 	Sticky    interface{} `json:"sticky,omitempty"`
 	Open      interface{} `json:"open,omitempty"`
@@ -113,10 +125,12 @@ type FlagsType struct {
 	Watched   interface{} `json:"watched,omitempty"`
 	Ignored   interface{} `json:"ignored,omitempty"`
 	SendEmail interface{} `json:"sendEmail,omitempty"`
-	SendSms   interface{} `json:"sendSMS,omitempty"`
+	SendSMS   interface{} `json:"sendSMS,omitempty"`
 	Attending interface{} `json:"attending,omitempty"`
 }
 
+// SetVisible determines whether the item should be visible and if so sets the
+// visible flag
 func (f *FlagsType) SetVisible() {
 	switch f.Moderated.(type) {
 	case bool:

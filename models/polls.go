@@ -156,7 +156,7 @@ func (m *PollType) Validate(
 // FetchProfileSummaries populates a partially populated struct
 func (m *PollType) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
@@ -177,7 +177,7 @@ func (m *PollType) FetchProfileSummaries(siteID int64) (int, error) {
 // FetchProfileSummaries populates a partially populated struct
 func (m *PollSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
@@ -213,7 +213,7 @@ INSERT INTO polls (
 		m.Title,
 		m.PollQuestion,
 		m.Meta.Created,
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 		m.VotingEndsNullable,
 		m.PollOpen,
 		m.Multi,
@@ -545,7 +545,7 @@ SELECT p.poll_id
 		&m.Title,
 		&m.PollQuestion,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 		&m.Meta.EditedNullable,
 		&m.Meta.EditedByNullable,
 		&m.Meta.EditReasonNullable,
@@ -701,7 +701,7 @@ SELECT poll_id
 		&m.Title,
 		&m.PollQuestion,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 		&m.VotingEndsNullable,
 		&m.Meta.Flags.Sticky,
 		&m.Meta.Flags.Open,

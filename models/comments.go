@@ -162,7 +162,7 @@ func (m *CommentSummaryType) Validate(siteID int64, exists bool) (int, error) {
 // FetchProfileSummaries populates a partially populated struct
 func (m *CommentSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
@@ -191,7 +191,7 @@ func (m *CommentSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
 			inReplyToProfileTitle, _, _ := GetTitle(
 				siteID,
 				h.ItemTypes[h.ItemTypeProfile],
-				parent.Meta.CreatedById,
+				parent.Meta.CreatedByID,
 				0,
 			)
 
@@ -205,7 +205,7 @@ func (m *CommentSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
 					"inReplyToAuthor",
 					inReplyToProfileTitle,
 					h.ItemTypeProfile,
-					parent.Meta.CreatedById,
+					parent.Meta.CreatedByID,
 				),
 			)
 		}
@@ -226,7 +226,7 @@ func (m *CommentSummaryType) Insert(siteID int64) (int, error) {
 		strconv.FormatInt(m.ItemTypeID, 10)+
 			strconv.FormatInt(m.ItemID, 10)+
 			m.Markdown+
-			strconv.FormatInt(m.Meta.CreatedById, 10),
+			strconv.FormatInt(m.Meta.CreatedByID, 10),
 	)
 
 	v, ok := c.CacheGetInt64(dupeKey)
@@ -290,7 +290,7 @@ INSERT INTO comments (
 ) RETURNING comment_id`,
 		m.ItemTypeID,
 		m.ItemID,
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 		m.Meta.Created,
 		m.Meta.Flags.Visible,
 		m.Meta.Flags.Moderated,
@@ -332,14 +332,14 @@ INSERT INTO comments (
 	PurgeCache(m.ItemTypeID, m.ItemID)
 
 	if !isImport {
-		go IncrementProfileCommentCount(m.Meta.CreatedById)
+		go IncrementProfileCommentCount(m.Meta.CreatedByID)
 		go IncrementItemCommentCount(m.ItemTypeID, m.ItemID)
 
 		summary, status, err := GetSummary(
 			siteID,
 			m.ItemTypeID,
 			m.ItemID,
-			m.Meta.CreatedById,
+			m.Meta.CreatedByID,
 		)
 		if err != nil {
 			glog.Error(err)
@@ -408,7 +408,7 @@ INSERT INTO revisions (
 		row = tx.QueryRow(
 			sqlQuery,
 			m.ID,
-			m.Meta.CreatedById,
+			m.Meta.CreatedByID,
 			m.Markdown,
 			m.Meta.Created,
 		)
@@ -500,7 +500,7 @@ func (m *CommentSummaryType) Update(siteID int64) (int, error) {
 		siteID,
 		m.ItemTypeID,
 		m.ItemID,
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 	)
 	if err != nil {
 		return status, err
@@ -593,7 +593,7 @@ UPDATE comments
 		siteID,
 		cst.ItemTypeID,
 		cst.ItemID,
-		cst.Meta.CreatedById,
+		cst.Meta.CreatedByID,
 	)
 	if err != nil {
 		return status, err
@@ -683,7 +683,7 @@ SELECT c1.item_type_id
 			fmt.Errorf("Transaction failed: %+v", err)
 	}
 
-	go DecrementProfileCommentCount(cst.Meta.CreatedById)
+	go DecrementProfileCommentCount(cst.Meta.CreatedByID)
 	go DecrementItemCommentCount(cst.ItemTypeID, cst.ItemID)
 	PurgeCache(h.ItemTypes[h.ItemTypeComment], cst.ID)
 
@@ -700,7 +700,7 @@ SELECT c1.item_type_id
 		siteID,
 		cst.ItemTypeID,
 		cst.ItemID,
-		cst.Meta.CreatedById,
+		cst.Meta.CreatedByID,
 	)
 	if err != nil {
 		glog.Error(err)
@@ -960,7 +960,7 @@ OFFSET 0`,
 		&m.ItemTypeID,
 		&m.ItemID,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 		&m.Revisions,
 		&revisionID,
 		&m.Meta.EditedNullable,
@@ -1407,7 +1407,7 @@ func GetComment(
 	m.HTML = commentsummary.HTML
 	m.Files = commentsummary.Files
 	m.Meta.Created = commentsummary.Meta.Created
-	m.Meta.CreatedById = commentsummary.Meta.CreatedById
+	m.Meta.CreatedByID = commentsummary.Meta.CreatedByID
 	m.Meta.CreatedBy = commentsummary.Meta.CreatedBy
 	m.Meta.EditedNullable = commentsummary.Meta.EditedNullable
 	m.Meta.Edited = commentsummary.Meta.Edited
@@ -1639,7 +1639,7 @@ SELECT c.comment_id
 	for rows.Next() {
 		err = rows.Scan(
 			&lastComment.ID,
-			&lastComment.CreatedById,
+			&lastComment.CreatedByID,
 			&lastComment.Created,
 		)
 		if err != nil {

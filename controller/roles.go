@@ -146,7 +146,7 @@ func (ctl *RolesController) Create(c *models.Context) {
 	// Populate where applicable from auth and context
 	m.SiteID = c.Site.ID
 	m.MicrocosmID = microcosmId
-	m.Meta.CreatedById = c.Auth.ProfileID
+	m.Meta.CreatedByID = c.Auth.ProfileID
 	m.Meta.Created = time.Now()
 
 	status, err := m.Insert(c.Site.ID, c.Auth.ProfileID)

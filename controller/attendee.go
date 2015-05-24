@@ -147,7 +147,7 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 	// Populate where applicable from auth and context
 	t := time.Now()
 	m.EventID = eventId
-	m.Meta.CreatedById = c.Auth.ProfileID
+	m.Meta.CreatedByID = c.Auth.ProfileID
 	m.Meta.Created = t
 	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileID, Valid: true}
 	m.Meta.EditedNullable = pq.NullTime{Time: t, Valid: true}

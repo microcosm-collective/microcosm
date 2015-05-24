@@ -92,7 +92,7 @@ func (m *HuddleType) Validate(siteID int64, exists bool) (int, error) {
 
 // FetchProfileSummaries populates the partially populated huddle
 func (m *HuddleType) FetchProfileSummaries(siteID int64) (int, error) {
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
@@ -112,7 +112,7 @@ func (m *HuddleType) FetchProfileSummaries(siteID int64) (int, error) {
 // FetchProfileSummaries populates the partially populated huddle summary
 func (m *HuddleSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
@@ -149,7 +149,7 @@ func (m *HuddleType) Insert(siteID int64) (int, error) {
 
 	dupeKey := "dupe_" + h.Md5sum(
 		m.Title+
-			strconv.FormatInt(m.Meta.CreatedById, 10),
+			strconv.FormatInt(m.Meta.CreatedByID, 10),
 	)
 
 	v, ok := c.CacheGetInt64(dupeKey)
@@ -189,7 +189,7 @@ INSERT INTO huddles (
 		siteID,
 		m.Title,
 		m.Meta.Created,
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 		m.IsConfidential,
 	).Scan(
 		&insertID,
@@ -209,7 +209,7 @@ INSERT INTO huddle_profiles (
     $1, $2
 )`,
 		m.ID,
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 	)
 	if err != nil {
 		glog.Error(err)
@@ -220,7 +220,7 @@ INSERT INTO huddle_profiles (
 	// As are all of the explicitly added participants
 	for _, p := range m.Participants {
 		// Cannot add the author twice
-		if p.ID != m.Meta.CreatedById {
+		if p.ID != m.Meta.CreatedByID {
 			_, err := tx.Exec(`
 INSERT INTO huddle_profiles (
     huddle_id, profile_id
@@ -337,7 +337,7 @@ SELECT h.huddle_id
 			&m.ID,
 			&m.Title,
 			&m.Meta.Created,
-			&m.Meta.CreatedById,
+			&m.Meta.CreatedByID,
 			&m.IsConfidential,
 			&participantID,
 		)
@@ -505,7 +505,7 @@ SELECT h.huddle_id
 			&m.ID,
 			&m.Title,
 			&m.Meta.Created,
-			&m.Meta.CreatedById,
+			&m.Meta.CreatedByID,
 			&participantID,
 			&m.LastCommentIDNullable,
 			&m.LastCommentCreatedNullable,

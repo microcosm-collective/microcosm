@@ -176,7 +176,7 @@ func (m *EventType) Validate(
 
 // FetchProfileSummaries populates a partially populated struct
 func (m *EventType) FetchProfileSummaries(siteID int64) (int, error) {
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
@@ -196,12 +196,12 @@ func (m *EventType) FetchProfileSummaries(siteID int64) (int, error) {
 
 // FetchProfileSummaries populates a partially populated struct
 func (m *EventSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		glog.Errorf(
 			"GetProfileSummary(%d, %d) %+v",
 			siteID,
-			m.Meta.CreatedById,
+			m.Meta.CreatedByID,
 			err,
 		)
 		return status, err
@@ -213,13 +213,13 @@ func (m *EventSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
 		lastComment := m.LastComment.(LastComment)
 
 		profile, status, err =
-			GetProfileSummary(siteID, lastComment.CreatedById)
+			GetProfileSummary(siteID, lastComment.CreatedByID)
 		if err != nil {
 			glog.Errorf("%+v", lastComment)
 			glog.Errorf(
 				"GetProfileSummary(%d, %d) %+v",
 				siteID,
-				lastComment.CreatedById,
+				lastComment.CreatedByID,
 				err,
 			)
 			return status, err
@@ -340,7 +340,7 @@ func (m *EventType) Insert(siteID int64, profileID int64) (int, error) {
 			fmt.Sprintf("%b", m.West)+
 			m.Status+
 			fmt.Sprintf("%d", m.RSVPLimit)+
-			strconv.FormatInt(m.Meta.CreatedById, 10),
+			strconv.FormatInt(m.Meta.CreatedByID, 10),
 	)
 
 	v, ok := c.CacheGetInt64(dupeKey)
@@ -372,7 +372,7 @@ INSERT INTO events (
 		m.MicrocosmID,
 		m.Title,
 		m.Meta.Created,
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 		m.WhenNullable,
 		m.Duration,
 		m.WhereNullable,
@@ -725,7 +725,7 @@ SELECT e.event_id
 		&m.MicrocosmID,
 		&m.Title,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 
 		&m.Meta.EditedNullable,
 		&m.Meta.EditedByNullable,
@@ -903,7 +903,7 @@ WHERE event_id = $1
 		&m.MicrocosmID,
 		&m.Title,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 
 		&m.Meta.Flags.Sticky,
 		&m.Meta.Flags.Open,

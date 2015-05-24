@@ -60,7 +60,7 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 
 	// Populate where applicable from auth and context
 	m.SiteID = c.Site.ID
-	m.Meta.CreatedById = c.Auth.ProfileID
+	m.Meta.CreatedByID = c.Auth.ProfileID
 	m.Meta.Created = time.Now()
 	m.OwnedByID = c.Auth.ProfileID
 

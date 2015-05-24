@@ -122,7 +122,7 @@ func (ctl *ConversationController) Read(c *models.Context) {
 		if watcherId > 0 {
 			m.Meta.Flags.Watched = true
 			m.Meta.Flags.SendEmail = sendEmail
-			m.Meta.Flags.SendSms = sendSms
+			m.Meta.Flags.SendSMS = sendSms
 		}
 	}
 	go models.IncrementViewCount(h.ItemTypes[h.ItemTypeConversation], m.ID)

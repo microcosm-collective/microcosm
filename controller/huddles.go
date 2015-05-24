@@ -104,7 +104,7 @@ func (ctl *HuddlesController) Create(c *models.Context) {
 	// End : Authorisation
 
 	// Populate where applicable from auth and context
-	m.Meta.CreatedById = c.Auth.ProfileID
+	m.Meta.CreatedByID = c.Auth.ProfileID
 	m.Meta.Created = time.Now()
 
 	status, err := m.Insert(c.Site.ID)

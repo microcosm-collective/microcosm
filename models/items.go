@@ -104,7 +104,7 @@ type ItemDetailCommentsAndMeta struct {
 // FetchProfileSummaries populates a partially populated Item
 func (m *Item) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}

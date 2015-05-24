@@ -126,7 +126,7 @@ func (m *MicrocosmType) FetchSummaries(
 	error,
 ) {
 
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
@@ -166,7 +166,7 @@ func (m *MicrocosmType) FetchSummaries(
 // FetchSummaries populates a partially populated struct
 func (m *MicrocosmSummaryType) FetchSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
@@ -218,7 +218,7 @@ INSERT INTO microcosms (
 		m.Title,
 		m.Description,
 		m.Meta.Created,
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 		m.OwnedByID,
 	).Scan(
 		&insertID,
@@ -474,7 +474,7 @@ SELECT microcosm_id,
 		&m.Title,
 		&m.Description,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 		&m.Meta.EditedNullable,
 		&m.Meta.EditedByNullable,
 		&m.Meta.EditReasonNullable,
@@ -603,7 +603,7 @@ SELECT microcosm_id
 		&m.Title,
 		&m.Description,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 		&m.Meta.Flags.Sticky,
 		&m.Meta.Flags.Open,
 		&m.Meta.Flags.Deleted,

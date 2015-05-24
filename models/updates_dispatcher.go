@@ -57,7 +57,7 @@ func SendUpdatesForNewCommentInItem(
 		comment.ItemTypeID,
 		comment.ItemID,
 		updateType.ID,
-		comment.Meta.CreatedById,
+		comment.Meta.CreatedByID,
 	)
 	if err != nil {
 		glog.Errorf("%s %+v", "GetUpdateRecipients()", err)
@@ -93,7 +93,7 @@ func SendUpdatesForNewCommentInItem(
 
 		if !sendEmails &&
 			recipient.SendEmail &&
-			recipient.ForProfile.ID != comment.Meta.CreatedById {
+			recipient.ForProfile.ID != comment.Meta.CreatedByID {
 
 			sendEmails = true
 		}
@@ -105,7 +105,7 @@ func SendUpdatesForNewCommentInItem(
 		update.ForProfileID = recipient.ForProfile.ID
 		update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
 		update.ItemID = comment.ID
-		update.Meta.CreatedById = comment.Meta.CreatedById
+		update.Meta.CreatedByID = comment.Meta.CreatedByID
 		status, err := update.insert(tx)
 		if err != nil {
 			glog.Errorf("%s %+v", "update.insert(tx)", err)
@@ -159,7 +159,7 @@ func SendUpdatesForNewCommentInItem(
 
 		byProfile, status, err := GetProfileSummary(
 			siteID,
-			comment.Meta.CreatedById,
+			comment.Meta.CreatedByID,
 		)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetProfileSummary()", err)
@@ -204,11 +204,11 @@ func SendUpdatesForNewCommentInItem(
 					glog.Errorf("%s %+v", "GetComment()", err)
 					return status, err
 				}
-				parentCommentCreatedByID = parentComment.Meta.CreatedById
+				parentCommentCreatedByID = parentComment.Meta.CreatedByID
 			}
 
 			if recipient.SendEmail &&
-				recipient.ForProfile.ID != comment.Meta.CreatedById &&
+				recipient.ForProfile.ID != comment.Meta.CreatedByID &&
 				(lastRead.After(recipient.LastNotified) ||
 					recipient.LastNotified.IsZero()) &&
 				recipient.ForProfile.ID != parentCommentCreatedByID {
@@ -277,7 +277,7 @@ func SendUpdatesForNewReplyToYourComment(
 		glog.Errorf("%s %+v", "GetComment()", err)
 		return status, err
 	}
-	profileID := parentComment.Meta.CreatedById
+	profileID := parentComment.Meta.CreatedByID
 
 	forProfile, status, err := GetProfileSummary(siteID, profileID)
 	if err != nil {
@@ -305,7 +305,7 @@ func SendUpdatesForNewReplyToYourComment(
 	update.ForProfileID = forProfile.ID
 	update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
 	update.ItemID = comment.ID
-	update.Meta.CreatedById = comment.Meta.CreatedById
+	update.Meta.CreatedByID = comment.Meta.CreatedByID
 	status, err = update.insert(tx)
 	if err != nil {
 		glog.Errorf("%s %+v", "update.insert(tx)", err)
@@ -369,7 +369,7 @@ func SendUpdatesForNewReplyToYourComment(
 
 		byProfile, status, err := GetProfileSummary(
 			siteID,
-			comment.Meta.CreatedById,
+			comment.Meta.CreatedByID,
 		)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetProfileSummary()", err)
@@ -508,7 +508,7 @@ func SendUpdatesForNewMentionInComment(
 
 		byProfile, status, err := GetProfileSummary(
 			siteID,
-			comment.Meta.CreatedById,
+			comment.Meta.CreatedByID,
 		)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetProfileSummary()", err)
@@ -592,7 +592,7 @@ func SendUpdatesForNewCommentInHuddle(
 		comment.ItemTypeID,
 		comment.ItemID,
 		updateType.ID,
-		comment.Meta.CreatedById,
+		comment.Meta.CreatedByID,
 	)
 	if err != nil {
 		glog.Errorf("%s %+v", "GetUpdateRecipients()", err)
@@ -628,7 +628,7 @@ func SendUpdatesForNewCommentInHuddle(
 
 		if !sendEmails &&
 			recipient.SendEmail &&
-			recipient.ForProfile.ID != comment.Meta.CreatedById {
+			recipient.ForProfile.ID != comment.Meta.CreatedByID {
 
 			sendEmails = true
 		}
@@ -640,7 +640,7 @@ func SendUpdatesForNewCommentInHuddle(
 		update.ForProfileID = recipient.ForProfile.ID
 		update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
 		update.ItemID = comment.ID
-		update.Meta.CreatedById = comment.Meta.CreatedById
+		update.Meta.CreatedByID = comment.Meta.CreatedByID
 		status, err := update.insert(tx)
 		if err != nil {
 			glog.Errorf("%s %+v", "update.insert(tx)", err)
@@ -695,7 +695,7 @@ func SendUpdatesForNewCommentInHuddle(
 
 		byProfile, status, err := GetProfileSummary(
 			siteID,
-			comment.Meta.CreatedById,
+			comment.Meta.CreatedByID,
 		)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetProfileSummary()", err)
@@ -740,11 +740,11 @@ func SendUpdatesForNewCommentInHuddle(
 					glog.Errorf("%s %+v", "GetComment()", err)
 					return status, err
 				}
-				parentCommentCreatedByID = parentComment.Meta.CreatedById
+				parentCommentCreatedByID = parentComment.Meta.CreatedByID
 			}
 
 			if recipient.SendEmail &&
-				recipient.ForProfile.ID != comment.Meta.CreatedById &&
+				recipient.ForProfile.ID != comment.Meta.CreatedByID &&
 				(lastRead.After(recipient.LastNotified) ||
 					recipient.LastNotified.IsZero()) &&
 				recipient.ForProfile.ID != parentCommentCreatedByID {
@@ -865,7 +865,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 		update.ForProfileID = recipient.ForProfile.ID
 		update.ItemTypeID = h.ItemTypes[h.ItemTypeEvent]
 		update.ItemID = attendee.EventID
-		update.Meta.CreatedById = attendee.ProfileID
+		update.Meta.CreatedByID = attendee.ProfileID
 		status, err := update.insert(tx)
 		if err != nil {
 			glog.Errorf("%s %+v", "update.insert(tx)", err)
@@ -1042,21 +1042,21 @@ func SendUpdatesForNewItemInAMicrocosm(
 		itemTypeID = h.ItemTypes[h.ItemTypeConversation]
 		itemType = h.ItemTypeConversation
 		itemID = conversation.ID
-		createdByID = conversation.Meta.CreatedById
+		createdByID = conversation.Meta.CreatedByID
 
 	case EventType:
 		event = item.(EventType)
 		itemTypeID = h.ItemTypes[h.ItemTypeEvent]
 		itemType = h.ItemTypeEvent
 		itemID = event.ID
-		createdByID = event.Meta.CreatedById
+		createdByID = event.Meta.CreatedByID
 
 	case PollType:
 		poll = item.(PollType)
 		itemTypeID = h.ItemTypes[h.ItemTypePoll]
 		itemType = h.ItemTypePoll
 		itemID = poll.ID
-		createdByID = poll.Meta.CreatedById
+		createdByID = poll.Meta.CreatedByID
 
 	default:
 		glog.Errorf("%s %+v", "type not known", item)
@@ -1112,7 +1112,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 		update.ForProfileID = recipient.ForProfile.ID
 		update.ItemTypeID = itemTypeID
 		update.ItemID = itemID
-		update.Meta.CreatedById = createdByID
+		update.Meta.CreatedByID = createdByID
 		status, err := update.insert(tx)
 		if err != nil {
 			glog.Errorf("%s %+v", "update.insert(tx)", err)

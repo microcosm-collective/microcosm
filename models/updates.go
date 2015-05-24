@@ -62,7 +62,7 @@ func (m *UpdateType) FetchSummaries(siteID int64) (int, error) {
 	profile, status, err := GetSummary(
 		siteID,
 		h.ItemTypes[h.ItemTypeProfile],
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 		m.ForProfileID,
 	)
 	if err != nil {
@@ -169,7 +169,7 @@ INSERT INTO updates (
 		m.ItemTypeID,
 		m.ItemID,
 
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 	).Scan(
 		&insertID,
 	)
@@ -226,7 +226,7 @@ INSERT INTO updates (
 		m.ItemTypeID,
 		m.ItemID,
 
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
@@ -283,7 +283,7 @@ SELECT update_id
 		&m.UpdateTypeID,
 		&m.ItemTypeID,
 		&m.ItemID,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 		&m.Meta.Created,
 		&m.SiteID,
 	)
@@ -527,7 +527,7 @@ SELECT total
 			&m.UpdateTypeID,
 			&m.ItemTypeID,
 			&m.ItemID,
-			&m.Meta.CreatedById,
+			&m.Meta.CreatedByID,
 			&m.Meta.Created,
 			&m.SiteID,
 			&unread,
@@ -577,7 +577,7 @@ SELECT total
 		go HandleSummaryContainerRequest(
 			siteID,
 			h.ItemTypes[h.ItemTypeProfile],
-			ems[i].Meta.CreatedById,
+			ems[i].Meta.CreatedByID,
 			ems[i].ForProfileID,
 			seq,
 			chan1,

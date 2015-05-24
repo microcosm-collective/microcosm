@@ -51,7 +51,7 @@ func (ctl *CommentsController) Create(c *models.Context) {
 	}
 
 	// Populate where applicable from auth and context
-	m.Meta.CreatedById = c.Auth.ProfileID
+	m.Meta.CreatedByID = c.Auth.ProfileID
 	m.Meta.Created = time.Now()
 
 	status, err := m.Validate(c.Site.ID, false)

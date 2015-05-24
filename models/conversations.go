@@ -91,7 +91,7 @@ func (m *ConversationType) Validate(
 // FetchSummaries populates a partially populated struct
 func (m *ConversationType) FetchSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
@@ -116,7 +116,7 @@ func (m *ConversationSummaryType) FetchProfileSummaries(
 	int,
 	error,
 ) {
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
@@ -127,7 +127,7 @@ func (m *ConversationSummaryType) FetchProfileSummaries(
 		lastComment := m.LastComment.(LastComment)
 
 		profile, status, err =
-			GetProfileSummary(siteID, lastComment.CreatedById)
+			GetProfileSummary(siteID, lastComment.CreatedByID)
 		if err != nil {
 			return status, err
 		}
@@ -149,7 +149,7 @@ func (m *ConversationType) Insert(siteID int64, profileID int64) (int, error) {
 	dupeKey := "dupe_" + h.Md5sum(
 		strconv.FormatInt(m.MicrocosmID, 10)+
 			m.Title+
-			strconv.FormatInt(m.Meta.CreatedById, 10),
+			strconv.FormatInt(m.Meta.CreatedByID, 10),
 	)
 	v, ok := c.CacheGetInt64(dupeKey)
 	if ok {
@@ -195,7 +195,7 @@ INSERT INTO conversations (
 		m.MicrocosmID,
 		m.Title,
 		m.Meta.Created,
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 		m.ViewCount,
 
 		m.Meta.Flags.Deleted,
@@ -464,7 +464,7 @@ SELECT c.conversation_id
 		&m.MicrocosmID,
 		&m.Title,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 
 		&m.Meta.EditedNullable,
 		&m.Meta.EditedByNullable,
@@ -572,7 +572,7 @@ SELECT conversation_id
 		&m.MicrocosmID,
 		&m.Title,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 		&m.Meta.Flags.Sticky,
 		&m.Meta.Flags.Open,
 		&m.Meta.Flags.Deleted,

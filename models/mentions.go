@@ -293,7 +293,7 @@ func ProcessMention(
 	update.ForProfileID = profileID
 	update.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
 	update.ItemID = commentID
-	update.Meta.CreatedById = createdBy
+	update.Meta.CreatedByID = createdBy
 	_, err := update.insert(tx)
 	if err != nil {
 		glog.Errorf("%s %+v", "update.insert(tx)", err)

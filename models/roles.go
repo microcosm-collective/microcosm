@@ -138,7 +138,7 @@ func (m *RoleType) Insert(siteID int64, profileID int64) (int, error) {
 	dupeKey := "dupe_" + h.Md5sum(
 		strconv.FormatInt(m.MicrocosmID, 10)+
 			m.Title+
-			strconv.FormatInt(m.Meta.CreatedById, 10),
+			strconv.FormatInt(m.Meta.CreatedByID, 10),
 	)
 
 	v, ok := c.CacheGetInt64(dupeKey)
@@ -170,7 +170,7 @@ INSERT INTO roles (
 		m.SiteID,
 		m.MicrocosmIDNullable,
 		m.Meta.Created,
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 
 		m.IsModerator,
 		m.IsBanned,
@@ -518,7 +518,7 @@ SELECT role_id
 		&m.ID,
 		&m.Title,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 		&m.Meta.EditedNullable,
 
 		&m.Meta.EditedByNullable,
@@ -654,7 +654,7 @@ func GetRoleSummary(
 // FetchProfileSummaries populates the profile summaries for a role
 func (m *RoleType) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}

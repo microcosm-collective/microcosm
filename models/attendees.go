@@ -131,12 +131,12 @@ func (m *AttendeeType) FetchProfileSummaries(siteID int64) (int, error) {
 	}
 	m.Profile = profile
 
-	profile, status, err = GetProfileSummary(siteID, m.Meta.CreatedById)
+	profile, status, err = GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		glog.Errorf(
 			"GetProfileSummary(%d, %d) %+v",
 			siteID,
-			m.Meta.CreatedById,
+			m.Meta.CreatedByID,
 			err,
 		)
 		return status, err
@@ -296,7 +296,7 @@ INSERT INTO attendees (
 		m.EventID,
 		m.ProfileID,
 		m.Meta.Created,
-		m.Meta.CreatedById,
+		m.Meta.CreatedByID,
 		m.RSVPID,
 		m.RSVPd,
 	)
@@ -448,7 +448,7 @@ WHERE attendee_id = $1`,
 		&m.EventID,
 		&m.ProfileID,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 		&m.Meta.EditedNullable,
 		&m.Meta.EditedByNullable,
 		&m.Meta.EditReasonNullable,

@@ -286,7 +286,7 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 // FetchProfileSummaries populates a partially populated site
 func (m *SiteType) FetchProfileSummaries() (int, error) {
 
-	profile, status, err := GetProfileSummary(m.ID, m.Meta.CreatedById)
+	profile, status, err := GetProfileSummary(m.ID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
@@ -697,7 +697,7 @@ SELECT s.site_id
 		&m.SubdomainKey,
 		&m.DomainNullable,
 		&m.Meta.Created,
-		&m.Meta.CreatedById,
+		&m.Meta.CreatedByID,
 		&m.OwnedByID,
 		&m.ThemeID,
 		&m.LogoURL,

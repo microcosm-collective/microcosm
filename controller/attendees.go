@@ -114,7 +114,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 	// Populate where applicable from auth and context
 	for i := range ems {
 		ems[i].EventID = eventId
-		ems[i].Meta.CreatedById = c.Auth.ProfileID
+		ems[i].Meta.CreatedByID = c.Auth.ProfileID
 		ems[i].Meta.Created = t
 		ems[i].Meta.EditedNullable = pq.NullTime{Time: t, Valid: true}
 		ems[i].Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileID, Valid: true}

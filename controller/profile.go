@@ -146,7 +146,7 @@ func (ctl *ProfileController) Read(c *models.Context) {
 		if watcherId > 0 {
 			m.Meta.Flags.Watched = true
 			m.Meta.Flags.SendEmail = sendEmail
-			m.Meta.Flags.SendSms = sendSms
+			m.Meta.Flags.SendSMS = sendSms
 		}
 
 		if c.Auth.ProfileID == m.ID {
