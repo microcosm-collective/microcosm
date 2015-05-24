@@ -55,7 +55,7 @@ func (ctl *AttributeController) Read(c *models.Context) {
 		return
 	}
 
-	attributeId, status, err := models.GetAttributeId(itemTypeId, itemId, c.RouteVars["key"])
+	attributeId, status, err := models.GetAttributeID(itemTypeId, itemId, c.RouteVars["key"])
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -113,7 +113,7 @@ func (ctl *AttributeController) Update(c *models.Context) {
 	audit.Replace(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttribute],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
@@ -141,13 +141,13 @@ func (ctl *AttributeController) Delete(c *models.Context) {
 	m := models.AttributeType{}
 	m.Key = key
 
-	attributeId, status, err := models.GetAttributeId(itemTypeId, itemId, m.Key)
+	attributeID, status, err := models.GetAttributeID(itemTypeId, itemId, m.Key)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	m.Id = attributeId
+	m.ID = attributeID
 
 	status, err = m.Delete()
 	if err != nil {
@@ -158,7 +158,7 @@ func (ctl *AttributeController) Delete(c *models.Context) {
 	audit.Delete(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttribute],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,

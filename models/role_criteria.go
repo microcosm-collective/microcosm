@@ -230,30 +230,30 @@ func (m *RoleCriterionType) Validate(exists bool) (int, error) {
 	switch m.Value.(type) {
 	case int:
 		m.ValueString = strconv.FormatInt(int64(m.Value.(int)), 10)
-		m.Type = NUMBER
+		m.Type = tNumber
 	case int32:
 		m.ValueString = strconv.FormatInt(int64(m.Value.(int32)), 10)
-		m.Type = NUMBER
+		m.Type = tNumber
 	case int64:
 		m.ValueString = strconv.FormatInt(m.Value.(int64), 10)
-		m.Type = NUMBER
+		m.Type = tNumber
 	case float32:
 		m.ValueString =
 			strconv.FormatFloat(float64(m.Value.(float32)), 'f', -1, 64)
-		m.Type = NUMBER
+		m.Type = tNumber
 	case float64:
 		m.ValueString = strconv.FormatFloat(m.Value.(float64), 'f', -1, 64)
-		m.Type = NUMBER
+		m.Type = tNumber
 	case string:
 		m.ValueString = strings.Trim(m.Value.(string), " ")
-		m.Type = STRING
+		m.Type = tString
 	case bool:
 		if m.Value.(bool) {
 			m.ValueString = "true"
 		} else {
 			m.ValueString = "false"
 		}
-		m.Type = BOOLEAN
+		m.Type = tBoolean
 	default:
 		return http.StatusBadRequest,
 			fmt.Errorf("The type of `value` cannot be determined or is invalid")
@@ -293,7 +293,7 @@ func (m *RoleCriterionType) Validate(exists bool) (int, error) {
 			}
 
 			switch m.Type {
-			case STRING:
+			case tString:
 				var found bool
 				for _, v := range StringPredicates {
 					if v == m.Predicate {
@@ -306,7 +306,7 @@ func (m *RoleCriterionType) Validate(exists bool) (int, error) {
 							"The predicate for the attribute type is not valid",
 						)
 				}
-			case NUMBER:
+			case tNumber:
 				var found bool
 				for _, v := range Int64Predicates {
 					if v == m.Predicate {
@@ -319,7 +319,7 @@ func (m *RoleCriterionType) Validate(exists bool) (int, error) {
 							"The predicate for the attribute type is not valid",
 						)
 				}
-			case BOOLEAN:
+			case tBoolean:
 				var found bool
 				for _, v := range BoolPredicates {
 					if v == m.Predicate {
@@ -599,15 +599,15 @@ SELECT or_group
 	}
 
 	switch m.Type {
-	case STRING:
+	case tString:
 		m.Value = m.ValueString
-	case DATE:
+	case tDate:
 		s, _ := strconv.ParseFloat(m.ValueString, 64)
 		m.Value = s
-	case NUMBER:
+	case tNumber:
 		s, _ := strconv.ParseFloat(m.ValueString, 64)
 		m.Value = s
-	case BOOLEAN:
+	case tBoolean:
 		s, _ := strconv.ParseBool(m.ValueString)
 		m.Value = s
 	default:

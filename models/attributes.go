@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -17,25 +16,28 @@ import (
 )
 
 const (
-	STRING  string = "string"
-	DATE    string = "date"
-	NUMBER  string = "number"
-	BOOLEAN string = "boolean"
+	tString  string = "string"
+	tDate    string = "date"
+	tNumber  string = "number"
+	tBoolean string = "boolean"
 )
 
+// AttributeTypes is a map of valid types of attributes
 var AttributeTypes = map[string]int64{
-	STRING:  1,
-	DATE:    2,
-	NUMBER:  3,
-	BOOLEAN: 4,
+	tString:  1,
+	tDate:    2,
+	tNumber:  3,
+	tBoolean: 4,
 }
 
+// AttributesType is a collection of attributes
 type AttributesType struct {
 	Attributes h.ArrayType `json:"attributes"`
 }
 
+// AttributeType is an attribute
 type AttributeType struct {
-	Id      int64           `json:"-"`
+	ID      int64           `json:"-"`
 	Key     string          `json:"key"`
 	Type    string          `json:"-"`
 	Value   interface{}     `json:"value"`
@@ -45,6 +47,7 @@ type AttributeType struct {
 	Boolean sql.NullBool    `json:"-"`
 }
 
+// AttributeRequest is a wrapper for a request for an attribute
 type AttributeRequest struct {
 	Item   AttributeType
 	Err    error
@@ -52,89 +55,95 @@ type AttributeRequest struct {
 	Seq    int
 }
 
+// AttributeRequestBySeq is a collection of attribute requests
 type AttributeRequestBySeq []AttributeRequest
 
-func (v AttributeRequestBySeq) Len() int           { return len(v) }
-func (v AttributeRequestBySeq) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
+// Len is the length of the collection
+func (v AttributeRequestBySeq) Len() int { return len(v) }
+
+// Swap exchanges two items in the collection
+func (v AttributeRequestBySeq) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+
+// Less determines if an attribute is less by sequence than another
 func (v AttributeRequestBySeq) Less(i, j int) bool { return v[i].Seq < v[j].Seq }
 
+// Validate returns true if the attribute is valid
 func (m *AttributeType) Validate() (int, error) {
-
 	m.Key = SanitiseText(m.Key)
 
 	if strings.Trim(m.Key, " ") == "" {
 		return http.StatusBadRequest,
-			errors.New("Attribute key cannot be null or empty")
+			fmt.Errorf("Attribute key cannot be null or empty")
 	}
 
 	switch m.Value.(type) {
 	case int:
 		m.Number =
 			sql.NullFloat64{Float64: float64(m.Value.(int)), Valid: true}
-		m.Type = NUMBER
+		m.Type = tNumber
 	case int32:
 		m.Number =
 			sql.NullFloat64{Float64: float64(m.Value.(int32)), Valid: true}
-		m.Type = NUMBER
+		m.Type = tNumber
 	case int64:
 		m.Number =
 			sql.NullFloat64{Float64: float64(m.Value.(int64)), Valid: true}
-		m.Type = NUMBER
+		m.Type = tNumber
 	case float32:
 		m.Number =
 			sql.NullFloat64{Float64: float64(m.Value.(float32)), Valid: true}
-		m.Type = NUMBER
+		m.Type = tNumber
 	case float64:
 		m.Number =
 			sql.NullFloat64{Float64: m.Value.(float64), Valid: true}
-		m.Type = NUMBER
+		m.Type = tNumber
 	case string:
 		m.String =
 			sql.NullString{
 				String: strings.Trim(SanitiseText(m.Value.(string)), " "),
 				Valid:  true,
 			}
-		m.Type = STRING
+		m.Type = tString
 	case bool:
 		m.Boolean =
 			sql.NullBool{Bool: m.Value.(bool), Valid: true}
-		m.Type = BOOLEAN
+		m.Type = tBoolean
 	default:
 		return http.StatusBadRequest,
-			errors.New("the type of value cannot be determined or is invalid")
+			fmt.Errorf("the type of value cannot be determined or is invalid")
 	}
 
 	switch m.Type {
-	case STRING:
+	case tString:
 		if m.String.String == "" {
-			return http.StatusBadRequest, errors.New("value is null or empty")
+			return http.StatusBadRequest, fmt.Errorf("value is null or empty")
 		}
 
 		t, err := time.Parse("2006-01-02", m.String.String)
 		if err == nil {
 			m.Date = pq.NullTime{Time: t, Valid: true}
-			m.Type = DATE
+			m.Type = tDate
 			m.String = sql.NullString{}
 		}
-	case NUMBER:
+	case tNumber:
 		if m.Number.Float64 == math.MaxFloat64 {
 			return http.StatusBadRequest,
-				errors.New("type = number, but number is null or empty")
+				fmt.Errorf("type = number, but number is null or empty")
 		}
 	}
 
 	return http.StatusOK, nil
 }
 
+// UpdateManyAttributes updates many attributes at once
 func UpdateManyAttributes(
-	itemTypeId int64,
-	itemId int64,
+	itemTypeID int64,
+	itemID int64,
 	ems []AttributeType,
 ) (
 	int,
 	error,
 ) {
-
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -142,7 +151,7 @@ func UpdateManyAttributes(
 	defer tx.Rollback()
 
 	for _, m := range ems {
-		status, err := m.upsert(tx, itemTypeId, itemId)
+		status, err := m.upsert(tx, itemTypeID, itemID)
 		if err != nil {
 			return status, err
 		}
@@ -151,20 +160,21 @@ func UpdateManyAttributes(
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %v", err.Error()))
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
-func (m *AttributeType) Update(itemTypeId int64, itemId int64) (int, error) {
+// Update updates a single attribute
+func (m *AttributeType) Update(itemTypeID int64, itemID int64) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	defer tx.Rollback()
 
-	status, err := m.upsert(tx, itemTypeId, itemId)
+	status, err := m.upsert(tx, itemTypeID, itemID)
 	if err != nil {
 		return status, err
 	}
@@ -172,7 +182,7 @@ func (m *AttributeType) Update(itemTypeId int64, itemId int64) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %v", err.Error()))
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -180,13 +190,12 @@ func (m *AttributeType) Update(itemTypeId int64, itemId int64) (int, error) {
 
 func (m *AttributeType) upsert(
 	tx *sql.Tx,
-	itemTypeId int64,
-	itemId int64,
+	itemTypeID int64,
+	itemID int64,
 ) (
 	int,
 	error,
 ) {
-
 	status, err := m.Validate()
 	if err != nil {
 		return status, err
@@ -205,8 +214,8 @@ WHERE attribute_id IN (
        WHERE item_type_id = $1
          AND item_id = $2
          AND key = $3)`,
-		itemTypeId,
-		itemId,
+		itemTypeID,
+		itemID,
 		m.Key,
 		AttributeTypes[m.Type],
 		m.String,
@@ -216,22 +225,18 @@ WHERE attribute_id IN (
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Error executing update: %v", err.Error()))
+			fmt.Errorf("Error executing update: %v", err.Error())
 	}
 
 	// If update was successful, we are done
 	if rowsAffected, _ := res.RowsAffected(); rowsAffected > 0 {
-
-		if itemTypeId == h.ItemTypes[h.ItemTypeProfile] {
-
-			status, err = FlushRoleMembersCacheByProfileID(tx, itemId)
+		if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
+			status, err = FlushRoleMembersCacheByProfileID(tx, itemID)
 			if err != nil {
 				return http.StatusInternalServerError,
-					errors.New(
-						fmt.Sprintf(
-							"Error flushing role members cache: %+v",
-							err,
-						),
+					fmt.Errorf(
+						"Error flushing role members cache: %+v",
+						err,
 					)
 			}
 		}
@@ -245,17 +250,15 @@ INSERT INTO attribute_keys (
 ) VALUES (
     $1, $2, $3
 ) RETURNING attribute_id`,
-		itemTypeId,
-		itemId,
+		itemTypeID,
+		itemID,
 		m.Key,
 	).Scan(
-		&m.Id,
+		&m.ID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error inserting data and returning ID: %+v", err),
-			)
+			fmt.Errorf("Error inserting data and returning ID: %+v", err)
 	}
 
 	res, err = tx.Exec(`
@@ -266,7 +269,7 @@ INSERT INTO attribute_values (
     $1, $2, $3, $4, $5,
     $6
 )`,
-		m.Id,
+		m.ID,
 		AttributeTypes[m.Type],
 		m.String,
 		m.Date,
@@ -275,31 +278,29 @@ INSERT INTO attribute_values (
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Error executing insert: %v", err.Error()))
+			fmt.Errorf("Error executing insert: %v", err.Error())
 	}
 
-	if itemTypeId == h.ItemTypes[h.ItemTypeProfile] {
-		status, err = FlushRoleMembersCacheByProfileID(tx, itemId)
+	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
+		status, err = FlushRoleMembersCacheByProfileID(tx, itemID)
 		if err != nil {
 			return http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Error flushing role members cache: %+v", err),
-				)
+				fmt.Errorf("Error flushing role members cache: %+v", err)
 		}
 	}
 
 	return http.StatusOK, nil
 }
 
+// DeleteManyAttributes removes many attributes
 func DeleteManyAttributes(
-	itemTypeId int64,
-	itemId int64,
+	itemTypeID int64,
+	itemID int64,
 	ms []AttributeType,
 ) (
 	int,
 	error,
 ) {
-
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -307,22 +308,21 @@ func DeleteManyAttributes(
 	defer tx.Rollback()
 
 	for _, m := range ms {
-
 		var (
-			attributeId int64
+			attributeID int64
 			status      int
 		)
 
-		if m.Id > 0 {
-			attributeId = m.Id
+		if m.ID > 0 {
+			attributeID = m.ID
 		} else {
-			attributeId, status, err = GetAttributeId(itemTypeId, itemId, m.Key)
+			attributeID, status, err = GetAttributeID(itemTypeID, itemID, m.Key)
 			if err != nil {
 				return status, err
 			}
 		}
 
-		status, err := m.delete(tx, attributeId)
+		status, err := m.delete(tx, attributeID)
 		if err != nil {
 			return status, err
 		}
@@ -331,12 +331,13 @@ func DeleteManyAttributes(
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %v", err.Error()))
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
+// Delete removes a single attribute
 func (m *AttributeType) Delete() (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
@@ -344,7 +345,7 @@ func (m *AttributeType) Delete() (int, error) {
 	}
 	defer tx.Rollback()
 
-	status, err := m.delete(tx, m.Id)
+	status, err := m.delete(tx, m.ID)
 	if err != nil {
 		return status, err
 	}
@@ -352,40 +353,39 @@ func (m *AttributeType) Delete() (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Transaction failed: %v", err.Error()))
+			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
 }
 
-func (m *AttributeType) delete(tx *sql.Tx, attributeId int64) (int, error) {
-
+func (m *AttributeType) delete(tx *sql.Tx, attributeID int64) (int, error) {
 	_, err := tx.Exec(`
 DELETE FROM attribute_values
  WHERE attribute_id = $1`,
-		attributeId,
+		attributeID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Failed to delete attribute value: %v", err))
+			fmt.Errorf("Failed to delete attribute value: %v", err)
 	}
 
 	_, err = tx.Exec(`
 DELETE FROM attribute_keys
  WHERE attribute_id = $1`,
-		attributeId,
+		attributeID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			errors.New(fmt.Sprintf("Failed to delete attribute key: %+v", err))
+			fmt.Errorf("Failed to delete attribute key: %+v", err)
 	}
 
 	return http.StatusOK, nil
 }
 
+// HandleAttributeRequest fetches an attribute to fulfil a request
 func HandleAttributeRequest(id int64, seq int, out chan<- AttributeRequest) {
 	item, status, err := GetAttribute(id)
-
 	response := AttributeRequest{
 		Item:   item,
 		Status: status,
@@ -395,22 +395,22 @@ func HandleAttributeRequest(id int64, seq int, out chan<- AttributeRequest) {
 	out <- response
 }
 
-func GetAttributeId(
-	itemTypeId int64,
-	itemId int64,
+// GetAttributeID fetches the id of an attribute
+func GetAttributeID(
+	itemTypeID int64,
+	itemID int64,
 	key string,
 ) (
 	int64,
 	int,
 	error,
 ) {
-
 	db, err := h.GetConnection()
 	if err != nil {
 		return 0, http.StatusInternalServerError, err
 	}
 
-	var attrId int64
+	var attrID int64
 
 	err = db.QueryRow(`
 SELECT attribute_id
@@ -419,34 +419,33 @@ SELECT attribute_id
    AND item_id = $2
    AND key = $3
 `,
-		itemTypeId,
-		itemId,
+		itemTypeID,
+		itemID,
 		key,
 	).Scan(
-		&attrId,
+		&attrID,
 	)
 	if err == sql.ErrNoRows {
-		return attrId, http.StatusNotFound, errors.New("Attribute not found.")
+		return attrID, http.StatusNotFound, fmt.Errorf("Attribute not found.")
 
 	} else if err != nil {
-		return attrId, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return attrID, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
-	return attrId, http.StatusOK, nil
+	return attrID, http.StatusOK, nil
 }
 
+// GetAttribute returns an attribute
 func GetAttribute(id int64) (AttributeType, int, error) {
-
 	db, err := h.GetConnection()
 	if err != nil {
 		return AttributeType{}, http.StatusInternalServerError, err
 	}
 
-	var typeId int64
+	var typeID int64
 
-	m := AttributeType{Id: id}
+	m := AttributeType{ID: id}
 	err = db.QueryRow(`
 SELECT k.key
       ,v.value_type_id
@@ -461,70 +460,68 @@ SELECT k.key
 		id,
 	).Scan(
 		&m.Key,
-		&typeId,
+		&typeID,
 		&m.String,
 		&m.Date,
 		&m.Number,
 		&m.Boolean,
 	)
 	if err == sql.ErrNoRows {
-		return AttributeType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Attribute not found: %v", err.Error()),
-		)
+		return AttributeType{}, http.StatusNotFound,
+			fmt.Errorf("Attribute not found: %v", err.Error())
 	} else if err != nil {
-		return AttributeType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return AttributeType{}, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
-	typeStr, err := h.GetMapStringFromInt(AttributeTypes, typeId)
+	typeStr, err := h.GetMapStringFromInt(AttributeTypes, typeID)
 	if err != nil {
-		return AttributeType{}, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Type is not a valid attribute type: %v", err.Error()),
-		)
+		return AttributeType{}, http.StatusInternalServerError,
+			fmt.Errorf("Type is not a valid attribute type: %v", err.Error())
 	}
 	m.Type = typeStr
 
 	switch m.Type {
-	case STRING:
+	case tString:
 		if m.String.Valid {
 			m.Value = m.String.String
 		} else {
 			return AttributeType{}, http.StatusInternalServerError,
-				errors.New("Type is string, but value is invalid")
+				fmt.Errorf("Type is string, but value is invalid")
 		}
-	case DATE:
+	case tDate:
 		if m.Date.Valid {
 			m.Value = m.Date.Time.Format("2006-01-02")
 		} else {
 			return AttributeType{}, http.StatusInternalServerError,
-				errors.New("Type is date, but value is invalid")
+				fmt.Errorf("Type is date, but value is invalid")
 		}
-	case NUMBER:
+	case tNumber:
 		if m.Number.Valid {
 			m.Value = m.Number.Float64
 		} else {
 			return AttributeType{}, http.StatusInternalServerError,
-				errors.New("Type is number, but value is invalid")
+				fmt.Errorf("Type is number, but value is invalid")
 		}
-	case BOOLEAN:
+	case tBoolean:
 		if m.Boolean.Valid {
 			m.Value = m.Boolean.Bool
 		} else {
 			return AttributeType{}, http.StatusInternalServerError,
-				errors.New("Type is boolean, but value is invalid")
+				fmt.Errorf("Type is boolean, but value is invalid")
 		}
 	default:
 		return AttributeType{}, http.StatusInternalServerError,
-			errors.New("Type was not one of string|date|number|boolean")
+			fmt.Errorf("Type was not one of string|date|number|boolean")
 	}
 
 	return m, http.StatusOK, nil
 }
 
+// GetAttributes fetches a collection of attributes
 func GetAttributes(
-	itemTypeId int64,
-	itemId int64,
+	itemTypeID int64,
+	itemID int64,
 	limit int64,
 	offset int64,
 ) (
@@ -534,7 +531,6 @@ func GetAttributes(
 	int,
 	error,
 ) {
-
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
@@ -550,15 +546,14 @@ SELECT COUNT(*) OVER() AS total
  ORDER BY key ASC
  LIMIT $3
 OFFSET $4`,
-		itemTypeId,
-		itemId,
+		itemTypeID,
+		itemID,
 		limit,
 		offset,
 	)
 	if err != nil {
-		return []AttributeType{}, 0, 0, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Database query failed: %v", err.Error()),
-		)
+		return []AttributeType{}, 0, 0, http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -572,9 +567,8 @@ OFFSET $4`,
 			&id,
 		)
 		if err != nil {
-			return []AttributeType{}, 0, 0, http.StatusInternalServerError, errors.New(
-				fmt.Sprintf("Row parsing error: %v", err.Error()),
-			)
+			return []AttributeType{}, 0, 0, http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
 		ids = append(ids, id)
@@ -582,9 +576,8 @@ OFFSET $4`,
 	}
 	err = rows.Err()
 	if err != nil {
-		return []AttributeType{}, 0, 0, http.StatusInternalServerError, errors.New(
-			fmt.Sprintf("Error fetching rows: %v", err.Error()),
-		)
+		return []AttributeType{}, 0, 0, http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -626,12 +619,11 @@ OFFSET $4`,
 	maxOffset := h.GetMaxOffset(total, limit)
 
 	if offset > maxOffset {
-		return []AttributeType{}, 0, 0, http.StatusBadRequest, errors.New(
-			fmt.Sprintf(
-				"not enough records, offset (%d) would return an empty page.",
+		return []AttributeType{}, 0, 0, http.StatusBadRequest,
+			fmt.Errorf(
+				"not enough records, offset (%d) would return an empty page",
 				offset,
-			),
-		)
+			)
 	}
 
 	return ems, total, pages, http.StatusOK, nil
