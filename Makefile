@@ -62,7 +62,7 @@ dep_update:
 	@go get -u github.com/golang/glog
 	@go get -u github.com/gorilla/mux
 	@go get -u github.com/lib/pq
-	#@go get -u github.com/microcosm-cc/bluemonday
+	@go get -u github.com/microcosm-cc/bluemonday
 	@go get -u github.com/microcosm-cc/goconfig
 	@go get -u github.com/microcosm-cc/exifutil
 	@go get -u github.com/mitchellh/goamz/aws

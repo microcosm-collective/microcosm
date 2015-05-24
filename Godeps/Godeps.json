@@ -67,20 +67,20 @@
 		},
 		{
 			"ImportPath": "github.com/russross/blackfriday",
-			"Comment": "v1.2-69-g4bed88b",
-			"Rev": "4bed88b4fd00fbb66b49b0f38ed3dd0b902ab515"
+			"Comment": "v1.2-70-g0bf420d",
+			"Rev": "0bf420d72ab408951224713a6c88c43397835109"
 		},
 		{
 			"ImportPath": "github.com/rwcarlsen/goexif/exif",
-			"Rev": "07696a806c8bc37bcff4af76fbc3f9e44a6941fc"
+			"Rev": "709fab3d192d7c62f86043caff1e7e3fb0f42bd8"
 		},
 		{
 			"ImportPath": "github.com/rwcarlsen/goexif/tiff",
-			"Rev": "07696a806c8bc37bcff4af76fbc3f9e44a6941fc"
+			"Rev": "709fab3d192d7c62f86043caff1e7e3fb0f42bd8"
 		},
 		{
 			"ImportPath": "github.com/shurcooL/sanitized_anchor_name",
-			"Rev": "8e87604bec3c645a4eeaee97dfec9f25811ff20d"
+			"Rev": "11a20b799bf22a02808c862eb6ca09f7fb38f84a"
 		},
 		{
 			"ImportPath": "github.com/vaughan0/go-ini",
@@ -92,15 +92,15 @@
 		},
 		{
 			"ImportPath": "golang.org/x/image/bmp",
-			"Rev": "4a3ed0c1249ebedab3c715c000034638f1cad002"
+			"Rev": "d8e202c6ce59fad0017414839b6648851d10767e"
 		},
 		{
 			"ImportPath": "golang.org/x/image/tiff",
-			"Rev": "4a3ed0c1249ebedab3c715c000034638f1cad002"
+			"Rev": "d8e202c6ce59fad0017414839b6648851d10767e"
 		},
 		{
 			"ImportPath": "golang.org/x/net/html",
-			"Rev": "e0403b4e005737430c05a57aac078479844f919c"
+			"Rev": "621fff363a1d9ad7fdd0bfa9d80a42881267deb4"
 		}
 	]
 }
