@@ -147,7 +147,7 @@ func (m *HuddleType) Import(siteID int64) (int, error) {
 // Insert saves a huddle to the database
 func (m *HuddleType) Insert(siteID int64) (int, error) {
 
-	dupeKey := "dupe_" + h.Md5sum(
+	dupeKey := "dupe_" + h.MD5Sum(
 		m.Title+
 			strconv.FormatInt(m.Meta.CreatedByID, 10),
 	)

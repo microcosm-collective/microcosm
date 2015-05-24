@@ -1251,7 +1251,7 @@ func MakeGravatarURL(email string) string {
 	return fmt.Sprintf(
 		"%s%s?d=identicon",
 		URLGravatar,
-		h.Md5sum(strings.ToLower(strings.Trim(email, " "))),
+		h.MD5Sum(strings.ToLower(strings.Trim(email, " "))),
 	)
 }
 

@@ -222,7 +222,7 @@ func (m *CommentSummaryType) Insert(siteID int64) (int, error) {
 	}
 
 	// Dupe checking
-	dupeKey := "dupe_" + h.Md5sum(
+	dupeKey := "dupe_" + h.MD5Sum(
 		strconv.FormatInt(m.ItemTypeID, 10)+
 			strconv.FormatInt(m.ItemID, 10)+
 			m.Markdown+

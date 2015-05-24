@@ -327,7 +327,7 @@ func (m *EventType) Insert(siteID int64, profileID int64) (int, error) {
 		where = m.WhereNullable.String
 	}
 
-	dupeKey := "dupe_" + h.Md5sum(
+	dupeKey := "dupe_" + h.MD5Sum(
 		strconv.FormatInt(m.MicrocosmID, 10)+
 			m.Title+
 			when+

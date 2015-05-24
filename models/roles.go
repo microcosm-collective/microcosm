@@ -135,7 +135,7 @@ func (m *RoleType) Insert(siteID int64, profileID int64) (int, error) {
 		return status, err
 	}
 
-	dupeKey := "dupe_" + h.Md5sum(
+	dupeKey := "dupe_" + h.MD5Sum(
 		strconv.FormatInt(m.MicrocosmID, 10)+
 			m.Title+
 			strconv.FormatInt(m.Meta.CreatedByID, 10),

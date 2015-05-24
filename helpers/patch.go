@@ -2,13 +2,14 @@ package helpers
 
 import (
 	"database/sql"
-	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/lib/pq"
 )
 
+// PatchType describes a JSON PATCH
 type PatchType struct {
 	Operation string         `json:"op"`
 	Path      string         `json:"path"`
@@ -20,7 +21,7 @@ type PatchType struct {
 	Time      pq.NullTime    `json:"-"`
 }
 
-// Partially implements http://tools.ietf.org/html/rfc6902
+// TestPatch partially implements http://tools.ietf.org/html/rfc6902
 //
 // Patch examples:
 // { "op": "test", "path": "/a/b/c", "value": "foo" },
@@ -31,48 +32,49 @@ type PatchType struct {
 // { "op": "copy", "from": "/a/b/d", "path": "/a/b/e" }
 func TestPatch(patches []PatchType) (int, error) {
 	if 0 == len(patches) {
-		return http.StatusBadRequest, errors.New("Patch: no patches were provided")
+		return http.StatusBadRequest, fmt.Errorf("Patch: no patches were provided")
 	}
 
 	for _, v := range patches {
 		switch v.Operation {
 		case "add":
 			if strings.Trim(v.Path, " ") == "" || v.RawValue == nil {
-				return http.StatusBadRequest, errors.New("Patch: add operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("Patch: add operation incorrectly specified")
 			}
-			return http.StatusNotImplemented, errors.New("Patch: json-patch 'add' operation not implemented")
+			return http.StatusNotImplemented, fmt.Errorf("Patch: json-patch 'add' operation not implemented")
 		case "copy":
 			if strings.Trim(v.Path, " ") == "" || strings.Trim(v.From, " ") == "" {
-				return http.StatusBadRequest, errors.New("Patch: copy operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("Patch: copy operation incorrectly specified")
 			}
-			return http.StatusNotImplemented, errors.New("Patch: json-patch 'copy' operation not implemented")
+			return http.StatusNotImplemented, fmt.Errorf("Patch: json-patch 'copy' operation not implemented")
 		case "move":
 			if strings.Trim(v.Path, " ") == "" || strings.Trim(v.From, " ") == "" {
-				return http.StatusBadRequest, errors.New("Patch: move operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("Patch: move operation incorrectly specified")
 			}
-			return http.StatusNotImplemented, errors.New("Patch: json-patch 'move' operation not implemented")
+			return http.StatusNotImplemented, fmt.Errorf("Patch: json-patch 'move' operation not implemented")
 		case "remove":
 			if strings.Trim(v.Path, " ") == "" {
-				return http.StatusBadRequest, errors.New("Patch: remove operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("Patch: remove operation incorrectly specified")
 			}
-			return http.StatusNotImplemented, errors.New("Patch: json-patch 'remove' operation not implemented")
+			return http.StatusNotImplemented, fmt.Errorf("Patch: json-patch 'remove' operation not implemented")
 		case "replace":
 			if strings.Trim(v.Path, " ") == "" || v.RawValue == nil {
-				return http.StatusBadRequest, errors.New("Patch: replace operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("Patch: replace operation incorrectly specified")
 			}
 		case "test":
 			if strings.Trim(v.Path, " ") == "" || v.RawValue == nil {
-				return http.StatusBadRequest, errors.New("Patch: test operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("Patch: test operation incorrectly specified")
 			}
-			return http.StatusNotImplemented, errors.New("Patch: json-patch 'test' operation not implemented")
+			return http.StatusNotImplemented, fmt.Errorf("Patch: json-patch 'test' operation not implemented")
 		default:
-			return http.StatusBadRequest, errors.New("Patch: unsupported operation in patch")
+			return http.StatusBadRequest, fmt.Errorf("Patch: unsupported operation in patch")
 		}
 	}
 
 	return http.StatusOK, nil
 }
 
+// ScanRawValue scans a PATCH value
 func (p *PatchType) ScanRawValue() (int, error) {
 
 	switch p.RawValue.(type) {
@@ -81,7 +83,7 @@ func (p *PatchType) ScanRawValue() (int, error) {
 	case string:
 		p.String = sql.NullString{String: p.RawValue.(string), Valid: true}
 	default:
-		return http.StatusNotImplemented, errors.New("Patch: Currently only values of type boolean and string patchable")
+		return http.StatusNotImplemented, fmt.Errorf("Patch: Currently only values of type boolean and string patchable")
 	}
 
 	return http.StatusOK, nil
