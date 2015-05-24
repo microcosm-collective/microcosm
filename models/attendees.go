@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -17,25 +16,28 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
-// The numerical order is implicitly important (it's the sort field)
-var RsvpStates = map[string]int64{
+// RSVPStates is a map of reply types, the numerical order is implicitly
+// important (it's the sort field)
+var RSVPStates = map[string]int64{
 	"yes":     1,
 	"maybe":   2,
 	"invited": 3,
 	"no":      4,
 }
 
+// AttendeesType is a collection of attendees
 type AttendeesType struct {
 	Attendees h.ArrayType    `json:"attendees"`
 	Meta      h.CoreMetaType `json:"meta"`
 }
 
+// AttendeeType is an attendee on an event
 type AttendeeType struct {
-	Id        int64       `json:"-"`
-	EventId   int64       `json:"-"`
-	ProfileId int64       `json:"profileId,omitempty"`
+	ID        int64       `json:"-"`
+	EventID   int64       `json:"-"`
+	ProfileID int64       `json:"profileId,omitempty"`
 	Profile   interface{} `json:"profile"`
-	RSVPId    int64       `json:"-"`
+	RSVPID    int64       `json:"-"`
 	RSVP      string      `json:"rsvp"`
 	RSVPd     pq.NullTime `json:"-"`
 	RSVPdOn   string      `json:"rsvpdOn,omitempty"`
@@ -43,6 +45,7 @@ type AttendeeType struct {
 	Meta h.DefaultNoFlagsMetaType `json:"meta"`
 }
 
+// AttendeeRequest is a request for an attendee
 type AttendeeRequest struct {
 	Item   AttendeeType
 	Err    error
@@ -50,82 +53,89 @@ type AttendeeRequest struct {
 	Seq    int
 }
 
+// AttendeeRequestBySeq is a collection of requests for attendees
 type AttendeeRequestBySeq []AttendeeRequest
 
-func (v AttendeeRequestBySeq) Len() int           { return len(v) }
-func (v AttendeeRequestBySeq) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
+// Len is the length of the collection
+func (v AttendeeRequestBySeq) Len() int { return len(v) }
+
+// Swap exchanges two items in the collection
+func (v AttendeeRequestBySeq) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+
+// Less determines if an item is less then another by sequence
 func (v AttendeeRequestBySeq) Less(i, j int) bool { return v[i].Seq < v[j].Seq }
 
+// Validate returns true if the attendee is valid
 func (m *AttendeeType) Validate(tx *sql.Tx) (int, error) {
-
-	if m.ProfileId <= 0 {
+	if m.ProfileID <= 0 {
 		glog.Infoln("m.ProfileId <= 0")
 		return http.StatusBadRequest,
-			errors.New("You must specify the attendees Profile ID")
+			fmt.Errorf("You must specify the attendees Profile ID")
 	}
 
 	if strings.Trim(m.RSVP, " ") == "" {
 		m.RSVP = "invited"
 	}
 
-	if _, inList := RsvpStates[m.RSVP]; !inList {
-		glog.Infoln("inList := RsvpStates[m.RSVP]; !inList")
+	if _, inList := RSVPStates[m.RSVP]; !inList {
+		glog.Infoln("inList := RSVPStates[m.RSVP]; !inList")
 		return http.StatusBadRequest,
-			errors.New("You must specify a valid rsvp value " +
+			fmt.Errorf("You must specify a valid rsvp value " +
 				"('invited', 'yes', 'maybe', or 'no')")
 	}
 
 	if m.RSVP == "yes" {
 		//check to see if event is full
 
-		var spaces, rsvp_limit int64
+		var spaces, rsvpLimit int64
 		err := tx.QueryRow(`
 SELECT rsvp_spaces
       ,rsvp_limit
   FROM events
  WHERE event_id = $1`,
-			m.EventId,
+			m.EventID,
 		).Scan(
 			&spaces,
-			&rsvp_limit,
+			&rsvpLimit,
 		)
 		if err != nil {
-			glog.Errorf("tx.QueryRow(%d).Scan() %+v", m.EventId, err)
+			glog.Errorf("tx.QueryRow(%d).Scan() %+v", m.EventID, err)
 			return http.StatusInternalServerError,
-				errors.New("Error fetching row")
+				fmt.Errorf("Error fetching row")
 		}
 
-		if spaces <= 0 && rsvp_limit != 0 {
-			glog.Infoln("spaces <= 0 && rsvp_limit != 0")
-			return http.StatusBadRequest, errors.New("Event is full")
+		if spaces <= 0 && rsvpLimit != 0 {
+			glog.Infoln("spaces <= 0 && rsvpLimit != 0")
+			return http.StatusBadRequest, fmt.Errorf("Event is full")
 		}
 	}
 
 	m.RSVPd = m.Meta.EditedNullable
-	m.RSVPId = RsvpStates[m.RSVP]
+	m.RSVPID = RSVPStates[m.RSVP]
 
 	return http.StatusOK, nil
 }
 
-func (m *AttendeeType) FetchProfileSummaries(siteId int64) (int, error) {
+// FetchProfileSummaries populates a partially populated struct
+func (m *AttendeeType) FetchProfileSummaries(siteID int64) (int, error) {
 
-	profile, status, err := GetProfileSummary(siteId, m.ProfileId)
+	profile, status, err := GetProfileSummary(siteID, m.ProfileID)
 	if err != nil {
 		glog.Errorf(
 			"GetProfileSummary(%d, %d) %+v",
-			siteId,
-			m.ProfileId,
+			siteID,
+			m.ProfileID,
 			err,
 		)
 		return status, err
 	}
 	m.Profile = profile
 
-	profile, status, err = GetProfileSummary(siteId, m.Meta.CreatedById)
+	profile, status, err = GetProfileSummary(siteID, m.Meta.CreatedById)
 	if err != nil {
 		glog.Errorf(
 			"GetProfileSummary(%d, %d) %+v",
-			siteId,
+			siteID,
 			m.Meta.CreatedById,
 			err,
 		)
@@ -135,11 +145,11 @@ func (m *AttendeeType) FetchProfileSummaries(siteId int64) (int, error) {
 
 	if m.Meta.EditedByNullable.Valid {
 		profile, status, err :=
-			GetProfileSummary(siteId, m.Meta.EditedByNullable.Int64)
+			GetProfileSummary(siteID, m.Meta.EditedByNullable.Int64)
 		if err != nil {
 			glog.Errorf(
 				"GetProfileSummary(%d, %d) %+v",
-				siteId,
+				siteID,
 				m.Meta.EditedByNullable.Int64,
 				err,
 			)
@@ -151,10 +161,11 @@ func (m *AttendeeType) FetchProfileSummaries(siteId int64) (int, error) {
 	return http.StatusOK, nil
 }
 
-func UpdateManyAttendees(siteId int64, ems []AttendeeType) (int, error) {
-	event, status, err := GetEvent(siteId, ems[0].EventId, 0)
+// UpdateManyAttendees updates many attendees
+func UpdateManyAttendees(siteID int64, ems []AttendeeType) (int, error) {
+	event, status, err := GetEvent(siteID, ems[0].EventID, 0)
 	if err != nil {
-		glog.Errorf("GetEvent(%d, %d, 0) %+v", siteId, ems[0].EventId, err)
+		glog.Errorf("GetEvent(%d, %d, 0) %+v", siteID, ems[0].EventID, err)
 		return status, err
 	}
 
@@ -182,7 +193,7 @@ func UpdateManyAttendees(siteId int64, ems []AttendeeType) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, errors.New("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeEvent], event.ID)
@@ -190,10 +201,11 @@ func UpdateManyAttendees(siteId int64, ems []AttendeeType) (int, error) {
 	return http.StatusOK, nil
 }
 
-func (m *AttendeeType) Update(siteId int64) (int, error) {
-	event, status, err := GetEvent(siteId, m.EventId, 0)
+// Update updates an attendee
+func (m *AttendeeType) Update(siteID int64) (int, error) {
+	event, status, err := GetEvent(siteID, m.EventID, 0)
 	if err != nil {
-		glog.Errorf("GetEvent(%d, %d, 0) %+v", siteId, m.EventId, err)
+		glog.Errorf("GetEvent(%d, %d, 0) %+v", siteID, m.EventID, err)
 		return status, err
 	}
 
@@ -220,10 +232,10 @@ func (m *AttendeeType) Update(siteId int64) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, errors.New("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.EventId)
+	go PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.EventID)
 
 	return http.StatusOK, nil
 }
@@ -245,25 +257,24 @@ func (m *AttendeeType) upsert(tx *sql.Tx) (int, error) {
 	 WHERE profile_id = $1
 	   AND event_id = $2
  RETURNING attendee_id`,
-		m.ProfileId,
-		m.EventId,
-		m.RSVPId,
+		m.ProfileID,
+		m.EventID,
+		m.RSVPID,
 		m.RSVPd,
 		m.Meta.EditedNullable,
 		m.Meta.EditedByNullable,
 		m.Meta.EditReason,
 	).Scan(
-		&m.Id,
+		&m.ID,
 	)
 	if err == nil {
-
 		glog.Infof(
 			"Set attendee %d as attending = '%s' to event %d",
-			m.ProfileId,
+			m.ProfileID,
 			m.RSVP,
-			m.EventId,
+			m.EventID,
 		)
-		go PurgeCache(h.ItemTypes[h.ItemTypeAttendee], m.Id)
+		go PurgeCache(h.ItemTypes[h.ItemTypeAttendee], m.ID)
 
 		return http.StatusOK, nil
 
@@ -271,7 +282,7 @@ func (m *AttendeeType) upsert(tx *sql.Tx) (int, error) {
 
 		glog.Errorf("tx.QueryRow(...).Scan() %+v", err)
 		return http.StatusInternalServerError,
-			errors.New("Error updating data and returning ID")
+			fmt.Errorf("Error updating data and returning ID")
 	}
 
 	_, err = tx.Exec(`
@@ -282,35 +293,35 @@ INSERT INTO attendees (
     $1, $2, $3, $4, $5,
     $6
 )`,
-		m.EventId,
-		m.ProfileId,
+		m.EventID,
+		m.ProfileID,
 		m.Meta.Created,
 		m.Meta.CreatedById,
-		m.RSVPId,
+		m.RSVPID,
 		m.RSVPd,
 	)
 	if err != nil {
 		glog.Errorf("tx.Exec(...) %+v", err)
 		return http.StatusInternalServerError,
-			errors.New("Error executing insert")
+			fmt.Errorf("Error executing insert")
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeAttendee], m.Id)
+	go PurgeCache(h.ItemTypes[h.ItemTypeAttendee], m.ID)
 	glog.Infof(
 		"Set attendee %d as attending = '%s' to event %d",
-		m.ProfileId,
+		m.ProfileID,
 		m.RSVP,
-		m.EventId,
+		m.EventID,
 	)
 
 	return http.StatusOK, nil
 }
 
-func (m *AttendeeType) Delete(siteId int64) (int, error) {
-
-	event, status, err := GetEvent(siteId, m.EventId, 0)
+// Delete removes an attendee
+func (m *AttendeeType) Delete(siteID int64) (int, error) {
+	event, status, err := GetEvent(siteID, m.EventID, 0)
 	if err != nil {
-		glog.Errorf("GetEvent(%d, %d, 0) %+v", siteId, m.EventId, err)
+		glog.Errorf("GetEvent(%d, %d, 0) %+v", siteID, m.EventID, err)
 		return status, err
 	}
 
@@ -325,11 +336,11 @@ func (m *AttendeeType) Delete(siteId int64) (int, error) {
 	_, err = tx.Exec(`
 DELETE FROM attendees
  WHERE attendee_id = $1`,
-		m.Id,
+		m.ID,
 	)
 	if err != nil {
-		glog.Errorf("tx.Exec(%d) %+v", m.Id, err)
-		return http.StatusInternalServerError, errors.New("Delete failed")
+		glog.Errorf("tx.Exec(%d) %+v", m.ID, err)
+		return http.StatusInternalServerError, fmt.Errorf("Delete failed")
 	}
 
 	status, err = event.UpdateAttendees(tx)
@@ -341,17 +352,17 @@ DELETE FROM attendees
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, errors.New("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
 	}
 
-	go PurgeCache(h.ItemTypes[h.ItemTypeAttendee], m.Id)
-	go PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.EventId)
+	go PurgeCache(h.ItemTypes[h.ItemTypeAttendee], m.ID)
+	go PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.EventID)
 
 	return http.StatusOK, nil
 }
 
-func GetAttendeeId(eventId int64, profileId int64) (int64, int, error) {
-
+// GetAttendeeID returns the attendee id of a profile
+func GetAttendeeID(eventID int64, profileID int64) (int64, int, error) {
 	// Open db connection and retrieve resource
 	db, err := h.GetConnection()
 	if err != nil {
@@ -359,38 +370,38 @@ func GetAttendeeId(eventId int64, profileId int64) (int64, int, error) {
 		return 0, http.StatusInternalServerError, err
 	}
 
-	var attendeeId int64
+	var attendeeID int64
 
 	err = db.QueryRow(`
 SELECT attendee_id
   FROM attendees
  WHERE event_id = $1
    AND profile_id = $2`,
-		eventId,
-		profileId,
+		eventID,
+		profileID,
 	).Scan(
-		&attendeeId,
+		&attendeeID,
 	)
 	if err == sql.ErrNoRows {
-		return 0, http.StatusNotFound, errors.New("attendee not found")
+		return 0, http.StatusNotFound, fmt.Errorf("attendee not found")
 
 	} else if err != nil {
-		glog.Errorf("db.QueryRow(%d, %d) %+v", eventId, profileId, err)
+		glog.Errorf("db.QueryRow(%d, %d) %+v", eventID, profileID, err)
 		return 0, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 
-	return attendeeId, http.StatusOK, nil
+	return attendeeID, http.StatusOK, nil
 }
 
+// HandleAttendeeRequest fetches an attendee for a request
 func HandleAttendeeRequest(
-	siteId int64,
+	siteID int64,
 	id int64,
 	seq int,
 	out chan<- AttendeeRequest,
 ) {
-	item, status, err := GetAttendee(siteId, id)
-
+	item, status, err := GetAttendee(siteID, id)
 	response := AttendeeRequest{
 		Item:   item,
 		Status: status,
@@ -400,13 +411,13 @@ func HandleAttendeeRequest(
 	out <- response
 }
 
-func GetAttendee(siteId int64, id int64) (AttendeeType, int, error) {
-
+// GetAttendee returns an attendee
+func GetAttendee(siteID int64, id int64) (AttendeeType, int, error) {
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcAttendeeKeys[c.CacheDetail], id)
 	if val, ok := c.CacheGet(mcKey, AttendeeType{}); ok {
 		m := val.(AttendeeType)
-		m.FetchProfileSummaries(siteId)
+		m.FetchProfileSummaries(siteID)
 		return m, 0, nil
 	}
 
@@ -433,25 +444,24 @@ SELECT attendee_id
 WHERE attendee_id = $1`,
 		id,
 	).Scan(
-		&m.Id,
-		&m.EventId,
-		&m.ProfileId,
+		&m.ID,
+		&m.EventID,
+		&m.ProfileID,
 		&m.Meta.Created,
 		&m.Meta.CreatedById,
 		&m.Meta.EditedNullable,
 		&m.Meta.EditedByNullable,
 		&m.Meta.EditReasonNullable,
-		&m.RSVPId,
+		&m.RSVPID,
 		&m.RSVPd,
 	)
 	if err == sql.ErrNoRows {
-		return AttendeeType{}, http.StatusNotFound, errors.New(
-			fmt.Sprintf("Resource with ID %d not found", id),
-		)
+		return AttendeeType{}, http.StatusNotFound,
+			fmt.Errorf("Resource with ID %d not found", id)
 	} else if err != nil {
 		glog.Errorf("db.QueryRow(%d) %+v", id, err)
 		return AttendeeType{}, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			fmt.Errorf("Database query failed")
 	}
 
 	if m.Meta.EditReasonNullable.Valid {
@@ -466,7 +476,7 @@ WHERE attendee_id = $1`,
 		m.RSVPdOn = m.RSVPd.Time.Format(time.RFC3339Nano)
 	}
 
-	m.RSVP, err = h.GetMapStringFromInt(RsvpStates, m.RSVPId)
+	m.RSVP, err = h.GetMapStringFromInt(RSVPStates, m.RSVPID)
 	if err != nil {
 		return AttendeeType{}, http.StatusInternalServerError, err
 	}
@@ -476,23 +486,24 @@ WHERE attendee_id = $1`,
 			"self",
 			"",
 			h.ItemTypeAttendee,
-			m.EventId,
-			m.ProfileId,
+			m.EventID,
+			m.ProfileID,
 		),
-		h.GetLink("profile", "", h.ItemTypeProfile, m.ProfileId),
-		h.GetLink("event", "", h.ItemTypeEvent, m.EventId),
+		h.GetLink("profile", "", h.ItemTypeProfile, m.ProfileID),
+		h.GetLink("event", "", h.ItemTypeEvent, m.EventID),
 	}
 
 	// Update cache
 	c.CacheSet(mcKey, m, mcTTL)
-	m.FetchProfileSummaries(siteId)
+	m.FetchProfileSummaries(siteID)
 
 	return m, http.StatusOK, nil
 }
 
+// GetAttendees returns a collection of attendees
 func GetAttendees(
-	siteId int64,
-	eventId int64,
+	siteID int64,
+	eventID int64,
 	limit int64,
 	offset int64,
 	attending bool,
@@ -503,7 +514,6 @@ func GetAttendees(
 	int,
 	error,
 ) {
-
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
@@ -527,15 +537,13 @@ SELECT COUNT(*) OVER() AS total
 OFFSET $3`,
 			where,
 		),
-		eventId,
+		eventID,
 		limit,
 		offset,
 	)
 	if err != nil {
 		return []AttendeeType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -550,9 +558,7 @@ OFFSET $3`,
 		)
 		if err != nil {
 			return []AttendeeType{}, 0, 0, http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
 		ids = append(ids, id)
@@ -560,9 +566,7 @@ OFFSET $3`,
 	err = rows.Err()
 	if err != nil {
 		return []AttendeeType{}, 0, 0, http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -572,7 +576,7 @@ OFFSET $3`,
 	defer close(req)
 
 	for seq, id := range ids {
-		go HandleAttendeeRequest(siteId, id, seq, req)
+		go HandleAttendeeRequest(siteID, id, seq, req)
 		wg1.Add(1)
 	}
 
@@ -604,27 +608,27 @@ OFFSET $3`,
 	maxOffset := h.GetMaxOffset(total, limit)
 
 	if offset > maxOffset {
-		return []AttendeeType{}, 0, 0, http.StatusBadRequest, errors.New(
-			fmt.Sprintf(
-				"not enough records, offset (%d) would return an empty page.",
+		return []AttendeeType{}, 0, 0, http.StatusBadRequest,
+			fmt.Errorf(
+				"not enough records, offset (%d) would return an empty page",
 				offset,
-			),
-		)
+			)
 	}
 
 	return ems, total, pages, http.StatusOK, nil
 }
 
+// GetAttendeesCSV returns the attendees details as a CSV file
 func GetAttendeesCSV(
-	siteId int64,
-	eventId int64,
-	profileId int64,
+	siteID int64,
+	eventID int64,
+	profileID int64,
 ) (
 	string,
 	int,
 	error,
 ) {
-	_, status, err := GetEvent(siteId, eventId, profileId)
+	_, status, err := GetEvent(siteID, eventID, profileID)
 	if err != nil {
 		return "", status, err
 	}
@@ -646,13 +650,11 @@ SELECT p.profile_name
  WHERE event_id = $1
    AND a.state_id = 1
  ORDER BY 1;`,
-		eventId,
+		eventID,
 	)
 	if err != nil {
 		return "", http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Database query failed: %v", err.Error()),
-			)
+			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -674,9 +676,7 @@ SELECT p.profile_name
 		)
 		if err != nil {
 			return "", http.StatusInternalServerError,
-				errors.New(
-					fmt.Sprintf("Row parsing error: %v", err.Error()),
-				)
+				fmt.Errorf("Row parsing error: %v", err.Error())
 		}
 
 		csv += fmt.Sprintf("\"%s\",%d,\"%s\",\"%s\"\r\n", name, id, email, date.Format(time.RFC3339))
@@ -684,9 +684,7 @@ SELECT p.profile_name
 	err = rows.Err()
 	if err != nil {
 		return "", http.StatusInternalServerError,
-			errors.New(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

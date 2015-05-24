@@ -85,11 +85,11 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 	// Also check that profile exists on site.
 	if perms.IsOwner || perms.IsModerator || perms.IsSiteOwner {
 		for _, m := range ems {
-			if m.ProfileId != c.Auth.ProfileID && m.RSVP == "yes" {
+			if m.ProfileID != c.Auth.ProfileID && m.RSVP == "yes" {
 				c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 				return
 			}
-			_, status, err := models.GetProfileSummary(c.Site.ID, m.ProfileId)
+			_, status, err := models.GetProfileSummary(c.Site.ID, m.ProfileID)
 			if err != nil {
 				c.RespondWithErrorMessage(h.NoAuthMessage, status)
 				return
@@ -97,11 +97,11 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 		}
 	} else {
 		for _, m := range ems {
-			if m.ProfileId != c.Auth.ProfileID {
+			if m.ProfileID != c.Auth.ProfileID {
 				c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 				return
 			}
-			_, status, err := models.GetProfileSummary(c.Site.ID, m.ProfileId)
+			_, status, err := models.GetProfileSummary(c.Site.ID, m.ProfileID)
 			if err != nil {
 				c.RespondWithErrorMessage(h.NoAuthMessage, status)
 				return
@@ -113,7 +113,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 	t := time.Now()
 	// Populate where applicable from auth and context
 	for i := range ems {
-		ems[i].EventId = eventId
+		ems[i].EventID = eventId
 		ems[i].Meta.CreatedById = c.Auth.ProfileID
 		ems[i].Meta.Created = t
 		ems[i].Meta.EditedNullable = pq.NullTime{Time: t, Valid: true}
@@ -132,9 +132,9 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 
 			// The new attendee should be following the event now
 			go models.RegisterWatcher(
-				m.ProfileId,
+				m.ProfileID,
 				h.UpdateTypes[h.UpdateTypeEventReminder],
-				m.EventId,
+				m.EventID,
 				h.ItemTypes[h.ItemTypeEvent],
 				c.Site.ID,
 			)
@@ -143,7 +143,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 		audit.Replace(
 			c.Site.ID,
 			h.ItemTypes[h.ItemTypeAttendee],
-			m.Id,
+			m.ID,
 			c.Auth.ProfileID,
 			time.Now(),
 			c.IP,

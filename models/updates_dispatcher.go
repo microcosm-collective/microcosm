@@ -815,9 +815,9 @@ func SendUpdatesForNewAttendeeInAnEvent(
 	recipients, status, err := GetUpdateRecipients(
 		siteID,
 		h.ItemTypes[h.ItemTypeEvent],
-		attendee.EventId,
+		attendee.EventID,
 		updateType.ID,
-		attendee.ProfileId,
+		attendee.ProfileID,
 	)
 	if err != nil {
 		glog.Errorf("%s %+v", "GetUpdateRecipients()", err)
@@ -853,7 +853,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 
 		if !sendEmails &&
 			recipient.SendEmail &&
-			recipient.ForProfile.ID != attendee.ProfileId {
+			recipient.ForProfile.ID != attendee.ProfileID {
 
 			sendEmails = true
 		}
@@ -864,8 +864,8 @@ func SendUpdatesForNewAttendeeInAnEvent(
 		update.UpdateTypeID = updateType.ID
 		update.ForProfileID = recipient.ForProfile.ID
 		update.ItemTypeID = h.ItemTypes[h.ItemTypeEvent]
-		update.ItemID = attendee.EventId
-		update.Meta.CreatedById = attendee.ProfileId
+		update.ItemID = attendee.EventID
+		update.Meta.CreatedById = attendee.ProfileID
 		status, err := update.insert(tx)
 		if err != nil {
 			glog.Errorf("%s %+v", "update.insert(tx)", err)
@@ -903,13 +903,13 @@ func SendUpdatesForNewAttendeeInAnEvent(
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/events/%d/",
 			mergeData.ProtoAndHost,
-			attendee.EventId,
+			attendee.EventID,
 		)
 
 		itemTitle, status, err := GetTitle(
 			siteID,
 			h.ItemTypes[h.ItemTypeEvent],
-			attendee.EventId,
+			attendee.EventID,
 			0,
 		)
 		if err != nil {
@@ -918,7 +918,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 		}
 		mergeData.ContextText = itemTitle
 
-		byProfile, status, err := GetProfileSummary(siteID, attendee.ProfileId)
+		byProfile, status, err := GetProfileSummary(siteID, attendee.ProfileID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetProfileSummary()", err)
 			return http.StatusInternalServerError, err
@@ -941,7 +941,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 			//    as that is handled by the NewReplyToYourComment thing
 			lastRead, status, err := GetLastReadTime(
 				h.ItemTypes[h.ItemTypeEvent],
-				attendee.EventId,
+				attendee.EventID,
 				recipient.ForProfile.ID,
 			)
 			if err != nil {
@@ -950,7 +950,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 			}
 
 			if recipient.SendEmail &&
-				recipient.ForProfile.ID != attendee.ProfileId &&
+				recipient.ForProfile.ID != attendee.ProfileID &&
 				(lastRead.After(recipient.LastNotified) ||
 					recipient.LastNotified.IsZero()) {
 

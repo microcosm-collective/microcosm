@@ -64,7 +64,7 @@ func (ctl *AttendeeController) Read(c *models.Context) {
 		return
 	}
 
-	attendeeId, status, err := models.GetAttendeeId(eventId, profileId)
+	attendeeId, status, err := models.GetAttendeeID(eventId, profileId)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -127,17 +127,17 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 	}
 
 	if perms.IsOwner || perms.IsModerator || perms.IsSiteOwner {
-		if m.ProfileId != c.Auth.ProfileID && m.RSVP == "yes" {
+		if m.ProfileID != c.Auth.ProfileID && m.RSVP == "yes" {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 			return
 		}
 	} else {
-		if m.ProfileId != c.Auth.ProfileID {
+		if m.ProfileID != c.Auth.ProfileID {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 			return
 		}
 	}
-	_, status, err := models.GetProfileSummary(c.Site.ID, m.ProfileId)
+	_, status, err := models.GetProfileSummary(c.Site.ID, m.ProfileID)
 	if err != nil {
 		c.RespondWithErrorMessage(h.NoAuthMessage, status)
 		return
@@ -146,7 +146,7 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 
 	// Populate where applicable from auth and context
 	t := time.Now()
-	m.EventId = eventId
+	m.EventID = eventId
 	m.Meta.CreatedById = c.Auth.ProfileID
 	m.Meta.Created = t
 	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileID, Valid: true}
@@ -165,14 +165,14 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 	audit.Replace(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttendee],
-		m.Id,
+		m.ID,
 		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
 	)
 
 	c.RespondWithSeeOther(
-		fmt.Sprintf("%s/%d", fmt.Sprintf(h.ApiTypeAttendee, m.EventId), m.ProfileId),
+		fmt.Sprintf("%s/%d", fmt.Sprintf(h.ApiTypeAttendee, m.EventID), m.ProfileID),
 	)
 }
 
@@ -197,7 +197,7 @@ func (ctl *AttendeeController) Delete(c *models.Context) {
 		return
 	}
 
-	attendeeId, status, err := models.GetAttendeeId(eventId, profileId)
+	attendeeId, status, err := models.GetAttendeeID(eventId, profileId)
 	if err != nil {
 		c.RespondWithOK()
 		return
