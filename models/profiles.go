@@ -1278,7 +1278,7 @@ func StoreGravatar(gravatarURL string) (FileMetadataType, int, error) {
 	metadata := FileMetadataType{}
 	metadata.Content = fileContent
 	metadata.FileSize = int32(len(metadata.Content))
-	metadata.FileHash, err = h.Sha1(metadata.Content)
+	metadata.FileHash, err = h.SHA1(metadata.Content)
 	if err != nil {
 		glog.Errorf("h.Sha1(metadata.Content) %+v", err)
 		return FileMetadataType{}, http.StatusInternalServerError,

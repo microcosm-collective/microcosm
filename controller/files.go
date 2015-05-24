@@ -98,7 +98,7 @@ func (ctl *FilesController) Create(c *models.Context) {
 					return
 				}
 
-				sha1, err := h.Sha1(md.Content)
+				sha1, err := h.SHA1(md.Content)
 				if err != nil {
 					c.RespondWithErrorMessage(
 						fmt.Sprintf("Couldn't generate SHA-1: %v", err.Error()),

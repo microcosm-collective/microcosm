@@ -582,7 +582,7 @@ func (f *FileMetadataType) ResizeImage(
 	// Update the file meta data
 	f.Content = buf.Bytes()
 
-	sha1, err := h.Sha1(f.Content)
+	sha1, err := h.SHA1(f.Content)
 	if err != nil {
 		glog.Errorf("h.Sha1(f.Content) %+v", err)
 		return http.StatusInternalServerError,
@@ -659,7 +659,7 @@ func (f *FileMetadataType) processExif() error {
 	f.Content = buf.Bytes()
 
 	// Update the hash and filesize based on changed content.
-	sha1, err := h.Sha1(f.Content)
+	sha1, err := h.SHA1(f.Content)
 	if err != nil {
 		return err
 	}

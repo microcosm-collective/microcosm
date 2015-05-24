@@ -5,7 +5,8 @@ import (
 	"fmt"
 )
 
-func Sha1(bytes []byte) (string, error) {
+// SHA1 calculates the SHA1 for a []byte
+func SHA1(bytes []byte) (string, error) {
 	s := sha1.New()
 	_, err := s.Write(bytes)
 	if err != nil {
