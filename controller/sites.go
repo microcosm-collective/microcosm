@@ -13,8 +13,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// SitesController is a web controller
 type SitesController struct{}
 
+// SitesHandler is a web handler
 func SitesHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -37,15 +39,15 @@ func SitesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ReadMany handles GET for a collection
 func (ctl *SitesController) ReadMany(c *models.Context) {
-
 	limit, offset, status, err := h.GetLimitAndOffset(c.Request.URL.Query())
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	var userId int64
+	var userID int64
 
 	// Passing ?filter=owned returns sites owned by logged-in user.
 	if c.Request.FormValue("filter") == "owned" {
@@ -55,13 +57,13 @@ func (ctl *SitesController) ReadMany(c *models.Context) {
 				http.StatusForbidden,
 			)
 			return
-		} else {
-			userId = c.Auth.UserID
 		}
+
+		userID = c.Auth.UserID
 	}
 
 	// Passing 0 as userID means return all sites.
-	ems, total, pages, status, err := models.GetSites(userId, limit, offset)
+	ems, total, pages, status, err := models.GetSites(userID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -87,8 +89,8 @@ func (ctl *SitesController) ReadMany(c *models.Context) {
 	c.RespondWithData(m)
 }
 
+// Create handles POST
 func (ctl *SitesController) Create(c *models.Context) {
-
 	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("You must be logged in to the root site create a site"),

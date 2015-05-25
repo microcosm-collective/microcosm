@@ -7,6 +7,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// UpdatesHandler is a web handler
 func UpdatesHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -30,10 +31,11 @@ func UpdatesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdatesController is a web controller
 type UpdatesController struct{}
 
+// ReadMany handles GET
 func (ctl *UpdatesController) ReadMany(c *models.Context) {
-
 	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return

@@ -11,6 +11,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// WatcherHandler is a web handler
 func WatcherHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -34,13 +35,15 @@ func WatcherHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// WatcherController is a web controller
 type WatcherController struct{}
 
+// Delete handles DELETE
 func (ctl *WatcherController) Delete(c *models.Context) {
 
-	_, _, itemId, status, err := c.GetItemTypeAndItemID()
-	if itemId != 0 {
-		m, status, err := models.GetWatcher(itemId, c.Site.ID)
+	_, _, itemID, status, err := c.GetItemTypeAndItemID()
+	if itemID != 0 {
+		m, status, err := models.GetWatcher(itemID, c.Site.ID)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
 			return
@@ -65,7 +68,7 @@ func (ctl *WatcherController) Delete(c *models.Context) {
 	// Fill from query string
 	m := models.WatcherType{}
 
-	itemId, itemType, status, err := h.GetItemAndItemType(c.Request.URL.Query())
+	itemID, itemType, status, err := h.GetItemAndItemType(c.Request.URL.Query())
 
 	if _, exists := h.ItemTypes[itemType]; !exists {
 		c.RespondWithErrorMessage(
@@ -73,13 +76,13 @@ func (ctl *WatcherController) Delete(c *models.Context) {
 			http.StatusBadRequest,
 		)
 		return
-	} else {
-		m.ItemTypeID = h.ItemTypes[itemType]
 	}
+
+	m.ItemTypeID = h.ItemTypes[itemType]
 
 	m.ID, _, _, _, status, err = models.GetWatcherAndIgnoreStatus(
 		m.ItemTypeID,
-		itemId,
+		itemID,
 		c.Auth.ProfileID,
 	)
 	if err != nil {
@@ -104,6 +107,7 @@ func (ctl *WatcherController) Delete(c *models.Context) {
 	c.RespondWithOK()
 }
 
+// Update handles PUT
 func (ctl *WatcherController) Update(c *models.Context) {
 	m := models.WatcherType{}
 	err := c.Fill(&m)
@@ -126,9 +130,9 @@ func (ctl *WatcherController) Update(c *models.Context) {
 				http.StatusBadRequest,
 			)
 			return
-		} else {
-			m.ItemTypeID = h.ItemTypes[itemType]
 		}
+
+		m.ItemTypeID = h.ItemTypes[itemType]
 	}
 
 	var status int

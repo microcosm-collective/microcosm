@@ -10,8 +10,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// UserController is a web controller
 type UserController struct{}
 
+// UserHandler is a web handler
 func UserHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -39,8 +41,9 @@ func UserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Read handles GET
 func (ctl *UserController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -49,7 +52,7 @@ func (ctl *UserController) Read(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -57,7 +60,7 @@ func (ctl *UserController) Read(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetUser(itemId)
+	m, status, err := models.GetUser(itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -71,14 +74,15 @@ func (ctl *UserController) Read(c *models.Context) {
 	c.RespondWithData(m)
 }
 
+// Update handles PUT
 func (ctl *UserController) Update(c *models.Context) {
-	_, _, itemId, status, err := c.GetItemTypeAndItemID()
+	_, _, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	m, status, err := models.GetUser(itemId)
+	m, status, err := models.GetUser(itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -101,7 +105,7 @@ func (ctl *UserController) Update(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeProfile], itemId),
+			c, 0, h.ItemTypes[h.ItemTypeProfile], itemID),
 	)
 	if !perms.CanUpdate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -118,7 +122,7 @@ func (ctl *UserController) Update(c *models.Context) {
 	audit.Replace(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
-		itemId,
+		itemID,
 		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,
@@ -133,14 +137,15 @@ func (ctl *UserController) Update(c *models.Context) {
 	)
 }
 
+// Delete handles DELETE
 func (ctl *UserController) Delete(c *models.Context) {
-	_, _, itemId, status, err := c.GetItemTypeAndItemID()
+	_, _, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	m, status, err := models.GetUser(itemId)
+	m, status, err := models.GetUser(itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -160,7 +165,7 @@ func (ctl *UserController) Delete(c *models.Context) {
 	audit.Delete(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeUser],
-		itemId,
+		itemID,
 		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,

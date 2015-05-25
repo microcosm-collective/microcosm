@@ -6,8 +6,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// SearchController is a web controller
 type SearchController struct{}
 
+// SearchHandler is a web handler
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -31,9 +33,8 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Returns information about a single site, the one related to this HTTP context
+// Read handles GET
 func (ctl *SearchController) Read(c *models.Context) {
-
 	results, status, err := models.Search(
 		c.Site.ID,
 		*c.Request.URL,

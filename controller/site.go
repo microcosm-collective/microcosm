@@ -11,8 +11,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// SiteController is a web controller
 type SiteController struct{}
 
+// SiteHandler is a web handler
 func SiteHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -37,15 +39,12 @@ func SiteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//Read can be accessed either by /site or /sites/{site_id} since it is registered
-//as handler for both routes.
+// Read handles GET either by /site or /sites/{site_id}
 func (ctl *SiteController) Read(c *models.Context) {
-
 	// Check whether this site is being accessed by ID
 	siteQuery, exists := c.RouteVars["site_id"]
 	if exists {
-
-		siteId, err := strconv.ParseInt(siteQuery, 10, 64)
+		siteID, err := strconv.ParseInt(siteQuery, 10, 64)
 		if err != nil {
 			c.RespondWithErrorMessage(
 				fmt.Sprintf("The supplied site ID ('%s') is not a number.", siteQuery),
@@ -54,10 +53,10 @@ func (ctl *SiteController) Read(c *models.Context) {
 			return
 		}
 
-		site, status, err := models.GetSite(siteId)
+		site, status, err := models.GetSite(siteID)
 		if err != nil {
 			c.RespondWithErrorMessage(
-				fmt.Sprintf("No site with ID %d found", siteId),
+				fmt.Sprintf("No site with ID %d found", siteID),
 				status,
 			)
 			return
@@ -66,28 +65,26 @@ func (ctl *SiteController) Read(c *models.Context) {
 		c.RespondWithData(site)
 		return
 
-	} else {
-
-		// Site already populated in context, so only fetch permissions
-		c.Site.Meta.Permissions = models.GetPermission(
-			models.MakeAuthorisationContext(
-				c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.ID),
-		)
-		c.RespondWithData(c.Site)
-		return
-
 	}
+
+	// Site already populated in context, so only fetch permissions
+	c.Site.Meta.Permissions = models.GetPermission(
+		models.MakeAuthorisationContext(
+			c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.ID),
+	)
+	c.RespondWithData(c.Site)
+	return
 }
 
+// Update handles PUT
 func (ctl *SiteController) Update(c *models.Context) {
-
-	_, _, itemId, status, err := c.GetItemTypeAndItemID()
+	_, _, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	m, status, err := models.GetSite(itemId)
+	m, status, err := models.GetSite(itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

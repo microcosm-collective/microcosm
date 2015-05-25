@@ -11,8 +11,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// RolesController is a web controller
 type RolesController struct{}
 
+// RolesHandler is a web handler
 func RolesHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -38,12 +40,11 @@ func RolesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Returns a list of all profiles
+// ReadMany handles GET
 // If microcosm_id is provided in request args then these are the roles for this
 // microcosm, otherwise this is a list of the default roles on this site
 func (ctl *RolesController) ReadMany(c *models.Context) {
-
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -51,11 +52,13 @@ func (ctl *RolesController) ReadMany(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
-	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId))
-	if microcosmId > 0 {
+	perms := models.GetPermission(
+		models.MakeAuthorisationContext(c, 0, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID),
+	)
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.CanRead {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -76,7 +79,7 @@ func (ctl *RolesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetRoles(c.Site.ID, microcosmId, c.Auth.ProfileID, limit, offset)
+	ems, total, pages, status, err := models.GetRoles(c.Site.ID, microcosmID, c.Auth.ProfileID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -97,12 +100,12 @@ func (ctl *RolesController) ReadMany(c *models.Context) {
 	c.RespondWithData(m)
 }
 
-// Creates a new role
+// Create handles POST
 // If microcosm_id is provided in request args then this is a role on a microcosm
 // otherwise this is a default role on this site
 func (ctl *RolesController) Create(c *models.Context) {
 
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -110,7 +113,7 @@ func (ctl *RolesController) Create(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
 	// Validate inputs
@@ -126,9 +129,9 @@ func (ctl *RolesController) Create(c *models.Context) {
 
 	// Start : Authorisation
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, microcosmId, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId),
+		models.MakeAuthorisationContext(c, microcosmID, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID),
 	)
-	if microcosmId > 0 {
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.IsModerator && !c.Auth.IsSiteOwner {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -145,7 +148,7 @@ func (ctl *RolesController) Create(c *models.Context) {
 
 	// Populate where applicable from auth and context
 	m.SiteID = c.Site.ID
-	m.MicrocosmID = microcosmId
+	m.MicrocosmID = microcosmID
 	m.Meta.CreatedByID = c.Auth.ProfileID
 	m.Meta.Created = time.Now()
 

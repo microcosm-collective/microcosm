@@ -7,6 +7,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// UpdateOptionsHandler is a web handler
 func UpdateOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -30,12 +31,11 @@ func UpdateOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdateOptionsController is a web controller
 type UpdateOptionsController struct{}
 
-// ReadMany fetches alert preferences for a user based on their Profile ID. As such
-// they are site-specific and the AlertTypeId acts as the resource ID.
+// ReadMany handles GET for a collection
 func (ctl *UpdateOptionsController) ReadMany(c *models.Context) {
-
 	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return

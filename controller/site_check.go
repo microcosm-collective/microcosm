@@ -9,8 +9,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// SiteCheckController is a web controller
 type SiteCheckController struct{}
 
+// SiteCheckHandler is a web handler
 func SiteCheckHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -33,15 +35,15 @@ func SiteCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Read handles GET
 func (ctl *SiteCheckController) Read(c *models.Context) {
-
-	_, _, itemId, status, err := c.GetItemTypeAndItemID()
+	_, _, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	m, status, err := models.GetSite(itemId)
+	m, status, err := models.GetSite(itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

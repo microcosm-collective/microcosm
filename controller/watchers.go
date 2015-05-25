@@ -9,6 +9,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// WatchersHandler is a web handler
 func WatchersHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -34,8 +35,10 @@ func WatchersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// WatchersController is a web controller
 type WatchersController struct{}
 
+// ReadMany handles GET for the collection
 func (ctl *WatchersController) ReadMany(c *models.Context) {
 
 	if c.Auth.ProfileID < 1 {
@@ -84,12 +87,14 @@ func (ctl *WatchersController) ReadMany(c *models.Context) {
 
 }
 
+// WatcherType allows a watcher to be marshaled from form data
 type WatcherType struct {
 	models.WatcherType
 
 	UpdateTypeID int64 `json:"updateTypeId"`
 }
 
+// Create handles POST
 func (ctl *WatchersController) Create(c *models.Context) {
 	// Fill from POST data
 	m := WatcherType{}
@@ -111,9 +116,9 @@ func (ctl *WatchersController) Create(c *models.Context) {
 				http.StatusBadRequest,
 			)
 			return
-		} else {
-			m.ItemTypeID = h.ItemTypes[itemType]
 		}
+
+		m.ItemTypeID = h.ItemTypes[itemType]
 	} else {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("No itemType supplied, cannot create a watcher"),

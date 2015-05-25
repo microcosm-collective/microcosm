@@ -8,6 +8,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// UpdateOptionHandler is a web handler
 func UpdateOptionHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -33,8 +34,10 @@ func UpdateOptionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdateOptionController is a web controller
 type UpdateOptionController struct{}
 
+// Read handles GET
 func (ctl *UpdateOptionController) Read(c *models.Context) {
 
 	if c.Auth.ProfileID < 1 {
@@ -42,13 +45,13 @@ func (ctl *UpdateOptionController) Read(c *models.Context) {
 		return
 	}
 
-	_, _, itemId, status, err := c.GetItemTypeAndItemID()
+	_, _, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	m, status, err := models.GetUpdateOptionByUpdateType(c.Auth.ProfileID, itemId)
+	m, status, err := models.GetUpdateOptionByUpdateType(c.Auth.ProfileID, itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -57,9 +60,9 @@ func (ctl *UpdateOptionController) Read(c *models.Context) {
 	c.RespondWithData(m)
 }
 
+// Update handles PUT
 func (ctl *UpdateOptionController) Update(c *models.Context) {
-
-	_, _, itemId, status, err := c.GetItemTypeAndItemID()
+	_, _, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -67,7 +70,7 @@ func (ctl *UpdateOptionController) Update(c *models.Context) {
 
 	var exists bool
 
-	m, status, err := models.GetUpdateOptionByUpdateType(c.Auth.ProfileID, itemId)
+	m, status, err := models.GetUpdateOptionByUpdateType(c.Auth.ProfileID, itemID)
 	if err != nil && status != http.StatusNotFound {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -86,7 +89,7 @@ func (ctl *UpdateOptionController) Update(c *models.Context) {
 	}
 
 	// Profile ID cannot be changed
-	m.UpdateTypeID = itemId
+	m.UpdateTypeID = itemID
 	m.ProfileID = c.Auth.ProfileID
 
 	if exists {
@@ -108,5 +111,4 @@ func (ctl *UpdateOptionController) Update(c *models.Context) {
 			m.UpdateTypeID,
 		),
 	)
-
 }

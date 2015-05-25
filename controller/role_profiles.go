@@ -9,8 +9,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// RoleProfilesController is a web controller
 type RoleProfilesController struct{}
 
+// RoleProfilesHandler is a web handler
 func RoleProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -38,10 +40,11 @@ func RoleProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ReadMany handles GET for the collection
 // Returns an array of all of the profiles explicitly assigned to this role
 func (ctl *RoleProfilesController) ReadMany(c *models.Context) {
 	// Validate inputs
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -49,16 +52,16 @@ func (ctl *RoleProfilesController) ReadMany(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
-	roleId, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
+	roleID, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("role_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
+	r, status, err := models.GetRole(c.Site.ID, microcosmID, roleID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -66,9 +69,9 @@ func (ctl *RoleProfilesController) ReadMany(c *models.Context) {
 
 	// Authorisation
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, microcosmId, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId),
+		models.MakeAuthorisationContext(c, microcosmID, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID),
 	)
-	if microcosmId > 0 {
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.IsModerator && !c.Auth.IsSiteOwner {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -88,7 +91,7 @@ func (ctl *RoleProfilesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetRoleProfiles(c.Site.ID, roleId, limit, offset)
+	ems, total, pages, status, err := models.GetRoleProfiles(c.Site.ID, roleID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -109,10 +112,11 @@ func (ctl *RoleProfilesController) ReadMany(c *models.Context) {
 	c.RespondWithData(m)
 }
 
+// UpdateMany handles PUT on the collection
 // Assigns one or more profiles explicitly to this role
 func (ctl *RoleProfilesController) UpdateMany(c *models.Context) {
 	// Validate inputs
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -120,16 +124,16 @@ func (ctl *RoleProfilesController) UpdateMany(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
-	roleId, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
+	roleID, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("role_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
+	_, status, err := models.GetRole(c.Site.ID, microcosmID, roleID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -148,9 +152,9 @@ func (ctl *RoleProfilesController) UpdateMany(c *models.Context) {
 
 	// Authorisation
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, microcosmId, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId),
+		models.MakeAuthorisationContext(c, microcosmID, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID),
 	)
-	if microcosmId > 0 {
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.IsModerator && !c.Auth.IsSiteOwner {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -164,7 +168,7 @@ func (ctl *RoleProfilesController) UpdateMany(c *models.Context) {
 		}
 	}
 
-	status, err = models.UpdateManyRoleProfiles(c.Site.ID, roleId, ems)
+	status, err = models.UpdateManyRoleProfiles(c.Site.ID, roleID, ems)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -173,10 +177,11 @@ func (ctl *RoleProfilesController) UpdateMany(c *models.Context) {
 	c.RespondWithOK()
 }
 
+// DeleteMany handles DELETE
 // Removes one or more profiles (that were explicitly assigned) from this role
 func (ctl *RoleProfilesController) DeleteMany(c *models.Context) {
 	// Validate inputs
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -184,16 +189,16 @@ func (ctl *RoleProfilesController) DeleteMany(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
-	roleId, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
+	roleID, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("role_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
+	_, status, err := models.GetRole(c.Site.ID, microcosmID, roleID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -212,9 +217,9 @@ func (ctl *RoleProfilesController) DeleteMany(c *models.Context) {
 
 	// Authorisation
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, microcosmId, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId),
+		models.MakeAuthorisationContext(c, microcosmID, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID),
 	)
-	if microcosmId > 0 {
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.IsModerator && !c.Auth.IsSiteOwner {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -228,7 +233,7 @@ func (ctl *RoleProfilesController) DeleteMany(c *models.Context) {
 		}
 	}
 
-	status, err = models.DeleteManyRoleProfiles(roleId, ems)
+	status, err = models.DeleteManyRoleProfiles(roleID, ems)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

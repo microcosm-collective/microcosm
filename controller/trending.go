@@ -7,8 +7,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// TrendingController is a web controller
 type TrendingController struct{}
 
+// TrendingHandler is a web handler
 func TrendingHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -30,8 +32,8 @@ func TrendingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ReadMany handles GET for the collection
 func (ctl *TrendingController) ReadMany(c *models.Context) {
-
 	limit, offset, status, err := h.GetLimitAndOffset(c.Request.URL.Query())
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)

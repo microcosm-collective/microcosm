@@ -10,8 +10,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// UsersController is a web controller
 type UsersController struct{}
 
+// UsersHandler is a web handler
 func UsersHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -33,6 +35,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Create handles POST
 func (ctl *UsersController) Create(c *models.Context) {
 	// Batch create users by email address
 	ems := []models.UserType{}

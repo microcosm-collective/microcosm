@@ -7,8 +7,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// SiteHostController is a web controller
 type SiteHostController struct{}
 
+// SiteHostHandler is a web handler
 func SiteHostHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -31,7 +33,7 @@ func SiteHostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Read responds with a header and body containing microcosm host for site.
+// Read handles GET
 func (ctl *SiteHostController) Read(c *models.Context) {
 	host, exists := c.RouteVars["host"]
 	if !exists {

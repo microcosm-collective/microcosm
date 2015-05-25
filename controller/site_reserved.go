@@ -7,8 +7,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// SiteReservedController is a web controller
 type SiteReservedController struct{}
 
+// SiteReservedHandler is a web handler
 func SiteReservedHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -31,6 +33,7 @@ func SiteReservedHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Read handles GET
 func (ctl *SiteReservedController) Read(c *models.Context) {
 	host, exists := c.RouteVars["subdomain"]
 	if !exists {
