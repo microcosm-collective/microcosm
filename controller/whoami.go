@@ -9,6 +9,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// WhoAmIHandler is the web handler
 func WhoAmIHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -30,6 +31,7 @@ func WhoAmIHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// WhoAmIController is the web controller
 type WhoAmIController struct{}
 
 func (wc *WhoAmIController) Read(c *models.Context) {
@@ -63,13 +65,13 @@ func (wc *WhoAmIController) Read(c *models.Context) {
 				http.StatusNotFound,
 			)
 			return
-		} else {
-			c.RespondWithErrorMessage(
-				fmt.Sprintf("Could not retrieve profile: %v", err.Error()),
-				http.StatusInternalServerError,
-			)
-			return
 		}
+
+		c.RespondWithErrorMessage(
+			fmt.Sprintf("Could not retrieve profile: %v", err.Error()),
+			http.StatusInternalServerError,
+		)
+		return
 	}
 
 	location := fmt.Sprintf(
