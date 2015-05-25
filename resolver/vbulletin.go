@@ -395,11 +395,11 @@ func resolveVbulletinURL(redirect Redirect, profileID int64) Redirect {
 		if redirect.ItemID > 0 {
 			redirect.URL.Href = fmt.Sprintf(
 				"%s/%d",
-				h.ApiTypeMicrocosm,
+				h.APITypeMicrocosm,
 				redirect.ItemID,
 			)
 		} else {
-			redirect.URL.Href = h.ApiTypeMicrocosm
+			redirect.URL.Href = h.APITypeMicrocosm
 		}
 		redirect.URL.Rel = redirect.ItemType
 		canPaginate = true
@@ -438,7 +438,7 @@ func resolveVbulletinURL(redirect Redirect, profileID int64) Redirect {
 
 				redirect.URL.Href = fmt.Sprintf(
 					"%s/%d",
-					h.ApiTypeComment,
+					h.APITypeComment,
 					redirect.ItemID,
 				)
 				redirect.URL.Rel = redirect.ItemType
@@ -452,7 +452,7 @@ func resolveVbulletinURL(redirect Redirect, profileID int64) Redirect {
 			if redirect.ItemID > 0 {
 				redirect.URL.Href = fmt.Sprintf(
 					"%s/%d",
-					h.ApiTypeConversation,
+					h.APITypeConversation,
 					redirect.ItemID,
 				)
 				redirect.URL.Rel = redirect.ItemType
@@ -469,7 +469,7 @@ func resolveVbulletinURL(redirect Redirect, profileID int64) Redirect {
 		if redirect.ItemID > 0 {
 			redirect.URL.Href = fmt.Sprintf(
 				"%s/%d",
-				h.ApiTypeComment,
+				h.APITypeComment,
 				redirect.ItemID,
 			)
 			redirect.URL.Rel = redirect.ItemType
@@ -508,7 +508,7 @@ SELECT file_sha1
 		redirect.URL.Href = fmt.Sprintf(
 			"https://%s.microco.sm%s/%s",
 			site.SubdomainKey,
-			h.ApiTypeFile,
+			h.APITypeFile,
 			fileSha1,
 		)
 
@@ -518,11 +518,11 @@ SELECT file_sha1
 		if redirect.ItemID > 0 {
 			redirect.URL.Href = fmt.Sprintf(
 				"%s/%d",
-				h.ApiTypeHuddle,
+				h.APITypeHuddle,
 				redirect.ItemID,
 			)
 		} else {
-			redirect.URL.Href = h.ApiTypeHuddle
+			redirect.URL.Href = h.APITypeHuddle
 		}
 		redirect.URL.Rel = redirect.ItemType
 
@@ -532,17 +532,17 @@ SELECT file_sha1
 		if redirect.ItemID > 0 {
 			redirect.URL.Href = fmt.Sprintf(
 				"%s/%d",
-				h.ApiTypeProfile,
+				h.APITypeProfile,
 				redirect.ItemID,
 			)
 		} else {
 			switch redirect.Action {
 			case ActionSearch:
-				redirect.URL.Href = h.ApiTypeProfile + "?q=" + redirect.Search
+				redirect.URL.Href = h.APITypeProfile + "?q=" + redirect.Search
 			case ActionWhoIsOnline:
-				redirect.URL.Href = h.ApiTypeProfile + "?online=true"
+				redirect.URL.Href = h.APITypeProfile + "?online=true"
 			default:
-				redirect.URL.Href = h.ApiTypeProfile
+				redirect.URL.Href = h.APITypeProfile
 			}
 			canPaginate = true
 		}
@@ -550,7 +550,7 @@ SELECT file_sha1
 
 	case h.ItemTypes[h.ItemTypeUpdate]:
 		redirect.ItemType = h.ItemTypeUpdate
-		redirect.URL.Href = h.ApiTypeUpdate
+		redirect.URL.Href = h.APITypeUpdate
 		redirect.URL.Rel = redirect.ItemType
 
 	default:

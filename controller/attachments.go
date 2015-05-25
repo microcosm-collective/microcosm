@@ -121,7 +121,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 
 		attachment.ItemID = profileId
 		attachment.ItemTypeID = h.ItemTypes[h.ItemTypeProfile]
-		path_prefix = h.ApiTypeProfile
+		path_prefix = h.APITypeProfile
 
 	} else if c.RouteVars["comment_id"] != "" {
 
@@ -167,7 +167,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 
 		attachment.ItemID = commentId
 		attachment.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
-		path_prefix = h.ApiTypeComment
+		path_prefix = h.APITypeComment
 
 	} else {
 		c.RespondWithErrorMessage(
@@ -196,7 +196,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 
 	if status != http.StatusNotFound && attachment.ItemTypeID != h.ItemTypes[h.ItemTypeProfile] {
 		c.RespondWithSeeOther(
-			fmt.Sprintf("%s/%d/%s", path_prefix, oldattachment.ItemID, h.ApiTypeAttachment),
+			fmt.Sprintf("%s/%d/%s", path_prefix, oldattachment.ItemID, h.APITypeAttachment),
 		)
 		return
 	}
@@ -241,7 +241,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			filePath += `.` + metadata.FileExt
 		}
 		profile.AvatarURLNullable = sql.NullString{
-			String: fmt.Sprintf("%s/%s", h.ApiTypeFile, filePath),
+			String: fmt.Sprintf("%s/%s", h.APITypeFile, filePath),
 			Valid:  true,
 		}
 		profile.AvatarIDNullable = sql.NullInt64{
@@ -259,7 +259,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 	}
 
 	c.RespondWithSeeOther(
-		fmt.Sprintf("%s/%d/%s", path_prefix, attachment.ItemID, h.ApiTypeAttachment),
+		fmt.Sprintf("%s/%d/%s", path_prefix, attachment.ItemID, h.APITypeAttachment),
 	)
 }
 
@@ -298,7 +298,7 @@ func (ctl *AttachmentsController) ReadMany(c *models.Context) {
 	m := models.AttachmentsType{}
 	m.Attachments = h.ConstructArray(
 		attachments,
-		h.ApiTypeAttachment,
+		h.APITypeAttachment,
 		total,
 		limit,
 		offset,

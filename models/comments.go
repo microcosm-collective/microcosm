@@ -1143,7 +1143,7 @@ func GetComments(
 
 	commentArray := h.ConstructArray(
 		ems,
-		h.ApiTypeComment,
+		h.APITypeComment,
 		total,
 		limit,
 		offset,

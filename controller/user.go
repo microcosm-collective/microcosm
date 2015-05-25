@@ -127,7 +127,7 @@ func (ctl *UserController) Update(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeUser,
+			h.APITypeUser,
 			m.ID,
 		),
 	)

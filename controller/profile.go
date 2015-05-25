@@ -93,7 +93,7 @@ func (ctl *ProfileController) Create(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeProfile,
+			h.APITypeProfile,
 			m.ID,
 		),
 	)
@@ -221,7 +221,7 @@ func (ctl *ProfileController) Update(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeProfile,
+			h.APITypeProfile,
 			m.ID,
 		),
 	)

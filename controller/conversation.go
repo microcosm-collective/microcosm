@@ -187,7 +187,7 @@ func (ctl *ConversationController) Update(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeConversation,
+			h.APITypeConversation,
 			m.ID,
 		),
 	)

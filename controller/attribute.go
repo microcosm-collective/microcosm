@@ -122,7 +122,7 @@ func (ctl *AttributeController) Update(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%s",
-			fmt.Sprintf(h.ApiTypeAttribute, c.RouteVars["type"], itemId),
+			fmt.Sprintf(h.APITypeAttribute, c.RouteVars["type"], itemId),
 			key,
 		),
 	)

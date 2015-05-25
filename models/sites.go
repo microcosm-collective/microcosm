@@ -461,7 +461,7 @@ SELECT new_ids.new_site_id,
 		filePath += `.` + fm.FileExt
 	}
 	profile.AvatarURLNullable = sql.NullString{
-		String: fmt.Sprintf("%s/%s", h.ApiTypeFile, filePath),
+		String: fmt.Sprintf("%s/%s", h.APITypeFile, filePath),
 		Valid:  true,
 	}
 	profile.AvatarIDNullable = sql.NullInt64{

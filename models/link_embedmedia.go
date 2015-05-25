@@ -251,7 +251,6 @@ func (m *Link) embedMediaUsingRule(
 	int,
 	error,
 ) {
-
 	// Build the embed HTML
 	matchURL, err := regexp.Compile(`(?i)` + rule.RegexMatch)
 	if err != nil {
@@ -263,7 +262,7 @@ func (m *Link) embedMediaUsingRule(
 	embedHTML := matchURL.ReplaceAllString(m.URL, rule.RegexReplace)
 
 	// Use string manipulation to insert the embed
-	shortURL := h.JumpUrl + m.ShortURL
+	shortURL := h.JumpURL + m.ShortURL
 
 	return m.embedMedia(revisionID, shortURL, embedHTML)
 }
@@ -276,7 +275,6 @@ func (m *Link) embedMedia(
 	int,
 	error,
 ) {
-
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err

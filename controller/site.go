@@ -133,5 +133,5 @@ func (ctl *SiteController) Update(c *models.Context) {
 		c.IP,
 	)
 
-	c.RespondWithSeeOther(fmt.Sprintf("%s/%d", h.ApiTypeSite, m.ID))
+	c.RespondWithSeeOther(fmt.Sprintf("%s/%d", h.APITypeSite, m.ID))
 }

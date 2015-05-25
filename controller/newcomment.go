@@ -68,7 +68,7 @@ func (ctl *NewCommentController) Read(c *models.Context) {
 
 		location := fmt.Sprintf(
 			"%s/%d",
-			h.ItemTypesToApiItem[itemType],
+			h.ItemTypesToAPIItem[itemType],
 			itemId,
 		)
 		parsed.RawQuery = values.Encode()
@@ -96,7 +96,7 @@ func (ctl *NewCommentController) Read(c *models.Context) {
 
 	location := fmt.Sprintf(
 		"%s/%d",
-		h.ItemTypesToApiItem[itemType],
+		h.ItemTypesToAPIItem[itemType],
 		itemId,
 	)
 	parsed.RawQuery = values.Encode()

@@ -82,7 +82,7 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeMicrocosm,
+			h.APITypeMicrocosm,
 			m.ID,
 		),
 	)
@@ -113,7 +113,7 @@ func (ctl *MicrocosmsController) ReadMany(c *models.Context) {
 	m := models.MicrocosmsType{}
 	m.Microcosms = h.ConstructArray(
 		ems,
-		h.ApiTypeMicrocosm,
+		h.APITypeMicrocosm,
 		total,
 		limit,
 		offset,

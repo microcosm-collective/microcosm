@@ -70,7 +70,7 @@ func (ctl *ConversationsController) ReadMany(c *models.Context) {
 	m := models.ConversationsType{}
 	m.Conversations = h.ConstructArray(
 		ems,
-		h.ApiTypeConversation,
+		h.APITypeConversation,
 		total,
 		limit,
 		offset,
@@ -148,7 +148,7 @@ func (ctl *ConversationsController) Create(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeConversation,
+			h.APITypeConversation,
 			m.ID,
 		),
 	)

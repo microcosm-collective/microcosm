@@ -57,7 +57,7 @@ type HuddleType struct {
 
 // GetLink returns the link to this huddle
 func (m *HuddleType) GetLink() string {
-	return fmt.Sprintf("%s/%d", h.ApiTypeHuddle, m.ID)
+	return fmt.Sprintf("%s/%d", h.APITypeHuddle, m.ID)
 }
 
 // Validate returns true if the huddle if valid

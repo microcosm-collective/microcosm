@@ -158,7 +158,7 @@ func (ctl *MicrocosmController) Update(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeMicrocosm,
+			h.APITypeMicrocosm,
 			m.ID,
 		),
 	)

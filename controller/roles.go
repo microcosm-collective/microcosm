@@ -86,7 +86,7 @@ func (ctl *RolesController) ReadMany(c *models.Context) {
 	m := models.RolesType{}
 	m.Roles = h.ConstructArray(
 		ems,
-		h.ApiTypeRole,
+		h.APITypeRole,
 		total,
 		limit,
 		offset,

@@ -316,7 +316,7 @@ SELECT avatar_url
 
 		if strings.HasPrefix(
 			location,
-			fmt.Sprintf("%s/%s", h.ApiTypeFile, fileHash),
+			fmt.Sprintf("%s/%s", h.APITypeFile, fileHash),
 		) {
 
 			_, err = tx.Exec(`
@@ -334,7 +334,7 @@ UPDATE profiles
          LIMIT 1
        ) att
  WHERE profile_id = $3`,
-				fmt.Sprintf("%s/", h.ApiTypeFile),
+				fmt.Sprintf("%s/", h.APITypeFile),
 				itemTypeID,
 				itemID,
 				fileHash,
@@ -342,7 +342,7 @@ UPDATE profiles
 			if err != nil {
 				glog.Errorf(
 					"tx.Exec(`%s`, %d, %d, `%s`) %+v",
-					fmt.Sprintf("%s/", h.ApiTypeFile),
+					fmt.Sprintf("%s/", h.APITypeFile),
 					itemTypeID,
 					itemID,
 					fileHash,
@@ -471,7 +471,7 @@ OFFSET $4`,
 		}
 		link := h.LinkType{
 			Rel:   "related",
-			Href:  fmt.Sprintf("%s/%s", h.ApiTypeFile, filePath),
+			Href:  fmt.Sprintf("%s/%s", h.APITypeFile, filePath),
 			Title: "File resource",
 		}
 		m.Meta.Links = append(m.Meta.Links, link)

@@ -94,7 +94,7 @@ func (ctl *EventsController) Create(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeEvent,
+			h.APITypeEvent,
 			m.ID,
 		),
 	)
@@ -140,7 +140,7 @@ func (ctl *EventsController) ReadMany(c *models.Context) {
 	m := models.EventsType{}
 	m.Events = h.ConstructArray(
 		ems,
-		h.ApiTypeEvent,
+		h.APITypeEvent,
 		total,
 		limit,
 		offset,

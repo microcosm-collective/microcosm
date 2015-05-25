@@ -74,7 +74,7 @@ func (wc *WhoAmIController) Read(c *models.Context) {
 
 	location := fmt.Sprintf(
 		"%s/%d",
-		h.ApiTypeProfile,
+		h.APITypeProfile,
 		m.ID,
 	)
 

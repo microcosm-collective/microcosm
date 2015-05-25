@@ -71,7 +71,7 @@ func (ctl *AttributesController) ReadMany(c *models.Context) {
 	m := models.AttributesType{}
 	m.Attributes = h.ConstructArray(
 		ems,
-		fmt.Sprintf(h.ApiTypeAttribute, c.RouteVars["type"], 0),
+		fmt.Sprintf(h.APITypeAttribute, c.RouteVars["type"], 0),
 		total,
 		limit,
 		offset,

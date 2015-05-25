@@ -95,7 +95,7 @@ func (ctl *PollsController) Create(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypePoll,
+			h.APITypePoll,
 			m.ID,
 		),
 	)
@@ -133,7 +133,7 @@ func (ctl *PollsController) ReadMany(c *models.Context) {
 	m := models.PollsType{}
 	m.Polls = h.ConstructArray(
 		ems,
-		h.ApiTypePoll,
+		h.APITypePoll,
 		total,
 		limit,
 		offset,

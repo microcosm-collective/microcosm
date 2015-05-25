@@ -184,7 +184,7 @@ func (ctl *EventController) Update(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeEvent,
+			h.APITypeEvent,
 			m.ID,
 		),
 	)

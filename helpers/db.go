@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/golang/glog"
@@ -68,7 +67,7 @@ func GetConnection() (*sql.DB, error) {
 func GetTransaction() (*sql.Tx, error) {
 	tx, err := db.Begin()
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Could not start a transaction: %v", err.Error()))
+		return nil, fmt.Errorf("Could not start a transaction: %v", err.Error())
 	}
 
 	return tx, err

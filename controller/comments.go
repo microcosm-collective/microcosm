@@ -129,7 +129,7 @@ func (ctl *CommentsController) Create(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeComment,
+			h.APITypeComment,
 			m.ID,
 		),
 	)

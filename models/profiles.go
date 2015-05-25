@@ -378,7 +378,7 @@ INSERT INTO profiles (
 		if fm.FileExt != "" {
 			filePath += `.` + fm.FileExt
 		}
-		avatarURL = fmt.Sprintf("%s/%s", h.ApiTypeFile, filePath)
+		avatarURL = fmt.Sprintf("%s/%s", h.APITypeFile, filePath)
 	}
 
 	// Construct URL to avatar, update profile with Avatar ID and URL

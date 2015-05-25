@@ -104,7 +104,7 @@ func (ctl *UpdateOptionController) Update(c *models.Context) {
 	// Respond
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
-			h.ApiTypeUpdateOptionType,
+			h.APITypeUpdateOptionType,
 			m.UpdateTypeID,
 		),
 	)

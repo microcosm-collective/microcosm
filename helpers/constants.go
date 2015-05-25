@@ -1,12 +1,12 @@
 package helpers
 
-import (
-	"errors"
-)
+import "fmt"
 
+// JumpURL is the URL to use for external URL redirects
+const JumpURL string = "http://microco.sm/out/"
+
+// Constants for all of the itemTypes
 const (
-	JumpUrl string = "http://microco.sm/out/"
-
 	ItemTypeActivity         string = "activity"
 	ItemTypeAlbum            string = "album"
 	ItemTypeArticle          string = "article"
@@ -33,6 +33,7 @@ const (
 	ItemTypeWhoAmI           string = "whoami"
 )
 
+// ItemTypes is a list of all itemTypes
 var ItemTypes = map[string]int64{
 	ItemTypeSite:             1,
 	ItemTypeMicrocosm:        2,
@@ -57,6 +58,7 @@ var ItemTypes = map[string]int64{
 	ItemTypeAttachment:       21,
 }
 
+// ItemTypesCommentable is a list of the itemTypes that can have comments on them
 var ItemTypesCommentable = map[string]int64{
 	ItemTypeProfile:      3,
 	ItemTypeHuddle:       5,
@@ -69,6 +71,8 @@ var ItemTypesCommentable = map[string]int64{
 	ItemTypeAlbum:        12,
 }
 
+// ItemTypesScoreable is a list of the itemTypes that will be scored to determine
+// trending items
 var ItemTypesScoreable = map[string]int64{
 	ItemTypeConversation: 6,
 	ItemTypePoll:         7,
@@ -79,59 +83,62 @@ var ItemTypesScoreable = map[string]int64{
 	ItemTypeAlbum:        12,
 }
 
+// List of APITypes
 const (
-	ApiTypeActivity         string = "/api/v1/activity"
-	ApiTypeAlbum            string = "/api/v1/albums"
-	ApiTypeArticle          string = "/api/v1/articles"
-	ApiTypeAttendee         string = "/api/v1/events/%d/attendees"
-	ApiTypeAttachment       string = "attachments"
-	ApiTypeAttribute        string = "/api/v1/%s/%d/attributes"
-	ApiTypeAuth             string = "/api/v1/auth"
-	ApiTypeClassified       string = "/api/v1/classifieds"
-	ApiTypeComment          string = "/api/v1/comments"
-	ApiTypeConversation     string = "/api/v1/conversations"
-	ApiTypeEvent            string = "/api/v1/events"
-	ApiTypeFile             string = "/api/v1/files"
-	ApiTypeHuddle           string = "/api/v1/huddles"
-	ApiTypeMicrocosm        string = "/api/v1/microcosms"
-	ApiTypeQuestion         string = "/api/v1/questions"
-	ApiTypePoll             string = "/api/v1/polls"
-	ApiTypeProfile          string = "/api/v1/profiles"
-	ApiTypeRole             string = "/api/v1/roles"
-	ApiTypeSite             string = "/api/v1/sites"
-	ApiTypeUpdate           string = "/api/v1/updates"
-	ApiTypeUpdateOptionType string = "/api/v1/updates/preferences/%d"
-	ApiTypeUser             string = "/api/v1/users"
-	ApiTypeWatcher          string = "/api/v1/watchers"
-	ApiTypeWhoAmI           string = "/api/v1/whoami"
+	APITypeActivity         string = "/api/v1/activity"
+	APITypeAlbum            string = "/api/v1/albums"
+	APITypeArticle          string = "/api/v1/articles"
+	APITypeAttendee         string = "/api/v1/events/%d/attendees"
+	APITypeAttachment       string = "attachments"
+	APITypeAttribute        string = "/api/v1/%s/%d/attributes"
+	APITypeAuth             string = "/api/v1/auth"
+	APITypeClassified       string = "/api/v1/classifieds"
+	APITypeComment          string = "/api/v1/comments"
+	APITypeConversation     string = "/api/v1/conversations"
+	APITypeEvent            string = "/api/v1/events"
+	APITypeFile             string = "/api/v1/files"
+	APITypeHuddle           string = "/api/v1/huddles"
+	APITypeMicrocosm        string = "/api/v1/microcosms"
+	APITypeQuestion         string = "/api/v1/questions"
+	APITypePoll             string = "/api/v1/polls"
+	APITypeProfile          string = "/api/v1/profiles"
+	APITypeRole             string = "/api/v1/roles"
+	APITypeSite             string = "/api/v1/sites"
+	APITypeUpdate           string = "/api/v1/updates"
+	APITypeUpdateOptionType string = "/api/v1/updates/preferences/%d"
+	APITypeUser             string = "/api/v1/users"
+	APITypeWatcher          string = "/api/v1/watchers"
+	APITypeWhoAmI           string = "/api/v1/whoami"
 )
 
-var ItemTypesToApiItem = map[string]string{
-	ItemTypeAttendee:         ApiTypeAttendee,
-	ItemTypeActivity:         ApiTypeActivity,
-	ItemTypeAlbum:            ApiTypeAlbum,
-	ItemTypeArticle:          ApiTypeArticle,
-	ItemTypeAttribute:        ApiTypeAttribute,
-	ItemTypeAuth:             ApiTypeAuth,
-	ItemTypeClassified:       ApiTypeClassified,
-	ItemTypeComment:          ApiTypeComment,
-	ItemTypeConversation:     ApiTypeConversation,
-	ItemTypeEvent:            ApiTypeEvent,
-	ItemTypeFile:             ApiTypeFile,
-	ItemTypeHuddle:           ApiTypeHuddle,
-	ItemTypeMicrocosm:        ApiTypeMicrocosm,
-	ItemTypePoll:             ApiTypePoll,
-	ItemTypeProfile:          ApiTypeProfile,
-	ItemTypeQuestion:         ApiTypeQuestion,
-	ItemTypeRole:             ApiTypeRole,
-	ItemTypeSite:             ApiTypeSite,
-	ItemTypeUpdate:           ApiTypeUpdate,
-	ItemTypeUpdateOptionType: ApiTypeUpdateOptionType,
-	ItemTypeUser:             ApiTypeUser,
-	ItemTypeWatcher:          ApiTypeWatcher,
-	ItemTypeWhoAmI:           ApiTypeWhoAmI,
+// ItemTypesToAPIItem maps from the itemType to the APIType
+var ItemTypesToAPIItem = map[string]string{
+	ItemTypeAttendee:         APITypeAttendee,
+	ItemTypeActivity:         APITypeActivity,
+	ItemTypeAlbum:            APITypeAlbum,
+	ItemTypeArticle:          APITypeArticle,
+	ItemTypeAttribute:        APITypeAttribute,
+	ItemTypeAuth:             APITypeAuth,
+	ItemTypeClassified:       APITypeClassified,
+	ItemTypeComment:          APITypeComment,
+	ItemTypeConversation:     APITypeConversation,
+	ItemTypeEvent:            APITypeEvent,
+	ItemTypeFile:             APITypeFile,
+	ItemTypeHuddle:           APITypeHuddle,
+	ItemTypeMicrocosm:        APITypeMicrocosm,
+	ItemTypePoll:             APITypePoll,
+	ItemTypeProfile:          APITypeProfile,
+	ItemTypeQuestion:         APITypeQuestion,
+	ItemTypeRole:             APITypeRole,
+	ItemTypeSite:             APITypeSite,
+	ItemTypeUpdate:           APITypeUpdate,
+	ItemTypeUpdateOptionType: APITypeUpdateOptionType,
+	ItemTypeUser:             APITypeUser,
+	ItemTypeWatcher:          APITypeWatcher,
+	ItemTypeWhoAmI:           APITypeWhoAmI,
 }
 
+// List of update_types
 const (
 	UpdateTypeEventReminder      string = "event_reminder"
 	UpdateTypeMentioned          string = "mentioned"
@@ -143,6 +150,7 @@ const (
 	UpdateTypeReplyToComment     string = "reply_to_comment"
 )
 
+// UpdateTypes is a map of update_types
 var UpdateTypes = map[string]int64{
 	UpdateTypeNewComment:         1, // New comment on an item you're watching
 	UpdateTypeReplyToComment:     2, // A reply to one of your comments
@@ -154,6 +162,7 @@ var UpdateTypes = map[string]int64{
 	UpdateTypeNewItem:            8, // New item created in microcosm you're watching
 }
 
+// List of texts for update_types
 const (
 	UpdateTextEventReminder      string = "You have an upcoming event"
 	UpdateTextMentioned          string = "You were mentioned in a comment"
@@ -166,6 +175,7 @@ const (
 	UpdateTextReplyToComment     string = "A user has replied to your post"
 )
 
+// UpdateTexts is a map of email titles for a given range of update_types
 var UpdateTexts = map[int64]string{
 	1: UpdateTextNewComment,
 	2: UpdateTextReplyToComment,
@@ -178,15 +188,18 @@ var UpdateTexts = map[int64]string{
 	9: UpdateTextMicrocosmActivity,
 }
 
+// GetItemTypeFromInt returns the string itemType for the integer itemTypeID
 func GetItemTypeFromInt(value int64) (string, error) {
 	return GetMapStringFromInt(ItemTypes, value)
 }
 
+// GetMapStringFromInt for a given map[string]int64 return the value of the
+// key where the value matches
 func GetMapStringFromInt(theMap map[string]int64, value int64) (string, error) {
 	for k, v := range theMap {
 		if v == value {
 			return k, nil
 		}
 	}
-	return "", errors.New("Item does not exist")
+	return "", fmt.Errorf("Item does not exist")
 }

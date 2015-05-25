@@ -91,7 +91,7 @@ func (ctl *ProfilesController) Create(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeProfile,
+			h.APITypeProfile,
 			m.ID,
 		),
 	)
@@ -135,7 +135,7 @@ func (ctl *ProfilesController) ReadMany(c *models.Context) {
 	thisLink := h.GetLinkToThisPage(*c.Request.URL, offset, limit, total)
 
 	m := models.ProfilesType{}
-	m.Profiles = h.ConstructArray(ems, h.ApiTypeProfile, total, limit, offset, pages, c.Request.URL)
+	m.Profiles = h.ConstructArray(ems, h.APITypeProfile, total, limit, offset, pages, c.Request.URL)
 	m.Meta.Links = []h.LinkType{
 		h.LinkType{Rel: "self", Href: thisLink.String()},
 	}

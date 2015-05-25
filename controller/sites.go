@@ -72,7 +72,7 @@ func (ctl *SitesController) ReadMany(c *models.Context) {
 	m := models.SitesType{}
 	m.Sites = h.ConstructArray(
 		ems,
-		h.ApiTypeSite,
+		h.APITypeSite,
 		total,
 		limit,
 		offset,
@@ -148,5 +148,5 @@ func (ctl *SitesController) Create(c *models.Context) {
 		c.IP,
 	)
 
-	c.RespondWithSeeOther(fmt.Sprintf("%s/%d", h.ApiTypeSite, site.ID))
+	c.RespondWithSeeOther(fmt.Sprintf("%s/%d", h.APITypeSite, site.ID))
 }

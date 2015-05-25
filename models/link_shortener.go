@@ -81,7 +81,7 @@ func ParseLinks(
 			for ii, attribute := range attributes {
 
 				if attribute.Key == "href" &&
-					!strings.Contains(attribute.Val, h.JumpUrl) &&
+					!strings.Contains(attribute.Val, h.JumpURL) &&
 					!strings.HasPrefix(attribute.Val, "mailto:") {
 
 					u, err := url.Parse(attribute.Val)
@@ -291,7 +291,7 @@ func ShortenLink(
 		*links = append(*links, l)
 	}
 
-	return fmt.Sprintf("%s%s", h.JumpUrl, link.ShortURL), text, title, nil
+	return fmt.Sprintf("%s%s", h.JumpURL, link.ShortURL), text, title, nil
 }
 
 // GetOrCreateLink fetches a link from the database or creates a new short link

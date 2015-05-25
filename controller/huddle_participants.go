@@ -140,7 +140,7 @@ func (ctl *HuddleParticipantsController) UpdateMany(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeHuddle,
+			h.APITypeHuddle,
 			huddleId,
 		),
 	)

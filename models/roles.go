@@ -69,13 +69,13 @@ func (m *RoleType) GetLink() string {
 	if m.MicrocosmID > 0 {
 		return fmt.Sprintf(
 			"%s/%d/roles/%d",
-			h.ApiTypeMicrocosm,
+			h.APITypeMicrocosm,
 			m.MicrocosmID,
 			m.ID,
 		)
 	}
 
-	return fmt.Sprintf("%s/%d", h.ApiTypeRole, m.ID)
+	return fmt.Sprintf("%s/%d", h.APITypeRole, m.ID)
 }
 
 // Validate returns true if the role config is valid
@@ -640,7 +640,7 @@ func GetRoleSummary(
 
 	roleSummary.Members = h.ConstructArray(
 		ems,
-		h.ApiTypeProfile,
+		h.APITypeProfile,
 		total,
 		limit,
 		offset,

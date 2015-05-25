@@ -202,7 +202,7 @@ func (ctl *AttendeesController) ReadMany(c *models.Context) {
 	m := models.AttendeesType{}
 	m.Attendees = h.ConstructArray(
 		ems,
-		fmt.Sprintf(h.ApiTypeAttendee, 0),
+		fmt.Sprintf(h.APITypeAttendee, 0),
 		total,
 		limit,
 		offset,

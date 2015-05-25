@@ -68,7 +68,7 @@ func (ctl *WatchersController) ReadMany(c *models.Context) {
 	m := models.WatchersType{}
 	m.Watchers = h.ConstructArray(
 		ems,
-		h.ApiTypeWatcher,
+		h.APITypeWatcher,
 		total,
 		limit,
 		offset,

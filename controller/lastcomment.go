@@ -67,7 +67,7 @@ func (ctl *LastCommentController) Read(c *models.Context) {
 
 	location := fmt.Sprintf(
 		"%s/%d",
-		h.ItemTypesToApiItem[itemType],
+		h.ItemTypesToAPIItem[itemType],
 		itemId,
 	)
 	parsed.Path = location

@@ -603,7 +603,7 @@ func GetItems(
 
 	m := h.ConstructArray(
 		ems,
-		h.ApiTypeComment,
+		h.APITypeComment,
 		total,
 		limit,
 		offset,

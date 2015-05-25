@@ -55,7 +55,7 @@ func (ctl *UpdatesController) ReadMany(c *models.Context) {
 	m := models.UpdatesType{}
 	m.Updates = h.ConstructArray(
 		ems,
-		h.ApiTypeUpdate,
+		h.APITypeUpdate,
 		total,
 		limit,
 		offset,

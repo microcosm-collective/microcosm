@@ -172,7 +172,7 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 	)
 
 	c.RespondWithSeeOther(
-		fmt.Sprintf("%s/%d", fmt.Sprintf(h.ApiTypeAttendee, m.EventID), m.ProfileID),
+		fmt.Sprintf("%s/%d", fmt.Sprintf(h.APITypeAttendee, m.EventID), m.ProfileID),
 	)
 }
 

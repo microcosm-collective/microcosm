@@ -145,7 +145,7 @@ func (ctl *CommentController) Update(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeComment,
+			h.APITypeComment,
 			m.ID,
 		),
 	)

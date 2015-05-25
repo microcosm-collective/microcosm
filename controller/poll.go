@@ -184,7 +184,7 @@ func (ctl *PollController) Update(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypePoll,
+			h.APITypePoll,
 			m.ID,
 		),
 	)

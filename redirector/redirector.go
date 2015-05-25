@@ -81,7 +81,7 @@ RETURNING
 	if m.ID == 0 {
 		glog.Errorf("m.Id == 0 for URL %s", shortURL)
 		return models.Link{}, http.StatusNotFound,
-			fmt.Errorf("URL %s%s not found", h.JumpUrl, shortURL)
+			fmt.Errorf("URL %s%s not found", h.JumpURL, shortURL)
 	}
 
 	if affiliateMayExist(m.Domain) {

@@ -62,7 +62,7 @@ func (ctl *HuddlesController) ReadMany(c *models.Context) {
 	m := models.HuddlesType{}
 	m.Huddles = h.ConstructArray(
 		ems,
-		h.ApiTypeHuddle,
+		h.APITypeHuddle,
 		total,
 		limit,
 		offset,
@@ -125,7 +125,7 @@ func (ctl *HuddlesController) Create(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%d",
-			h.ApiTypeHuddle,
+			h.APITypeHuddle,
 			m.ID,
 		),
 	)
