@@ -9,8 +9,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// AttendeesCSVController is a web controller
 type AttendeesCSVController struct{}
 
+// AttendeesCSVHandler is a web handler
 func AttendeesCSVHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -34,8 +36,9 @@ func AttendeesCSVHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ReadMany handles GET
 func (ctl *AttendeesCSVController) ReadMany(c *models.Context) {
-	eventId, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
+	eventID, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("The supplied event_id ('%s') is not a number.", c.RouteVars["event_id"]),
@@ -47,7 +50,7 @@ func (ctl *AttendeesCSVController) ReadMany(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeEvent], eventId),
+			c, 0, h.ItemTypes[h.ItemTypeEvent], eventID),
 	)
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -59,7 +62,7 @@ func (ctl *AttendeesCSVController) ReadMany(c *models.Context) {
 	}
 	// End Authorisation
 
-	attendees, status, err := models.GetAttendeesCSV(c.Site.ID, eventId, c.Auth.ProfileID)
+	attendees, status, err := models.GetAttendeesCSV(c.Site.ID, eventID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -68,6 +71,6 @@ func (ctl *AttendeesCSVController) ReadMany(c *models.Context) {
 	c.ResponseWriter.Header().Set(`Cache-Control`, `no-cache, max-age=0`)
 	c.ResponseWriter.Header().Set(`Vary`, `Authorization`)
 	c.ResponseWriter.Header().Set(`Content-Type`, `text/csv`)
-	c.ResponseWriter.Header().Set(`Content-Disposition`, fmt.Sprintf(`attachment; filename=event%d.csv`, eventId))
+	c.ResponseWriter.Header().Set(`Content-Disposition`, fmt.Sprintf(`attachment; filename=event%d.csv`, eventID))
 	c.WriteResponse([]byte(attendees), http.StatusOK)
 }

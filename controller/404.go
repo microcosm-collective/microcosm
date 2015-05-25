@@ -7,8 +7,10 @@ import (
 	"github.com/microcosm-cc/microcosm/resolver"
 )
 
+// Redirect404Controller is a web controller
 type Redirect404Controller struct{}
 
+// Redirect404Handler is a web handler
 func Redirect404Handler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -30,8 +32,8 @@ func Redirect404Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Read handles GET
 func (ctl *Redirect404Controller) Read(c *models.Context) {
-
 	// Just call this with authentication (if you have it) and pass in the
 	// unknown URL as a GET param:
 	//
@@ -47,11 +49,11 @@ func (ctl *Redirect404Controller) Read(c *models.Context) {
 
 	u := c.Request.URL
 	q := u.Query()
-	inUrl := q.Get("url")
-	if inUrl == "" {
+	inURL := q.Get("url")
+	if inURL == "" {
 		c.RespondWithError(http.StatusBadRequest)
 		return
 	}
 
-	c.RespondWithData(resolver.Resolve(c.Site.ID, inUrl, c.Auth.ProfileID))
+	c.RespondWithData(resolver.Resolve(c.Site.ID, inURL, c.Auth.ProfileID))
 }

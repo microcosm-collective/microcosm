@@ -11,6 +11,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// AttachmentsHandler is a web handler
 func AttachmentsHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -36,10 +37,11 @@ func AttachmentsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// AttachmentsController is a web controller
 type AttachmentsController struct{}
 
+// Create handles POST
 func (ctl *AttachmentsController) Create(c *models.Context) {
-
 	attachment := models.AttachmentType{}
 
 	err := c.Fill(&attachment)
@@ -68,24 +70,23 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 				http.StatusBadRequest,
 			)
 			return
-		} else {
-			c.RespondWithErrorMessage(
-				fmt.Sprintf("Could not retrieve metadata: %v", err.Error()),
-				http.StatusBadRequest,
-			)
-			return
 		}
+
+		c.RespondWithErrorMessage(
+			fmt.Sprintf("Could not retrieve metadata: %v", err.Error()),
+			http.StatusBadRequest,
+		)
+		return
 	}
 
 	attachment.AttachmentMetaID = metadata.AttachmentMetaID
 
 	// Determine whether this is an attachment to a profile or comment, and if the
 	// user is authorised to do so
-	path_prefix := ""
+	pathPrefix := ""
 
 	if c.RouteVars["profile_id"] != "" {
-
-		profileId, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
+		profileID, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
 		if err != nil {
 			c.RespondWithErrorMessage(
 				fmt.Sprintf("The supplied profile ID ('%s') is not a number.", c.RouteVars["profile_id"]),
@@ -93,39 +94,38 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			)
 			return
 		}
-		_, status, err := models.GetProfileSummary(c.Site.ID, profileId)
+		_, status, err := models.GetProfileSummary(c.Site.ID, profileID)
 		if err != nil {
 			if status == http.StatusNotFound {
 				c.RespondWithErrorMessage(
-					fmt.Sprintf("Profile with ID ('%d') does not exist.", profileId),
+					fmt.Sprintf("Profile with ID ('%d') does not exist.", profileID),
 					http.StatusBadRequest,
 				)
 				return
-			} else {
-				c.RespondWithErrorMessage(
-					fmt.Sprintf("Could not retrieve profile: %v.", err.Error()),
-					http.StatusInternalServerError,
-				)
-				return
 			}
+
+			c.RespondWithErrorMessage(
+				fmt.Sprintf("Could not retrieve profile: %v.", err.Error()),
+				http.StatusInternalServerError,
+			)
+			return
 		}
 
 		perms := models.GetPermission(
 			models.MakeAuthorisationContext(
-				c, 0, h.ItemTypes[h.ItemTypeProfile], profileId),
+				c, 0, h.ItemTypes[h.ItemTypeProfile], profileID),
 		)
 		if !perms.CanCreate && !perms.CanUpdate {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 			return
 		}
 
-		attachment.ItemID = profileId
+		attachment.ItemID = profileID
 		attachment.ItemTypeID = h.ItemTypes[h.ItemTypeProfile]
-		path_prefix = h.APITypeProfile
+		pathPrefix = h.APITypeProfile
 
 	} else if c.RouteVars["comment_id"] != "" {
-
-		commentId, err := strconv.ParseInt(c.RouteVars["comment_id"], 10, 64)
+		commentID, err := strconv.ParseInt(c.RouteVars["comment_id"], 10, 64)
 		if err != nil {
 			c.RespondWithErrorMessage(
 				fmt.Sprintf("The supplied comment ID ('%s') is not a number.", c.RouteVars["comment_id"]),
@@ -134,26 +134,26 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			return
 		}
 
-		_, status, err := models.GetCommentSummary(c.Site.ID, commentId)
+		_, status, err := models.GetCommentSummary(c.Site.ID, commentID)
 		if err != nil {
 			if status == http.StatusNotFound {
 				c.RespondWithErrorMessage(
-					fmt.Sprintf("Comment with ID ('%d') does not exist.", commentId),
+					fmt.Sprintf("Comment with ID ('%d') does not exist.", commentID),
 					http.StatusBadRequest,
 				)
 				return
-			} else {
-				c.RespondWithErrorMessage(
-					fmt.Sprintf("Could not retrieve comment: %v.", err.Error()),
-					http.StatusInternalServerError,
-				)
-				return
 			}
+
+			c.RespondWithErrorMessage(
+				fmt.Sprintf("Could not retrieve comment: %v.", err.Error()),
+				http.StatusInternalServerError,
+			)
+			return
 		}
 
 		perms := models.GetPermission(
 			models.MakeAuthorisationContext(
-				c, 0, h.ItemTypes[h.ItemTypeComment], commentId),
+				c, 0, h.ItemTypes[h.ItemTypeComment], commentID),
 		)
 		if !perms.CanCreate && !perms.CanUpdate {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -165,9 +165,9 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			return
 		}
 
-		attachment.ItemID = commentId
+		attachment.ItemID = commentID
 		attachment.ItemTypeID = h.ItemTypes[h.ItemTypeComment]
-		path_prefix = h.APITypeComment
+		pathPrefix = h.APITypeComment
 
 	} else {
 		c.RespondWithErrorMessage(
@@ -196,14 +196,14 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 
 	if status != http.StatusNotFound && attachment.ItemTypeID != h.ItemTypes[h.ItemTypeProfile] {
 		c.RespondWithSeeOther(
-			fmt.Sprintf("%s/%d/%s", path_prefix, oldattachment.ItemID, h.APITypeAttachment),
+			fmt.Sprintf("%s/%d/%s", pathPrefix, oldattachment.ItemID, h.APITypeAttachment),
 		)
 		return
 	}
 
 	if status == http.StatusNotFound {
 		// Update attach count on attachment_meta
-		metadata.AttachCount += 1
+		metadata.AttachCount++
 		status, err = metadata.Update()
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
@@ -259,13 +259,13 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 	}
 
 	c.RespondWithSeeOther(
-		fmt.Sprintf("%s/%d/%s", path_prefix, attachment.ItemID, h.APITypeAttachment),
+		fmt.Sprintf("%s/%d/%s", pathPrefix, attachment.ItemID, h.APITypeAttachment),
 	)
 }
 
+// ReadMany handles GET for the collection
 func (ctl *AttachmentsController) ReadMany(c *models.Context) {
-
-	itemTypeId, itemId, perms, status, err := ParseItemInfo(c)
+	itemTypeID, itemID, perms, status, err := ParseItemInfo(c)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -287,7 +287,7 @@ func (ctl *AttachmentsController) ReadMany(c *models.Context) {
 		return
 	}
 
-	attachments, total, pages, status, err := models.GetAttachments(itemTypeId, itemId, limit, offset)
+	attachments, total, pages, status, err := models.GetAttachments(itemTypeID, itemID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

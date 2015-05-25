@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// AttachmentHandler is a web handler
 func AttachmentHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -31,11 +31,12 @@ func AttachmentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// AttachmentController is a web controller
 type AttachmentController struct{}
 
+// Delete handles DELETE
 func (ctl *AttachmentController) Delete(c *models.Context) {
-
-	itemTypeId, itemId, perms, status, err := ParseItemInfo(c)
+	itemTypeID, itemID, perms, status, err := ParseItemInfo(c)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -63,16 +64,16 @@ func (ctl *AttachmentController) Delete(c *models.Context) {
 				http.StatusBadRequest,
 			)
 			return
-		} else {
-			c.RespondWithErrorMessage(
-				fmt.Sprintf("Could not retrieve metadata: %v", err.Error()),
-				http.StatusBadRequest,
-			)
-			return
 		}
+
+		c.RespondWithErrorMessage(
+			fmt.Sprintf("Could not retrieve metadata: %v", err.Error()),
+			http.StatusBadRequest,
+		)
+		return
 	}
 
-	status, err = models.DeleteAttachment(itemTypeId, itemId, fileHash)
+	status, err = models.DeleteAttachment(itemTypeID, itemID, fileHash)
 	if err != nil {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("Could not remove attachment: %v", err.Error()),
@@ -92,70 +93,69 @@ func (ctl *AttachmentController) Delete(c *models.Context) {
 	c.RespondWithOK()
 }
 
+// ParseItemInfo determines what this attachment is attached to
 func ParseItemInfo(c *models.Context) (int64, int64, models.PermissionType, int, error) {
-
-	var itemTypeId int64
-	var itemId int64
+	var itemTypeID int64
+	var itemID int64
 
 	if c.RouteVars["profile_id"] != "" {
-
-		profileId, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
+		profileID, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
 		if err != nil {
 			return 0, 0, models.PermissionType{}, http.StatusBadRequest,
-				errors.New(fmt.Sprintf(
-					"The supplied profile ID ('%s') is not a number.",
+				fmt.Errorf(
+					"The supplied profile ID ('%s') is not a number",
 					c.RouteVars["profile_id"],
-				))
+				)
 		}
-		_, status, err := models.GetProfileSummary(c.Site.ID, profileId)
+		_, status, err := models.GetProfileSummary(c.Site.ID, profileID)
 		if err != nil {
 			if status == http.StatusNotFound {
 				return 0, 0, models.PermissionType{}, http.StatusBadRequest,
-					errors.New(fmt.Sprintf(
-						"Profile with ID ('%d') does not exist.", profileId,
-					))
-			} else {
-				return 0, 0, models.PermissionType{}, http.StatusBadRequest, err
+					fmt.Errorf(
+						"Profile with ID ('%d') does not exist", profileID,
+					)
 			}
+
+			return 0, 0, models.PermissionType{}, http.StatusBadRequest, err
 		}
 
-		itemId = profileId
-		itemTypeId = h.ItemTypes[h.ItemTypeProfile]
+		itemID = profileID
+		itemTypeID = h.ItemTypes[h.ItemTypeProfile]
 
 	} else if c.RouteVars["comment_id"] != "" {
 
-		commentId, err := strconv.ParseInt(c.RouteVars["comment_id"], 10, 64)
+		commentID, err := strconv.ParseInt(c.RouteVars["comment_id"], 10, 64)
 		if err != nil {
 			return 0, 0, models.PermissionType{}, http.StatusBadRequest,
-				errors.New(fmt.Sprintf(
-					"The supplied comment ID ('%s') is not a number.",
+				fmt.Errorf(
+					"The supplied comment ID ('%s') is not a number",
 					c.RouteVars["comment_id"],
-				))
+				)
 		}
-		_, status, err := models.GetCommentSummary(c.Site.ID, commentId)
+		_, status, err := models.GetCommentSummary(c.Site.ID, commentID)
 		if err != nil {
 			if status == http.StatusNotFound {
 				return 0, 0, models.PermissionType{}, http.StatusBadRequest,
-					errors.New(fmt.Sprintf(
-						"Comment with ID ('%d') does not exist.", commentId,
-					))
-			} else {
-				return 0, 0, models.PermissionType{}, http.StatusBadRequest, err
+					fmt.Errorf(
+						"Comment with ID ('%d') does not exist", commentID,
+					)
 			}
+
+			return 0, 0, models.PermissionType{}, http.StatusBadRequest, err
 		}
 
-		itemId = commentId
-		itemTypeId = h.ItemTypes[h.ItemTypeComment]
+		itemID = commentID
+		itemTypeID = h.ItemTypes[h.ItemTypeComment]
 
 	} else {
 		return 0, 0, models.PermissionType{}, http.StatusBadRequest,
-			errors.New("You must supply a profile_id or comment_id as a RouteVar")
+			fmt.Errorf("You must supply a profile_id or comment_id as a RouteVar")
 	}
 
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 
-	return itemTypeId, itemId, perms, http.StatusOK, nil
+	return itemTypeID, itemID, perms, http.StatusOK, nil
 }

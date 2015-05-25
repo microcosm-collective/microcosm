@@ -12,8 +12,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// AttributeController is a web controller
 type AttributeController struct{}
 
+// AttributeHandler is a web handler
 func AttributeHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -41,27 +43,27 @@ func AttributeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Returns a single attribute
+// Read handles GET
 func (ctl *AttributeController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeId, itemId))
+	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeID, itemID))
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
 
-	attributeId, status, err := models.GetAttributeID(itemTypeId, itemId, c.RouteVars["key"])
+	attributeID, status, err := models.GetAttributeID(itemTypeID, itemID, c.RouteVars["key"])
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	m, status, err := models.GetAttribute(attributeId)
+	m, status, err := models.GetAttribute(attributeID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -70,9 +72,9 @@ func (ctl *AttributeController) Read(c *models.Context) {
 	c.RespondWithData(m)
 }
 
-// Updates a single attribute
+// Update handles PUT
 func (ctl *AttributeController) Update(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -98,13 +100,13 @@ func (ctl *AttributeController) Update(c *models.Context) {
 		return
 	}
 
-	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeId, itemId))
+	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeID, itemID))
 	if !perms.CanUpdate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
 
-	status, err = m.Update(itemTypeId, itemId)
+	status, err = m.Update(itemTypeID, itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -122,15 +124,15 @@ func (ctl *AttributeController) Update(c *models.Context) {
 	c.RespondWithSeeOther(
 		fmt.Sprintf(
 			"%s/%s",
-			fmt.Sprintf(h.APITypeAttribute, c.RouteVars["type"], itemId),
+			fmt.Sprintf(h.APITypeAttribute, c.RouteVars["type"], itemID),
 			key,
 		),
 	)
 }
 
-// Deletes a single attribute
+// Delete handles DELETE
 func (ctl *AttributeController) Delete(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -141,7 +143,7 @@ func (ctl *AttributeController) Delete(c *models.Context) {
 	m := models.AttributeType{}
 	m.Key = key
 
-	attributeID, status, err := models.GetAttributeID(itemTypeId, itemId, m.Key)
+	attributeID, status, err := models.GetAttributeID(itemTypeID, itemID, m.Key)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

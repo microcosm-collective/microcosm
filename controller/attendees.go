@@ -16,8 +16,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// AttendeesController is a web controller
 type AttendeesController struct{}
 
+// AttendeesHandler is a web handler
 func AttendeesHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -43,10 +45,10 @@ func AttendeesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdateMany handles PUT on the collection
 func (ctl *AttendeesController) UpdateMany(c *models.Context) {
-
 	// Verify event_id is a positive integer
-	eventId, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
+	eventID, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
 	if err != nil {
 		glog.Errorln(err.Error())
 		c.RespondWithErrorMessage(
@@ -71,7 +73,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 	// Start : Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeEvent], eventId),
+			c, 0, h.ItemTypes[h.ItemTypeEvent], eventID),
 	)
 
 	if !perms.CanCreate {
@@ -113,7 +115,7 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 	t := time.Now()
 	// Populate where applicable from auth and context
 	for i := range ems {
-		ems[i].EventID = eventId
+		ems[i].EventID = eventID
 		ems[i].Meta.CreatedByID = c.Auth.ProfileID
 		ems[i].Meta.Created = t
 		ems[i].Meta.EditedNullable = pq.NullTime{Time: t, Valid: true}
@@ -153,9 +155,10 @@ func (ctl *AttendeesController) UpdateMany(c *models.Context) {
 	c.RespondWithOK()
 }
 
+// ReadMany handles GET for the collection
 func (ctl *AttendeesController) ReadMany(c *models.Context) {
 
-	eventId, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
+	eventID, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("The supplied event_id ('%s') is not a number.", c.RouteVars["event_id"]),
@@ -167,7 +170,7 @@ func (ctl *AttendeesController) ReadMany(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeEvent], eventId),
+			c, 0, h.ItemTypes[h.ItemTypeEvent], eventID),
 	)
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -190,7 +193,7 @@ func (ctl *AttendeesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetAttendees(c.Site.ID, eventId, limit, offset, attending == "attending")
+	ems, total, pages, status, err := models.GetAttendees(c.Site.ID, eventID, limit, offset, attending == "attending")
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

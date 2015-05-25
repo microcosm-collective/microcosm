@@ -13,8 +13,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// CommentController is a web controller
 type CommentController struct{}
 
+// CommentHandler is a web handler
 func CommentHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -44,9 +46,9 @@ func CommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Reads a single comment
+// Read handles GET
 func (ctl *CommentController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -55,7 +57,7 @@ func (ctl *CommentController) Read(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -69,7 +71,7 @@ func (ctl *CommentController) Read(c *models.Context) {
 		return
 	}
 
-	m, status, err := models.GetComment(c.Site.ID, itemId, c.Auth.ProfileID, limit)
+	m, status, err := models.GetComment(c.Site.ID, itemID, c.Auth.ProfileID, limit)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -85,16 +87,16 @@ func (ctl *CommentController) Read(c *models.Context) {
 
 }
 
-// Updates (replaces) a single comment
+// Update handles PUT
 func (ctl *CommentController) Update(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Initialise
-	m, status, err := models.GetCommentSummary(c.Site.ID, itemId)
+	m, status, err := models.GetCommentSummary(c.Site.ID, itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -113,7 +115,7 @@ func (ctl *CommentController) Update(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if !perms.CanUpdate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -151,9 +153,9 @@ func (ctl *CommentController) Update(c *models.Context) {
 	)
 }
 
-// Partially updates a comment, this is limited to changing the boolean flags only
+// Patch handles PATCH
 func (ctl *CommentController) Patch(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -176,7 +178,7 @@ func (ctl *CommentController) Patch(c *models.Context) {
 	}
 
 	// Start Authorisation
-	ac := models.MakeAuthorisationContext(c, 0, itemTypeId, itemId)
+	ac := models.MakeAuthorisationContext(c, 0, itemTypeID, itemID)
 	perms := models.GetPermission(ac)
 	if !perms.CanUpdate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -215,7 +217,7 @@ func (ctl *CommentController) Patch(c *models.Context) {
 	// End Authorisation
 
 	m := models.CommentSummaryType{}
-	m.ID = itemId
+	m.ID = itemID
 	status, err = m.Patch(c.Site.ID, ac, patches)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
@@ -234,9 +236,9 @@ func (ctl *CommentController) Patch(c *models.Context) {
 	c.RespondWithOK()
 }
 
-// Deletes a single comment
+// Delete handles DELETE
 func (ctl *CommentController) Delete(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -245,7 +247,7 @@ func (ctl *CommentController) Delete(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if !perms.CanDelete {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -254,7 +256,7 @@ func (ctl *CommentController) Delete(c *models.Context) {
 	// End Authorisation
 
 	// Partially instantiated type for Id passing
-	m, status, err := models.GetCommentSummary(c.Site.ID, itemId)
+	m, status, err := models.GetCommentSummary(c.Site.ID, itemID)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithOK()

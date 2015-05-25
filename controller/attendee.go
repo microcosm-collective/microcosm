@@ -14,8 +14,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// AttendeeController is a web controller
 type AttendeeController struct{}
 
+// AttendeeHandler is a web handler
 func AttendeeHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -43,10 +45,10 @@ func AttendeeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Read handles GET
 func (ctl *AttendeeController) Read(c *models.Context) {
-
 	// Verify ID is a positive integer
-	eventId, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
+	eventID, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("The supplied event_id ('%s') is not a number.", c.RouteVars["event_id"]),
@@ -55,7 +57,7 @@ func (ctl *AttendeeController) Read(c *models.Context) {
 		return
 	}
 
-	profileId, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
+	profileID, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("The supplied profile_id ('%s') is not a number.", c.RouteVars["profile_id"]),
@@ -64,7 +66,7 @@ func (ctl *AttendeeController) Read(c *models.Context) {
 		return
 	}
 
-	attendeeId, status, err := models.GetAttendeeID(eventId, profileId)
+	attendeeID, status, err := models.GetAttendeeID(eventID, profileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -73,7 +75,7 @@ func (ctl *AttendeeController) Read(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeAttendee], attendeeId),
+			c, 0, h.ItemTypes[h.ItemTypeAttendee], attendeeID),
 	)
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -82,7 +84,7 @@ func (ctl *AttendeeController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Read Event
-	m, status, err := models.GetAttendee(c.Site.ID, attendeeId)
+	m, status, err := models.GetAttendee(c.Site.ID, attendeeID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -93,10 +95,10 @@ func (ctl *AttendeeController) Read(c *models.Context) {
 	c.RespondWithData(m)
 }
 
+// Update handles PUT
 func (ctl *AttendeeController) Update(c *models.Context) {
-
 	// Verify ID is a positive integer
-	eventId, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
+	eventID, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("The supplied event_id ('%s') is not a number.", c.RouteVars["event_id"]),
@@ -119,7 +121,7 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeEvent], eventId),
+			c, 0, h.ItemTypes[h.ItemTypeEvent], eventID),
 	)
 	if !perms.CanUpdate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -146,7 +148,7 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 
 	// Populate where applicable from auth and context
 	t := time.Now()
-	m.EventID = eventId
+	m.EventID = eventID
 	m.Meta.CreatedByID = c.Auth.ProfileID
 	m.Meta.Created = t
 	m.Meta.EditedByNullable = sql.NullInt64{Int64: c.Auth.ProfileID, Valid: true}
@@ -176,10 +178,10 @@ func (ctl *AttendeeController) Update(c *models.Context) {
 	)
 }
 
+// Delete handles DELETE
 func (ctl *AttendeeController) Delete(c *models.Context) {
-
 	// Validate inputs
-	eventId, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
+	eventID, err := strconv.ParseInt(c.RouteVars["event_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("The supplied event_id ('%s') is not a number.", c.RouteVars["event_id"]),
@@ -188,7 +190,7 @@ func (ctl *AttendeeController) Delete(c *models.Context) {
 		return
 	}
 
-	profileId, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
+	profileID, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("The supplied profile_id ('%s') is not a number.", c.RouteVars["profile_id"]),
@@ -197,7 +199,7 @@ func (ctl *AttendeeController) Delete(c *models.Context) {
 		return
 	}
 
-	attendeeId, status, err := models.GetAttendeeID(eventId, profileId)
+	attendeeID, status, err := models.GetAttendeeID(eventID, profileID)
 	if err != nil {
 		c.RespondWithOK()
 		return
@@ -206,7 +208,7 @@ func (ctl *AttendeeController) Delete(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeAttendee], attendeeId),
+			c, 0, h.ItemTypes[h.ItemTypeAttendee], attendeeID),
 	)
 	if !perms.CanDelete {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -214,7 +216,7 @@ func (ctl *AttendeeController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetAttendee(c.Site.ID, attendeeId)
+	m, status, err := models.GetAttendee(c.Site.ID, attendeeID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -230,7 +232,7 @@ func (ctl *AttendeeController) Delete(c *models.Context) {
 	audit.Replace(
 		c.Site.ID,
 		h.ItemTypes[h.ItemTypeAttendee],
-		attendeeId,
+		attendeeID,
 		c.Auth.ProfileID,
 		time.Now(),
 		c.IP,

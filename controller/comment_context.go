@@ -9,8 +9,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// CommentContextController is a web controller
 type CommentContextController struct{}
 
+// CommentContextHandler is a web handler
 func CommentContextHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -34,9 +36,9 @@ func CommentContextHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Redirects to the comment within the context of the thing it is attached to
+// Read handles GET
 func (ctl *CommentContextController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -45,7 +47,7 @@ func (ctl *CommentContextController) Read(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -59,7 +61,7 @@ func (ctl *CommentContextController) Read(c *models.Context) {
 		return
 	}
 
-	m, status, err := models.GetCommentSummary(c.Site.ID, itemId)
+	m, status, err := models.GetCommentSummary(c.Site.ID, itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -71,15 +73,15 @@ func (ctl *CommentContextController) Read(c *models.Context) {
 		return
 	}
 
-	pageUrl, err := url.Parse(link.Href)
+	pageURL, err := url.Parse(link.Href)
 	if err != nil {
 		c.RespondWithErrorMessage(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	queryString := pageUrl.Query()
+	queryString := pageURL.Query()
 	queryString.Add("comment_id", strconv.FormatInt(m.ID, 10))
-	pageUrl.RawQuery = queryString.Encode()
+	pageURL.RawQuery = queryString.Encode()
 
-	c.RespondWithLocation(pageUrl.String())
+	c.RespondWithLocation(pageURL.String())
 }

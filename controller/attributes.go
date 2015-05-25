@@ -11,8 +11,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// AttributesController is a web controller
 type AttributesController struct{}
 
+// AttributesHandler is a web handler
 func AttributesHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -40,15 +42,15 @@ func AttributesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Returns an array of attributes associated with the given entity
+// ReadMany handles GET for a collection
 func (ctl *AttributesController) ReadMany(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeId, itemId))
+	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeID, itemID))
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
@@ -61,7 +63,7 @@ func (ctl *AttributesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetAttributes(itemTypeId, itemId, limit, offset)
+	ems, total, pages, status, err := models.GetAttributes(itemTypeID, itemID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -82,9 +84,9 @@ func (ctl *AttributesController) ReadMany(c *models.Context) {
 	c.RespondWithData(m)
 }
 
-// Updates one or more attributes on the given entity
+// UpdateMany handles PUT for the collection
 func (ctl *AttributesController) UpdateMany(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -111,13 +113,13 @@ func (ctl *AttributesController) UpdateMany(c *models.Context) {
 		}
 	}
 
-	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeId, itemId))
+	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeID, itemID))
 	if !perms.CanUpdate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
 
-	status, err = models.UpdateManyAttributes(itemTypeId, itemId, ems)
+	status, err = models.UpdateManyAttributes(itemTypeID, itemID, ems)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -137,9 +139,9 @@ func (ctl *AttributesController) UpdateMany(c *models.Context) {
 	c.RespondWithOK()
 }
 
-// Deletes one or more attributes associated to a given entityt
+// DeleteMany handles DELETE for the collection
 func (ctl *AttributesController) DeleteMany(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -166,13 +168,13 @@ func (ctl *AttributesController) DeleteMany(c *models.Context) {
 		}
 	}
 
-	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeId, itemId))
+	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeID, itemID))
 	if !perms.CanDelete {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
 
-	status, err = models.DeleteManyAttributes(itemTypeId, itemId, ems)
+	status, err = models.DeleteManyAttributes(itemTypeID, itemID, ems)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

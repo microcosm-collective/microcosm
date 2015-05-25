@@ -10,8 +10,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// ConversationsController is a web controller
 type ConversationsController struct{}
 
+// ConversationsHandler is a web handler
 func ConversationsHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -37,9 +39,8 @@ func ConversationsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Returns an array of conversations
+// ReadMany handles GET
 func (ctl *ConversationsController) ReadMany(c *models.Context) {
-
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
@@ -86,9 +87,8 @@ func (ctl *ConversationsController) ReadMany(c *models.Context) {
 	c.RespondWithData(m)
 }
 
-// Creates a conversations
+// Create handles POST
 func (ctl *ConversationsController) Create(c *models.Context) {
-
 	// Validate inputs
 	m := models.ConversationType{}
 	m.Meta.Flags.Deleted = false

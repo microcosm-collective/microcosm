@@ -11,8 +11,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// CommentsController is a web controller
 type CommentsController struct{}
 
+// CommentsHandler is a web handler
 func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -34,13 +36,9 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Creates a single comment
+// Create handles POST
 func (ctl *CommentsController) Create(c *models.Context) {
-
-	// Initialise (non-zero defaults must be set)
 	m := models.CommentSummaryType{}
-
-	// Fill from POST data
 	err := c.Fill(&m)
 	if err != nil {
 		c.RespondWithErrorMessage(

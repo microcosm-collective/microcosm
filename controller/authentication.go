@@ -18,8 +18,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// AuthController is a web controller
 type AuthController struct{}
 
+// AuthHandler is a web handler
 func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -47,8 +49,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Create handles POST
 func (ctl *AuthController) Create(c *models.Context) {
-
 	accessTokenRequest := models.AccessTokenRequestType{}
 	err := c.Fill(&accessTokenRequest)
 	if err != nil {
@@ -228,8 +230,8 @@ func (ctl *AuthController) Create(c *models.Context) {
 	c.RespondWithData(tokenValue)
 }
 
+// Read handles GET
 func (ctl *AuthController) Read(c *models.Context) {
-
 	// Extract access token from request and retrieve its metadata
 	m, status, err := models.GetAccessToken(c.RouteVars["id"])
 	if err != nil {
@@ -242,6 +244,7 @@ func (ctl *AuthController) Read(c *models.Context) {
 	c.RespondWithData(m)
 }
 
+// Delete handles DELETE
 func (ctl *AuthController) Delete(c *models.Context) {
 
 	// Extract access token from request and delete its record
