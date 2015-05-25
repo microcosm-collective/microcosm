@@ -23,7 +23,7 @@ func getOrigin(siteID int64) *Origin {
 
 	key := fmt.Sprintf("site_origin_%d", siteID)
 
-	if val, ok := cache.CacheGet(key, Origin{}); ok {
+	if val, ok := cache.Get(key, Origin{}); ok {
 		origin := val.(Origin)
 		return &origin
 	}
@@ -53,7 +53,7 @@ SELECT origin_id
 		return nil
 	}
 
-	cache.CacheSet(key, origin, ttl)
+	cache.Set(key, origin, ttl)
 
 	return &origin
 }

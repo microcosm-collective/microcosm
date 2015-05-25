@@ -424,7 +424,7 @@ func GetMicrocosm(
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcMicrocosmKeys[c.CacheDetail], id)
-	if val, ok := c.CacheGet(mcKey, MicrocosmType{}); ok {
+	if val, ok := c.Get(mcKey, MicrocosmType{}); ok {
 
 		m := val.(MicrocosmType)
 		if m.SiteID != siteID {
@@ -507,7 +507,7 @@ SELECT microcosm_id,
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	m.FetchSummaries(siteID, profileID)
 	return m, http.StatusOK, nil
@@ -551,7 +551,7 @@ func GetMicrocosmSummary(
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcMicrocosmKeys[c.CacheSummary], id)
-	if val, ok := c.CacheGet(mcKey, MicrocosmSummaryType{}); ok {
+	if val, ok := c.Get(mcKey, MicrocosmSummaryType{}); ok {
 
 		m := val.(MicrocosmSummaryType)
 
@@ -640,7 +640,7 @@ SELECT microcosm_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	m.FetchSummaries(siteID)
 
@@ -652,7 +652,7 @@ func GetMicrocosmTitle(id int64) string {
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcMicrocosmKeys[c.CacheTitle], id)
-	if val, ok := c.CacheGetString(mcKey); ok {
+	if val, ok := c.GetString(mcKey); ok {
 		return val
 	}
 
@@ -678,7 +678,7 @@ SELECT title
 	}
 
 	// Update cache
-	c.CacheSetString(mcKey, title, mcTTL)
+	c.SetString(mcKey, title, mcTTL)
 
 	return title
 }

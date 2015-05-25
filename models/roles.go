@@ -141,7 +141,7 @@ func (m *RoleType) Insert(siteID int64, profileID int64) (int, error) {
 			strconv.FormatInt(m.Meta.CreatedByID, 10),
 	)
 
-	v, ok := c.CacheGetInt64(dupeKey)
+	v, ok := c.GetInt64(dupeKey)
 	if ok {
 		m.ID = v
 		return http.StatusOK, nil
@@ -465,7 +465,7 @@ func GetRole(
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcRoleKeys[c.CacheDetail], roleID)
-	if val, ok := c.CacheGet(mcKey, RoleType{}); ok {
+	if val, ok := c.Get(mcKey, RoleType{}); ok {
 
 		m := val.(RoleType)
 
@@ -583,7 +583,7 @@ SELECT role_id
 	}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteID)
 

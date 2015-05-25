@@ -229,7 +229,7 @@ func (m *CommentSummaryType) Insert(siteID int64) (int, error) {
 			strconv.FormatInt(m.Meta.CreatedByID, 10),
 	)
 
-	v, ok := c.CacheGetInt64(dupeKey)
+	v, ok := c.GetInt64(dupeKey)
 	if ok {
 		m.ID = v
 		return http.StatusOK, nil
@@ -237,7 +237,7 @@ func (m *CommentSummaryType) Insert(siteID int64) (int, error) {
 
 	status, err = m.insert(siteID, false)
 	// 5 minute dupe check
-	c.CacheSetInt64(dupeKey, m.ID, 60*5)
+	c.SetInt64(dupeKey, m.ID, 60*5)
 
 	// If we're posting to a huddle, purge the counts for the users in the
 	// huddle
@@ -895,7 +895,7 @@ func GetCommentSummary(
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcCommentKeys[c.CacheDetail], commentID)
-	if val, ok := c.CacheGet(mcKey, CommentSummaryType{}); ok {
+	if val, ok := c.Get(mcKey, CommentSummaryType{}); ok {
 		m := val.(CommentSummaryType)
 
 		m.FetchProfileSummaries(siteID)
@@ -1101,7 +1101,7 @@ UPDATE revisions
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, commentTTL)
+	c.Set(mcKey, m, commentTTL)
 
 	// Profiles should be fetched after the item is cached.
 	m.FetchProfileSummaries(siteID)

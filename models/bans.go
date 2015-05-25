@@ -23,7 +23,7 @@ func IsBanned(siteID int64, userID int64) bool {
 	// this cache key is unique and does not conform to the cache flushing
 	// mechanism
 	mcKey := fmt.Sprintf(banCacheKey, siteID, userID)
-	if val, ok := c.CacheGetBool(mcKey); ok {
+	if val, ok := c.GetBool(mcKey); ok {
 		return val
 	}
 
@@ -51,7 +51,7 @@ SELECT 1
 		return false
 	}
 
-	c.CacheSetBool(mcKey, isBanned, mcTTL)
+	c.SetBool(mcKey, isBanned, mcTTL)
 
 	return isBanned
 }

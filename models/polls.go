@@ -495,7 +495,7 @@ func GetPoll(siteID int64, id int64, profileID int64) (PollType, int, error) {
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcPollKeys[c.CacheDetail], id)
-	if val, ok := c.CacheGet(mcKey, PollType{}); ok {
+	if val, ok := c.Get(mcKey, PollType{}); ok {
 		m := val.(PollType)
 		m.FetchProfileSummaries(siteID)
 		return m, http.StatusOK, nil
@@ -632,7 +632,7 @@ SELECT choice_id,
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteID)
 	return m, http.StatusOK, nil
@@ -651,7 +651,7 @@ func GetPollSummary(
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcPollKeys[c.CacheSummary], id)
-	if val, ok := c.CacheGet(mcKey, PollSummaryType{}); ok {
+	if val, ok := c.Get(mcKey, PollSummaryType{}); ok {
 		m := val.(PollSummaryType)
 		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmID, profileID)
 		if err != nil {
@@ -737,7 +737,7 @@ SELECT poll_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteID)
 	return m, http.StatusOK, nil

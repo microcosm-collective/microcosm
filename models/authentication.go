@@ -95,7 +95,7 @@ INSERT INTO access_tokens (
 
 	// Update cache
 	mcKey := fmt.Sprintf(mcAccessTokenKeys[c.CacheDetail], m.TokenValue)
-	c.CacheSet(mcKey, m, int32(m.Expires.Sub(time.Now()).Seconds()))
+	c.Set(mcKey, m, int32(m.Expires.Sub(time.Now()).Seconds()))
 
 	return http.StatusOK, nil
 }
@@ -104,7 +104,7 @@ INSERT INTO access_tokens (
 func GetAccessToken(token string) (AccessTokenType, int, error) {
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcAccessTokenKeys[c.CacheDetail], token)
-	if val, ok := c.CacheGet(mcKey, AccessTokenType{}); ok {
+	if val, ok := c.Get(mcKey, AccessTokenType{}); ok {
 		return val.(AccessTokenType), http.StatusOK, nil
 	}
 
@@ -152,7 +152,7 @@ SELECT access_token_id
 	}
 
 	// Update cache
-	c.CacheSet(mcKey, m, int32(m.Expires.Sub(time.Now()).Seconds()))
+	c.Set(mcKey, m, int32(m.Expires.Sub(time.Now()).Seconds()))
 
 	return m, http.StatusOK, nil
 }
@@ -184,7 +184,7 @@ DELETE FROM access_tokens
 
 	// Clear the cache. We do this manually as the ID in this case isn't
 	// an int64
-	c.CacheDelete(fmt.Sprintf(mcAccessTokenKeys[c.CacheDetail], m.TokenValue))
+	c.Delete(fmt.Sprintf(mcAccessTokenKeys[c.CacheDetail], m.TokenValue))
 
 	return http.StatusOK, nil
 }

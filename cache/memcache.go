@@ -42,8 +42,8 @@ func InitCache(host string, port int64) {
 	enabled = true
 }
 
-// CacheSet puts the given interface into the cache
-func CacheSet(key string, data interface{}, timeToLive int32) {
+// Set puts the given interface into the cache
+func Set(key string, data interface{}, timeToLive int32) {
 	if !enabled {
 		return
 	}
@@ -70,8 +70,8 @@ func CacheSet(key string, data interface{}, timeToLive int32) {
 	}
 }
 
-// CacheGet gets the data for the given key, if the data is in the cache
-func CacheGet(key string, dst interface{}) (interface{}, bool) {
+// Get gets the data for the given key, if the data is in the cache
+func Get(key string, dst interface{}) (interface{}, bool) {
 	if !enabled {
 		return nil, false
 	}
@@ -97,9 +97,9 @@ func CacheGet(key string, dst interface{}) (interface{}, bool) {
 	return dst, true
 }
 
-// CacheDelete removes items matching the given key from the cache, if it is in
+// Delete removes items matching the given key from the cache, if it is in
 // the cache
-func CacheDelete(key string) {
+func Delete(key string) {
 	if !enabled {
 		return
 	}

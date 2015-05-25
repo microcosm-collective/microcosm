@@ -152,7 +152,7 @@ func (m *HuddleType) Insert(siteID int64) (int, error) {
 			strconv.FormatInt(m.Meta.CreatedByID, 10),
 	)
 
-	v, ok := c.CacheGetInt64(dupeKey)
+	v, ok := c.GetInt64(dupeKey)
 	if ok {
 		m.ID = v
 		return http.StatusOK, nil
@@ -161,7 +161,7 @@ func (m *HuddleType) Insert(siteID int64) (int, error) {
 	status, err := m.insert(siteID)
 
 	// 5 second dupe check just to catch people hitting submit multiple times
-	c.CacheSetInt64(dupeKey, m.ID, 5)
+	c.SetInt64(dupeKey, m.ID, 5)
 
 	return status, err
 }
@@ -296,7 +296,7 @@ func GetHuddle(
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcHuddleKeys[c.CacheDetail], id)
-	if val, ok := c.CacheGet(mcKey, HuddleType{}); ok {
+	if val, ok := c.Get(mcKey, HuddleType{}); ok {
 		m := val.(HuddleType)
 		m.FetchProfileSummaries(siteID)
 		return m, http.StatusOK, nil
@@ -369,7 +369,7 @@ SELECT h.huddle_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteID)
 
@@ -380,7 +380,7 @@ SELECT h.huddle_id
 func GetHuddleTitle(id int64) string {
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcHuddleKeys[c.CacheTitle], id)
-	if val, ok := c.CacheGetString(mcKey); ok {
+	if val, ok := c.GetString(mcKey); ok {
 		return val
 	}
 
@@ -406,7 +406,7 @@ SELECT title
 	}
 
 	// Update cache
-	c.CacheSetString(mcKey, title, mcTTL)
+	c.SetString(mcKey, title, mcTTL)
 
 	return title
 }
@@ -423,7 +423,7 @@ func GetHuddleSummary(
 ) {
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcHuddleKeys[c.CacheSummary], id)
-	if val, ok := c.CacheGet(mcKey, HuddleSummaryType{}); ok {
+	if val, ok := c.Get(mcKey, HuddleSummaryType{}); ok {
 		m := val.(HuddleSummaryType)
 		m.FetchProfileSummaries(siteID)
 		return m, http.StatusOK, nil
@@ -552,7 +552,7 @@ SELECT h.huddle_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteID)
 

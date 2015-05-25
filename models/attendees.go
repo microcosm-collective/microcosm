@@ -415,7 +415,7 @@ func HandleAttendeeRequest(
 func GetAttendee(siteID int64, id int64) (AttendeeType, int, error) {
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcAttendeeKeys[c.CacheDetail], id)
-	if val, ok := c.CacheGet(mcKey, AttendeeType{}); ok {
+	if val, ok := c.Get(mcKey, AttendeeType{}); ok {
 		m := val.(AttendeeType)
 		m.FetchProfileSummaries(siteID)
 		return m, 0, nil
@@ -494,7 +494,7 @@ WHERE attendee_id = $1`,
 	}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 	m.FetchProfileSummaries(siteID)
 
 	return m, http.StatusOK, nil

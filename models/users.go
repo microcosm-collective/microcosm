@@ -139,7 +139,7 @@ func GetUser(id int64) (UserType, int, error) {
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcProfileKeys[c.CacheUser], id)
-	if val, ok := c.CacheGet(mcKey, UserType{}); ok {
+	if val, ok := c.Get(mcKey, UserType{}); ok {
 		return val.(UserType), http.StatusOK, nil
 	}
 
@@ -191,7 +191,7 @@ SELECT user_id
 			h.GetLink("self", "", h.ItemTypeUser, m.ID),
 		}
 
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }

@@ -303,7 +303,7 @@ func (m *SiteType) FetchProfileSummaries() (int, error) {
 	// These are updated by eviction from a cron job, so have a long TTL in case
 	// the cron job fails
 	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheCounts], m.ID)
-	if val, ok := c.CacheGet(mcKey, []h.StatType{}); ok {
+	if val, ok := c.Get(mcKey, []h.StatType{}); ok {
 		m.Meta.Stats = val.([]h.StatType)
 	} else {
 		stats, err := GetSiteStats(m.ID)
@@ -311,7 +311,7 @@ func (m *SiteType) FetchProfileSummaries() (int, error) {
 			glog.Error(err)
 		} else {
 			m.Meta.Stats = stats
-			c.CacheSet(mcKey, m.Meta.Stats, mcTTL)
+			c.Set(mcKey, m.Meta.Stats, mcTTL)
 		}
 	}
 
@@ -609,7 +609,7 @@ func GetSiteTitle(id int64) string {
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheTitle], id)
-	if val, ok := c.CacheGetString(mcKey); ok {
+	if val, ok := c.GetString(mcKey); ok {
 		return val
 	}
 
@@ -633,7 +633,7 @@ SELECT title
 	}
 
 	// Update cache
-	c.CacheSetString(mcKey, title, mcTTL)
+	c.SetString(mcKey, title, mcTTL)
 
 	return title
 }
@@ -643,7 +643,7 @@ func GetSite(id int64) (SiteType, int, error) {
 
 	// Try cache
 	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheDetail], id)
-	if val, ok := c.CacheGet(mcKey, SiteType{}); ok {
+	if val, ok := c.Get(mcKey, SiteType{}); ok {
 		m := val.(SiteType)
 		// Site now caches the profile summaries as the benefits on performance
 		// are too great to do this every time as context.MakeContext for every
@@ -741,7 +741,7 @@ SELECT s.site_id
 		}
 	m.FetchProfileSummaries()
 
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }
@@ -1001,7 +1001,7 @@ func GetSiteBySubdomain(subdomain string) (SiteType, int, error) {
 	}
 
 	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheSubdomain], subdomain)
-	if val, ok := c.CacheGetInt64(mcKey); ok {
+	if val, ok := c.GetInt64(mcKey); ok {
 		return GetSite(val)
 	}
 
@@ -1033,7 +1033,7 @@ SELECT site_id
 	}
 
 	// Update cache
-	c.CacheSetInt64(mcKey, siteID, mcTTL)
+	c.SetInt64(mcKey, siteID, mcTTL)
 
 	return GetSite(siteID)
 }
@@ -1047,7 +1047,7 @@ func GetSiteByDomain(domain string) (SiteType, int, error) {
 	}
 
 	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheDomain], domain)
-	if val, ok := c.CacheGetInt64(mcKey); ok {
+	if val, ok := c.GetInt64(mcKey); ok {
 		return GetSite(val)
 	}
 
@@ -1078,7 +1078,7 @@ SELECT site_id
 	}
 
 	// Update cache
-	c.CacheSetInt64(mcKey, siteID, mcTTL)
+	c.SetInt64(mcKey, siteID, mcTTL)
 
 	return GetSite(siteID)
 }

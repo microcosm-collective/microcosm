@@ -28,7 +28,7 @@ func GetUpdateType(updateTypeID int64) (UpdateTypesType, int, error) {
 
 	// Try fetching from cache
 	mcKey := fmt.Sprintf(mcUpdateTypeKeys[c.CacheDetail], updateTypeID)
-	if val, ok := c.CacheGet(mcKey, UpdateTypesType{}); ok {
+	if val, ok := c.Get(mcKey, UpdateTypesType{}); ok {
 		m := val.(UpdateTypesType)
 		return m, http.StatusOK, nil
 	}
@@ -65,7 +65,7 @@ SELECT update_type_id
 			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }

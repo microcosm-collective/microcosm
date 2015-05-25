@@ -104,7 +104,7 @@ func GetProfileOptions(profileID int64) (ProfileOptionType, int, error) {
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcProfileKeys[c.CacheOptions], profileID)
-	if val, ok := c.CacheGet(mcKey, ProfileOptionType{}); ok {
+	if val, ok := c.Get(mcKey, ProfileOptionType{}); ok {
 		m := val.(ProfileOptionType)
 		return m, http.StatusOK, nil
 	}
@@ -143,7 +143,7 @@ SELECT profile_id
 	}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }

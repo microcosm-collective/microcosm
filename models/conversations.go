@@ -151,7 +151,7 @@ func (m *ConversationType) Insert(siteID int64, profileID int64) (int, error) {
 			m.Title+
 			strconv.FormatInt(m.Meta.CreatedByID, 10),
 	)
-	v, ok := c.CacheGetInt64(dupeKey)
+	v, ok := c.GetInt64(dupeKey)
 	if ok {
 		m.ID = v
 		return http.StatusOK, nil
@@ -160,7 +160,7 @@ func (m *ConversationType) Insert(siteID int64, profileID int64) (int, error) {
 	status, err = m.insert(siteID, profileID)
 	if status == http.StatusOK {
 		// 5 minute dupe check
-		c.CacheSetInt64(dupeKey, m.ID, 60*5)
+		c.SetInt64(dupeKey, m.ID, 60*5)
 	}
 
 	return status, err
@@ -414,7 +414,7 @@ func GetConversation(
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcConversationKeys[c.CacheDetail], id)
-	if val, ok := c.CacheGet(mcKey, ConversationType{}); ok {
+	if val, ok := c.Get(mcKey, ConversationType{}); ok {
 		m := val.(ConversationType)
 
 		// TODO(buro9) 2014-05-05: We are not verifying that the cached
@@ -508,7 +508,7 @@ SELECT c.conversation_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	m.FetchSummaries(siteID)
 	return m, http.StatusOK, nil
@@ -526,7 +526,7 @@ func GetConversationSummary(
 ) {
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcConversationKeys[c.CacheSummary], id)
-	if val, ok := c.CacheGet(mcKey, ConversationSummaryType{}); ok {
+	if val, ok := c.Get(mcKey, ConversationSummaryType{}); ok {
 		m := val.(ConversationSummaryType)
 		m.FetchProfileSummaries(siteID)
 		return m, http.StatusOK, nil
@@ -613,7 +613,7 @@ SELECT conversation_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	m.FetchProfileSummaries(siteID)
 	return m, http.StatusOK, nil

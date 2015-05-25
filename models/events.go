@@ -241,7 +241,7 @@ func IsAttending(profileID int64, eventID int64) (bool, error) {
 	var attendeeIDs []int64
 
 	key := fmt.Sprintf(mcEventKeys[c.CacheProfileIds], eventID)
-	attendeeIDs, ok := c.CacheGetInt64Slice(key)
+	attendeeIDs, ok := c.GetInt64Slice(key)
 
 	if !ok {
 		db, err := h.GetConnection()
@@ -266,7 +266,7 @@ SELECT profile_id
 			attendeeIDs = append(attendeeIDs, attendeeID)
 		}
 
-		c.CacheSetInt64Slice(key, attendeeIDs, mcTTL)
+		c.SetInt64Slice(key, attendeeIDs, mcTTL)
 	}
 
 	for _, id := range attendeeIDs {
@@ -343,7 +343,7 @@ func (m *EventType) Insert(siteID int64, profileID int64) (int, error) {
 			strconv.FormatInt(m.Meta.CreatedByID, 10),
 	)
 
-	v, ok := c.CacheGetInt64(dupeKey)
+	v, ok := c.GetInt64(dupeKey)
 	if ok {
 		m.ID = v
 		return http.StatusOK, nil
@@ -408,7 +408,7 @@ INSERT INTO events (
 	}
 
 	// 5 minute dupe check
-	c.CacheSetInt64(dupeKey, m.ID, 60*5)
+	c.SetInt64(dupeKey, m.ID, 60*5)
 
 	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.ID)
 	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.MicrocosmID)
@@ -647,7 +647,7 @@ func GetEvent(siteID int64, id int64, profileID int64) (EventType, int, error) {
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcEventKeys[c.CacheDetail], id)
-	if val, ok := c.CacheGet(mcKey, EventType{}); ok {
+	if val, ok := c.Get(mcKey, EventType{}); ok {
 		m := val.(EventType)
 
 		// TODO(buro9) 2014-05-05: We are not verifying that the cached
@@ -799,7 +799,7 @@ SELECT e.event_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	status, err := m.FetchProfileSummaries(siteID)
 	if err != nil {
@@ -832,7 +832,7 @@ func GetEventSummary(
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcEventKeys[c.CacheSummary], id)
-	if val, ok := c.CacheGet(mcKey, EventSummaryType{}); ok {
+	if val, ok := c.Get(mcKey, EventSummaryType{}); ok {
 
 		m := val.(EventSummaryType)
 
@@ -970,7 +970,7 @@ WHERE event_id = $1
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	status, err = m.FetchProfileSummaries(siteID)
 	if err != nil {

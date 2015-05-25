@@ -352,7 +352,7 @@ func GetWatcher(watcherID int64, siteID int64) (WatcherType, int, error) {
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcWatcherKeys[c.CacheDetail], watcherID)
-	if val, ok := c.CacheGet(mcKey, WatcherType{}); ok {
+	if val, ok := c.Get(mcKey, WatcherType{}); ok {
 		return val.(WatcherType), http.StatusOK, nil
 	}
 
@@ -433,7 +433,7 @@ SELECT watcher_id,
 	}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }

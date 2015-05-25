@@ -249,7 +249,7 @@ func GetUpdate(
 
 	// Try fetching from cache
 	mcKey := fmt.Sprintf(mcUpdateKeys[c.CacheDetail], updateID)
-	if val, ok := c.CacheGet(mcKey, UpdateType{}); ok {
+	if val, ok := c.Get(mcKey, UpdateType{}); ok {
 		m := val.(UpdateType)
 		m.FetchSummaries(siteID)
 		return m, http.StatusOK, nil
@@ -302,7 +302,7 @@ SELECT update_id
 	m.ItemType = itemType
 	m.FetchSummaries(siteID)
 
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 	return m, http.StatusOK, nil
 }
 

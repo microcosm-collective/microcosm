@@ -272,14 +272,14 @@ func (c *Context) authenticate() (int, error) {
 		// Update entry for user's last activity
 		if c.Auth.ProfileID > 0 {
 			lastActiveKey := fmt.Sprintf("la_%d", c.Auth.ProfileID)
-			_, ok := cache.CacheGetInt64(lastActiveKey)
+			_, ok := cache.GetInt64(lastActiveKey)
 			if !ok {
 				// Background as the first call to this is likely a whoami which
 				// is a blocking call
 				go UpdateLastActive(c.Auth.ProfileID, c.StartTime)
 
 				// Only update every 60 seconds at most
-				cache.CacheSetInt64(lastActiveKey, 1, 60)
+				cache.SetInt64(lastActiveKey, 1, 60)
 			}
 		}
 

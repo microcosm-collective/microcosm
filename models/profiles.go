@@ -636,7 +636,7 @@ func GetProfile(siteID int64, id int64) (ProfileType, int, error) {
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcProfileKeys[c.CacheDetail], id)
-	if val, ok := c.CacheGet(mcKey, ProfileType{}); ok {
+	if val, ok := c.Get(mcKey, ProfileType{}); ok {
 		m := val.(ProfileType)
 
 		if m.SiteID != siteID {
@@ -753,7 +753,7 @@ SELECT p.profile_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }
@@ -830,7 +830,7 @@ func (m *ProfileType) GetUnreadHuddleCount() (int, error) {
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcProfileKeys[c.CacheCounts], m.ID)
-	if i, ok := c.CacheGetInt64(mcKey); ok {
+	if i, ok := c.GetInt64(mcKey); ok {
 
 		m.Meta.Stats = append(
 			m.Meta.Stats,
@@ -864,7 +864,7 @@ SELECT unread_huddles
 		h.StatType{Metric: "unreadHuddles", Value: unreadHuddles},
 	)
 
-	c.CacheSetInt64(mcKey, unreadHuddles, mcTTL)
+	c.SetInt64(mcKey, unreadHuddles, mcTTL)
 
 	return http.StatusOK, nil
 }
@@ -905,7 +905,7 @@ func GetProfileSummary(
 
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcProfileKeys[c.CacheSummary], id)
-	if val, ok := c.CacheGet(mcKey, ProfileSummaryType{}); ok {
+	if val, ok := c.Get(mcKey, ProfileSummaryType{}); ok {
 		m := val.(ProfileSummaryType)
 		if m.SiteID != siteID {
 			return ProfileSummaryType{}, http.StatusNotFound,
@@ -967,7 +967,7 @@ SELECT profile_id
 		}
 
 	// Update cache
-	c.CacheSet(mcKey, m, mcTTL)
+	c.Set(mcKey, m, mcTTL)
 
 	return m, http.StatusOK, nil
 }
@@ -985,7 +985,7 @@ func GetProfileID(siteID int64, userID int64) (int64, int, error) {
 	// this cache key is unique and does not conform to the cache flushing
 	// mechanism
 	mcKey := fmt.Sprintf("s%d_u%d", siteID, userID)
-	if val, ok := c.CacheGetInt64(mcKey); ok {
+	if val, ok := c.GetInt64(mcKey); ok {
 		return val, http.StatusOK, nil
 	}
 
@@ -1021,7 +1021,7 @@ SELECT profile_id
 			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
-	c.CacheSetInt64(mcKey, profileID, mcTTL)
+	c.SetInt64(mcKey, profileID, mcTTL)
 
 	return profileID, http.StatusOK, nil
 }
