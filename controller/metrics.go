@@ -1,4 +1,3 @@
-// Check auth user ID, print metrics table as an html table.
 package controller
 
 import (
@@ -8,8 +7,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// MetricsController is a web controller
 type MetricsController struct{}
 
+// MetricsHandler is a web handler
 func MetricsHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -33,6 +34,7 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Update handles PUT
 func (ctl *MetricsController) Update(c *models.Context) {
 
 	// Hard coded to only work for founders.
@@ -58,6 +60,7 @@ func (ctl *MetricsController) Update(c *models.Context) {
 	return
 }
 
+// Read handles GET
 func (ctl *MetricsController) Read(c *models.Context) {
 
 	// Hard coded to only work for founders.

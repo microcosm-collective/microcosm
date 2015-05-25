@@ -9,8 +9,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// HuddleController is a web controller
 type HuddleController struct{}
 
+// HuddleHandler is a web handler
 func HuddleHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -36,9 +38,9 @@ func HuddleHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Returns a single huddle
+// Read handles GET
 func (ctl *HuddleController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -47,7 +49,7 @@ func (ctl *HuddleController) Read(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -56,7 +58,7 @@ func (ctl *HuddleController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Get Huddle
-	m, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, itemId)
+	m, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -92,7 +94,7 @@ func (ctl *HuddleController) Read(c *models.Context) {
 		models.UpdateUnreadHuddleCount(c.Auth.ProfileID)
 
 		// Get watcher status
-		watcherId, sendEmail, sendSms, _, status, err := models.GetWatcherAndIgnoreStatus(
+		watcherID, sendEmail, sendSms, _, status, err := models.GetWatcherAndIgnoreStatus(
 			h.ItemTypes[h.ItemTypeHuddle], m.ID, c.Auth.ProfileID,
 		)
 		if err != nil {
@@ -100,7 +102,7 @@ func (ctl *HuddleController) Read(c *models.Context) {
 			return
 		}
 
-		if watcherId > 0 {
+		if watcherID > 0 {
 			m.Meta.Flags.Watched = true
 			m.Meta.Flags.SendEmail = sendEmail
 			m.Meta.Flags.SendSMS = sendSms
@@ -110,9 +112,9 @@ func (ctl *HuddleController) Read(c *models.Context) {
 	c.RespondWithData(m)
 }
 
-// Deletes a single huddle
+// Delete handles DELETE
 func (ctl *HuddleController) Delete(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -121,7 +123,7 @@ func (ctl *HuddleController) Delete(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if !perms.CanDelete {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -129,7 +131,7 @@ func (ctl *HuddleController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, itemId)
+	m, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, itemID)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithOK()

@@ -8,8 +8,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// HuddleParticipantController is a web controller
 type HuddleParticipantController struct{}
 
+// HuddleParticipantHandler is a web handler
 func HuddleParticipantHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -37,15 +39,15 @@ func HuddleParticipantHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Returns information on a profile assigned to this huddle
+// Read handles GET
 func (ctl *HuddleParticipantController) Read(c *models.Context) {
-	huddleId, err := strconv.ParseInt(c.RouteVars["huddle_id"], 10, 64)
+	huddleID, err := strconv.ParseInt(c.RouteVars["huddle_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("huddle_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	_, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleId)
+	_, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -54,7 +56,7 @@ func (ctl *HuddleParticipantController) Read(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeHuddle], huddleId),
+			c, 0, h.ItemTypes[h.ItemTypeHuddle], huddleID),
 	)
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -62,13 +64,13 @@ func (ctl *HuddleParticipantController) Read(c *models.Context) {
 	}
 	// End Authorisation
 
-	profileId, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
+	profileID, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("profile_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	m, status, err := models.GetHuddleParticipant(c.Site.ID, huddleId, profileId)
+	m, status, err := models.GetHuddleParticipant(c.Site.ID, huddleID, profileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -77,21 +79,21 @@ func (ctl *HuddleParticipantController) Read(c *models.Context) {
 	c.RespondWithData(m)
 }
 
-// Explicitly associates a profile to this huddle
+// Update handles PUT
 func (ctl *HuddleParticipantController) Update(c *models.Context) {
-	huddleId, err := strconv.ParseInt(c.RouteVars["huddle_id"], 10, 64)
+	huddleID, err := strconv.ParseInt(c.RouteVars["huddle_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("huddle_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleId)
+	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	profileId, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
+	profileID, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("profile_id in URL is not a number", http.StatusBadRequest)
 		return
@@ -100,7 +102,7 @@ func (ctl *HuddleParticipantController) Update(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeHuddle], huddleId),
+			c, 0, h.ItemTypes[h.ItemTypeHuddle], huddleID),
 	)
 	if !perms.CanUpdate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -114,9 +116,9 @@ func (ctl *HuddleParticipantController) Update(c *models.Context) {
 	// End Authorisation
 
 	m := models.HuddleParticipantType{}
-	m.ID = profileId
+	m.ID = profileID
 
-	status, err = m.Update(c.Site.ID, huddleId)
+	status, err = m.Update(c.Site.ID, huddleID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -125,22 +127,21 @@ func (ctl *HuddleParticipantController) Update(c *models.Context) {
 	c.RespondWithSeeOther(m.GetLink(r.GetLink()))
 }
 
-// Deletes a profile from the huddle
+// Delete handles DELETE
 func (ctl *HuddleParticipantController) Delete(c *models.Context) {
-
-	huddleId, err := strconv.ParseInt(c.RouteVars["huddle_id"], 10, 64)
+	huddleID, err := strconv.ParseInt(c.RouteVars["huddle_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("huddle_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	_, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleId)
+	_, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	profileId, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
+	profileID, err := strconv.ParseInt(c.RouteVars["profile_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("profile_id in URL is not a number", http.StatusBadRequest)
 		return
@@ -149,7 +150,7 @@ func (ctl *HuddleParticipantController) Delete(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeHuddle], huddleId),
+			c, 0, h.ItemTypes[h.ItemTypeHuddle], huddleID),
 	)
 	if !perms.CanDelete {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -157,15 +158,15 @@ func (ctl *HuddleParticipantController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	if profileId != c.Auth.ProfileID {
+	if profileID != c.Auth.ProfileID {
 		c.RespondWithErrorMessage("Only the participant in question can remove a participant from a huddle", http.StatusBadRequest)
 		return
 	}
 
 	m := models.HuddleParticipantType{}
-	m.ID = profileId
+	m.ID = profileID
 
-	status, err = m.Delete(huddleId)
+	status, err = m.Delete(huddleID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

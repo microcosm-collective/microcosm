@@ -9,8 +9,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// MenuController is a web controller
 type MenuController struct{}
 
+// MenuHandler is a web handler
 func MenuHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -18,10 +20,10 @@ func MenuHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var siteId int64
+	var siteID int64
 
 	if id, exists := c.RouteVars["site_id"]; exists {
-		siteId, err = strconv.ParseInt(id, 10, 64)
+		siteID, err = strconv.ParseInt(id, 10, 64)
 		if err != nil {
 			c.RespondWithErrorMessage(
 				fmt.Sprintf("The supplied site_id ('%s') is not a number.", id),
@@ -31,8 +33,8 @@ func MenuHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if siteId == 0 {
-		siteId = c.Site.ID
+	if siteID == 0 {
+		siteID = c.Site.ID
 	}
 
 	ctl := MenuController{}
@@ -42,23 +44,23 @@ func MenuHandler(w http.ResponseWriter, r *http.Request) {
 		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE"})
 		return
 	case "GET":
-		ctl.Read(c, siteId)
+		ctl.Read(c, siteID)
 	case "HEAD":
-		ctl.Read(c, siteId)
+		ctl.Read(c, siteID)
 	case "PUT":
-		ctl.Update(c, siteId)
+		ctl.Update(c, siteID)
 	case "DELETE":
-		ctl.Delete(c, siteId)
+		ctl.Delete(c, siteID)
 	default:
 		c.RespondWithStatus(http.StatusMethodNotAllowed)
 		return
 	}
 }
 
-// Returns an array of attributes associated with the given entity
-func (ctl *MenuController) Read(c *models.Context, siteId int64) {
+// Read handles GET
+func (ctl *MenuController) Read(c *models.Context, siteID int64) {
 
-	ems, status, err := models.GetMenu(siteId)
+	ems, status, err := models.GetMenu(siteID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -67,12 +69,12 @@ func (ctl *MenuController) Read(c *models.Context, siteId int64) {
 	c.RespondWithData(ems)
 }
 
-// Updates one or more attributes on the given entity
-func (ctl *MenuController) Update(c *models.Context, siteId int64) {
+// Update handles PUT
+func (ctl *MenuController) Update(c *models.Context, siteID int64) {
 	ems := []h.LinkType{}
 
 	// Start :: Auth
-	site, status, err := models.GetSite(siteId)
+	site, status, err := models.GetSite(siteID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -101,7 +103,7 @@ func (ctl *MenuController) Update(c *models.Context, siteId int64) {
 		return
 	}
 
-	status, err = models.UpdateMenu(siteId, ems)
+	status, err = models.UpdateMenu(siteID, ems)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -110,10 +112,10 @@ func (ctl *MenuController) Update(c *models.Context, siteId int64) {
 	c.RespondWithOK()
 }
 
-func (ctl *MenuController) Delete(c *models.Context, siteId int64) {
-
+// Delete handles DELETE
+func (ctl *MenuController) Delete(c *models.Context, siteID int64) {
 	// Start :: Auth
-	site, status, err := models.GetSite(siteId)
+	site, status, err := models.GetSite(siteID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -133,7 +135,7 @@ func (ctl *MenuController) Delete(c *models.Context, siteId int64) {
 	}
 	// End :: Auth
 
-	status, err = models.DeleteMenu(siteId)
+	status, err = models.DeleteMenu(siteID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

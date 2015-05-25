@@ -10,8 +10,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// HuddlesController is a web controller
 type HuddlesController struct{}
 
+// HuddlesHandler is a web handler
 func HuddlesHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -37,11 +39,11 @@ func HuddlesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Returns an array of huddles
+// ReadMany handles GET for the collection
 func (ctl *HuddlesController) ReadMany(c *models.Context) {
-
-	// NOTE: Auth check skipped, permissions are enforced by limiting the
-	// underlying queries in the model
+	// NOTE: Auth check skipped, permissions are enforced by limiting the scope
+	// of the underlying queries in the model to only show huddles you are a
+	// participant in
 
 	// Fetch query string args if any exist
 	limit, offset, status, err := h.GetLimitAndOffset(c.Request.URL.Query())
@@ -77,9 +79,8 @@ func (ctl *HuddlesController) ReadMany(c *models.Context) {
 	c.RespondWithData(m)
 }
 
-// Creates a Huddle
+// Create handles POST
 func (ctl *HuddlesController) Create(c *models.Context) {
-
 	// Validate inputs
 	m := models.HuddleType{}
 

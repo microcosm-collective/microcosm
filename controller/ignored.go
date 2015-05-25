@@ -8,6 +8,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// IgnoredHandler is a web handler
 func IgnoredHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -35,10 +36,11 @@ func IgnoredHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// IgnoredController is a web controller
 type IgnoredController struct{}
 
+// ReadMany handles GET
 func (ctl *IgnoredController) ReadMany(c *models.Context) {
-
 	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
@@ -83,8 +85,8 @@ func (ctl *IgnoredController) ReadMany(c *models.Context) {
 	c.RespondWithData(m)
 }
 
+// Update handles PUT
 func (ctl *IgnoredController) Update(c *models.Context) {
-
 	m := models.IgnoreType{}
 	err := c.Fill(&m)
 	if err != nil {
@@ -110,8 +112,8 @@ func (ctl *IgnoredController) Update(c *models.Context) {
 	c.RespondWithOK()
 }
 
+// Delete handles DELETE
 func (ctl *IgnoredController) Delete(c *models.Context) {
-
 	m := models.IgnoreType{}
 	err := c.Fill(&m)
 	if err != nil {

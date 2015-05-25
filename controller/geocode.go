@@ -11,8 +11,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// GeoCodeController is a web handler
 type GeoCodeController struct{}
 
+// GeoCodeHandler is a web handler
 func GeoCodeHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -29,21 +31,22 @@ func GeoCodeHandler(w http.ResponseWriter, r *http.Request) {
 	ctl.Read(c)
 }
 
+// Error is a generic error handler for the Geo controller
 func (ctl *GeoCodeController) Error(c *models.Context, message string, status int) {
-	errorJson := `{"error":["` + message + `"]}`
+	errorJSON := `{"error":["` + message + `"]}`
 
-	contentLength := len(errorJson)
+	contentLength := len(errorJSON)
 	c.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(contentLength))
 
 	dur := time.Now().Sub(c.StartTime)
 	go models.SendUsage(c, status, contentLength, dur, []string{"message"})
 
-	c.WriteResponse([]byte(errorJson), status)
+	c.WriteResponse([]byte(errorJSON), status)
 	return
 }
 
+// Read handles GET
 func (ctl *GeoCodeController) Read(c *models.Context) {
-
 	c.ResponseWriter.Header().Set("Content-Type", "application/json")
 
 	// Debugging info

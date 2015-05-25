@@ -12,8 +12,8 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// FilesHandler is a web handler
 func FilesHandler(w http.ResponseWriter, r *http.Request) {
-
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
@@ -33,8 +33,8 @@ func FilesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// FileHandler is a web handler
 func FileHandler(w http.ResponseWriter, r *http.Request) {
-
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
@@ -55,10 +55,11 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// FilesController is a web controller
 type FilesController struct{}
 
+// Create handles POST
 func (ctl *FilesController) Create(c *models.Context) {
-
 	if c.Auth.UserID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
@@ -77,7 +78,6 @@ func (ctl *FilesController) Create(c *models.Context) {
 
 	part, err := mr.NextPart()
 	for err == nil {
-
 		// FormName() is only populated if the part has
 		// Content-Disposition set to "form-data"
 		if part.FormName() != "" {
@@ -159,11 +159,11 @@ func (ctl *FilesController) Create(c *models.Context) {
 	c.RespondWithData(files)
 }
 
+// FileController is a web controller
 type FileController struct{}
 
-//Given a file hash, responds with the file itself
+// Read handles GET
 func (ctl *FileController) Read(c *models.Context) {
-
 	fileHash := c.RouteVars["fileHash"]
 	if fileHash == "" {
 		c.RespondWithErrorMessage(

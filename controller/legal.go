@@ -8,6 +8,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// LegalsHandler is a web handler
 func LegalsHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -28,25 +29,25 @@ func LegalsHandler(w http.ResponseWriter, r *http.Request) {
 				}},
 			)
 			return
-		} else {
-			// A customer site
-			c.RespondWithData(
-				h.LinkArrayType{Links: []h.LinkType{
-					h.LinkType{Rel: "cookies", Href: "/api/v1/legal/cookies"},
-					h.LinkType{Rel: "privacy", Href: "/api/v1/legal/privacy"},
-					h.LinkType{Rel: "terms", Href: "/api/v1/legal/terms"},
-				}},
-			)
-			return
 		}
+
+		// A customer site
+		c.RespondWithData(
+			h.LinkArrayType{Links: []h.LinkType{
+				h.LinkType{Rel: "cookies", Href: "/api/v1/legal/cookies"},
+				h.LinkType{Rel: "privacy", Href: "/api/v1/legal/privacy"},
+				h.LinkType{Rel: "terms", Href: "/api/v1/legal/terms"},
+			}},
+		)
+		return
 	default:
 		c.RespondWithStatus(http.StatusMethodNotAllowed)
 		return
 	}
 }
 
+// LegalHandler is a web handler
 func LegalHandler(w http.ResponseWriter, r *http.Request) {
-
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
@@ -67,10 +68,11 @@ func LegalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// LegalController is a web controller
 type LegalController struct{}
 
+// Read handles GET
 func (ctl *LegalController) Read(c *models.Context) {
-
 	document := c.RouteVars["document"]
 	if document == "" {
 		c.RespondWithErrorMessage(

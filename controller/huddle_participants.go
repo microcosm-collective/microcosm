@@ -9,8 +9,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// HuddleParticipantsController is a web controller
 type HuddleParticipantsController struct{}
 
+// HuddleParticipantsHandler is a web handler
 func HuddleParticipantsHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -36,16 +38,16 @@ func HuddleParticipantsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Returns an array of all of the profiles explicitly assigned to this huddle
+// ReadMany handles GET for the collection
 func (ctl *HuddleParticipantsController) ReadMany(c *models.Context) {
 	// Validate inputs
-	huddleId, err := strconv.ParseInt(c.RouteVars["huddle_id"], 10, 64)
+	huddleID, err := strconv.ParseInt(c.RouteVars["huddle_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("huddle_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleId)
+	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -54,7 +56,7 @@ func (ctl *HuddleParticipantsController) ReadMany(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeHuddle], huddleId),
+			c, 0, h.ItemTypes[h.ItemTypeHuddle], huddleID),
 	)
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -68,7 +70,7 @@ func (ctl *HuddleParticipantsController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetHuddleParticipants(c.Site.ID, huddleId, limit, offset)
+	ems, total, pages, status, err := models.GetHuddleParticipants(c.Site.ID, huddleID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -89,16 +91,16 @@ func (ctl *HuddleParticipantsController) ReadMany(c *models.Context) {
 	c.RespondWithData(m)
 }
 
-// Assigns one or more profiles explicitly to this huddle
+// UpdateMany handles PUT for the collection
 func (ctl *HuddleParticipantsController) UpdateMany(c *models.Context) {
 	// Validate inputs
-	huddleId, err := strconv.ParseInt(c.RouteVars["huddle_id"], 10, 64)
+	huddleID, err := strconv.ParseInt(c.RouteVars["huddle_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("huddle_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleId)
+	r, status, err := models.GetHuddle(c.Site.ID, c.Auth.ProfileID, huddleID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -107,7 +109,7 @@ func (ctl *HuddleParticipantsController) UpdateMany(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, h.ItemTypes[h.ItemTypeHuddle], huddleId),
+			c, 0, h.ItemTypes[h.ItemTypeHuddle], huddleID),
 	)
 	if !perms.CanUpdate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -131,7 +133,7 @@ func (ctl *HuddleParticipantsController) UpdateMany(c *models.Context) {
 		return
 	}
 
-	status, err = models.UpdateManyHuddleParticipants(c.Site.ID, huddleId, ems)
+	status, err = models.UpdateManyHuddleParticipants(c.Site.ID, huddleID, ems)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -141,7 +143,7 @@ func (ctl *HuddleParticipantsController) UpdateMany(c *models.Context) {
 		fmt.Sprintf(
 			"%s/%d",
 			h.APITypeHuddle,
-			huddleId,
+			huddleID,
 		),
 	)
 }

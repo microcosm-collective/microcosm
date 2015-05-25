@@ -9,8 +9,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// LastCommentController is a web controller
 type LastCommentController struct{}
 
+// LastCommentHandler is a web handler
 func LastCommentHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -32,15 +34,15 @@ func LastCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Read handles GET
 func (ctl *LastCommentController) Read(c *models.Context) {
-
-	itemType, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	itemType, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeId, itemId))
+	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeID, itemID))
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
@@ -59,7 +61,7 @@ func (ctl *LastCommentController) Read(c *models.Context) {
 		query.Set("limit", strconv.FormatInt(limit, 10))
 	}
 
-	lastComment, status, err := models.GetLastComment(itemTypeId, itemId)
+	lastComment, status, err := models.GetLastComment(itemTypeID, itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -68,7 +70,7 @@ func (ctl *LastCommentController) Read(c *models.Context) {
 	location := fmt.Sprintf(
 		"%s/%d",
 		h.ItemTypesToAPIItem[itemType],
-		itemId,
+		itemID,
 	)
 	parsed.Path = location
 
