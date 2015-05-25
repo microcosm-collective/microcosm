@@ -7,8 +7,8 @@ import (
 
 var validHexColor = regexp.MustCompile(`#[0-9A-F]{3}(?:[0-9A-F]{3})?`)
 
+// IsValidColor returns true if the string color is a websafe recognised color
 func IsValidColor(color string) bool {
-
 	if validHexColor.MatchString(strings.ToUpper(color)) {
 		return true
 	}

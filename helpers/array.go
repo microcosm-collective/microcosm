@@ -4,6 +4,7 @@ import (
 	"net/url"
 )
 
+// ArrayType describes an array in JSON and how to paginate the collection
 type ArrayType struct {
 	Total     int64       `json:"total"`
 	Limit     int64       `json:"limit"`
@@ -16,6 +17,7 @@ type ArrayType struct {
 	Items     interface{} `json:"items"`
 }
 
+// ConstructArray returns an array
 func ConstructArray(
 	resources interface{},
 	contentType string,
@@ -23,10 +25,10 @@ func ConstructArray(
 	limit int64,
 	offset int64,
 	pages int64,
-	requestUrl *url.URL,
+	requestURL *url.URL,
 ) ArrayType {
 
-	if requestUrl != nil {
+	if requestURL != nil {
 		return ArrayType{
 			Total:     total,
 			Limit:     limit,
@@ -34,24 +36,25 @@ func ConstructArray(
 			MaxOffset: GetMaxOffset(total, limit),
 			Pages:     pages,
 			Page:      GetCurrentPage(offset, limit),
-			Links:     GetArrayLinks(*requestUrl, offset, limit, total),
-			Type:      contentType,
-			Items:     resources,
-		}
-	} else {
-		return ArrayType{
-			Total:     total,
-			Limit:     limit,
-			Offset:    offset,
-			MaxOffset: GetMaxOffset(total, limit),
-			Pages:     pages,
-			Page:      GetCurrentPage(offset, limit),
+			Links:     GetArrayLinks(*requestURL, offset, limit, total),
 			Type:      contentType,
 			Items:     resources,
 		}
 	}
+
+	return ArrayType{
+		Total:     total,
+		Limit:     limit,
+		Offset:    offset,
+		MaxOffset: GetMaxOffset(total, limit),
+		Pages:     pages,
+		Page:      GetCurrentPage(offset, limit),
+		Type:      contentType,
+		Items:     resources,
+	}
 }
 
+// GetCurrentPage returns the current page for a given offset and limit value
 func GetCurrentPage(offset int64, limit int64) int64 {
 	if limit == 0 {
 		return 0
