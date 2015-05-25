@@ -48,8 +48,8 @@ var elasticSearchConnString string
 func init() {
 	elasticSearchConnString = fmt.Sprintf(
 		"%s:%d",
-		conf.CONFIG_STRING[conf.KEY_ELASTICSEARCH_HOST],
-		conf.CONFIG_INT64[conf.KEY_ELASTICSEARCH_PORT],
+		conf.ConfigStrings[conf.ElasticSearchHost],
+		conf.ConfigInt64s[conf.ElasticSearchPort],
 	)
 }
 

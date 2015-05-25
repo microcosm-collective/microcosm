@@ -196,7 +196,7 @@ func ShortenLink(
 	if site.Domain == "" {
 		// If site.Domain were not blank this would cause issues as it would
 		// break /api/v1/files/* links.
-		prefix := "https://" + site.SubdomainKey + conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN]
+		prefix := "https://" + site.SubdomainKey + conf.ConfigStrings[conf.MicrocosmDomain]
 		if strings.HasPrefix(fullURL, prefix) {
 			if len(fullURL) > len(prefix) {
 				fullURL = fullURL[len(prefix):]
@@ -211,7 +211,7 @@ func ShortenLink(
 	} else {
 		// We should not shortern this... it's a link to a file we know about,
 		// an attachment or something.
-		prefix := "https://" + site.SubdomainKey + conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN]
+		prefix := "https://" + site.SubdomainKey + conf.ConfigStrings[conf.MicrocosmDomain]
 		if strings.HasPrefix(fullURL, prefix) {
 			return fullURL, text, "", nil
 		}

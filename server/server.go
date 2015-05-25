@@ -25,12 +25,12 @@ func StartServer(port int64) {
 
 	// Register all handlers for the root site (e.g. http://microco.sm)
 	for url, handler := range rootHandlers {
-		r.HandleFunc(url, handler).Host(conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN])
+		r.HandleFunc(url, handler).Host(conf.ConfigStrings[conf.MicrocosmDomain])
 	}
 
 	// Register all handlers for sites (e.g. http://{[A-Za-z0-9]+}.microco.sm)
 	for url, handler := range siteHandlers {
-		r.HandleFunc(url, handler).Host("{subdomain:[a-z0-9]+}." + conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN])
+		r.HandleFunc(url, handler).Host("{subdomain:[a-z0-9]+}." + conf.ConfigStrings[conf.MicrocosmDomain])
 	}
 
 	http.Handle("/", r)

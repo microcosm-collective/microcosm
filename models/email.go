@@ -53,7 +53,7 @@ func MergeAndSendEmail(
 	//
 	// If you need to test emails to specific external email hosts then you
 	// will need to consciously do so by doing so outside of this code
-	if conf.CONFIG_STRING[conf.KEY_ENVIRONMENT] != `prod` &&
+	if conf.ConfigStrings[conf.Environment] != `prod` &&
 		!strings.Contains(to, "@microcosm.cc") {
 
 		glog.Infof("dev environment, skipping email to %s", to)
@@ -124,7 +124,7 @@ func (m *EmailType) Send(siteID int64) (int, error) {
 	// EmailType describes an email
 	req, err := http.NewRequest(
 		"POST",
-		conf.CONFIG_STRING[conf.KEY_MAILGUN_API_URL],
+		conf.ConfigStrings[conf.MailgunAPIURL],
 		strings.NewReader(formBody.Encode()),
 	)
 
@@ -133,7 +133,7 @@ func (m *EmailType) Send(siteID int64) (int, error) {
 		"application/x-www-form-urlencoded; charset=UTF-8",
 	)
 
-	req.SetBasicAuth("api", conf.CONFIG_STRING[conf.KEY_MAILGUN_API_KEY])
+	req.SetBasicAuth("api", conf.ConfigStrings[conf.MailgunAPIKey])
 
 	client := &http.Client{}
 

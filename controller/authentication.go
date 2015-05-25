@@ -66,9 +66,9 @@ func (ctl *AuthController) Create(c *models.Context) {
 	if c.Site.Domain != "" {
 		audience = c.Site.Domain
 	} else if c.Site.SubdomainKey == "root" {
-		audience = conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN]
+		audience = conf.ConfigStrings[conf.MicrocosmDomain]
 	} else {
-		audience = fmt.Sprintf("%s.%s", c.Site.SubdomainKey, conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN])
+		audience = fmt.Sprintf("%s.%s", c.Site.SubdomainKey, conf.ConfigStrings[conf.MicrocosmDomain])
 	}
 
 	// Verify persona assertion
@@ -88,7 +88,7 @@ func (ctl *AuthController) Create(c *models.Context) {
 	}
 
 	resp, err := http.Post(
-		conf.CONFIG_STRING[conf.KEY_PERSONA_VERIFIER_URL],
+		conf.ConfigStrings[conf.PersonaVerifierURL],
 		"application/json",
 		bytes.NewReader(jsonData),
 	)

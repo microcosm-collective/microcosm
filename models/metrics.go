@@ -100,7 +100,7 @@ SELECT job_timestamp
 
 // UpdateMetrics builds a new set of metrics
 func UpdateMetrics() error {
-	if conf.CONFIG_STRING[conf.KEY_ENVIRONMENT] != `prod` {
+	if conf.ConfigStrings[conf.Environment] != `prod` {
 		glog.Info("dev environment, skipping creation of metrics")
 		return nil
 	}
@@ -249,7 +249,7 @@ func GoogleAnalytics(
 	error,
 ) {
 	// Dev env does not register on Google Analytics
-	if conf.CONFIG_STRING[conf.KEY_ENVIRONMENT] != `prod` {
+	if conf.ConfigStrings[conf.Environment] != `prod` {
 		glog.Info("dev environment, skipping creation of metrics")
 		return 0, 0, 0, nil
 	}

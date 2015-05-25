@@ -81,26 +81,26 @@ func main() {
 		glog.Info("Initialising DB connection")
 	}
 	h.InitDBConnection(h.DBConfig{
-		Host:     conf.CONFIG_STRING[conf.KEY_DATABASE_HOST],
-		Port:     conf.CONFIG_INT64[conf.KEY_DATABASE_PORT],
-		Database: conf.CONFIG_STRING[conf.KEY_DATABASE_DATABASE],
-		Username: conf.CONFIG_STRING[conf.KEY_DATABASE_USERNAME],
-		Password: conf.CONFIG_STRING[conf.KEY_DATABASE_PASSWORD],
+		Host:     conf.ConfigStrings[conf.DatabaseHost],
+		Port:     conf.ConfigInt64s[conf.DatabasePort],
+		Database: conf.ConfigStrings[conf.DatabaseName],
+		Username: conf.ConfigStrings[conf.DatabaseUsername],
+		Password: conf.ConfigStrings[conf.DatabasePassword],
 	})
 
 	if glog.V(2) {
 		glog.Info("Initialising cache connection")
 	}
 	cache.InitCache(
-		conf.CONFIG_STRING[conf.KEY_MEMCACHED_HOST],
-		conf.CONFIG_INT64[conf.KEY_MEMCACHED_PORT],
+		conf.ConfigStrings[conf.MemcachedHost],
+		conf.ConfigInt64s[conf.MemcachedPort],
 	)
 
 	if glog.V(2) {
 		glog.Infof(
 			"Starting server on port %d",
-			conf.CONFIG_INT64[conf.KEY_LISTEN_PORT],
+			conf.ConfigInt64s[conf.ListenPort],
 		)
 	}
-	server.StartServer(conf.CONFIG_INT64[conf.KEY_LISTEN_PORT])
+	server.StartServer(conf.ConfigInt64s[conf.ListenPort])
 }

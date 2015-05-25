@@ -270,12 +270,12 @@ func (f *FileMetadataType) insert(
 	// Check whether we've already uploaded this image as we can save ourselves
 	// some network effort if we have.
 	auth := aws.Auth{
-		AccessKey: conf.CONFIG_STRING[conf.KEY_AWS_ACCESS_KEY_ID],
-		SecretKey: conf.CONFIG_STRING[conf.KEY_AWS_SECRET_ACCESS_KEY],
+		AccessKey: conf.ConfigStrings[conf.AWSAccessKeyID],
+		SecretKey: conf.ConfigStrings[conf.AWSSecretAccessKey],
 	}
 
 	s3Instance := s3.New(auth, aws.EUWest)
-	bucket := s3Instance.Bucket(conf.CONFIG_STRING[conf.KEY_S3_BUCKET])
+	bucket := s3Instance.Bucket(conf.ConfigStrings[conf.AWSS3BucketName])
 
 	uploaded := false
 	key, _ := bucket.GetKey(f.FileHash)
@@ -408,12 +408,12 @@ func GetFile(fileHash string) ([]byte, map[string]string, int, error) {
 	headersOut := map[string]string{}
 
 	auth := aws.Auth{
-		AccessKey: conf.CONFIG_STRING[conf.KEY_AWS_ACCESS_KEY_ID],
-		SecretKey: conf.CONFIG_STRING[conf.KEY_AWS_SECRET_ACCESS_KEY],
+		AccessKey: conf.ConfigStrings[conf.AWSAccessKeyID],
+		SecretKey: conf.ConfigStrings[conf.AWSSecretAccessKey],
 	}
 
 	s3Instance := s3.New(auth, aws.EUWest)
-	bucket := s3Instance.Bucket(conf.CONFIG_STRING[conf.KEY_S3_BUCKET])
+	bucket := s3Instance.Bucket(conf.ConfigStrings[conf.AWSS3BucketName])
 
 	resp, err := bucket.GetResponse(fileHash)
 	if err != nil {

@@ -315,7 +315,7 @@ func (c *Context) getSiteContext() error {
 	// Ignore port
 	host := strings.Split(c.Request.Host, ":")[0]
 	hostParts := strings.Split(host, ".")
-	mcDomain := conf.CONFIG_STRING[conf.KEY_MICROCOSM_DOMAIN]
+	mcDomain := conf.ConfigStrings[conf.MicrocosmDomain]
 
 	var err error
 	if host == mcDomain {
