@@ -15,7 +15,7 @@
 .PHONY: all fmt build vet lint test clean dep_restore dep_update
 
 # The first target is always the default action if `make` is called without args
-all: clean fmt vet test build
+all: clean fmt lint vet test build
 
 fmt:
 	@gofmt -w ./$*
