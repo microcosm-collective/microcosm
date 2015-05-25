@@ -10,8 +10,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// NewCommentController is a web controller
 type NewCommentController struct{}
 
+// NewCommentHandler is a web handler
 func NewCommentHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -33,15 +35,15 @@ func NewCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Read handles GET
 func (ctl *NewCommentController) Read(c *models.Context) {
-
-	itemType, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	itemType, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeId, itemId))
+	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, itemTypeID, itemID))
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
@@ -54,7 +56,7 @@ func (ctl *NewCommentController) Read(c *models.Context) {
 		return
 	}
 
-	offset, commentId, _, err := models.GetLatestComments(c.Site.ID, itemType, itemId, c.Auth.ProfileID, limit)
+	offset, commentID, _, err := models.GetLatestComments(c.Site.ID, itemType, itemID, c.Auth.ProfileID, limit)
 	if err != nil {
 		//Go to to the first page
 		parsed, _ := url.Parse(c.Request.URL.String())
@@ -69,7 +71,7 @@ func (ctl *NewCommentController) Read(c *models.Context) {
 		location := fmt.Sprintf(
 			"%s/%d",
 			h.ItemTypesToAPIItem[itemType],
-			itemId,
+			itemID,
 		)
 		parsed.RawQuery = values.Encode()
 		parsed.Path = location
@@ -92,12 +94,12 @@ func (ctl *NewCommentController) Read(c *models.Context) {
 	}
 
 	values.Del("comment_id")
-	values.Set("comment_id", strconv.FormatInt(commentId, 10))
+	values.Set("comment_id", strconv.FormatInt(commentID, 10))
 
 	location := fmt.Sprintf(
 		"%s/%d",
 		h.ItemTypesToAPIItem[itemType],
-		itemId,
+		itemID,
 	)
 	parsed.RawQuery = values.Encode()
 	parsed.Path = location

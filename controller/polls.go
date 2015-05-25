@@ -10,6 +10,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// PollsHandler is a web handler
 func PollsHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -35,10 +36,11 @@ func PollsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// PollsController is a web controller
 type PollsController struct{}
 
+// Create handles POST
 func (ctl *PollsController) Create(c *models.Context) {
-
 	// Validate inputs
 	m := models.PollType{}
 	m.PollOpen = true
@@ -101,8 +103,8 @@ func (ctl *PollsController) Create(c *models.Context) {
 	)
 }
 
+// ReadMany handles GET for the collection
 func (ctl *PollsController) ReadMany(c *models.Context) {
-
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(

@@ -10,6 +10,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// MicrocosmsHandler is a web handler
 func MicrocosmsHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -35,10 +36,11 @@ func MicrocosmsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// MicrocosmsController is a web controller
 type MicrocosmsController struct{}
 
+// Create handles GET
 func (ctl *MicrocosmsController) Create(c *models.Context) {
-
 	// Validate inputs
 	m := models.MicrocosmType{}
 	err := c.Fill(&m)
@@ -51,7 +53,9 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 	}
 
 	// Start : Authorisation
-	perms := models.GetPermission(models.MakeAuthorisationContext(c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.ID))
+	perms := models.GetPermission(
+		models.MakeAuthorisationContext(c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.ID),
+	)
 	if !perms.CanCreate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
@@ -88,6 +92,7 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 	)
 }
 
+// ReadMany handles GET
 func (ctl *MicrocosmsController) ReadMany(c *models.Context) {
 
 	perms := models.GetPermission(
