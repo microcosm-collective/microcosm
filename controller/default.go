@@ -7,6 +7,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// RootHandler is a web handler
 func RootHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -31,7 +32,8 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ApiHandler(w http.ResponseWriter, r *http.Request) {
+// APIHandler is a web handler
+func APIHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
@@ -55,6 +57,7 @@ func ApiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// V1Handler is a web handler
 func V1Handler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {

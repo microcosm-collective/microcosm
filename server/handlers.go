@@ -38,7 +38,7 @@ var (
 	}
 	siteHandlers = map[string]func(http.ResponseWriter, *http.Request){
 		"/":            controller.RootHandler,
-		"/api":         controller.ApiHandler,
+		"/api":         controller.APIHandler,
 		"/api/v1":      controller.V1Handler,
 		"/api/v1/auth": controller.AuthHandler,
 
@@ -92,8 +92,6 @@ var (
 		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}":                                                       controller.MicrocosmHandler,
 		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}/attributes":                                            controller.AttributesHandler,
 		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}/attributes/{key:[0-9a-zA-Z_-]+}":                       controller.AttributeHandler,
-		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}/effectivepermissions":                                  controller.EffectivePermissionsHandler,
-		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}/effectivepermissions/{profile_id:[0-9]+}":              controller.EffectivePermissionsHandler,
 		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}/roles":                                                 controller.RolesHandler,
 		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}/roles/{role_id:[0-9a-zA-Z_-]+}":                        controller.RoleHandler,
 		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}/roles/{role_id:[0-9]+}/profiles":                       controller.RoleProfilesHandler,

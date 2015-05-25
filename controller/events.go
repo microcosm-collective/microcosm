@@ -10,6 +10,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// EventsHandler is a web handler
 func EventsHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -35,10 +36,11 @@ func EventsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// EventsController is a web controller
 type EventsController struct{}
 
+// Create handles POST
 func (ctl *EventsController) Create(c *models.Context) {
-
 	m := models.EventType{}
 	m.Meta.Flags.Open = true
 
@@ -100,6 +102,7 @@ func (ctl *EventsController) Create(c *models.Context) {
 	)
 }
 
+// ReadMany handles GET
 func (ctl *EventsController) ReadMany(c *models.Context) {
 
 	// Start Authorisation

@@ -13,6 +13,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// EventHandler is a web handler
 func EventHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -42,10 +43,12 @@ func EventHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// EventController is a web controller
 type EventController struct{}
 
+// Read handles GET
 func (ctl *EventController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -54,7 +57,7 @@ func (ctl *EventController) Read(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if !perms.CanRead {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -63,7 +66,7 @@ func (ctl *EventController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Read Event
-	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileID)
+	m, status, err := models.GetEvent(c.Site.ID, itemID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -105,7 +108,7 @@ func (ctl *EventController) Read(c *models.Context) {
 		go models.MarkAsRead(h.ItemTypes[h.ItemTypeEvent], m.ID, c.Auth.ProfileID, read)
 
 		// Get watcher status
-		watcherId, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
+		watcherID, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
 			h.ItemTypes[h.ItemTypeEvent], m.ID, c.Auth.ProfileID,
 		)
 		if err != nil {
@@ -117,7 +120,7 @@ func (ctl *EventController) Read(c *models.Context) {
 			m.Meta.Flags.Ignored = true
 		}
 
-		if watcherId > 0 {
+		if watcherID > 0 {
 			m.Meta.Flags.Watched = true
 			m.Meta.Flags.SendEmail = sendEmail
 			m.Meta.Flags.SendSMS = sendSms
@@ -129,15 +132,16 @@ func (ctl *EventController) Read(c *models.Context) {
 	c.RespondWithData(m)
 }
 
+// Update handles PUT
 func (ctl *EventController) Update(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Validate inputs
-	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileID)
+	m, status, err := models.GetEvent(c.Site.ID, itemID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -154,7 +158,7 @@ func (ctl *EventController) Update(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if !perms.CanUpdate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -190,8 +194,9 @@ func (ctl *EventController) Update(c *models.Context) {
 	)
 }
 
+// Patch handles PATCH
 func (ctl *EventController) Patch(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -214,7 +219,7 @@ func (ctl *EventController) Patch(c *models.Context) {
 	}
 
 	// Start Authorisation
-	ac := models.MakeAuthorisationContext(c, 0, itemTypeId, itemId)
+	ac := models.MakeAuthorisationContext(c, 0, itemTypeID, itemID)
 	perms := models.GetPermission(ac)
 	if !perms.CanUpdate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -272,7 +277,7 @@ func (ctl *EventController) Patch(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileID)
+	m, status, err := models.GetEvent(c.Site.ID, itemID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -296,8 +301,9 @@ func (ctl *EventController) Patch(c *models.Context) {
 	c.RespondWithOK()
 }
 
+// Delete handles DELETE
 func (ctl *EventController) Delete(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -306,7 +312,7 @@ func (ctl *EventController) Delete(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if !perms.CanDelete {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -314,7 +320,7 @@ func (ctl *EventController) Delete(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetEvent(c.Site.ID, itemId, c.Auth.ProfileID)
+	m, status, err := models.GetEvent(c.Site.ID, itemID, c.Auth.ProfileID)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithOK()
