@@ -10,6 +10,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// ProfileReadHandler is a web handler
 func ProfileReadHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -31,10 +32,11 @@ func ProfileReadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ProfileReadController is a web controller
 type ProfileReadController struct{}
 
+// Update handles PUT
 func (ctl *ProfileReadController) Update(c *models.Context) {
-
 	if c.Auth.ProfileID == 0 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
@@ -51,12 +53,12 @@ func (ctl *ProfileReadController) Update(c *models.Context) {
 		return
 	}
 
-	itemTypeId, ok := h.ItemTypes[rs.ItemType]
+	itemTypeID, ok := h.ItemTypes[rs.ItemType]
 	if !ok {
 		c.RespondWithErrorMessage("Unknown item type", http.StatusBadRequest)
 		return
 	}
-	rs.ItemTypeID = itemTypeId
+	rs.ItemTypeID = itemTypeID
 
 	status, err := models.MarkScopeAsRead(c.Auth.ProfileID, rs)
 	if err != nil {

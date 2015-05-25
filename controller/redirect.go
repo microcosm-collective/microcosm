@@ -8,6 +8,7 @@ import (
 	"github.com/microcosm-cc/microcosm/redirector"
 )
 
+// RedirectHandler is a web handler
 func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeEmptyContext(r, w)
 	if err != nil {
@@ -29,8 +30,10 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// RedirectController is a web controller
 type RedirectController struct{}
 
+// Read handles GET
 func (ctl *RedirectController) Read(c *models.Context) {
 	redirect, status, err := redirector.GetRedirect(c.RouteVars["short_url"])
 	if err != nil {
@@ -40,13 +43,13 @@ func (ctl *RedirectController) Read(c *models.Context) {
 				http.StatusNotFound,
 			)
 			return
-		} else {
-			c.RespondWithErrorMessage(
-				fmt.Sprintf("Could not retrieve redirect: %v", err.Error()),
-				http.StatusInternalServerError,
-			)
-			return
 		}
+
+		c.RespondWithErrorMessage(
+			fmt.Sprintf("Could not retrieve redirect: %v", err.Error()),
+			http.StatusInternalServerError,
+		)
+		return
 	}
 
 	c.RespondWithLocation(redirect.URL)

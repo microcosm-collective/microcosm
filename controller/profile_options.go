@@ -10,6 +10,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// ProfileOptionsHandler is a web handler
 func ProfileOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -35,10 +36,11 @@ func ProfileOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ProfileOptionsController is a web controller
 type ProfileOptionsController struct{}
 
+// Read handles GET
 func (ctl *ProfileOptionsController) Read(c *models.Context) {
-
 	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
@@ -53,8 +55,8 @@ func (ctl *ProfileOptionsController) Read(c *models.Context) {
 	c.RespondWithData(m)
 }
 
+// Update handles PUT
 func (ctl *ProfileOptionsController) Update(c *models.Context) {
-
 	var m = models.ProfileOptionType{}
 	err := c.Fill(&m)
 	if err != nil {

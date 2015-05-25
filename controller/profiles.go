@@ -10,6 +10,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// ProfilesHandler is a web handler
 func ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -35,10 +36,11 @@ func ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ProfilesController is a web controller
 type ProfilesController struct{}
 
+// Create handles POST
 func (ctl *ProfilesController) Create(c *models.Context) {
-
 	m := models.ProfileType{}
 	m.Visible = true
 
@@ -97,8 +99,8 @@ func (ctl *ProfilesController) Create(c *models.Context) {
 	)
 }
 
+// ReadMany handles GET for the collection
 func (ctl *ProfilesController) ReadMany(c *models.Context) {
-
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(

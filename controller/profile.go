@@ -10,6 +10,7 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// ProfileHandler is a web handler
 func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -37,10 +38,11 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ProfileController is a web controller
 type ProfileController struct{}
 
+// Create handles POST
 func (ctl *ProfileController) Create(c *models.Context) {
-
 	m := models.ProfileType{}
 	m.Visible = true
 
@@ -99,8 +101,9 @@ func (ctl *ProfileController) Create(c *models.Context) {
 	)
 }
 
+// Read handles GET
 func (ctl *ProfileController) Read(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -109,10 +112,10 @@ func (ctl *ProfileController) Read(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if c.Site.ID == 1 {
-		if c.Auth.ProfileID != itemId {
+		if c.Auth.ProfileID != itemID {
 			perms.CanRead = false
 		}
 	}
@@ -122,7 +125,7 @@ func (ctl *ProfileController) Read(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetProfile(c.Site.ID, itemId)
+	m, status, err := models.GetProfile(c.Site.ID, itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -131,7 +134,7 @@ func (ctl *ProfileController) Read(c *models.Context) {
 
 	if c.Auth.ProfileID > 0 {
 		// Get watcher status
-		watcherId, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
+		watcherID, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
 			h.ItemTypes[h.ItemTypeProfile], m.ID, c.Auth.ProfileID,
 		)
 		if err != nil {
@@ -143,7 +146,7 @@ func (ctl *ProfileController) Read(c *models.Context) {
 			m.Meta.Flags.Ignored = true
 		}
 
-		if watcherId > 0 {
+		if watcherID > 0 {
 			m.Meta.Flags.Watched = true
 			m.Meta.Flags.SendEmail = sendEmail
 			m.Meta.Flags.SendSMS = sendSms
@@ -167,14 +170,15 @@ func (ctl *ProfileController) Read(c *models.Context) {
 	c.RespondWithData(m)
 }
 
+// Update handles PUT
 func (ctl *ProfileController) Update(c *models.Context) {
-	_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	m, status, err := models.GetProfile(c.Site.ID, itemId)
+	m, status, err := models.GetProfile(c.Site.ID, itemID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -192,7 +196,7 @@ func (ctl *ProfileController) Update(c *models.Context) {
 	// Start Authorisation
 	perms := models.GetPermission(
 		models.MakeAuthorisationContext(
-			c, 0, itemTypeId, itemId),
+			c, 0, itemTypeID, itemID),
 	)
 	if !perms.CanUpdate {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -227,21 +231,21 @@ func (ctl *ProfileController) Update(c *models.Context) {
 	)
 }
 
+// Delete handles DELETE
 func (ctl *ProfileController) Delete(c *models.Context) {
-
 	// Right now no-one can delete as it would break attribution
 	// of things like Comments
 	c.RespondWithNotImplemented()
 	return
 
 	/*
-		_, itemTypeId, itemId, status, err := c.GetItemTypeAndItemID()
+		_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
 		}
 
 		m := models.ProfileType{}
-		m.Id = itemId
+		m.Id = itemID
 
 		status, err := m.Delete()
 		if err != nil {

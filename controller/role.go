@@ -14,8 +14,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// RoleController is a web controller
 type RoleController struct{}
 
+// RoleHandler is a web handler
 func RoleHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -45,10 +47,10 @@ func RoleHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Returns the information about a single role
+// Read handles GET
 func (ctl *RoleController) Read(c *models.Context) {
 	// Validate inputs
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -56,10 +58,10 @@ func (ctl *RoleController) Read(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
-	roleId, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
+	roleID, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("microcosm_id in URL is not a number", http.StatusBadRequest)
 		return
@@ -67,9 +69,9 @@ func (ctl *RoleController) Read(c *models.Context) {
 
 	// Authorisation
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, microcosmId, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId),
+		models.MakeAuthorisationContext(c, microcosmID, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID),
 	)
-	if microcosmId > 0 {
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.IsModerator && !c.Auth.IsSiteOwner {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -84,7 +86,7 @@ func (ctl *RoleController) Read(c *models.Context) {
 	}
 
 	// Get Role
-	m, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
+	m, status, err := models.GetRole(c.Site.ID, microcosmID, roleID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -95,10 +97,10 @@ func (ctl *RoleController) Read(c *models.Context) {
 	c.RespondWithData(m)
 }
 
-// Updates (replaces) a single role
+// Update handles PUT
 func (ctl *RoleController) Update(c *models.Context) {
 	// Validate inputs
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -106,16 +108,16 @@ func (ctl *RoleController) Update(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
-	roleId, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
+	roleID, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("microcosm_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	m, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
+	m, status, err := models.GetRole(c.Site.ID, microcosmID, roleID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -132,9 +134,9 @@ func (ctl *RoleController) Update(c *models.Context) {
 
 	// Authorisation
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, microcosmId, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId),
+		models.MakeAuthorisationContext(c, microcosmID, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID),
 	)
-	if microcosmId > 0 {
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.IsModerator && !c.Auth.IsSiteOwner {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -170,11 +172,10 @@ func (ctl *RoleController) Update(c *models.Context) {
 	c.RespondWithSeeOther(m.GetLink())
 }
 
-// Allows the boolean properties of the role to be altered without updating the
-// entire role
+// Patch handles PATCH
 func (ctl *RoleController) Patch(c *models.Context) {
 	// Validate inputs
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -182,10 +183,10 @@ func (ctl *RoleController) Patch(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
-	roleId, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
+	roleID, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("microcosm_id in URL is not a number", http.StatusBadRequest)
 		return
@@ -208,9 +209,9 @@ func (ctl *RoleController) Patch(c *models.Context) {
 	}
 
 	// Start Authorisation
-	ac := models.MakeAuthorisationContext(c, microcosmId, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId)
+	ac := models.MakeAuthorisationContext(c, microcosmID, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID)
 	perms := models.GetPermission(ac)
-	if microcosmId > 0 {
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.IsModerator && !c.Auth.IsSiteOwner {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -285,7 +286,7 @@ func (ctl *RoleController) Patch(c *models.Context) {
 	}
 	// End Authorisation
 
-	m, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
+	m, status, err := models.GetRole(c.Site.ID, microcosmID, roleID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -309,10 +310,10 @@ func (ctl *RoleController) Patch(c *models.Context) {
 	c.RespondWithOK()
 }
 
-// Deletes this role
+// Delete handles DELETE
 func (ctl *RoleController) Delete(c *models.Context) {
 	// Validate inputs
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -320,10 +321,10 @@ func (ctl *RoleController) Delete(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
-	roleId, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
+	roleID, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("microcosm_id in URL is not a number", http.StatusBadRequest)
 		return
@@ -331,9 +332,9 @@ func (ctl *RoleController) Delete(c *models.Context) {
 
 	// Start Authorisation
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, microcosmId, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId),
+		models.MakeAuthorisationContext(c, microcosmID, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID),
 	)
-	if microcosmId > 0 {
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.IsModerator && !c.Auth.IsSiteOwner {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -347,7 +348,7 @@ func (ctl *RoleController) Delete(c *models.Context) {
 		}
 	}
 
-	m, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
+	m, status, err := models.GetRole(c.Site.ID, microcosmID, roleID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

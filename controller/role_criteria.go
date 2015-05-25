@@ -9,8 +9,10 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
+// RoleCriteriaController is a web controller
 type RoleCriteriaController struct{}
 
+// RoleCriteriaHandler is a web handler
 func RoleCriteriaHandler(w http.ResponseWriter, r *http.Request) {
 	c, status, err := models.MakeContext(r, w)
 	if err != nil {
@@ -38,10 +40,10 @@ func RoleCriteriaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Returns all of the criteria that implicitly filter profiles for this role
+// ReadMany handles GET for the collection
 func (ctl *RoleCriteriaController) ReadMany(c *models.Context) {
 	// Validate inputs
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -49,16 +51,16 @@ func (ctl *RoleCriteriaController) ReadMany(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
-	roleId, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
+	roleID, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("role_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
+	r, status, err := models.GetRole(c.Site.ID, microcosmID, roleID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -66,9 +68,9 @@ func (ctl *RoleCriteriaController) ReadMany(c *models.Context) {
 
 	// Authorisation
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, microcosmId, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId),
+		models.MakeAuthorisationContext(c, microcosmID, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID),
 	)
-	if microcosmId > 0 {
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.IsModerator && !c.Auth.IsSiteOwner {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -88,7 +90,7 @@ func (ctl *RoleCriteriaController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetRoleCriteria(roleId, limit, offset)
+	ems, total, pages, status, err := models.GetRoleCriteria(roleID, limit, offset)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -109,10 +111,10 @@ func (ctl *RoleCriteriaController) ReadMany(c *models.Context) {
 	c.RespondWithData(m)
 }
 
-// Creates a new criterion that will be used to implicitly filter profiles
+// Create handles POST
 func (ctl *RoleCriteriaController) Create(c *models.Context) {
 	// Validate inputs
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -120,16 +122,16 @@ func (ctl *RoleCriteriaController) Create(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
-	roleId, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
+	roleID, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("role_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	r, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
+	r, status, err := models.GetRole(c.Site.ID, microcosmID, roleID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -148,9 +150,9 @@ func (ctl *RoleCriteriaController) Create(c *models.Context) {
 
 	// Authorisation
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, microcosmId, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId),
+		models.MakeAuthorisationContext(c, microcosmID, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID),
 	)
-	if microcosmId > 0 {
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.IsModerator && !c.Auth.IsSiteOwner {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -164,7 +166,7 @@ func (ctl *RoleCriteriaController) Create(c *models.Context) {
 		}
 	}
 
-	status, err = m.Insert(roleId)
+	status, err = m.Insert(roleID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -173,10 +175,10 @@ func (ctl *RoleCriteriaController) Create(c *models.Context) {
 	c.RespondWithSeeOther(m.GetLink(r.GetLink()))
 }
 
-// Deletes one or more role criterion by their identifier
+// DeleteMany handles DELETE for the collection
 func (ctl *RoleCriteriaController) DeleteMany(c *models.Context) {
 	// Validate inputs
-	var microcosmId int64
+	var microcosmID int64
 	if sid, exists := c.RouteVars["microcosm_id"]; exists {
 		id, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -184,16 +186,16 @@ func (ctl *RoleCriteriaController) DeleteMany(c *models.Context) {
 			return
 		}
 
-		microcosmId = id
+		microcosmID = id
 	}
 
-	roleId, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
+	roleID, err := strconv.ParseInt(c.RouteVars["role_id"], 10, 64)
 	if err != nil {
 		c.RespondWithErrorMessage("role_id in URL is not a number", http.StatusBadRequest)
 		return
 	}
 
-	_, status, err := models.GetRole(c.Site.ID, microcosmId, roleId, c.Auth.ProfileID)
+	_, status, err := models.GetRole(c.Site.ID, microcosmID, roleID, c.Auth.ProfileID)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -212,9 +214,9 @@ func (ctl *RoleCriteriaController) DeleteMany(c *models.Context) {
 
 	// Authorisation
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, microcosmId, h.ItemTypes[h.ItemTypeMicrocosm], microcosmId),
+		models.MakeAuthorisationContext(c, microcosmID, h.ItemTypes[h.ItemTypeMicrocosm], microcosmID),
 	)
-	if microcosmId > 0 {
+	if microcosmID > 0 {
 		// Related to a Microcosm
 		if !perms.IsModerator && !c.Auth.IsSiteOwner {
 			c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
@@ -228,7 +230,7 @@ func (ctl *RoleCriteriaController) DeleteMany(c *models.Context) {
 		}
 	}
 
-	status, err = models.DeleteManyRoleCriteria(roleId, ems)
+	status, err = models.DeleteManyRoleCriteria(roleID, ems)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
