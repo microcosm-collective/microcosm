@@ -254,27 +254,24 @@ func GetWatcherAndIgnoreStatus(
 	}
 
 	// Returns a watched id if a watcher exists, or zero
-	rows, err := db.Query(`
-SELECT MAX(watcher_id) AS watcher_id,
-       BOOL_OR(send_email) as send_email,
-       BOOL_OR(send_sms) as send_sms,
-       (SELECT EXISTS (
-           SELECT profile_id
-             FROM ignores
-            WHERE item_type_id = $1
-              AND item_id = $2
-              AND profile_id = $3
-       )) AS ignored
-  FROM (
-           SELECT watcher_id,
-           		  send_email,
-           		  send_sms
-             FROM watchers
-            WHERE item_type_id = $1
-              AND item_id = $2
-              AND profile_id = $3
-            UNION SELECT 0, false, false
-       ) AS w`,
+	rows, err := db.Query(`--GetWatcherAndIgnoreStatus
+SELECT COALESCE(w.watcher_id, 0) AS watcher_id
+      ,COALESCE(w.send_email, FALSE) AS send_email
+      ,COALESCE(w.send_sms, FALSE) AS send_sms
+      ,CASE WHEN i.profile_id IS NULL THEN FALSE
+              ELSE TRUE
+       END AS ignored
+  FROM flags f
+  LEFT JOIN watchers w ON w.item_type_id = f.item_type_id
+                      AND w.item_id = f.item_id
+                      AND w.profile_id = $3
+  LEFT JOIN ignores i ON i.item_type_id = f.item_type_id
+                     AND i.item_id = f.item_id
+                     AND i.profile_id = $3
+ WHERE f.item_type_id = $1
+   AND f.item_id = $2
+ ORDER BY 1 DESC
+ LIMIT 1`,
 		itemTypeID,
 		itemID,
 		profileID,
