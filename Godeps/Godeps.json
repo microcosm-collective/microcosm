@@ -61,6 +61,10 @@
 			"Rev": "caaaea8b30ee15616494ee68abd5d8ebbbef05cf"
 		},
 		{
+			"ImportPath": "github.com/nytimes/gziphandler",
+			"Rev": "05ffaf97c37e486a9b983089cc4865a1b0a9a651"
+		},
+		{
 			"ImportPath": "github.com/robfig/cron",
 			"Comment": "v1-2-g67823cd",
 			"Rev": "67823cd24dece1b04cced3a0a0b3ca2bc84d875e"

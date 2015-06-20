@@ -67,6 +67,7 @@ dep_update:
 	@go get -u github.com/microcosm-cc/exifutil
 	@go get -u github.com/mitchellh/goamz/aws
 	@go get -u github.com/mitchellh/goamz/s3
+	@go get -u github.com/nytimes/gziphandler
 	@go get -u github.com/robfig/cron
 	@go get -u github.com/russross/blackfriday
 	@go get -u github.com/rwcarlsen/goexif/exif
