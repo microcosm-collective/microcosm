@@ -216,7 +216,8 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 	// In this case, p contains the color difference to the preceding pixel.
 	// See page 64-65 of the spec.
 	if d.firstVal(tPredictor) == prHorizontal {
-		if d.bpp == 16 {
+		switch d.bpp {
+		case 16:
 			var off int
 			n := 2 * len(d.features[tBitsPerSample]) // bytes per sample times samples per pixel
 			for y := ymin; y < ymax; y++ {
@@ -231,7 +232,7 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 					off += 2
 				}
 			}
-		} else if d.bpp == 8 {
+		case 8:
 			var off int
 			n := 1 * len(d.features[tBitsPerSample]) // bytes per sample times samples per pixel
 			for y := ymin; y < ymax; y++ {
@@ -244,6 +245,8 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 					off++
 				}
 			}
+		case 1:
+			return UnsupportedError("horizontal predictor with 1 BitsPerSample")
 		}
 	}
 
@@ -318,7 +321,7 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 				max := img.PixOffset(rMaxX, y)
 				off := (y - ymin) * (xmax - xmin) * 3
 				for i := min; i < max; i += 4 {
-					if d.off+3 > len(d.buf) {
+					if off+3 > len(d.buf) {
 						return FormatError("not enough pixel data")
 					}
 					img.Pix[i+0] = d.buf[off+0]
@@ -436,6 +439,14 @@ func newDecoder(r io.Reader) (*decoder, error) {
 		return nil, FormatError("BitsPerSample tag missing")
 	}
 	d.bpp = d.firstVal(tBitsPerSample)
+	switch d.bpp {
+	case 0:
+		return nil, FormatError("BitsPerSample must not be 0")
+	case 1, 8, 16:
+		// Nothing to do, these are accepted by this implementation.
+	default:
+		return nil, UnsupportedError(fmt.Sprintf("BitsPerSample of %v", d.bpp))
+	}
 
 	// Determine the image mode.
 	switch d.firstVal(tPhotometricInterpretation) {

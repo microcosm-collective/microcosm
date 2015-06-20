@@ -7,6 +7,8 @@ package tiff
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
+	"errors"
 	"image"
 	"io/ioutil"
 	"os"
@@ -36,9 +38,9 @@ func load(name string) (image.Image, error) {
 	return img, nil
 }
 
-// TestNoRPS tries to decode an image that has no RowsPerStrip tag.
-// The tag is mandatory according to the spec but some software omits
-// it in the case of a single strip.
+// TestNoRPS tests decoding an image that has no RowsPerStrip tag. The tag is
+// mandatory according to the spec but some software omits it in the case of a
+// single strip.
 func TestNoRPS(t *testing.T) {
 	_, err := load("no_rps.tiff")
 	if err != nil {
@@ -46,8 +48,9 @@ func TestNoRPS(t *testing.T) {
 	}
 }
 
-// TestNoCompression tries to decode an images that has no Compression tag.
-// This tag is mandatory, but most tools interpret a missing value as no compression.
+// TestNoCompression tests decoding an image that has no Compression tag. This
+// tag is mandatory, but most tools interpret a missing value as no
+// compression.
 func TestNoCompression(t *testing.T) {
 	_, err := load("no_compress.tiff")
 	if err != nil {
@@ -174,8 +177,8 @@ func TestDecode(t *testing.T) {
 	compare(t, img0, img4)
 }
 
-// TestDecodeLZW tests that decoding a PNG image and a LZW-compressed TIFF image
-// result in the same pixel data.
+// TestDecodeLZW tests that decoding a PNG image and a LZW-compressed TIFF
+// image result in the same pixel data.
 func TestDecodeLZW(t *testing.T) {
 	img0, err := load("blue-purple-pink.png")
 	if err != nil {
@@ -211,8 +214,106 @@ func TestDecompress(t *testing.T) {
 	}
 }
 
-// Do not panic when image dimensions are zero, return zero-sized
-// image instead.
+func replace(src []byte, find, repl string) ([]byte, error) {
+	removeSpaces := func(r rune) rune {
+		if r != ' ' {
+			return r
+		}
+		return -1
+	}
+
+	f, err := hex.DecodeString(strings.Map(removeSpaces, find))
+	if err != nil {
+		return nil, err
+	}
+	r, err := hex.DecodeString(strings.Map(removeSpaces, repl))
+	if err != nil {
+		return nil, err
+	}
+	dst := bytes.Replace(src, f, r, 1)
+	if bytes.Equal(dst, src) {
+		return nil, errors.New("replacement failed")
+	}
+	return dst, nil
+}
+
+// TestZeroBitsPerSample tests that an IFD with a bitsPerSample of 0 does not
+// cause a crash.
+// Issue 10711.
+func TestZeroBitsPerSample(t *testing.T) {
+	b0, err := ioutil.ReadFile(testdataDir + "bw-deflate.tiff")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Mutate the loaded image to have the problem.
+	// 02 01: tag number (tBitsPerSample)
+	// 03 00: data type (short, or uint16)
+	// 01 00 00 00: count
+	// ?? 00 00 00: value (1 -> 0)
+	b1, err := replace(b0,
+		"02 01 03 00 01 00 00 00 01 00 00 00",
+		"02 01 03 00 01 00 00 00 00 00 00 00",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = Decode(bytes.NewReader(b1))
+	if err == nil {
+		t.Fatal("Decode with 0 bits per sample: got nil error, want non-nil")
+	}
+}
+
+// TestTileTooBig tests that we do not panic when a tile is too big compared to
+// the data available.
+// Issue 10712
+func TestTileTooBig(t *testing.T) {
+	b0, err := ioutil.ReadFile(testdataDir + "video-001-tile-64x64.tiff")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Mutate the loaded image to have the problem.
+	//
+	// 42 01: tag number (tTileWidth)
+	// 03 00: data type (short, or uint16)
+	// 01 00 00 00: count
+	// xx 00 00 00: value (0x40 -> 0x44: a wider tile consumes more data
+	// than is available)
+	b1, err := replace(b0,
+		"42 01 03 00 01 00 00 00 40 00 00 00",
+		"42 01 03 00 01 00 00 00 44 00 00 00",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Turn off the predictor, which makes it possible to hit the
+	// place with the defect. Without this patch to the image, we run
+	// out of data too early, and do not hit the part of the code where
+	// the original panic was.
+	//
+	// 3d 01: tag number (tPredictor)
+	// 03 00: data type (short, or uint16)
+	// 01 00 00 00: count
+	// xx 00 00 00: value (2 -> 1: 2 = horizontal, 1 = none)
+	b2, err := replace(b1,
+		"3d 01 03 00 01 00 00 00 02 00 00 00",
+		"3d 01 03 00 01 00 00 00 01 00 00 00",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = Decode(bytes.NewReader(b2))
+	if err == nil {
+		t.Fatal("did not expect nil error")
+	}
+}
+
+// TestZeroSizedImages tests that decoding does not panic when image dimensions
+// are zero, and returns a zero-sized image instead.
 // Issue 10393.
 func TestZeroSizedImages(t *testing.T) {
 	testsizes := []struct {
@@ -236,8 +337,8 @@ func TestZeroSizedImages(t *testing.T) {
 	}
 }
 
-// TestLargeIFDEntry verifies that a large IFD entry does not cause Decode
-// to panic.
+// TestLargeIFDEntry tests that a large IFD entry does not cause Decode to
+// panic.
 // Issue 10596.
 func TestLargeIFDEntry(t *testing.T) {
 	testdata := "II*\x00\x08\x00\x00\x00\f\x000000000000" +
@@ -260,7 +361,7 @@ func benchmarkDecode(b *testing.B, filename string) {
 	b.StopTimer()
 	contents, err := ioutil.ReadFile(testdataDir + filename)
 	if err != nil {
-		panic(err)
+		b.Fatal(err)
 	}
 	r := &buffer{buf: contents}
 	b.StartTimer()
