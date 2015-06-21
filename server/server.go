@@ -6,7 +6,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
-	"github.com/nytimes/gziphandler"
 	"github.com/robfig/cron"
 
 	conf "github.com/microcosm-cc/microcosm/config"
@@ -34,7 +33,7 @@ func StartServer(port int64) {
 		r.HandleFunc(url, handler).Host("{subdomain:[a-z0-9]+}." + conf.ConfigStrings[conf.MicrocosmDomain])
 	}
 
-	http.Handle("/", gziphandler.GzipHandler(r))
+	http.Handle("/", r)
 
 	// Start the HTTP server
 	glog.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
