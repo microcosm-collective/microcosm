@@ -679,7 +679,7 @@ func GetRawTermsOfUseText() string {
 
 <h3>Changes to the documents</h3>
 
-<p>We may revise these Terms of Use from time to time but the current version will always be at <a href="{{.TermsOfUseLastModified}}">{{.TermsOfUseLastModified}}</a>.</p>
+<p>We may revise these Terms of Use from time to time but the current version will always be at <a href="/about/terms/">{{.CustomerURL}}/about/terms/</a>.</p>
 
 <p>Changes will usually occur because of new features being added to the forum, changes in the law or where we need to clarify our position on something.</p>
 
@@ -824,7 +824,7 @@ func GetRawPrivacyPolicyText() string {
 
 <h3>Marketing and Advertising</h3>
 
-<p><strong>Email Marketing</strong> - From time to time we may contact you by email with information about our products and services. If you do not want us to send you email marketing, please let us know by sending an email to us at <a href="{{.CustomerEmail}}">{{.CustomerEmail}}</a>. You can also unsubscribe from our marketing emails by clicking on the unsubscribe link (where available) in the emails we send to you.</p>
+<p><strong>Email Marketing</strong> - From time to time we may contact you by email with information about our products and services. If you do not want us to send you email marketing, please let us know by sending an email to us at <a href="mailto:{{.CustomerEmail}}">{{.CustomerEmail}}</a>. You can also unsubscribe from our marketing emails by clicking on the unsubscribe link (where available) in the emails we send to you.</p>
 
 <p><strong>Email Notifications About Activity on the Forum</strong> - We will send you email notifications when certain actions take place on the forum. Such notifications will be sent in accordance with your notification settings under your user profile. If you want to stop or change the notifications you receive you can do so by amending your notification setting in your user profile.</p>
 
