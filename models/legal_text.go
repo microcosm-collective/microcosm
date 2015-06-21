@@ -490,7 +490,7 @@ func GetRawTermsOfUseText() string {
 
 <h3>Welcome to our forum!</h3>
 
-<p>The forum <a href="{{.CustomerUrl}}">{{.CustomerUrl}}</a> (the "<strong>forum</strong>") is operated by the person, company or organisation detailed in the forum administrator section of the forum ("<strong>we</strong>" or "<strong>us</strong>").</p>
+<p>The forum <a href="{{.CustomerURL}}">{{.CustomerURL}}</a> (the "<strong>forum</strong>") is operated by the person, company or organisation detailed in the forum administrator section of the forum ("<strong>we</strong>" or "<strong>us</strong>").</p>
 
 <p>If you need to contact us, please use our contact details set out at the end of this document.</p>
 
@@ -722,7 +722,7 @@ func GetRawPrivacyPolicyText() string {
 
 <h3>Our approach to privacy</h3>
 
-<p>The forum <a href="{{.CustomerUrl}}">{{.CustomerUrl}}</a> (the "<strong>forum</strong>") is operated by the person, company or organisation detailed in the forum administrator section of the forum ("<strong>we</strong>" or "<strong>us</strong>"). We control how your personal information is used.</p>
+<p>The forum <a href="{{.CustomerURL}}">{{.CustomerURL}}</a> (the "<strong>forum</strong>") is operated by the person, company or organisation detailed in the forum administrator section of the forum ("<strong>we</strong>" or "<strong>us</strong>"). We control how your personal information is used.</p>
 
 <p>We are committed to protecting and respecting your privacy. This privacy policy sets out how we collect, use and share information that identifies you or is associated with you ("<strong>personal information</strong>") when you use our forum.</p>
 
@@ -883,7 +883,7 @@ func GetRawCookiePolicyText() string {
 
 <h3>Summary</h3>
 
-<p>The forum <a href="{{.CustomerUrl}}">{{.CustomerUrl}}</a> (the "<strong>forum</strong>") is operated by the person, company or organisation detailed in the forum administrator section of the forum ("<strong>we</strong>" or "<strong>us</strong>").</p>
+<p>The forum <a href="{{.CustomerURL}}">{{.CustomerURL}}</a> (the "<strong>forum</strong>") is operated by the person, company or organisation detailed in the forum administrator section of the forum ("<strong>we</strong>" or "<strong>us</strong>").</p>
 
 <p>This cookie policy explains what cookies are and how we use them on the forum.  We encourage you to read the policy in full so that you can understand what information we collect using cookies and how that information is used.</p>
 
