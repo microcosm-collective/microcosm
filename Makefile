@@ -55,7 +55,6 @@ dep_restore:
 
 dep_update:
 	@rm -rf Godeps/
-	@go get -u code.google.com/p/goauth2/oauth
 	@go get -u github.com/bradfitz/gomemcache/memcache
 	@go get -u github.com/cloudflare/ahocorasick
 	@go get -u github.com/disintegration/imaging
@@ -74,5 +73,6 @@ dep_update:
 	@go get -u github.com/tools/godep
 	@go get -u github.com/xtgo/uuid
 	@go get -u golang.org/x/net/html
+	@go get -u golang.org/x/oauth2
 	@godep save ./...
 	@make fmt

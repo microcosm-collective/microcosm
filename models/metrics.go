@@ -1,13 +1,10 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
-	"code.google.com/p/goauth2/oauth"
 	"github.com/golang/glog"
 
 	conf "github.com/microcosm-cc/microcosm/config"
@@ -248,103 +245,104 @@ func GoogleAnalytics(
 	int,
 	error,
 ) {
-	// Dev env does not register on Google Analytics
-	if conf.ConfigStrings[conf.Environment] != `prod` {
-		glog.Info("dev environment, skipping creation of metrics")
-		return 0, 0, 0, nil
-	}
+	// // Dev env does not register on Google Analytics
+	// if conf.ConfigStrings[conf.Environment] != `prod` {
+	// 	glog.Info("dev environment, skipping creation of metrics")
+	// 	return 0, 0, 0, nil
+	// }
 
-	// This is where we put the auth code once we have it
-	code := "4/gMqQpQtF5u4h_-xeEH6v5iIDkNsG.4tytjKAb8TgSOl05ti8ZT3YD5W2xjQI"
+	// // This is where we put the auth code once we have it
+	// code := "4/gMqQpQtF5u4h_-xeEH6v5iIDkNsG.4tytjKAb8TgSOl05ti8ZT3YD5W2xjQI"
 
-	config := &oauth.Config{
-		ClientId:     "569955368064-507h6pojaqoick1pfh6of9j72fb8r9fv.apps.googleusercontent.com",
-		ClientSecret: "anB8qgvtEks4Pr2mc5Nfj4eL",
-		RedirectURL:  "urn:ietf:wg:oauth:2.0:oob",
-		Scope:        "https://www.googleapis.com/auth/analytics https://www.googleapis.com/auth/analytics.readonly",
-		AuthURL:      "https://accounts.google.com/o/oauth2/auth",
-		TokenURL:     "https://accounts.google.com/o/oauth2/token",
-		TokenCache:   oauth.CacheFile("/etc/microcosm/ga-auth-cache.json"),
-	}
+	// config := &oauth2.Config{
+	// 	ClientId:     "569955368064-507h6pojaqoick1pfh6of9j72fb8r9fv.apps.googleusercontent.com",
+	// 	ClientSecret: "anB8qgvtEks4Pr2mc5Nfj4eL",
+	// 	RedirectURL:  "urn:ietf:wg:oauth:2.0:oob",
+	// 	Scope:        "https://www.googleapis.com/auth/analytics https://www.googleapis.com/auth/analytics.readonly",
+	// 	AuthURL:      "https://accounts.google.com/o/oauth2/auth",
+	// 	TokenURL:     "https://accounts.google.com/o/oauth2/token",
+	// 	TokenCache:   oauth2.CacheFile("/etc/microcosm/ga-auth-cache.json"),
+	// }
 
-	// Set up a Transport using the config.
-	transport := &oauth.Transport{Config: config}
+	// // Set up a Transport using the config.
+	// transport := &oauth2.Transport{Config: config}
 
-	token, err := config.TokenCache.Token()
-	if err != nil {
+	// token, err := config.TokenCache.Token()
+	// if err != nil {
 
-		if code == "" {
-			// Get an authorization code from the data provider.
-			// ("Please ask the user if I can access this resource.")
-			url := config.AuthCodeURL("")
-			glog.Error("GA metrics: Visit this URL to get a code, then run again with -code=YOUR_CODE\n" + url)
-			return 0, 0, 0, err
-		}
+	// 	if code == "" {
+	// 		// Get an authorization code from the data provider.
+	// 		// ("Please ask the user if I can access this resource.")
+	// 		url := config.AuthCodeURL("")
+	// 		glog.Error("GA metrics: Visit this URL to get a code, then run again with -code=YOUR_CODE\n" + url)
+	// 		return 0, 0, 0, err
+	// 	}
 
-		// Exchange the authorization code for an access token.
-		// ("Here's the code you gave the user, now give me a token!")
-		// If we already have a token in the cache but it has expired, this will
-		// refresh the token
-		token, err = transport.Exchange(code)
-		if err != nil {
-			glog.Errorf("GA metrics: Exchange: %+v", err)
-			return 0, 0, 0, err
-		}
+	// 	// Exchange the authorization code for an access token.
+	// 	// ("Here's the code you gave the user, now give me a token!")
+	// 	// If we already have a token in the cache but it has expired, this will
+	// 	// refresh the token
+	// 	token, err = transport.Exchange(code)
+	// 	if err != nil {
+	// 		glog.Errorf("GA metrics: Exchange: %+v", err)
+	// 		return 0, 0, 0, err
+	// 	}
 
-		// (The Exchange method will automatically cache the token.)
-		glog.Infof("GA metrics: Token is cached in %v\n", config.TokenCache)
-	}
+	// 	// (The Exchange method will automatically cache the token.)
+	// 	glog.Infof("GA metrics: Token is cached in %v\n", config.TokenCache)
+	// }
 
-	// Make the actual request using the cached token to authenticate.
-	// ("Here's the token, let me in!")
-	transport.Token = token
+	// // Make the actual request using the cached token to authenticate.
+	// // ("Here's the token, let me in!")
+	// transport.Token = token
 
-	// Make the request.
-	r, err := transport.Client().Get("https://www.googleapis.com/analytics/v3/data/ga?ids=ga%3A71862589&start-date=yesterday&end-date=yesterday&metrics=ga%3Apageviews%2Cga%3Asessions%2Cga%3Ausers&fields=query(end-date%2Cstart-date)%2CtotalsForAllResults")
-	if err != nil {
-		glog.Errorf("GA metrics: Get: %+v", err)
-		return 0, 0, 0, err
-	}
-	defer r.Body.Close()
+	// // Make the request.
+	// r, err := transport.Client().Get("https://www.googleapis.com/analytics/v3/data/ga?ids=ga%3A71862589&start-date=yesterday&end-date=yesterday&metrics=ga%3Apageviews%2Cga%3Asessions%2Cga%3Ausers&fields=query(end-date%2Cstart-date)%2CtotalsForAllResults")
+	// if err != nil {
+	// 	glog.Errorf("GA metrics: Get: %+v", err)
+	// 	return 0, 0, 0, err
+	// }
+	// defer r.Body.Close()
 
-	type GA struct {
-		Query struct {
-			StartDate string `json:"start-date"`
-			EndDate   string `json:"end-date"`
-		} `json:"query"`
-		Totals struct {
-			Pageviews string `json:"ga:pageviews"`
-			Sessions  string `json:"ga:sessions"`
-			Users     string `json:"ga:users"`
-		} `json:"totalsForAllResults"`
-	}
+	// type GA struct {
+	// 	Query struct {
+	// 		StartDate string `json:"start-date"`
+	// 		EndDate   string `json:"end-date"`
+	// 	} `json:"query"`
+	// 	Totals struct {
+	// 		Pageviews string `json:"ga:pageviews"`
+	// 		Sessions  string `json:"ga:sessions"`
+	// 		Users     string `json:"ga:users"`
+	// 	} `json:"totalsForAllResults"`
+	// }
 
-	ga := GA{}
-	err = json.NewDecoder(r.Body).Decode(&ga)
-	r.Body.Close()
-	if err != nil {
-		glog.Errorf("GA metrics: Decode: %+v", err)
-		return 0, 0, 0, err
-	}
+	// ga := GA{}
+	// err = json.NewDecoder(r.Body).Decode(&ga)
+	// r.Body.Close()
+	// if err != nil {
+	// 	glog.Errorf("GA metrics: Decode: %+v", err)
+	// 	return 0, 0, 0, err
+	// }
 
-	pageviews, err := strconv.Atoi(ga.Totals.Pageviews)
-	if err != nil {
-		glog.Errorf("GA metrics: Atoi: %+v\n%+v", err, ga)
-		return 0, 0, 0, err
-	}
+	// pageviews, err := strconv.Atoi(ga.Totals.Pageviews)
+	// if err != nil {
+	// 	glog.Errorf("GA metrics: Atoi: %+v\n%+v", err, ga)
+	// 	return 0, 0, 0, err
+	// }
 
-	sessions, err := strconv.Atoi(ga.Totals.Sessions)
-	if err != nil {
-		glog.Errorf("GA metrics: Atoi: %+v", err)
-		return 0, 0, 0, err
-	}
+	// sessions, err := strconv.Atoi(ga.Totals.Sessions)
+	// if err != nil {
+	// 	glog.Errorf("GA metrics: Atoi: %+v", err)
+	// 	return 0, 0, 0, err
+	// }
 
-	users, err := strconv.Atoi(ga.Totals.Users)
-	if err != nil {
-		glog.Errorf("GA metrics: Atoi: %+v", err)
-		return 0, 0, 0, err
-	}
+	// users, err := strconv.Atoi(ga.Totals.Users)
+	// if err != nil {
+	// 	glog.Errorf("GA metrics: Atoi: %+v", err)
+	// 	return 0, 0, 0, err
+	// }
 
+	var pageviews, sessions, users int
 	return pageviews, sessions, users, nil
 }
 
