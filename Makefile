@@ -5,20 +5,22 @@
 #   fmt:          Formats the source files
 #   build:        Builds the code locally
 #   vet:          Vets the code
-#   lint:         Runs lint over the code (you do not need to fix everything)
 #   test:         Runs the tests
 #   clean:        Deletes the locally built file (if it exists)
 #
 #   dep_restore:  Ensures all dependent packages are at the correct version
 #   dep_update:   Ensures all dependent packages are at the latest version
 
-.PHONY: all fmt build vet lint test clean dep_restore dep_update
+export GO15VENDOREXPERIMENT=1
+
+
+.PHONY: all fmt build vet test clean dep_restore dep_update
 
 # The first target is always the default action if `make` is called without args
-all: clean fmt lint vet test build
+all: clean fmt vet test build
 
 fmt:
-	@gofmt -w ./$*
+	@gofmt -w ./$$*
 
 build: export GOOS=linux
 build: export GOARCH=amd64
@@ -26,24 +28,10 @@ build: clean
 	@go build
 
 vet:
-	@go vet main.go
-	@go vet audit/*
-	@go vet cache/*
-	@go vet config/*
-	@go vet controller/*
-	@go vet errors/*
-	@go vet helpers/*
-	@go vet models/*
-	@go vet redirector/*
-	@go vet resolver/*
-	@go vet server/*
-
-lint:
-	@golint main.go
-	@golint ./...
+	@go vet $$(go list ./... | grep -v /vendor/)
 
 test:
-	@go test -v ./...
+	@go test $$(go list ./... | grep -v /vendor/)
 
 clean:
 	@find . -name microcosm -delete
@@ -54,7 +42,6 @@ dep_restore:
 	@godep restore
 
 dep_update:
-	@rm -rf Godeps/
 	@go get -u github.com/bradfitz/gomemcache/memcache
 	@go get -u github.com/cloudflare/ahocorasick
 	@go get -u github.com/disintegration/imaging
@@ -74,5 +61,6 @@ dep_update:
 	@go get -u github.com/xtgo/uuid
 	@go get -u golang.org/x/net/html
 	@go get -u golang.org/x/oauth2
+	@rm -rf Godeps/
 	@godep save ./...
 	@make fmt

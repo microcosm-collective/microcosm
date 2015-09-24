@@ -16,7 +16,7 @@
 		},
 		{
 			"ImportPath": "github.com/disintegration/imaging",
-			"Rev": "a806ad60dee047a720f14c6c6b4e7ef43bc7d536"
+			"Rev": "493653de80c32beeae336f3a3a3a125e7603459b"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
@@ -28,7 +28,7 @@
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
-			"Rev": "ee1815431e497d3850809578c93ab6705f1a19f7"
+			"Rev": "49c024275504f0341e5a9971eb7ba7fa3dc7af40"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
@@ -37,7 +37,7 @@
 		},
 		{
 			"ImportPath": "github.com/microcosm-cc/bluemonday",
-			"Rev": "2b7763a06cb6d740966c9a8e6a001eee9679be0e"
+			"Rev": "85ba47ef2ca30f636a36c5c3f31f91092e26db60"
 		},
 		{
 			"ImportPath": "github.com/microcosm-cc/exifutil",
@@ -87,23 +87,15 @@
 		},
 		{
 			"ImportPath": "golang.org/x/image/bmp",
-			"Rev": "8ab1ac6834edd43d91cbe24272897a87ce7e835e"
+			"Rev": "baddd3465a05d84a6d8d3507547a91cb188c81ea"
 		},
 		{
 			"ImportPath": "golang.org/x/image/tiff",
-			"Rev": "8ab1ac6834edd43d91cbe24272897a87ce7e835e"
-		},
-		{
-			"ImportPath": "golang.org/x/net/context",
-			"Rev": "7654728e381988afd88e58cabfd6363a5ea91810"
+			"Rev": "baddd3465a05d84a6d8d3507547a91cb188c81ea"
 		},
 		{
 			"ImportPath": "golang.org/x/net/html",
-			"Rev": "7654728e381988afd88e58cabfd6363a5ea91810"
-		},
-		{
-			"ImportPath": "golang.org/x/oauth2",
-			"Rev": "397fe7649477ff2e8ced8fc0b2696f781e53745a"
+			"Rev": "03affa02f16950ea3188823456766ed60bfed9bb"
 		}
 	]
 }
