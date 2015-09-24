@@ -25,7 +25,7 @@ fmt:
 build: export GOOS=linux
 build: export GOARCH=amd64
 build: clean
-	@go build
+	@go build cmd/microcosm/microcosm.go
 
 vet:
 	@go vet $$(go list ./... | grep -v /vendor/)
@@ -34,7 +34,7 @@ test:
 	@go test $$(go list ./... | grep -v /vendor/)
 
 clean:
-	@find . -name microcosm -delete
+	@find . -maxdepth 1 -name microcosm -delete
 
 dep_restore:
 	@sudo apt-get -y install bzr
