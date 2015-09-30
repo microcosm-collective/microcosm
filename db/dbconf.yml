@@ -1,0 +1,7 @@
+development:
+    driver: postgres
+    open: host=sql.dev.microcosm.cc port=5432 user=microcosm dbname=microcosm password=changeme sslmode=disable
+
+production:
+    driver: postgres
+    open: $MICROCOSM_PROD_DB_URL

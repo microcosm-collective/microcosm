@@ -36,6 +36,12 @@ You can also:
 
 For the Makefile to work, you should add the dependencies to that.
 
+For the database migrations you will need [goose](https://bitbucket.org/liamstask/goose) installed:
+
+```bash
+go get bitbucket.org/liamstask/goose/cmd/goose
+```
+
 ### Config File
 
 For the microcosm binary to run, /etc/microcosm/api.conf needs to exist with the following configuration keys (values obviously changed for your environment):
