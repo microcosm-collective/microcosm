@@ -48,5 +48,6 @@ INSERT INTO goose_db_version (id, version_id, is_applied, tstamp) VALUES (1, 0, 
 INSERT INTO goose_db_version (id, version_id, is_applied, tstamp) VALUES (2, 20150930224827, true, '2015-10-01 05:45:37.853826');
 INSERT INTO goose_db_version (id, version_id, is_applied, tstamp) VALUES (3, 20151001060912, true, '2015-10-01 05:45:40.443675');
 INSERT INTO goose_db_version (id, version_id, is_applied, tstamp) VALUES (4, 20151001065335, true, '2015-10-01 05:55:31.933328');
+INSERT INTO goose_db_version (id, version_id, is_applied, tstamp) VALUES (5, 20151001065754, true, '2015-10-01 06:14:35.423997');
 
-SELECT pg_catalog.setval('goose_db_version_id_seq', 4, true);
+SELECT pg_catalog.setval('goose_db_version_id_seq', 5, true);
