@@ -44,6 +44,8 @@ CREATE FUNCTION create_owned_site(in_title character varying, in_subdomain_key c
 DECLARE
 BEGIN
 
+DROP TABLE IF EXISTS new_ids;
+
 CREATE TEMP TABLE new_ids (
     profile_id bigint NOT NULL,
     site_id bigint NOT NULL,
