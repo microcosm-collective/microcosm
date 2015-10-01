@@ -18,6 +18,8 @@ CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 SET search_path = development, public, pg_catalog;
 
+ALTER ROLE microcosm SET search_path TO development, public;
+
 CREATE TYPE effective_permissions AS (
 	can_create boolean,
 	can_read boolean,
@@ -32,7 +34,6 @@ CREATE TYPE effective_permissions AS (
 	is_superuser boolean,
 	is_site_owner boolean
 );
-
 
 ALTER TYPE development.effective_permissions OWNER TO microcosm;
 
@@ -4789,16 +4790,6 @@ ALTER TABLE development.roles_role_id_seq OWNER TO microcosm;
 
 ALTER SEQUENCE roles_role_id_seq OWNED BY roles.role_id;
 
-CREATE TABLE schema_migrations (
-    file character varying(50) NOT NULL,
-    modify_schema boolean DEFAULT false NOT NULL,
-    modify_data boolean DEFAULT false NOT NULL,
-    applied timestamp without time zone DEFAULT now() NOT NULL,
-    description text NOT NULL
-);
-
-ALTER TABLE development.schema_migrations OWNER TO microcosm;
-
 CREATE TABLE search_index (
     site_id bigint NOT NULL,
     microcosm_id bigint,
@@ -5313,9 +5304,6 @@ ALTER TABLE ONLY role_profiles
 
 ALTER TABLE ONLY roles
     ADD CONSTRAINT roles_pkey PRIMARY KEY (role_id);
-
-ALTER TABLE ONLY schema_migrations
-    ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (file);
 
 ALTER TABLE ONLY search_index
     ADD CONSTRAINT search_index_pkey PRIMARY KEY (item_type_id, item_id);
@@ -6049,7 +6037,6 @@ ALTER TABLE ONLY development.site_options DROP CONSTRAINT site_options_pkey;
 ALTER TABLE ONLY development.site_stats DROP CONSTRAINT site_id_pkey;
 ALTER TABLE ONLY development.sites DROP CONSTRAINT site_id_pk;
 ALTER TABLE ONLY development.search_index DROP CONSTRAINT search_index_pkey;
-ALTER TABLE ONLY development.schema_migrations DROP CONSTRAINT schema_migrations_pkey;
 ALTER TABLE ONLY development.roles DROP CONSTRAINT roles_pkey;
 ALTER TABLE ONLY development.role_profiles DROP CONSTRAINT role_profiles_pkey;
 ALTER TABLE ONLY development.role_members_cache DROP CONSTRAINT role_members_cache_pkey;
@@ -6164,7 +6151,6 @@ DROP TABLE development.sites;
 DROP TABLE development.site_stats;
 DROP TABLE development.site_options;
 DROP TABLE development.search_index;
-DROP TABLE development.schema_migrations;
 DROP SEQUENCE development.roles_role_id_seq;
 DROP TABLE development.roles;
 DROP TABLE development.role_profiles;
