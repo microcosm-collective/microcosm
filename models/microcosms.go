@@ -24,14 +24,16 @@ type MicrocosmsType struct {
 
 // MicrocosmSummaryType is a summary of a microcosm
 type MicrocosmSummaryType struct {
-	ID           int64   `json:"id"`
-	SiteID       int64   `json:"siteId,omitempty"`
-	Visibility   string  `json:"visibility"`
-	Title        string  `json:"title"`
-	Description  string  `json:"description"`
-	Moderators   []int64 `json:"moderators"`
-	ItemCount    int64   `json:"totalItems"`
-	CommentCount int64   `json:"totalComments"`
+	ID               int64 `json:"id"`
+	ParentID         int64 `json:"parentId,omitempty"`
+	parentIDNullable sql.NullInt64
+	SiteID           int64   `json:"siteId,omitempty"`
+	Visibility       string  `json:"visibility"`
+	Title            string  `json:"title"`
+	Description      string  `json:"description"`
+	Moderators       []int64 `json:"moderators"`
+	ItemCount        int64   `json:"totalItems"`
+	CommentCount     int64   `json:"totalComments"`
 
 	MRU interface{} `json:"mostRecentUpdate,omitempty"`
 
@@ -40,12 +42,14 @@ type MicrocosmSummaryType struct {
 
 // MicrocosmType is a microcosm
 type MicrocosmType struct {
-	ID          int64  `json:"id"`
-	SiteID      int64  `json:"siteId,omitempty"`
-	Visibility  string `json:"visibility"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	OwnedByID   int64  `json:"-"`
+	ID               int64 `json:"id"`
+	ParentID         int64 `json:"parentId,omitempty"`
+	parentIDNullable sql.NullInt64
+	SiteID           int64  `json:"siteId,omitempty"`
+	Visibility       string `json:"visibility"`
+	Title            string `json:"title"`
+	Description      string `json:"description"`
+	OwnedByID        int64  `json:"-"`
 
 	Moderators []int64 `json:"moderators"`
 
@@ -446,6 +450,7 @@ func GetMicrocosm(
 	var m MicrocosmType
 	err = db.QueryRow(`--GetMicrocosm
 SELECT microcosm_id,
+       parent_id,
        site_id,
        visibility,
        title,
@@ -469,6 +474,7 @@ SELECT microcosm_id,
 		id,
 	).Scan(
 		&m.ID,
+		&m.parentIDNullable,
 		&m.SiteID,
 		&m.Visibility,
 		&m.Title,
@@ -493,6 +499,9 @@ SELECT microcosm_id,
 			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
+	if m.parentIDNullable.Valid {
+		m.ParentID = m.parentIDNullable.Int64
+	}
 	if m.Meta.EditReasonNullable.Valid {
 		m.Meta.EditReason = m.Meta.EditReasonNullable.String
 	}
@@ -576,6 +585,7 @@ func GetMicrocosmSummary(
 	var m MicrocosmSummaryType
 	err = db.QueryRow(`--GetMicrocosmSummary
 SELECT microcosm_id
+      ,parent_id
       ,site_id
       ,visibility
       ,title
@@ -598,6 +608,7 @@ SELECT microcosm_id
 		id,
 	).Scan(
 		&m.ID,
+		&m.parentIDNullable,
 		&m.SiteID,
 		&m.Visibility,
 		&m.Title,
@@ -623,6 +634,10 @@ SELECT microcosm_id
 		return MicrocosmSummaryType{},
 			http.StatusInternalServerError,
 			fmt.Errorf("Database query failed")
+	}
+
+	if m.parentIDNullable.Valid {
+		m.ParentID = m.parentIDNullable.Int64
 	}
 
 	mru, status, err := GetMostRecentItem(siteID, m.ID, profileID)
@@ -742,8 +757,8 @@ UPDATE microcosms
 	return nil
 }
 
-// GetMicrocosms fetches a collection of microcosms
-func GetMicrocosms(
+// GetRootMicrocosms fetches the collection of microcosms that have no parent
+func GetRootMicrocosms(
 	siteID int64,
 	profileID int64,
 	limit int64,
@@ -778,6 +793,7 @@ WITH m AS (
      WHERE m.site_id = $1
        AND m.is_deleted IS NOT TRUE
        AND m.is_moderated IS NOT TRUE
+       AND m.parent_id IS NULL
        AND i.profile_id IS NULL
        AND (
                (p.can_read IS NOT NULL AND p.can_read IS TRUE)

@@ -314,7 +314,7 @@ func GetAllItems(
                    SELECT $2::bigint AS microcosm_id
                     WHERE (get_effective_permissions($1, $2, 2, $2, $3)).can_read IS TRUE
                )
-           AND (f.item_type_id = 6 OR f.item_type_id = 9)
+           AND f.item_type_id IN (2, 6, 9)
            AND f.site_id = $1
            AND i.profile_id IS NULL
            AND f.microcosm_is_deleted IS NOT TRUE
@@ -350,7 +350,8 @@ SELECT item_type_id
   FROM (
         SELECT f.item_type_id
               ,f.item_id`+sqlFromWhere+`
-         ORDER BY f.item_is_sticky DESC
+         ORDER BY f.item_type_id = 2
+                 ,f.item_is_sticky DESC
                  ,f.last_modified DESC
          LIMIT $4
         OFFSET $5
