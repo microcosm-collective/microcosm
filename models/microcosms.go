@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -27,13 +28,14 @@ type MicrocosmSummaryType struct {
 	ID               int64 `json:"id"`
 	ParentID         int64 `json:"parentId,omitempty"`
 	parentIDNullable sql.NullInt64
-	SiteID           int64   `json:"siteId,omitempty"`
-	Visibility       string  `json:"visibility"`
-	Title            string  `json:"title"`
-	Description      string  `json:"description"`
-	Moderators       []int64 `json:"moderators"`
-	ItemCount        int64   `json:"totalItems"`
-	CommentCount     int64   `json:"totalComments"`
+	SiteID           int64    `json:"siteId,omitempty"`
+	Visibility       string   `json:"visibility"`
+	Title            string   `json:"title"`
+	Description      string   `json:"description"`
+	Moderators       []int64  `json:"moderators"`
+	ItemCount        int64    `json:"totalItems"`
+	CommentCount     int64    `json:"totalComments"`
+	ItemTypes        []string `json:"itemTypes"`
 
 	MRU interface{} `json:"mostRecentUpdate,omitempty"`
 
@@ -45,11 +47,12 @@ type MicrocosmType struct {
 	ID               int64 `json:"id"`
 	ParentID         int64 `json:"parentId,omitempty"`
 	parentIDNullable sql.NullInt64
-	SiteID           int64  `json:"siteId,omitempty"`
-	Visibility       string `json:"visibility"`
-	Title            string `json:"title"`
-	Description      string `json:"description"`
-	OwnedByID        int64  `json:"-"`
+	SiteID           int64    `json:"siteId,omitempty"`
+	Visibility       string   `json:"visibility"`
+	Title            string   `json:"title"`
+	Description      string   `json:"description"`
+	OwnedByID        int64    `json:"-"`
+	ItemTypes        []string `json:"itemTypes"`
 
 	Moderators []int64 `json:"moderators"`
 
@@ -212,10 +215,10 @@ func (m *MicrocosmType) insert() (int, error) {
 	err = tx.QueryRow(`-- Create Microcosm
 INSERT INTO microcosms (
     site_id, visibility, title, description, created,
-    created_by, owned_by
+    created_by, owned_by, item_types
 ) VALUES (
     $1, $2, $3, $4, $5,
-    $6, $7
+    $6, $7, $8
 ) RETURNING microcosm_id`,
 		m.SiteID,
 		m.Visibility,
@@ -224,6 +227,7 @@ INSERT INTO microcosms (
 		m.Meta.Created,
 		m.Meta.CreatedByID,
 		m.OwnedByID,
+		itemTypesToPSQLArray(m.ItemTypes),
 	).Scan(
 		&insertID,
 	)
@@ -267,7 +271,8 @@ UPDATE microcosms
        description = $5,
        edited = $6,
        edited_by = $7,
-       edit_reason = $8
+       edit_reason = $8,
+       item_types = $9
  WHERE microcosm_id = $1`,
 		m.ID,
 		m.SiteID,
@@ -277,6 +282,7 @@ UPDATE microcosms
 		m.Meta.EditedNullable,
 		m.Meta.EditedByNullable,
 		m.Meta.EditReason,
+		itemTypesToPSQLArray(m.ItemTypes),
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
@@ -447,7 +453,10 @@ func GetMicrocosm(
 	}
 
 	// TODO(buro9): admins and mods could see this with isDeleted=true in the querystring
-	var m MicrocosmType
+	var (
+		m         MicrocosmType
+		itemTypes string
+	)
 	err = db.QueryRow(`--GetMicrocosm
 SELECT microcosm_id,
        parent_id,
@@ -464,7 +473,8 @@ SELECT microcosm_id,
        is_open,
        is_deleted,
        is_moderated,
-       is_visible
+       is_visible,
+       item_types
   FROM microcosms
  WHERE site_id = $1
    AND microcosm_id = $2
@@ -489,6 +499,7 @@ SELECT microcosm_id,
 		&m.Meta.Flags.Deleted,
 		&m.Meta.Flags.Moderated,
 		&m.Meta.Flags.Visible,
+		&itemTypes,
 	)
 	if err == sql.ErrNoRows {
 		return MicrocosmType{}, http.StatusNotFound,
@@ -498,6 +509,8 @@ SELECT microcosm_id,
 		return MicrocosmType{}, http.StatusInternalServerError,
 			fmt.Errorf("Database query failed: %v", err.Error())
 	}
+
+	m.ItemTypes = psqlArrayToItemTypes(itemTypes)
 
 	if m.parentIDNullable.Valid {
 		m.ParentID = m.parentIDNullable.Int64
@@ -582,7 +595,10 @@ func GetMicrocosmSummary(
 	}
 
 	// TODO(buro9): admins and mods could see this with isDeleted=true in the querystring
-	var m MicrocosmSummaryType
+	var (
+		m         MicrocosmSummaryType
+		itemTypes string
+	)
 	err = db.QueryRow(`--GetMicrocosmSummary
 SELECT microcosm_id
       ,parent_id
@@ -599,6 +615,7 @@ SELECT microcosm_id
       ,is_visible
       ,item_count
       ,comment_count
+      ,item_types
   FROM microcosms
  WHERE site_id = $1
    AND microcosm_id = $2
@@ -622,6 +639,7 @@ SELECT microcosm_id
 		&m.Meta.Flags.Visible,
 		&m.ItemCount,
 		&m.CommentCount,
+		&itemTypes,
 	)
 	if err == sql.ErrNoRows {
 		glog.Warning(err)
@@ -635,6 +653,8 @@ SELECT microcosm_id
 			http.StatusInternalServerError,
 			fmt.Errorf("Database query failed")
 	}
+
+	m.ItemTypes = psqlArrayToItemTypes(itemTypes)
 
 	if m.parentIDNullable.Valid {
 		m.ParentID = m.parentIDNullable.Int64
@@ -916,4 +936,34 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 	}
 
 	return ems, total, pages, http.StatusOK, nil
+}
+
+func itemTypesToPSQLArray(s []string) string {
+	it := []string{}
+	for _, v := range s {
+		if val, ok := h.ItemTypes[v]; ok {
+			it = append(it, strconv.FormatInt(val, 10))
+		}
+	}
+	return `{` + strings.Join(it, `,`) + `}`
+}
+
+func psqlArrayToItemTypes(s string) []string {
+	s = strings.TrimLeft(s, `{`)
+	s = strings.TrimRight(s, `}`)
+
+	itemTypes := []string{}
+	for _, v := range strings.Split(s, `,`) {
+		i, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			continue
+		}
+		str, err := h.GetItemTypeFromInt(i)
+		if err != nil {
+			continue
+		}
+		itemTypes = append(itemTypes, str)
+	}
+
+	return itemTypes
 }
