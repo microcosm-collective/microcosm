@@ -88,7 +88,6 @@ func (v MicrocosmSummaryRequestBySeq) Less(i, j int) bool {
 
 // Validate returns true if the microcosm is valid
 func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
-
 	m.Title = SanitiseText(m.Title)
 	m.Description = string(SanitiseHTML([]byte(m.Description)))
 
@@ -120,6 +119,11 @@ func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
 	}
 
 	m.Description = ShoutToWhisper(m.Description)
+
+	if m.ParentID > 0 {
+		m.parentIDNullable.Valid = true
+		m.parentIDNullable.Int64 = m.ParentID
+	}
 
 	return http.StatusOK, nil
 }
@@ -204,7 +208,6 @@ func (m *MicrocosmType) Import() (int, error) {
 
 // insert saves the microcosm to the database
 func (m *MicrocosmType) insert() (int, error) {
-
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -215,10 +218,10 @@ func (m *MicrocosmType) insert() (int, error) {
 	err = tx.QueryRow(`-- Create Microcosm
 INSERT INTO microcosms (
     site_id, visibility, title, description, created,
-    created_by, owned_by, item_types
+    created_by, owned_by, item_types, parent_id
 ) VALUES (
     $1, $2, $3, $4, $5,
-    $6, $7, $8
+    $6, $7, $8, $9
 ) RETURNING microcosm_id`,
 		m.SiteID,
 		m.Visibility,
@@ -228,6 +231,7 @@ INSERT INTO microcosms (
 		m.Meta.CreatedByID,
 		m.OwnedByID,
 		itemTypesToPSQLArray(m.ItemTypes),
+		m.parentIDNullable,
 	).Scan(
 		&insertID,
 	)
@@ -250,7 +254,6 @@ INSERT INTO microcosms (
 
 // Update saves changes to the microcosm
 func (m *MicrocosmType) Update() (int, error) {
-
 	status, err := m.Validate(true, false)
 	if err != nil {
 		return status, err
@@ -272,7 +275,8 @@ UPDATE microcosms
        edited = $6,
        edited_by = $7,
        edit_reason = $8,
-       item_types = $9
+       item_types = $9,
+       parent_id = $10
  WHERE microcosm_id = $1`,
 		m.ID,
 		m.SiteID,
@@ -283,6 +287,7 @@ UPDATE microcosms
 		m.Meta.EditedByNullable,
 		m.Meta.EditReason,
 		itemTypesToPSQLArray(m.ItemTypes),
+		m.parentIDNullable,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
