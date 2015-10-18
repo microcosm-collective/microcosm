@@ -107,8 +107,12 @@ func (ctl *MicrocosmsController) ReadMany(c *models.Context) {
 	}
 
 	// Fetch list of microcosms
-	ems, total, pages, status, err := models.GetRootMicrocosms(
+	var parentMicrocosmID int64
+	fetchChildren := true
+	ems, total, pages, status, err := models.GetMicrocosms(
 		c.Site.ID,
+		parentMicrocosmID,
+		fetchChildren,
 		c.Auth.ProfileID,
 		limit,
 		offset,

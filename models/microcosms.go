@@ -28,14 +28,15 @@ type MicrocosmSummaryType struct {
 	ID               int64 `json:"id"`
 	ParentID         int64 `json:"parentId,omitempty"`
 	parentIDNullable sql.NullInt64
-	SiteID           int64    `json:"siteId,omitempty"`
-	Visibility       string   `json:"visibility"`
-	Title            string   `json:"title"`
-	Description      string   `json:"description"`
-	Moderators       []int64  `json:"moderators"`
-	ItemCount        int64    `json:"totalItems"`
-	CommentCount     int64    `json:"totalComments"`
-	ItemTypes        []string `json:"itemTypes"`
+	SiteID           int64                   `json:"siteId,omitempty"`
+	Visibility       string                  `json:"visibility"`
+	Title            string                  `json:"title"`
+	Description      string                  `json:"description"`
+	Moderators       []int64                 `json:"moderators"`
+	ItemCount        int64                   `json:"totalItems"`
+	CommentCount     int64                   `json:"totalComments"`
+	ItemTypes        []string                `json:"itemTypes"`
+	Children         *[]MicrocosmSummaryType `json:"children,omitempty"`
 
 	MRU interface{} `json:"mostRecentUpdate,omitempty"`
 
@@ -47,12 +48,13 @@ type MicrocosmType struct {
 	ID               int64 `json:"id"`
 	ParentID         int64 `json:"parentId,omitempty"`
 	parentIDNullable sql.NullInt64
-	SiteID           int64    `json:"siteId,omitempty"`
-	Visibility       string   `json:"visibility"`
-	Title            string   `json:"title"`
-	Description      string   `json:"description"`
-	OwnedByID        int64    `json:"-"`
-	ItemTypes        []string `json:"itemTypes"`
+	SiteID           int64                   `json:"siteId,omitempty"`
+	Visibility       string                  `json:"visibility"`
+	Title            string                  `json:"title"`
+	Description      string                  `json:"description"`
+	OwnedByID        int64                   `json:"-"`
+	ItemTypes        []string                `json:"itemTypes"`
+	Children         *[]MicrocosmSummaryType `json:"children,omitempty"`
 
 	Moderators []int64 `json:"moderators"`
 
@@ -66,6 +68,23 @@ type MicrocosmSummaryRequest struct {
 	Err    error
 	Status int
 	Seq    int
+}
+
+// MicrocosmLinkForestType is a collection of Microcosm links organised as trees
+type MicrocosmLinkForestType struct {
+	Links []MicrocosmLinkForestType `json:"forest"`
+}
+
+// MicrocosmLinkType is a link
+type MicrocosmLinkType struct {
+	Rel      string               `json:"rel,omitempty"` // REST
+	Href     string               `json:"href"`
+	Title    string               `json:"title,omitempty"`
+	Text     string               `json:"text,omitempty"` // HTML
+	ID       int64                `json:"id"`
+	Level    int64                `json:"level,omitempty"`
+	ParentID int64                `json:"-"`
+	Children *[]MicrocosmLinkType `json:"children,omitempty"`
 }
 
 // MicrocosmSummaryRequestBySeq is a collection of requests
@@ -128,15 +147,14 @@ func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
 	return http.StatusOK, nil
 }
 
-// FetchSummaries populates a partially populated microcosm struct
-func (m *MicrocosmType) FetchSummaries(
+// Hydrate populates a partially populated microcosm struct
+func (m *MicrocosmType) Hydrate(
 	siteID int64,
 	profileID int64,
 ) (
 	int,
 	error,
 ) {
-
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
@@ -171,17 +189,53 @@ func (m *MicrocosmType) FetchSummaries(
 	}
 	m.Meta.Flags.Unread = unread
 
+	fetchChildren := false
+	children, _, _, status, err := GetMicrocosms(
+		siteID,
+		m.ID,
+		fetchChildren,
+		profileID,
+		h.DefaultQueryLimit,
+		h.DefaultQueryOffset,
+	)
+	if err != nil {
+		return status, err
+	}
+	m.Children = &children
+
 	return http.StatusOK, nil
 }
 
-// FetchSummaries populates a partially populated struct
-func (m *MicrocosmSummaryType) FetchSummaries(siteID int64) (int, error) {
-
+// Hydrate populates a partially populated struct
+func (m *MicrocosmSummaryType) Hydrate(
+	siteID int64,
+	fetchChildren bool,
+	profileID int64,
+) (
+	int,
+	error,
+) {
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
 	m.Meta.CreatedBy = profile
+
+	if fetchChildren {
+		fetchChildren = false
+		children, _, _, status, err := GetMicrocosms(
+			siteID,
+			m.ID,
+			fetchChildren,
+			profileID,
+			h.DefaultQueryLimit,
+			h.DefaultQueryOffset,
+		)
+		if err != nil {
+			return status, err
+		}
+		m.Children = &children
+	}
 
 	return http.StatusOK, nil
 }
@@ -241,6 +295,14 @@ INSERT INTO microcosms (
 	}
 	m.ID = insertID
 
+	if m.parentIDNullable.Valid && m.parentIDNullable.Int64 != 0 {
+		purgeCache := false
+		status, err := updateMicrocosmPaths(tx, m.SiteID, purgeCache)
+		if err != nil {
+			return status, err
+		}
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
@@ -294,6 +356,9 @@ UPDATE microcosms
 			fmt.Errorf("Update failed: %v", err.Error())
 	}
 
+	purgeCache := true
+	updateMicrocosmPaths(tx, m.SiteID, purgeCache)
+
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
@@ -313,7 +378,6 @@ func (m *MicrocosmType) Patch(
 	int,
 	error,
 ) {
-
 	// Update resource
 	tx, err := h.GetTransaction()
 	if err != nil {
@@ -390,7 +454,6 @@ UPDATE microcosms
 
 // Delete removes a microcosm from the database
 func (m *MicrocosmType) Delete() (int, error) {
-
 	// Delete resource
 	tx, err := h.GetTransaction()
 	if err != nil {
@@ -431,7 +494,6 @@ func GetMicrocosm(
 	int,
 	error,
 ) {
-
 	if id == 0 {
 		return MicrocosmType{}, http.StatusNotFound,
 			fmt.Errorf("Microcosm not found")
@@ -446,7 +508,7 @@ func GetMicrocosm(
 			return MicrocosmType{}, http.StatusNotFound, fmt.Errorf("Not found")
 		}
 
-		m.FetchSummaries(siteID, profileID)
+		m.Hydrate(siteID, profileID)
 
 		return m, 0, nil
 	}
@@ -457,7 +519,8 @@ func GetMicrocosm(
 		return MicrocosmType{}, http.StatusInternalServerError, err
 	}
 
-	// TODO(buro9): admins and mods could see this with isDeleted=true in the querystring
+	// TODO(buro9): admins and mods could see this with isDeleted=true in the
+	// querystring
 	var (
 		m         MicrocosmType
 		itemTypes string
@@ -536,7 +599,7 @@ SELECT microcosm_id,
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	m.FetchSummaries(siteID, profileID)
+	m.Hydrate(siteID, profileID)
 	return m, http.StatusOK, nil
 }
 
@@ -544,12 +607,12 @@ SELECT microcosm_id,
 func HandleMicrocosmSummaryRequest(
 	siteID int64,
 	id int64,
+	fetchChildren bool,
 	profileID int64,
 	seq int,
 	out chan<- MicrocosmSummaryRequest,
 ) {
-
-	item, status, err := GetMicrocosmSummary(siteID, id, profileID)
+	item, status, err := GetMicrocosmSummary(siteID, id, fetchChildren, profileID)
 
 	response := MicrocosmSummaryRequest{
 		Item:   item,
@@ -564,13 +627,13 @@ func HandleMicrocosmSummaryRequest(
 func GetMicrocosmSummary(
 	siteID int64,
 	id int64,
+	fetchChildren bool,
 	profileID int64,
 ) (
 	MicrocosmSummaryType,
 	int,
 	error,
 ) {
-
 	if id == 0 {
 		return MicrocosmSummaryType{}, http.StatusNotFound,
 			fmt.Errorf("Microcosm not found")
@@ -587,7 +650,7 @@ func GetMicrocosmSummary(
 				fmt.Errorf("Not found")
 		}
 
-		m.FetchSummaries(siteID)
+		m.Hydrate(siteID, fetchChildren, profileID)
 
 		return m, http.StatusOK, nil
 	}
@@ -599,7 +662,8 @@ func GetMicrocosmSummary(
 		return MicrocosmSummaryType{}, http.StatusInternalServerError, err
 	}
 
-	// TODO(buro9): admins and mods could see this with isDeleted=true in the querystring
+	// TODO(buro9): admins and mods could see this with isDeleted=true in the
+	// querystring
 	var (
 		m         MicrocosmSummaryType
 		itemTypes string
@@ -682,7 +746,7 @@ SELECT microcosm_id
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	m.FetchSummaries(siteID)
+	m.Hydrate(siteID, fetchChildren, profileID)
 
 	return m, http.StatusOK, nil
 }
@@ -782,9 +846,11 @@ UPDATE microcosms
 	return nil
 }
 
-// GetRootMicrocosms fetches the collection of microcosms that have no parent
-func GetRootMicrocosms(
+// GetMicrocosms fetches the collection of microcosms that have no parent
+func GetMicrocosms(
 	siteID int64,
+	parentMicrocosmID int64,
+	fetchChildren bool,
 	profileID int64,
 	limit int64,
 	offset int64,
@@ -795,13 +861,27 @@ func GetRootMicrocosms(
 	int,
 	error,
 ) {
-
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
 		glog.Errorf("h.GetConnection() %+v", err)
 		return []MicrocosmSummaryType{}, 0, 0,
 			http.StatusInternalServerError, err
+	}
+
+	var (
+		sqlChild  string
+		sqlIsRoot string
+	)
+	if parentMicrocosmID > 0 {
+		sqlChild =
+			fmt.Sprintf(`
+       AND m.parent_id = %d`,
+				parentMicrocosmID,
+			)
+	} else {
+		sqlIsRoot = `
+       AND m.parent_id IS NULL`
 	}
 
 	rows, err := db.Query(`--GetMicrocosms
@@ -815,10 +895,9 @@ WITH m AS (
            LEFT JOIN ignores i ON i.profile_id = $2
                               AND i.item_type_id = 2
                               AND i.item_id = m.microcosm_id
-     WHERE m.site_id = $1
+     WHERE m.site_id = $1`+sqlChild+sqlIsRoot+`
        AND m.is_deleted IS NOT TRUE
        AND m.is_moderated IS NOT TRUE
-       AND m.parent_id IS NULL
        AND i.profile_id IS NULL
        AND (
                (p.can_read IS NOT NULL AND p.can_read IS TRUE)
@@ -899,7 +978,14 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 	defer close(req)
 
 	for seq, id := range ids {
-		go HandleMicrocosmSummaryRequest(siteID, id, profileID, seq, req)
+		go HandleMicrocosmSummaryRequest(
+			siteID,
+			id,
+			fetchChildren,
+			profileID,
+			seq,
+			req,
+		)
 		wg1.Add(1)
 	}
 
@@ -971,4 +1057,86 @@ func psqlArrayToItemTypes(s string) []string {
 	}
 
 	return itemTypes
+}
+
+// updateMicrocosmPaths will update the parent paths for all microcosms, and if
+// this resulted in any rows in the database being updated then this will also
+// purge those from cache so that the updates are reflected
+func updateMicrocosmPaths(tx *sql.Tx, siteId int64, cachePurge bool) (int, error) {
+	res, err := tx.Exec(`-- Update Microcosm Paths
+WITH RECURSIVE parent_microcosms AS (
+    SELECT microcosm_id
+          ,CAST(microcosm_id AS VARCHAR) AS path
+      FROM microcosms
+     WHERE parent_id IS NULL
+       AND site_id = $1
+     UNION ALL
+    SELECT c.microcosm_id
+          ,p.path || '.' || CAST(c.microcosm_id AS VARCHAR)
+      FROM microcosms c
+      JOIN parent_microcosms p ON c.parent_id = p.microcosm_id
+)
+UPDATE microcosms m
+   SET path = CAST(p.path AS ltree)
+  FROM parent_microcosms p
+ WHERE m.microcosm_id = p.microcosm_id
+   AND (
+           m.path IS NULL
+        OR CAST(m.path AS VARCHAR) <> p.path
+       )`,
+		siteId,
+	)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	if cachePurge {
+		rowsUpdated, err := res.RowsAffected()
+		if err != nil {
+			return http.StatusInternalServerError, err
+		}
+
+		if rowsUpdated > 0 {
+			rows, err := tx.Query(`-- Get all Microcosms for Site
+SELECT microcosm_id
+  FROM microcosms
+ WHERE site_id = $1
+   AND is_deleted IS NOT TRUE
+   AND is_moderated IS NOT TRUE`,
+				siteId,
+			)
+			if err != nil {
+				return http.StatusInternalServerError, err
+			}
+
+			ids := []int64{}
+			for rows.Next() {
+				var id int64
+				err = rows.Scan(&id)
+				if err != nil {
+					return http.StatusInternalServerError, err
+				}
+				ids = append(ids, id)
+			}
+			err = rows.Err()
+			if err != nil {
+				return http.StatusInternalServerError, err
+			}
+			rows.Close()
+
+			for _, id := range ids {
+				PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], id)
+			}
+		}
+	}
+
+	return http.StatusOK, nil
+}
+
+func getMicrocosmParents() ([]MicrocosmLinkType, int, error) {
+	return []MicrocosmLinkType{}, http.StatusOK, nil
+}
+
+func getMicrocosmTree() (MicrocosmLinkForestType, int, error) {
+	return MicrocosmLinkForestType{}, http.StatusOK, nil
 }

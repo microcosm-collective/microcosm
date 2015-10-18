@@ -101,7 +101,13 @@ func (m *EventType) Validate(
 
 	// Does the Microcosm specified exist on this site?
 	if !exists {
-		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmID, profileID)
+		fetchChildren := false
+		_, status, err := GetMicrocosmSummary(
+			siteID,
+			m.MicrocosmID,
+			fetchChildren,
+			profileID,
+		)
 		if err != nil {
 			glog.Infof(`GetMicrocosmSummary error %+v`, err)
 			return status, err

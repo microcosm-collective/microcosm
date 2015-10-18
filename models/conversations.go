@@ -53,7 +53,13 @@ func (m *ConversationType) Validate(
 
 	if !exists {
 		// Does the Microcosm specified exist on this site?
-		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmID, profileID)
+		fetchChildren := false
+		_, status, err := GetMicrocosmSummary(
+			siteID,
+			m.MicrocosmID,
+			fetchChildren,
+			profileID,
+		)
 		if err != nil {
 			return status, err
 		}
