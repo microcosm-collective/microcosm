@@ -28,15 +28,15 @@ type MicrocosmSummaryType struct {
 	ID               int64 `json:"id"`
 	ParentID         int64 `json:"parentId,omitempty"`
 	parentIDNullable sql.NullInt64
-	SiteID           int64                   `json:"siteId,omitempty"`
-	Visibility       string                  `json:"visibility"`
-	Title            string                  `json:"title"`
-	Description      string                  `json:"description"`
-	Moderators       []int64                 `json:"moderators"`
-	ItemCount        int64                   `json:"totalItems"`
-	CommentCount     int64                   `json:"totalComments"`
-	ItemTypes        []string                `json:"itemTypes"`
-	Children         *[]MicrocosmSummaryType `json:"children,omitempty"`
+	SiteID           int64                  `json:"siteId,omitempty"`
+	Visibility       string                 `json:"visibility"`
+	Title            string                 `json:"title"`
+	Description      string                 `json:"description"`
+	Moderators       []int64                `json:"moderators"`
+	ItemCount        int64                  `json:"totalItems"`
+	CommentCount     int64                  `json:"totalComments"`
+	ItemTypes        []string               `json:"itemTypes"`
+	Children         []MicrocosmSummaryType `json:"children,omitempty"`
 
 	MRU interface{} `json:"mostRecentUpdate,omitempty"`
 
@@ -48,13 +48,13 @@ type MicrocosmType struct {
 	ID               int64 `json:"id"`
 	ParentID         int64 `json:"parentId,omitempty"`
 	parentIDNullable sql.NullInt64
-	SiteID           int64                   `json:"siteId,omitempty"`
-	Visibility       string                  `json:"visibility"`
-	Title            string                  `json:"title"`
-	Description      string                  `json:"description"`
-	OwnedByID        int64                   `json:"-"`
-	ItemTypes        []string                `json:"itemTypes"`
-	Children         *[]MicrocosmSummaryType `json:"children,omitempty"`
+	SiteID           int64                  `json:"siteId,omitempty"`
+	Visibility       string                 `json:"visibility"`
+	Title            string                 `json:"title"`
+	Description      string                 `json:"description"`
+	OwnedByID        int64                  `json:"-"`
+	ItemTypes        []string               `json:"itemTypes"`
+	Children         []MicrocosmSummaryType `json:"children,omitempty"`
 
 	Moderators []int64 `json:"moderators"`
 
@@ -189,27 +189,12 @@ func (m *MicrocosmType) Hydrate(
 	}
 	m.Meta.Flags.Unread = unread
 
-	fetchChildren := false
-	children, _, _, status, err := GetMicrocosms(
-		siteID,
-		m.ID,
-		fetchChildren,
-		profileID,
-		h.DefaultQueryLimit,
-		h.DefaultQueryOffset,
-	)
-	if err != nil {
-		return status, err
-	}
-	m.Children = &children
-
 	return http.StatusOK, nil
 }
 
 // Hydrate populates a partially populated struct
 func (m *MicrocosmSummaryType) Hydrate(
 	siteID int64,
-	fetchChildren bool,
 	profileID int64,
 ) (
 	int,
@@ -220,22 +205,6 @@ func (m *MicrocosmSummaryType) Hydrate(
 		return status, err
 	}
 	m.Meta.CreatedBy = profile
-
-	if fetchChildren {
-		fetchChildren = false
-		children, _, _, status, err := GetMicrocosms(
-			siteID,
-			m.ID,
-			fetchChildren,
-			profileID,
-			h.DefaultQueryLimit,
-			h.DefaultQueryOffset,
-		)
-		if err != nil {
-			return status, err
-		}
-		m.Children = &children
-	}
 
 	return http.StatusOK, nil
 }
@@ -607,12 +576,11 @@ SELECT microcosm_id,
 func HandleMicrocosmSummaryRequest(
 	siteID int64,
 	id int64,
-	fetchChildren bool,
 	profileID int64,
 	seq int,
 	out chan<- MicrocosmSummaryRequest,
 ) {
-	item, status, err := GetMicrocosmSummary(siteID, id, fetchChildren, profileID)
+	item, status, err := GetMicrocosmSummary(siteID, id, profileID)
 
 	response := MicrocosmSummaryRequest{
 		Item:   item,
@@ -627,7 +595,6 @@ func HandleMicrocosmSummaryRequest(
 func GetMicrocosmSummary(
 	siteID int64,
 	id int64,
-	fetchChildren bool,
 	profileID int64,
 ) (
 	MicrocosmSummaryType,
@@ -650,7 +617,7 @@ func GetMicrocosmSummary(
 				fmt.Errorf("Not found")
 		}
 
-		m.Hydrate(siteID, fetchChildren, profileID)
+		m.Hydrate(siteID, profileID)
 
 		return m, http.StatusOK, nil
 	}
@@ -746,7 +713,7 @@ SELECT microcosm_id
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	m.Hydrate(siteID, fetchChildren, profileID)
+	m.Hydrate(siteID, profileID)
 
 	return m, http.StatusOK, nil
 }
@@ -849,8 +816,7 @@ UPDATE microcosms
 // GetMicrocosms fetches the collection of microcosms that have no parent
 func GetMicrocosms(
 	siteID int64,
-	parentMicrocosmID int64,
-	fetchChildren bool,
+	seedMicrocosmID int64,
 	profileID int64,
 	limit int64,
 	offset int64,
@@ -873,15 +839,15 @@ func GetMicrocosms(
 		sqlChild  string
 		sqlIsRoot string
 	)
-	if parentMicrocosmID > 0 {
+	if seedMicrocosmID > 0 {
 		sqlChild =
 			fmt.Sprintf(`
        AND m.parent_id = %d`,
-				parentMicrocosmID,
+				seedMicrocosmID,
 			)
 	} else {
 		sqlIsRoot = `
-       AND m.parent_id IS NULL`
+       AND nlevel(m.path) <= 2`
 	}
 
 	rows, err := db.Query(`--GetMicrocosms
@@ -904,33 +870,27 @@ WITH m AS (
             OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$2)).can_read IS TRUE
            )
 )
-SELECT (SELECT COUNT(*) FROM m) AS total
-      ,microcosm_id
+SELECT microcosm_id
       ,has_unread(2, microcosm_id, $2)
   FROM (
            SELECT microcosm_id
              FROM microcosms
             WHERE microcosm_id IN (SELECT microcosm_id FROM m)
-            ORDER BY is_sticky DESC
+            ORDER BY nlevel(path) ASC
+                    ,is_sticky DESC
                     ,comment_count DESC
                     ,item_count DESC
                     ,created ASC
-            LIMIT $3
-           OFFSET $4
        ) r`,
 		siteID,
 		profileID,
-		limit,
-		offset,
 	)
 
 	if err != nil {
 		glog.Errorf(
-			"db.Query(%d, %d, %d, %d) %+v",
+			"db.Query(%d, %d) %+v",
 			siteID,
 			profileID,
-			limit,
-			offset,
 			err,
 		)
 		return []MicrocosmSummaryType{}, 0, 0,
@@ -949,7 +909,6 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 			hasUnread bool
 		)
 		err = rows.Scan(
-			&total,
 			&id,
 			&hasUnread,
 		)
@@ -981,7 +940,6 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 		go HandleMicrocosmSummaryRequest(
 			siteID,
 			id,
-			fetchChildren,
 			profileID,
 			seq,
 			req,
@@ -1009,15 +967,39 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 	sort.Sort(MicrocosmSummaryRequestBySeq(resps))
 
 	// Extract the values
-	ems := []MicrocosmSummaryType{}
+	ems1 := []MicrocosmSummaryType{}
 	for _, resp := range resps {
 		m := resp.Item
 		m.Meta.Flags.Unread = unread[m.ID]
-		ems = append(ems, m)
+		ems1 = append(ems1, m)
 	}
 
-	pages := h.GetPageCount(total, limit)
-	maxOffset := h.GetMaxOffset(total, limit)
+	var (
+		ems2 []MicrocosmSummaryType
+	)
+	if seedMicrocosmID == 0 {
+		for _, ms1 := range ems1 {
+			var isChild bool
+			if ms1.ParentID > 0 {
+				for i, ms2 := range ems2 {
+					if ms1.ParentID == ms2.ID {
+						ems2[i].Children = append(ems2[i].Children, ms1)
+						isChild = true
+						continue
+					}
+				}
+			}
+			if !isChild {
+				ems2 = append(ems2, ms1)
+				total++
+			}
+		}
+	} else {
+		ems2 = ems1
+	}
+
+	pages := int64(1)     // h.GetPageCount(total, limit)
+	maxOffset := int64(0) // h.GetMaxOffset(total, limit)
 
 	if offset > maxOffset {
 		return []MicrocosmSummaryType{}, 0, 0,
@@ -1026,7 +1008,7 @@ SELECT (SELECT COUNT(*) FROM m) AS total
 				"offset (%d) would return an empty page.", offset))
 	}
 
-	return ems, total, pages, http.StatusOK, nil
+	return ems2, total, pages, http.StatusOK, nil
 }
 
 func itemTypesToPSQLArray(s []string) string {

@@ -101,11 +101,9 @@ func (m *EventType) Validate(
 
 	// Does the Microcosm specified exist on this site?
 	if !exists {
-		fetchChildren := false
 		_, status, err := GetMicrocosmSummary(
 			siteID,
 			m.MicrocosmID,
-			fetchChildren,
 			profileID,
 		)
 		if err != nil {

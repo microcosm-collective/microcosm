@@ -205,11 +205,9 @@ func GetSummary(
 		return summary, status, err
 
 	case h.ItemTypes[h.ItemTypeMicrocosm]:
-		fetchChildren := false
 		summary, status, err := GetMicrocosmSummary(
 			siteID,
 			itemID,
-			fetchChildren,
 			profileID,
 		)
 		if err != nil {

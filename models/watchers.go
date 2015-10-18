@@ -419,11 +419,9 @@ SELECT watcher_id,
 			}
 			m.Item = item
 		} else {
-			fetchChildren := false
 			microcosm, _, err := GetMicrocosmSummary(
 				siteID,
 				m.ItemID,
-				fetchChildren,
 				m.ProfileID,
 			)
 			if err != nil {

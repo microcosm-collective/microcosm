@@ -92,11 +92,9 @@ func (m *RoleType) Validate(
 
 	// Does the Microcosm specified exist on this site?
 	if !exists && m.MicrocosmID > 0 {
-		fetchChildren := false
 		_, status, err := GetMicrocosmSummary(
 			siteID,
 			m.MicrocosmID,
-			fetchChildren,
 			profileID,
 		)
 		if err != nil {
@@ -473,11 +471,9 @@ func GetRole(
 	if val, ok := c.Get(mcKey, RoleType{}); ok {
 
 		m := val.(RoleType)
-		fetchChildren := false
 		_, status, err := GetMicrocosmSummary(
 			siteID,
 			microcosmID,
-			fetchChildren,
 			profileID,
 		)
 		if err != nil {

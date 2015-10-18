@@ -350,7 +350,7 @@ SELECT item_type_id
   FROM (
         SELECT f.item_type_id
               ,f.item_id`+sqlFromWhere+`
-         ORDER BY f.item_type_id = 2
+         ORDER BY f.item_type_id = 2 DESC
                  ,f.item_is_sticky DESC
                  ,f.last_modified DESC
          LIMIT $4

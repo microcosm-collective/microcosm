@@ -75,11 +75,9 @@ func (m *PollType) Validate(
 
 	// Does the Microcosm specified exist on this site?
 	if !exists {
-		fetchChildren := false
 		_, status, err := GetMicrocosmSummary(
 			siteID,
 			m.MicrocosmID,
-			fetchChildren,
 			profileID,
 		)
 		if err != nil {
@@ -659,11 +657,9 @@ func GetPollSummary(
 	mcKey := fmt.Sprintf(mcPollKeys[c.CacheSummary], id)
 	if val, ok := c.Get(mcKey, PollSummaryType{}); ok {
 		m := val.(PollSummaryType)
-		fetchChildren := false
 		_, status, err := GetMicrocosmSummary(
 			siteID,
 			m.MicrocosmID,
-			fetchChildren,
 			profileID,
 		)
 		if err != nil {
