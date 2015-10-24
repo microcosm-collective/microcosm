@@ -264,12 +264,10 @@ INSERT INTO microcosms (
 	}
 	m.ID = insertID
 
-	if m.parentIDNullable.Valid && m.parentIDNullable.Int64 != 0 {
-		purgeCache := false
-		status, err := updateMicrocosmPaths(tx, m.SiteID, purgeCache)
-		if err != nil {
-			return status, err
-		}
+	purgeCache := false
+	status, err := updateMicrocosmPaths(tx, m.SiteID, purgeCache)
+	if err != nil {
+		return status, err
 	}
 
 	err = tx.Commit()
