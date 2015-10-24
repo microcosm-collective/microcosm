@@ -1020,9 +1020,9 @@ func GetEvents(
 WITH m AS (
     SELECT m.microcosm_id
       FROM microcosms m
-      LEFT JOIN ignores i ON i.profile_id = $3
-                         AND i.item_type_id = 2
-                         AND i.item_id = m.microcosm_id
+      LEFT JOIN ignores_expanded i ON i.profile_id = $3
+                                  AND i.item_type_id = 2
+                                  AND i.item_id = m.microcosm_id
      WHERE i.profile_id IS NULL
        AND (get_effective_permissions(m.site_id, m.microcosm_id, 2, m.microcosm_id, $3)).can_read IS TRUE
 )

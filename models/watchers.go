@@ -265,9 +265,9 @@ SELECT COALESCE(w.watcher_id, 0) AS watcher_id
   LEFT JOIN watchers w ON w.item_type_id = f.item_type_id
                       AND w.item_id = f.item_id
                       AND w.profile_id = $3
-  LEFT JOIN ignores i ON i.item_type_id = f.item_type_id
-                     AND i.item_id = f.item_id
-                     AND i.profile_id = $3
+  LEFT JOIN ignores_expanded i ON i.item_type_id = f.item_type_id
+                              AND i.item_id = f.item_id
+                              AND i.profile_id = $3
  WHERE f.item_type_id = $1
    AND f.item_id = $2
  ORDER BY 1 DESC

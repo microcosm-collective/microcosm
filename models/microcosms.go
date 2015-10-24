@@ -856,9 +856,9 @@ WITH m AS (
                                    AND p.item_type_id = 2
                                    AND p.item_id = m.microcosm_id
                                    AND p.profile_id = $2
-           LEFT JOIN ignores i ON i.profile_id = $2
-                              AND i.item_type_id = 2
-                              AND i.item_id = m.microcosm_id
+           LEFT JOIN ignores_expanded i ON i.profile_id = $2
+                                       AND i.item_type_id = 2
+                                       AND i.item_id = m.microcosm_id
      WHERE m.site_id = $1`+sqlChild+sqlIsRoot+`
        AND m.is_deleted IS NOT TRUE
        AND m.is_moderated IS NOT TRUE
