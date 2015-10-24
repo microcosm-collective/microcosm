@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/glog"
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
@@ -647,8 +648,57 @@ func (sq *SearchQuery) Validate() {
 	}
 
 	if len(sq.MicrocosmIDs) > 0 {
-		// Implement Microcosm search, which means havign a really cheap way of looking
-		// up a Microcosm Id even when given a comment ID
+		// Expand microcosmIDs so that the array includes child forums too
+		it := []string{}
+		for _, microcosmID := range sq.MicrocosmIDs {
+			it = append(it, strconv.FormatInt(microcosmID, 10))
+		}
+		microcosmIDs := `{` + strings.Join(it, `,`) + `}`
+
+		// Retrieve resources
+		db, err := h.GetConnection()
+		if err != nil {
+			glog.Errorf("h.GetConnection() %+v", err)
+			return
+		}
+
+		rows, err := db.Query(`-- GetMicrocosmChildren
+SELECT microcosm_id
+  FROM microcosms
+ WHERE path <@ (
+           SELECT path
+             FROM microcosms
+            WHERE site_id = 3
+              AND microcosm_id = ANY ($1::bigint[])
+       );`,
+			microcosmIDs,
+		)
+		if err != nil {
+			glog.Errorf("db.Query(%s) %+v", microcosmIDs, err)
+			return
+		}
+		defer rows.Close()
+
+		// Get a list of the identifiers of the items to return
+		ids := []int64{}
+		for rows.Next() {
+			var id int64
+			err = rows.Scan(&id)
+			if err != nil {
+				glog.Errorf("rows.Scan() %+v", err)
+				return
+			}
+			ids = append(ids, id)
+		}
+		err = rows.Err()
+		if err != nil {
+			glog.Errorf("rows.Err() %+v", err)
+			return
+		}
+		rows.Close()
+
+		sq.MicrocosmIDs = ids
+
 		valid = true
 	}
 

@@ -702,11 +702,22 @@ SELECT microcosm_id
 	if mru.Valid {
 		m.MRU = mru
 	}
-	m.Meta.Links =
-		[]h.LinkType{
-			h.GetLink("self", "", h.ItemTypeMicrocosm, m.ID),
-			h.GetLink("site", "", h.ItemTypeSite, m.SiteID),
-		}
+
+	if m.ParentID > 0 && m.ParentID != GetRootMicrocosmID(siteID) {
+		m.Meta.Links =
+			[]h.LinkType{
+				h.GetLink("self", "", h.ItemTypeMicrocosm, m.ID),
+				h.GetLink("parent", GetMicrocosmTitle(m.ParentID), h.ItemTypeMicrocosm, m.ParentID),
+				h.GetLink("site", "", h.ItemTypeSite, m.SiteID),
+			}
+	} else {
+		m.Meta.Links =
+			[]h.LinkType{
+				h.GetLink("self", "", h.ItemTypeMicrocosm, m.ID),
+				h.GetLink("site", "", h.ItemTypeSite, m.SiteID),
+			}
+
+	}
 
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
@@ -714,6 +725,43 @@ SELECT microcosm_id
 	m.Hydrate(siteID, profileID)
 
 	return m, http.StatusOK, nil
+}
+
+// GetRootMicrocosmID returns the ID of the microcosm that is the root microcosm
+// that ultimately is the ancestor of all microcosms
+func GetRootMicrocosmID(id int64) int64 {
+	// Get from cache if it's available
+	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheRootID], id)
+	if val, ok := c.GetInt64(mcKey); ok {
+		return val
+	}
+
+	// Retrieve resource
+	db, err := h.GetConnection()
+	if err != nil {
+		glog.Errorf("h.GetConmection() %+v", err)
+		return 0
+	}
+
+	var rootID int64
+	err = db.QueryRow(`--GetRootMicrocosmID
+SELECT microcosm_id
+  FROM microcosms
+ WHERE site_id = $1
+   AND parent_id IS NULL`,
+		id,
+	).Scan(
+		&rootID,
+	)
+	if err != nil {
+		glog.Errorf("db.QueryRow(%d).Scan(&rootID) %+v", id, err)
+		return 0
+	}
+
+	// Update cache
+	c.SetInt64(mcKey, rootID, mcTTL)
+
+	return rootID
 }
 
 // GetMicrocosmTitle provides a cheap way to retrieve the title

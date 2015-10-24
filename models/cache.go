@@ -67,6 +67,7 @@ var (
 		c.CacheSubdomain: "s_sd%s",
 		c.CacheTitle:     "s_t%d",
 		c.CacheCounts:    "s_c%d",
+		c.CacheRootID:    "s_r%d",
 	}
 	mcUpdateKeys = map[int]string{
 		c.CacheDetail: "u_d%d",
