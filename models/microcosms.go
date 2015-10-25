@@ -4,10 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/golang/glog"
@@ -859,202 +857,26 @@ UPDATE microcosms
 	return nil
 }
 
-// GetMicrocosms fetches the collection of microcosms that have no parent
-func GetMicrocosms(
+// GetRootMicrocosm fetches the root microcosm and it's contents
+func GetRootMicrocosm(
 	siteID int64,
-	seedMicrocosmID int64,
 	profileID int64,
 	limit int64,
 	offset int64,
 ) (
-	[]MicrocosmSummaryType,
+	[]SummaryContainer,
 	int64,
 	int64,
 	int,
 	error,
 ) {
-	// Retrieve resources
-	db, err := h.GetConnection()
-	if err != nil {
-		glog.Errorf("h.GetConnection() %+v", err)
-		return []MicrocosmSummaryType{}, 0, 0,
-			http.StatusInternalServerError, err
+	rootMicrocosmID := GetRootMicrocosmID(siteID)
+	if rootMicrocosmID == 0 {
+		return []SummaryContainer{}, 0, 0,
+			http.StatusInternalServerError, fmt.Errorf("Root microcosm must exist")
 	}
 
-	var (
-		sqlChild  string
-		sqlIsRoot string
-	)
-	if seedMicrocosmID > 0 {
-		sqlChild =
-			fmt.Sprintf(`
-       AND m.parent_id = %d`,
-				seedMicrocosmID,
-			)
-	} else {
-		sqlIsRoot = `
-       AND nlevel(m.path) <= 2`
-	}
-
-	rows, err := db.Query(`--GetMicrocosms
-WITH m AS (
-    SELECT m.microcosm_id
-      FROM microcosms m
-      LEFT JOIN permissions_cache p ON p.site_id = m.site_id
-                                   AND p.item_type_id = 2
-                                   AND p.item_id = m.microcosm_id
-                                   AND p.profile_id = $2
-           LEFT JOIN ignores_expanded i ON i.profile_id = $2
-                                       AND i.item_type_id = 2
-                                       AND i.item_id = m.microcosm_id
-     WHERE m.site_id = $1`+sqlChild+sqlIsRoot+`
-       AND m.is_deleted IS NOT TRUE
-       AND m.is_moderated IS NOT TRUE
-       AND i.profile_id IS NULL
-       AND (
-               (p.can_read IS NOT NULL AND p.can_read IS TRUE)
-            OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$2)).can_read IS TRUE
-           )
-)
-SELECT microcosm_id
-      ,has_unread(2, microcosm_id, $2)
-  FROM (
-           SELECT microcosm_id
-             FROM microcosms
-            WHERE microcosm_id IN (SELECT microcosm_id FROM m)
-            ORDER BY nlevel(path) ASC
-                    ,is_sticky DESC
-                    ,comment_count DESC
-                    ,item_count DESC
-                    ,created ASC
-       ) r`,
-		siteID,
-		profileID,
-	)
-
-	if err != nil {
-		glog.Errorf(
-			"db.Query(%d, %d) %+v",
-			siteID,
-			profileID,
-			err,
-		)
-		return []MicrocosmSummaryType{}, 0, 0,
-			http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
-	}
-	defer rows.Close()
-
-	// Get a list of the identifiers of the items to return
-	var total int64
-	ids := []int64{}
-	unread := map[int64]bool{}
-	for rows.Next() {
-		var (
-			id        int64
-			hasUnread bool
-		)
-		err = rows.Scan(
-			&id,
-			&hasUnread,
-		)
-		if err != nil {
-			glog.Errorf("rows.Scan() %+v", err)
-			return []MicrocosmSummaryType{}, 0, 0,
-				http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
-		}
-
-		unread[id] = hasUnread
-		ids = append(ids, id)
-	}
-	err = rows.Err()
-	if err != nil {
-		glog.Errorf("rows.Err() %+v", err)
-		return []MicrocosmSummaryType{}, 0, 0,
-			http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
-	}
-	rows.Close()
-
-	// Make a request for each identifier
-	var wg1 sync.WaitGroup
-	req := make(chan MicrocosmSummaryRequest)
-	defer close(req)
-
-	for seq, id := range ids {
-		go HandleMicrocosmSummaryRequest(
-			siteID,
-			id,
-			profileID,
-			seq,
-			req,
-		)
-		wg1.Add(1)
-	}
-
-	// Receive the responses and check for errors
-	resps := []MicrocosmSummaryRequest{}
-	for i := 0; i < len(ids); i++ {
-		resp := <-req
-		wg1.Done()
-		resps = append(resps, resp)
-	}
-	wg1.Wait()
-
-	for _, resp := range resps {
-		if resp.Err != nil {
-			return []MicrocosmSummaryType{}, 0, 0,
-				http.StatusInternalServerError, resp.Err
-		}
-	}
-
-	// Sort them
-	sort.Sort(MicrocosmSummaryRequestBySeq(resps))
-
-	// Extract the values
-	ems1 := []MicrocosmSummaryType{}
-	for _, resp := range resps {
-		m := resp.Item
-		m.Meta.Flags.Unread = unread[m.ID]
-		ems1 = append(ems1, m)
-	}
-
-	var (
-		ems2 []MicrocosmSummaryType
-	)
-	if seedMicrocosmID == 0 {
-		for _, ms1 := range ems1 {
-			var isChild bool
-			if ms1.ParentID > 0 {
-				for i, ms2 := range ems2 {
-					if ms1.ParentID == ms2.ID {
-						ems2[i].Children = append(ems2[i].Children, ms1)
-						isChild = true
-						continue
-					}
-				}
-			}
-			if !isChild {
-				ems2 = append(ems2, ms1)
-				total++
-			}
-		}
-	} else {
-		ems2 = ems1
-	}
-
-	pages := int64(1)     // h.GetPageCount(total, limit)
-	maxOffset := int64(0) // h.GetMaxOffset(total, limit)
-
-	if offset > maxOffset {
-		return []MicrocosmSummaryType{}, 0, 0,
-			http.StatusBadRequest,
-			fmt.Errorf(fmt.Sprintf("not enough records, "+
-				"offset (%d) would return an empty page.", offset))
-	}
-
-	return ems2, total, pages, http.StatusOK, nil
+	return GetAllItems(siteID, rootMicrocosmID, profileID, limit, offset)
 }
 
 func itemTypesToPSQLArray(s []string) string {

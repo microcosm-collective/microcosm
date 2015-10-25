@@ -334,12 +334,13 @@ p AS (
 
 	sqlFromWhere := `
           FROM flags f
+          JOIN p ON f.microcosm_id = p.microcosm_id
           LEFT JOIN ignores i ON i.profile_id = $3
                              AND i.item_type_id = f.item_type_id
                              AND i.item_id = f.item_id
           LEFT JOIN m AS m2 ON f.item_type_id = 2
                            AND f.item_id = m2.microcosm_id
-         WHERE f.microcosm_id = (SELECT microcosm_id FROM p)
+         WHERE f.microcosm_id = $2::BIGINT
            AND (
                    f.item_type_id IN (6, 9)
                 OR (
@@ -475,6 +476,14 @@ SELECT item_type_id
 		m := resp.Item
 
 		switch m.Summary.(type) {
+		case MicrocosmSummaryType:
+			summary := m.Summary.(MicrocosmSummaryType)
+			summary.Meta.Flags.Unread =
+				unread[strconv.FormatInt(m.ItemTypeID, 10)+`_`+
+					strconv.FormatInt(m.ItemID, 10)]
+
+			m.Summary = summary
+
 		case ConversationSummaryType:
 			summary := m.Summary.(ConversationSummaryType)
 			summary.Meta.Flags.Unread =
