@@ -764,7 +764,6 @@ SELECT microcosm_id
 
 // GetMicrocosmTitle provides a cheap way to retrieve the title
 func GetMicrocosmTitle(id int64) string {
-
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcMicrocosmKeys[c.CacheTitle], id)
 	if val, ok := c.GetString(mcKey); ok {
@@ -983,8 +982,69 @@ SELECT microcosm_id
 	return http.StatusOK, nil
 }
 
-func getMicrocosmParents() ([]MicrocosmLinkType, int, error) {
-	return []MicrocosmLinkType{}, http.StatusOK, nil
+func getMicrocosmParents(microcosmID int64) ([]MicrocosmLinkType, int, error) {
+	// Retrieve resources
+	db, err := h.GetConnection()
+	if err != nil {
+		return []MicrocosmLinkType{},
+			http.StatusInternalServerError,
+			err
+	}
+
+	rows, err := db.Query(`
+SELECT microcosm_id
+      ,title
+      ,NLEVEL(m.path) AS depth
+  FROM (
+           SELECT path
+             FROM microcosms
+            WHERE microcosm_id = $1
+       ) im
+  JOIN microcosms m ON m.path @> im.path
+ ORDER BY m.path`,
+		microcosmID,
+	)
+	if err != nil {
+		glog.Error(err)
+		return []MicrocosmLinkType{},
+			http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
+	}
+	defer rows.Close()
+
+	links := []MicrocosmLinkType{}
+	for rows.Next() {
+		link := MicrocosmLinkType{}
+		err = rows.Scan(
+			&link.ID,
+			&link.Title,
+			&link.Level,
+		)
+		if err != nil {
+			return []MicrocosmLinkType{},
+				http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
+		}
+
+		link.Rel = "microcosm ancestor"
+		if link.Level > 1 {
+			link.Href =
+				fmt.Sprintf("%s/%d", h.ItemTypesToAPIItem[h.ItemTypeMicrocosm], link.ID)
+		} else {
+			link.Href = h.ItemTypesToAPIItem[h.ItemTypeMicrocosm]
+		}
+
+		links = append(links, link)
+	}
+	err = rows.Err()
+	if err != nil {
+		return []MicrocosmLinkType{},
+			http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
+	}
+	rows.Close()
+
+	return links, http.StatusOK, nil
 }
 
 func getMicrocosmTree() (MicrocosmLinkForestType, int, error) {

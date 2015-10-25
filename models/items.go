@@ -546,22 +546,45 @@ func GetMostRecentItem(
 		return SummaryContainer{}, http.StatusInternalServerError, err
 	}
 
-	rows, err := db.Query(`
+	// Fetch a summary of the most recent item that exists in this or a child
+	// forum that this person may see.
+	rows, err := db.Query(`--GetMostRecentItem
+WITH m AS (
+    SELECT m.microcosm_id
+      FROM (
+               SELECT path
+                 FROM microcosms
+                WHERE microcosm_id = $2
+           ) im
+      JOIN microcosms m ON m.path <@ im.path
+      LEFT JOIN permissions_cache p ON p.site_id = m.site_id
+                                   AND p.item_type_id = 2
+                                   AND p.item_id = m.microcosm_id
+                                   AND p.profile_id = $3
+      LEFT JOIN ignores_expanded i ON i.profile_id = $3
+                                  AND i.item_type_id = 2
+                                  AND i.item_id = m.microcosm_id
+     WHERE m.site_id = $1
+       AND m.is_deleted IS NOT TRUE
+       AND m.is_moderated IS NOT TRUE
+       AND i.profile_id IS NULL
+       AND (
+               (p.can_read IS NOT NULL AND p.can_read IS TRUE)
+            OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$3)).can_read IS TRUE
+           )
+)
 SELECT item_type_id
       ,item_id
   FROM flags
- WHERE microcosm_id = $1
-   AND microcosm_is_deleted IS NOT TRUE
-   AND microcosm_is_moderated IS NOT TRUE
-   AND parent_is_deleted IS NOT TRUE
-   AND parent_is_moderated IS NOT TRUE
+ WHERE microcosm_id IN (SELECT microcosm_id FROM m)
    AND item_is_deleted IS NOT TRUE
    AND item_is_moderated IS NOT TRUE
-   AND (item_type_id = 6
-    OR item_type_id = 9)
+   AND (item_type_id = 6 OR item_type_id = 9)
  ORDER BY last_modified DESC
  LIMIT 1`,
+		siteID,
 		microcosmID,
+		profileID,
 	)
 	if err != nil {
 		glog.Errorf("db.Query(%d) %+v", microcosmID, err)

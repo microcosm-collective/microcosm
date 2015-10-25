@@ -121,8 +121,23 @@ func PurgeCache(itemTypeID int64, itemID int64) {
 		}
 
 	case h.ItemTypes[h.ItemTypeMicrocosm]:
-		for _, mcKeyFmt := range mcMicrocosmKeys {
-			c.Delete(fmt.Sprintf(mcKeyFmt, itemID))
+		// Need to purge parents too but not the root.
+		links, _, err := getMicrocosmParents(itemID)
+		if err != nil {
+			glog.Errorf("+%v", err)
+			for _, mcKeyFmt := range mcMicrocosmKeys {
+				c.Delete(fmt.Sprintf(mcKeyFmt, itemID))
+			}
+			return
+		}
+
+		for _, link := range links {
+			if link.Level == 1 {
+				continue
+			}
+			for _, mcKeyFmt := range mcMicrocosmKeys {
+				c.Delete(fmt.Sprintf(mcKeyFmt, link.ID))
+			}
 		}
 
 	case h.ItemTypes[h.ItemTypePoll]:
