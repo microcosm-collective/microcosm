@@ -79,7 +79,7 @@ type MicrocosmLinkType struct {
 	Title            string `json:"title,omitempty"`
 	ID               int64  `json:"id"`
 	Level            int64  `json:"level,omitempty"`
-	ParentID         int64  `json:"parentID,omitempty"`
+	ParentID         int64  `json:"parentId,omitempty"`
 	parentIDNullable sql.NullInt64
 }
 
