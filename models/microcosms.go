@@ -1057,7 +1057,3 @@ SELECT microcosm_id
 
 	return links, http.StatusOK, nil
 }
-
-func getMicrocosmTree() (MicrocosmLinkForestType, int, error) {
-	return MicrocosmLinkForestType{}, http.StatusOK, nil
-}
