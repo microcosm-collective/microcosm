@@ -305,16 +305,48 @@ func GetAllItems(
 		return []SummaryContainer{}, 0, 0, http.StatusInternalServerError, err
 	}
 
+	sqlChildMicrocosms := `
+WITH m AS (
+    SELECT m.microcosm_id
+          ,m.comment_count + m.item_count AS seq
+      FROM microcosms m
+      LEFT JOIN permissions_cache p ON p.site_id = m.site_id
+                                   AND p.item_type_id = 2
+                                   AND p.item_id = m.microcosm_id
+                                   AND p.profile_id = $3
+           LEFT JOIN ignores_expanded i ON i.profile_id = $3
+                                       AND i.item_type_id = 2
+                                       AND i.item_id = m.microcosm_id
+     WHERE m.site_id = $1
+       AND m.parent_id = $2
+       AND m.is_deleted IS NOT TRUE
+       AND m.is_moderated IS NOT TRUE
+       AND i.profile_id IS NULL
+       AND (
+               (p.can_read IS NOT NULL AND p.can_read IS TRUE)
+            OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$3)).can_read IS TRUE
+           )
+),
+p AS (
+    SELECT $2::bigint AS microcosm_id
+     WHERE (get_effective_permissions($1, $2, 2, $2, $3)).can_read IS TRUE
+)`
+
 	sqlFromWhere := `
           FROM flags f
           LEFT JOIN ignores i ON i.profile_id = $3
                              AND i.item_type_id = f.item_type_id
                              AND i.item_id = f.item_id
-         WHERE f.microcosm_id = (
-                   SELECT $2::bigint AS microcosm_id
-                    WHERE (get_effective_permissions($1, $2, 2, $2, $3)).can_read IS TRUE
+          LEFT JOIN m AS m2 ON f.item_type_id = 2
+                           AND f.item_id = m2.microcosm_id
+         WHERE f.microcosm_id = (SELECT microcosm_id FROM p)
+           AND (
+                   f.item_type_id IN (6, 9)
+                OR (
+                       f.item_type_id = 2
+                   AND m2.microcosm_id IS NOT NULL
+                   )
                )
-           AND f.item_type_id IN (2, 6, 9)
            AND f.site_id = $1
            AND i.profile_id IS NULL
            AND f.microcosm_is_deleted IS NOT TRUE
@@ -325,7 +357,7 @@ func GetAllItems(
            AND f.item_is_moderated IS NOT TRUE`
 
 	var total int64
-	err = db.QueryRow(`
+	err = db.QueryRow(sqlChildMicrocosms+`
 SELECT COUNT(*) AS total`+sqlFromWhere,
 		siteID,
 		microcosmID,
@@ -339,7 +371,7 @@ SELECT COUNT(*) AS total`+sqlFromWhere,
 			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
-	rows, err := db.Query(`
+	rows, err := db.Query(sqlChildMicrocosms+`
 SELECT item_type_id
       ,item_id
       ,has_unread(item_type_id, item_id, $3)
@@ -351,7 +383,7 @@ SELECT item_type_id
         SELECT f.item_type_id
               ,f.item_id`+sqlFromWhere+`
          ORDER BY f.item_is_sticky DESC
-                 ,f.item_type_id = 2 DESC
+                 ,m2.seq DESC NULLS LAST
                  ,f.last_modified DESC
          LIMIT $4
         OFFSET $5
