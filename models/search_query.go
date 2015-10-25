@@ -668,8 +668,7 @@ SELECT microcosm_id
  WHERE path <@ (
            SELECT path
              FROM microcosms
-            WHERE site_id = 3
-              AND microcosm_id = ANY ($1::bigint[])
+            WHERE microcosm_id = ANY ($1::bigint[])
        );`,
 			microcosmIDs,
 		)
@@ -699,7 +698,9 @@ SELECT microcosm_id
 
 		sq.MicrocosmIDs = ids
 
-		valid = true
+		if len(sq.MicrocosmIDs) > 0 {
+			valid = true
+		}
 	}
 
 	// Build up our knowledge of what we're ignoring and what we are searching
