@@ -26,15 +26,14 @@ type MicrocosmSummaryType struct {
 	ID               int64 `json:"id"`
 	ParentID         int64 `json:"parentId,omitempty"`
 	parentIDNullable sql.NullInt64
-	SiteID           int64                  `json:"siteId,omitempty"`
-	Visibility       string                 `json:"visibility"`
-	Title            string                 `json:"title"`
-	Description      string                 `json:"description"`
-	Moderators       []int64                `json:"moderators"`
-	ItemCount        int64                  `json:"totalItems"`
-	CommentCount     int64                  `json:"totalComments"`
-	ItemTypes        []string               `json:"itemTypes"`
-	Children         []MicrocosmSummaryType `json:"children,omitempty"`
+	SiteID           int64    `json:"siteId,omitempty"`
+	Visibility       string   `json:"visibility"`
+	Title            string   `json:"title"`
+	Description      string   `json:"description"`
+	Moderators       []int64  `json:"moderators"`
+	ItemCount        int64    `json:"totalItems"`
+	CommentCount     int64    `json:"totalComments"`
+	ItemTypes        []string `json:"itemTypes"`
 
 	MRU interface{} `json:"mostRecentUpdate,omitempty"`
 
@@ -46,13 +45,13 @@ type MicrocosmType struct {
 	ID               int64 `json:"id"`
 	ParentID         int64 `json:"parentId,omitempty"`
 	parentIDNullable sql.NullInt64
-	SiteID           int64                  `json:"siteId,omitempty"`
-	Visibility       string                 `json:"visibility"`
-	Title            string                 `json:"title"`
-	Description      string                 `json:"description"`
-	OwnedByID        int64                  `json:"-"`
-	ItemTypes        []string               `json:"itemTypes"`
-	Children         []MicrocosmSummaryType `json:"children,omitempty"`
+	SiteID           int64               `json:"siteId,omitempty"`
+	Visibility       string              `json:"visibility"`
+	Title            string              `json:"title"`
+	Description      string              `json:"description"`
+	OwnedByID        int64               `json:"-"`
+	ItemTypes        []string            `json:"itemTypes"`
+	Parents          []MicrocosmLinkType `json:"parents,omitempty"`
 
 	Moderators []int64 `json:"moderators"`
 
@@ -548,6 +547,18 @@ SELECT microcosm_id,
 	if m.parentIDNullable.Valid {
 		m.ParentID = m.parentIDNullable.Int64
 	}
+
+	parents, status, err := getMicrocosmParents(m.ID)
+	if err != nil {
+		return MicrocosmType{}, status, err
+	}
+	for _, parent := range parents {
+		if parent.ID == m.ID || parent.Level == 1 {
+			continue
+		}
+		m.Parents = append(m.Parents, parent)
+	}
+
 	if m.Meta.EditReasonNullable.Valid {
 		m.Meta.EditReason = m.Meta.EditReasonNullable.String
 	}
