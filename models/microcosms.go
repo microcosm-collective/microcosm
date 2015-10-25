@@ -74,14 +74,13 @@ type MicrocosmLinkForestType struct {
 
 // MicrocosmLinkType is a link
 type MicrocosmLinkType struct {
-	Rel      string               `json:"rel,omitempty"` // REST
-	Href     string               `json:"href"`
-	Title    string               `json:"title,omitempty"`
-	Text     string               `json:"text,omitempty"` // HTML
-	ID       int64                `json:"id"`
-	Level    int64                `json:"level,omitempty"`
-	ParentID int64                `json:"-"`
-	Children *[]MicrocosmLinkType `json:"children,omitempty"`
+	Rel              string `json:"rel,omitempty"` // REST
+	Href             string `json:"href"`
+	Title            string `json:"title,omitempty"`
+	ID               int64  `json:"id"`
+	Level            int64  `json:"level,omitempty"`
+	ParentID         int64  `json:"parentID,omitempty"`
+	parentIDNullable sql.NullInt64
 }
 
 // MicrocosmSummaryRequestBySeq is a collection of requests
@@ -1002,7 +1001,7 @@ func getMicrocosmParents(microcosmID int64) ([]MicrocosmLinkType, int, error) {
 			err
 	}
 
-	rows, err := db.Query(`
+	rows, err := db.Query(`--GetMicrocosmParents
 SELECT microcosm_id
       ,title
       ,NLEVEL(m.path) AS depth
@@ -1038,6 +1037,94 @@ SELECT microcosm_id
 		}
 
 		link.Rel = "microcosm ancestor"
+		if link.Level > 1 {
+			link.Href =
+				fmt.Sprintf("%s/%d", h.ItemTypesToAPIItem[h.ItemTypeMicrocosm], link.ID)
+		} else {
+			link.Href = h.ItemTypesToAPIItem[h.ItemTypeMicrocosm]
+		}
+
+		links = append(links, link)
+	}
+	err = rows.Err()
+	if err != nil {
+		return []MicrocosmLinkType{},
+			http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
+	}
+	rows.Close()
+
+	return links, http.StatusOK, nil
+}
+
+func GetMicrocosmTree(siteID int64, profileID int64) ([]MicrocosmLinkType, int, error) {
+	// Retrieve resources
+	db, err := h.GetConnection()
+	if err != nil {
+		return []MicrocosmLinkType{},
+			http.StatusInternalServerError,
+			err
+	}
+
+	rows, err := db.Query(`--GetMicrocosmTree
+WITH m AS (
+    SELECT m.microcosm_id
+          ,m.comment_count + m.item_count AS seq
+      FROM microcosms m
+      LEFT JOIN permissions_cache p ON p.site_id = m.site_id
+                                   AND p.item_type_id = 2
+                                   AND p.item_id = m.microcosm_id
+                                   AND p.profile_id = $2
+           LEFT JOIN ignores_expanded i ON i.profile_id = $2
+                                       AND i.item_type_id = 2
+                                       AND i.item_id = m.microcosm_id
+     WHERE m.site_id = $1
+       AND m.is_deleted IS NOT TRUE
+       AND m.is_moderated IS NOT TRUE
+       AND i.profile_id IS NULL
+       AND (
+               (p.can_read IS NOT NULL AND p.can_read IS TRUE)
+            OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$2)).can_read IS TRUE
+           )
+)
+SELECT microcosm_id
+      ,title
+      ,parent_id
+      ,NLEVEL(path) AS depth
+  FROM microcosms
+ WHERE microcosm_id IN (SELECT microcosm_id FROM m)
+ ORDER BY path`,
+		siteID,
+		profileID,
+	)
+	if err != nil {
+		glog.Error(err)
+		return []MicrocosmLinkType{},
+			http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
+	}
+	defer rows.Close()
+
+	links := []MicrocosmLinkType{}
+	for rows.Next() {
+		link := MicrocosmLinkType{}
+		err = rows.Scan(
+			&link.ID,
+			&link.Title,
+			&link.parentIDNullable,
+			&link.Level,
+		)
+		if err != nil {
+			return []MicrocosmLinkType{},
+				http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
+		}
+
+		if link.parentIDNullable.Valid {
+			link.ParentID = link.parentIDNullable.Int64
+		}
+
+		link.Rel = "microcosm"
 		if link.Level > 1 {
 			link.Href =
 				fmt.Sprintf("%s/%d", h.ItemTypesToAPIItem[h.ItemTypeMicrocosm], link.ID)
