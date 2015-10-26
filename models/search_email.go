@@ -50,7 +50,7 @@ SELECT *
                  ,'' AS highlight
              FROM users u
              JOIN profiles p ON p.user_id = u.user_id
-            WHERE u.email = ANY(string_to_array($2, '____'))
+            WHERE LOWER(u.email) = ANY(string_to_array($2, '____'))
               AND p.site_id = $1
             ORDER BY p.profile_name ASC
        ) AS r
@@ -65,7 +65,7 @@ OFFSET $4`,
 		glog.Errorf(
 			"stmt.Query(%d, %s, %d, %d) %+v",
 			siteID,
-			strings.Join(m.Query.Emails, `,`),
+			strings.ToLower(strings.Join(m.Query.Emails, `,`)),
 			limit,
 			offset,
 			err,
