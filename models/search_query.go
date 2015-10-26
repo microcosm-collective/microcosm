@@ -28,6 +28,7 @@ type SearchQuery struct {
 	ItemIDsQuery      []int64   `json:"id,omitempty"`
 	ItemIDs           []int64   `json:"-"`
 	ProfileID         int64     `json:"authorId,omitempty"`
+	Emails            []string  `json:"email,omitempty"`
 	Following         bool      `json:"following,omitempty"`
 	Since             string    `json:"since,omitempty"`
 	SinceTime         time.Time `json:"-"`
@@ -60,8 +61,11 @@ type SearchQuery struct {
 }
 
 // GetSearchQueryFromURL fetches and parses a query and returns a SearchQuery
-func GetSearchQueryFromURL(requestURL url.URL) SearchQuery {
-
+func GetSearchQueryFromURL(
+	siteID int64,
+	requestURL url.URL,
+	profileID int64,
+) SearchQuery {
 	sq := SearchQuery{
 		URL:       requestURL,
 		URLValues: requestURL.Query(),
@@ -69,7 +73,7 @@ func GetSearchQueryFromURL(requestURL url.URL) SearchQuery {
 
 	sq.ParseFullQueryString()
 	sq.ParseSingleQueryValue()
-	sq.Validate()
+	sq.Validate(siteID, profileID)
 
 	return sq
 }
@@ -80,7 +84,6 @@ func GetSearchQueryFromURL(requestURL url.URL) SearchQuery {
 // 	type = conversation
 // Within the sq object
 func (sq *SearchQuery) ParseFullQueryString() {
-
 	// Get the named values first
 	sq.Query = sq.URLValues.Get("q")
 
@@ -156,6 +159,21 @@ func (sq *SearchQuery) ParseFullQueryString() {
 				}
 			}
 		}
+
+		if k == "email" {
+			for _, email := range v {
+				var found bool
+				for _, it := range sq.Emails {
+					if it == email {
+						found = true
+						break
+					}
+				}
+				if !found {
+					sq.Emails = append(sq.Emails, email)
+				}
+			}
+		}
 	}
 
 	dateTimes := []string{"since", "until", "eventAfter", "eventBefore"}
@@ -187,7 +205,6 @@ func (sq *SearchQuery) ParseFullQueryString() {
 // querystring 'q' and sees whether there are things like type:conversation
 // and if so will populate sq.* accordingly
 func (sq *SearchQuery) ParseSingleQueryValue() {
-
 	if sq.Query == "" {
 		return
 	}
@@ -262,7 +279,18 @@ func (sq *SearchQuery) ParseSingleQueryValue() {
 						sq.ItemTypeIDs = append(sq.ItemTypeIDs, itemTypeID)
 					}
 				}
-
+			case "email":
+				// emails
+				var found bool
+				for _, t := range sq.Emails {
+					if t == value {
+						found = true
+						break
+					}
+				}
+				if !found {
+					sq.Emails = append(sq.Emails, value)
+				}
 			case "since", "until", "eventafter", "eventbefore":
 				sq.ParseDateTime(key, value, frag)
 			case "lat", "lon", "north", "east", "south", "west":
@@ -459,7 +487,7 @@ func (sq *SearchQuery) ParseBool(key string, value string, frag string) {
 }
 
 // Validate returns true if the query is valid
-func (sq *SearchQuery) Validate() {
+func (sq *SearchQuery) Validate(siteID int64, profileID int64) {
 
 	var valid bool
 
@@ -635,6 +663,27 @@ func (sq *SearchQuery) Validate() {
 
 	if sq.ProfileID > 0 {
 		valid = true
+	}
+
+	if len(sq.Emails) > 0 {
+		site, _, err := GetSite(siteID)
+		if err != nil {
+			sq.IgnoredArr = append(
+				sq.IgnoredArr,
+				fmt.Sprintf("email:%s", sq.Emails),
+			)
+			sq.Emails = []string{}
+		} else {
+			if site.OwnedByID == profileID {
+				valid = true
+			} else {
+				sq.IgnoredArr = append(
+					sq.IgnoredArr,
+					fmt.Sprintf("email:%s", sq.Emails),
+				)
+				sq.Emails = []string{}
+			}
+		}
 	}
 
 	if sq.Attendee {

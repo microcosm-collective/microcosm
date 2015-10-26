@@ -43,15 +43,18 @@ func Search(
 	int,
 	error,
 ) {
-
 	// Parse the search options and determine what kind of search that we will
 	// be performing.
 	m := SearchResults{
-		Query: GetSearchQueryFromURL(searchURL),
+		Query: GetSearchQueryFromURL(siteID, searchURL, profileID),
 	}
 
 	if !m.Query.Valid {
 		return m, http.StatusOK, nil
+	}
+
+	if len(m.Query.Emails) > 0 {
+		return searchEmail(siteID, searchURL, profileID, m)
 	}
 
 	if strings.Trim(m.Query.Query, " ") != "" {
