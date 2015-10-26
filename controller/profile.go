@@ -133,17 +133,13 @@ func (ctl *ProfileController) Read(c *models.Context) {
 	m.Meta.Permissions = perms
 
 	if c.Auth.ProfileID > 0 {
-		// Get watcher status
-		watcherID, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeProfile], m.ID, c.Auth.ProfileID,
-		)
+		watcherID, sendEmail, sendSms, ignored, status, err :=
+			models.GetWatcherAndIgnoreStatus(
+				h.ItemTypes[h.ItemTypeProfile], m.ID, c.Auth.ProfileID,
+			)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
 			return
-		}
-
-		if ignored {
-			m.Meta.Flags.Ignored = true
 		}
 
 		if watcherID > 0 {
@@ -152,18 +148,16 @@ func (ctl *ProfileController) Read(c *models.Context) {
 			m.Meta.Flags.SendSMS = sendSms
 		}
 
+		if ignored {
+			m.Meta.Flags.Ignored = true
+		}
+
 		if c.Auth.ProfileID == m.ID {
-			// Get counts of things
 			m.GetUnreadHuddleCount()
 		}
 
-		if perms.IsOwner {
-			user, status, err := models.GetUser(c.Auth.UserID)
-			if err != nil {
-				c.RespondWithErrorDetail(err, status)
-				return
-			}
-			m.Email = user.Email
+		if perms.IsOwner || perms.IsSiteOwner {
+			m.Email = models.GetProfileEmail(c.Site.ID, m.ID)
 		}
 	}
 

@@ -626,6 +626,31 @@ UPDATE profiles AS p
 	return http.StatusOK, nil
 }
 
+// GetProfileEmail fetches the email address for a profile
+func GetProfileEmail(siteID int64, profileID int64) (email string) {
+	db, err := h.GetConnection()
+	if err != nil {
+		glog.Error(err)
+		return
+	}
+
+	err = db.QueryRow(`--GetProfileEmail
+SELECT u.email
+  FROM users u
+  JOIN profiles p ON p.user_id = u.user_id
+ WHERE p.profile_id = $2
+   AND p.site_id = $1`,
+		siteID,
+		profileID,
+	).Scan(&email)
+	if err != nil {
+		glog.Error(err)
+		return
+	}
+
+	return
+}
+
 // GetProfile fetches a single profile
 func GetProfile(siteID int64, id int64) (ProfileType, int, error) {
 
