@@ -206,7 +206,10 @@ UPDATE polls
 		_, err = db.Exec(`--Update Microcosm Comment Count
 UPDATE microcosms
    SET comment_count = comment_count + 1
- WHERE microcosm_id = $1`,
+ WHERE path @> (
+           SELECT path FROM microcosms WHERE microcosm_id = $1
+       )
+   AND parent_id IS NOT NULL`,
 			microcosmID,
 		)
 		if err != nil {
@@ -214,7 +217,16 @@ UPDATE microcosms
 			return
 		}
 
-		PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], microcosmID)
+		parents, _, err := getMicrocosmParents(microcosmID)
+		if err != nil {
+			glog.Error(err)
+			return
+		}
+		for _, link := range parents {
+			if link.Level > 1 {
+				PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], link.ID)
+			}
+		}
 	}
 }
 
@@ -273,7 +285,10 @@ UPDATE polls
 		_, err = db.Exec(`--Update Microcosm Comment Count
 UPDATE microcosms
    SET comment_count = comment_count - 1
- WHERE microcosm_id = $1`,
+ WHERE path @> (
+           SELECT path FROM microcosms WHERE microcosm_id = $1
+       )
+   AND parent_id IS NOT NULL`,
 			microcosmID,
 		)
 		if err != nil {
@@ -281,7 +296,16 @@ UPDATE microcosms
 			return
 		}
 
-		PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], microcosmID)
+		parents, _, err := getMicrocosmParents(microcosmID)
+		if err != nil {
+			glog.Error(err)
+			return
+		}
+		for _, link := range parents {
+			if link.Level > 1 {
+				PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], link.ID)
+			}
+		}
 	}
 }
 

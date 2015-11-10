@@ -25,15 +25,17 @@ var (
 		c.CacheDetail: "cm_d%d",
 	}
 	mcConversationKeys = map[int]string{
-		c.CacheDetail:  "cv_d%d",
-		c.CacheSummary: "cv_s%d",
-		c.CacheItem:    "cv_i%d",
+		c.CacheDetail:     "cv_d%d",
+		c.CacheSummary:    "cv_s%d",
+		c.CacheItem:       "cv_i%d",
+		c.CacheBreadcrumb: "cv_b%d",
 	}
 	mcEventKeys = map[int]string{
 		c.CacheDetail:     "ev_d%d",
 		c.CacheSummary:    "ev_s%d",
 		c.CacheItem:       "ev_i%d",
 		c.CacheProfileIds: "ev_l%d",
+		c.CacheBreadcrumb: "ev_b%d",
 	}
 	mcHuddleKeys = map[int]string{
 		c.CacheDetail:  "hd_d%d",
@@ -42,14 +44,16 @@ var (
 		c.CacheTitle:   "hd_t%d",
 	}
 	mcMicrocosmKeys = map[int]string{
-		c.CacheDetail:  "ms_d%d",
-		c.CacheSummary: "ms_s%d",
-		c.CacheTitle:   "ms_t%d",
+		c.CacheDetail:     "ms_d%d",
+		c.CacheSummary:    "ms_s%d",
+		c.CacheTitle:      "ms_t%d",
+		c.CacheBreadcrumb: "ms_b%d",
 	}
 	mcPollKeys = map[int]string{
-		c.CacheDetail:  "po_d%d",
-		c.CacheSummary: "po_s%d",
-		c.CacheItem:    "po_i%d",
+		c.CacheDetail:     "po_d%d",
+		c.CacheSummary:    "po_s%d",
+		c.CacheItem:       "po_i%d",
+		c.CacheBreadcrumb: "po_b%d",
 	}
 	mcProfileKeys = map[int]string{
 		c.CacheDetail:  "pr_d%d",

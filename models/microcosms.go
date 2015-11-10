@@ -839,7 +839,10 @@ func IncrementMicrocosmItemCount(tx *sql.Tx, microcosmID int64) error {
 	_, err := tx.Exec(`--Update Microcosm Item Count
 UPDATE microcosms
    SET item_count = item_count + 1
- WHERE microcosm_id = $1`,
+ WHERE path @> (
+           SELECT path FROM microcosms WHERE microcosm_id = $1
+       )
+   AND parent_id IS NOT NULL`,
 		microcosmID,
 	)
 	if err != nil {
@@ -855,7 +858,10 @@ func DecrementMicrocosmItemCount(tx *sql.Tx, microcosmID int64) error {
 	_, err := tx.Exec(`--Update Microcosm Item Count
 UPDATE microcosms
    SET item_count = item_count - 1
- WHERE microcosm_id = $1`,
+ WHERE path @> (
+           SELECT path FROM microcosms WHERE microcosm_id = $1
+       )
+   AND parent_id IS NOT NULL`,
 		microcosmID,
 	)
 	if err != nil {
@@ -993,6 +999,12 @@ SELECT microcosm_id
 }
 
 func getMicrocosmParents(microcosmID int64) ([]MicrocosmLinkType, int, error) {
+	mcKey := fmt.Sprintf(mcMicrocosmKeys[c.CacheBreadcrumb], microcosmID)
+	if val, ok := c.Get(mcKey, []MicrocosmLinkType{}); ok {
+		m := val.([]MicrocosmLinkType)
+		return m, http.StatusOK, nil
+	}
+
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
@@ -1053,6 +1065,8 @@ SELECT microcosm_id
 			fmt.Errorf("Error fetching rows: %v", err.Error())
 	}
 	rows.Close()
+
+	c.Set(mcKey, links, mcTTL)
 
 	return links, http.StatusOK, nil
 }
