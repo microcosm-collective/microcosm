@@ -50,6 +50,7 @@ type ProfileType struct {
 	UserID            int64              `json:"userId"`
 	Email             string             `json:"email,omitempty"`
 	ProfileName       string             `json:"profileName"`
+	Member            bool               `json:"member,omitempty"`
 	GenderNullable    sql.NullString     `json:"-"`
 	Gender            string             `json:"gender,omitempty"`
 	Visible           bool               `json:"visible"`
@@ -500,6 +501,91 @@ UPDATE profiles
 	}
 
 	PurgeCacheByScope(c.CacheDetail, h.ItemTypes[h.ItemTypeProfile], profileID)
+
+	return http.StatusOK, nil
+}
+
+// Patch partially updates a profile
+func (m *ProfileType) Patch(
+	ac AuthContext,
+	patches []h.PatchType,
+) (
+	int,
+	error,
+) {
+	// Update resource
+	tx, err := h.GetTransaction()
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	defer tx.Rollback()
+
+	for _, patch := range patches {
+		patch.ScanRawValue()
+		switch patch.Path {
+		case "/member":
+			if !ac.IsSiteOwner {
+				return http.StatusUnauthorized, nil
+			}
+
+			// Revoke any existing status
+			var attributeID int64
+			err = tx.QueryRow(`--GetMemberStatus
+SELECT k.attribute_id
+  FROM attribute_keys k
+  JOIN attribute_values v ON v.attribute_id = k.attribute_id
+ WHERE k.item_type_id = 3
+   AND k.item_id = $1
+   AND k.key = 'is_member'`,
+				m.ID,
+			).Scan(&attributeID)
+			if err != nil && err != sql.ErrNoRows {
+				return http.StatusInternalServerError, err
+			}
+
+			if attributeID != 0 {
+				attr, status, err := GetAttribute(attributeID)
+				if err != nil {
+					return status, err
+				}
+
+				status, err = attr.delete(tx)
+				if err != nil {
+					return status, err
+				}
+			}
+
+			if patch.Bool.Bool {
+				// Grant membership status if necessary
+				attr := AttributeType{}
+				attr.Key = "is_member"
+				attr.Type = tBoolean
+				attr.Value = patch.Bool.Bool
+				// upsert manages the roles flush
+				status, err := attr.upsert(tx, h.ItemTypes[h.ItemTypeProfile], m.ID)
+				if err != nil {
+					return status, err
+				}
+			} else {
+				status, err := FlushRoleMembersCacheByProfileID(tx, m.ID)
+				if err != nil {
+					return status,
+						fmt.Errorf("Error flushing role members cache: %+v", err)
+				}
+			}
+		default:
+			return http.StatusBadRequest,
+				fmt.Errorf("Unsupported path in patch replace operation")
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
+	}
+
+	PurgeCache(h.ItemTypes[h.ItemTypeProfile], m.ID)
 
 	return http.StatusOK, nil
 }

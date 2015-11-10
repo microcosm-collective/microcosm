@@ -22,7 +22,7 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch c.GetHTTPMethod() {
 	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "DELETE"})
+		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "PATCH", "DELETE"})
 		return
 	case "HEAD":
 		ctl.Read(c)
@@ -30,6 +30,8 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		ctl.Read(c)
 	case "PUT":
 		ctl.Update(c)
+	case "PATCH":
+		ctl.Patch(c)
 	case "DELETE":
 		ctl.Delete(c)
 	default:
@@ -158,6 +160,22 @@ func (ctl *ProfileController) Read(c *models.Context) {
 
 		if perms.IsOwner || perms.IsSiteOwner {
 			m.Email = models.GetProfileEmail(c.Site.ID, m.ID)
+
+			// Get member status
+			attrs, _, _, status, err := models.GetAttributes(
+				h.ItemTypes[h.ItemTypeProfile],
+				m.ID,
+				h.DefaultQueryLimit,
+				h.DefaultQueryOffset,
+			)
+			if err != nil {
+				c.RespondWithErrorDetail(err, status)
+			}
+			for _, attr := range attrs {
+				if attr.Key == "is_member" && attr.Boolean.Valid {
+					m.Member = attr.Boolean.Bool
+				}
+			}
 		}
 	}
 
@@ -223,6 +241,85 @@ func (ctl *ProfileController) Update(c *models.Context) {
 			m.ID,
 		),
 	)
+}
+
+// Patch handles PATCH
+func (ctl *ProfileController) Patch(c *models.Context) {
+	_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+
+	patches := []h.PatchType{}
+	err = c.Fill(&patches)
+	if err != nil {
+		c.RespondWithErrorMessage(
+			fmt.Sprintf("The post data is invalid: %v", err.Error()),
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	status, err = h.TestPatch(patches)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+
+	// Start Authorisation
+	ac := models.MakeAuthorisationContext(c, 0, itemTypeID, itemID)
+	perms := models.GetPermission(ac)
+	if !perms.CanUpdate {
+		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
+		return
+	}
+
+	// All patches are 'replace'
+	for _, patch := range patches {
+		status, err := patch.ScanRawValue()
+		if !patch.Bool.Valid {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
+
+		switch patch.Path {
+		case "/member":
+			// Only super users' can sticky and unsticky
+			if !patch.Bool.Valid {
+				c.RespondWithErrorMessage("/member requires a bool value", http.StatusBadRequest)
+				return
+			}
+		default:
+			c.RespondWithErrorMessage("Invalid patch operation path", http.StatusBadRequest)
+			return
+		}
+	}
+	// End Authorisation
+
+	// Populate where applicable from auth and context
+	m, status, err := models.GetProfile(c.Site.ID, itemID)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+
+	status, err = m.Patch(ac, patches)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+
+	audit.Update(
+		c.Site.ID,
+		h.ItemTypes[h.ItemTypeProfile],
+		m.ID,
+		c.Auth.ProfileID,
+		time.Now(),
+		c.IP,
+	)
+
+	c.RespondWithOK()
 }
 
 // Delete handles DELETE
