@@ -206,10 +206,7 @@ UPDATE polls
 		_, err = db.Exec(`--Update Microcosm Comment Count
 UPDATE microcosms
    SET comment_count = comment_count + 1
- WHERE path @> (
-           SELECT path FROM microcosms WHERE microcosm_id = $1
-       )
-   AND parent_id IS NOT NULL`,
+ WHERE microcosm_id = $1`,
 			microcosmID,
 		)
 		if err != nil {
@@ -285,10 +282,7 @@ UPDATE polls
 		_, err = db.Exec(`--Update Microcosm Comment Count
 UPDATE microcosms
    SET comment_count = comment_count - 1
- WHERE path @> (
-           SELECT path FROM microcosms WHERE microcosm_id = $1
-       )
-   AND parent_id IS NOT NULL`,
+ WHERE microcosm_id = $1`,
 			microcosmID,
 		)
 		if err != nil {

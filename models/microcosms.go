@@ -642,27 +642,35 @@ func GetMicrocosmSummary(
 		itemTypes string
 	)
 	err = db.QueryRow(`--GetMicrocosmSummary
-SELECT microcosm_id
-      ,parent_id
-      ,site_id
-      ,visibility
-      ,title
-      ,description
-      ,created
-      ,created_by
-      ,is_sticky
-      ,is_open
-      ,is_deleted
-      ,is_moderated
-      ,is_visible
-      ,item_count
-      ,comment_count
-      ,item_types
-  FROM microcosms
- WHERE site_id = $1
-   AND microcosm_id = $2
-   AND is_deleted IS NOT TRUE
-   AND is_moderated IS NOT TRUE`,
+SELECT m.microcosm_id
+      ,m.parent_id
+      ,m.site_id
+      ,m.visibility
+      ,m.title
+      ,m.description
+      ,m.created
+      ,m.created_by
+      ,m.is_sticky
+      ,m.is_open
+      ,m.is_deleted
+      ,m.is_moderated
+      ,m.is_visible
+      ,(SELECT SUM(item_count)
+          FROM microcosms
+         WHERE path <@ m.path
+           AND is_deleted IS NOT TRUE
+           AND is_moderated IS NOT TRUE) AS item_count
+      ,(SELECT SUM(comment_count)
+          FROM microcosms
+         WHERE path <@ m.path
+           AND is_deleted IS NOT TRUE
+           AND is_moderated IS NOT TRUE) AS comment_count
+      ,m.item_types
+  FROM microcosms m
+ WHERE m.site_id = $1
+   AND m.microcosm_id = $2
+   AND m.is_deleted IS NOT TRUE
+   AND m.is_moderated IS NOT TRUE`,
 		siteID,
 		id,
 	).Scan(
@@ -836,13 +844,10 @@ SELECT microcosm_id
 
 // IncrementMicrocosmItemCount adds an item to the microcosm
 func IncrementMicrocosmItemCount(tx *sql.Tx, microcosmID int64) error {
-	_, err := tx.Exec(`--Update Microcosm Item Count
+	_, err := tx.Exec(`--Increment Microcosm Item Count
 UPDATE microcosms
    SET item_count = item_count + 1
- WHERE path @> (
-           SELECT path FROM microcosms WHERE microcosm_id = $1
-       )
-   AND parent_id IS NOT NULL`,
+ WHERE microcosm_id = $1`,
 		microcosmID,
 	)
 	if err != nil {
@@ -855,13 +860,10 @@ UPDATE microcosms
 
 // DecrementMicrocosmItemCount removes an item from the microcosm
 func DecrementMicrocosmItemCount(tx *sql.Tx, microcosmID int64) error {
-	_, err := tx.Exec(`--Update Microcosm Item Count
+	_, err := tx.Exec(`--Decrement Microcosm Item Count
 UPDATE microcosms
    SET item_count = item_count - 1
- WHERE path @> (
-           SELECT path FROM microcosms WHERE microcosm_id = $1
-       )
-   AND parent_id IS NOT NULL`,
+ WHERE microcosm_id = $1`,
 		microcosmID,
 	)
 	if err != nil {

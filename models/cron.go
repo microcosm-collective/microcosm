@@ -192,10 +192,11 @@ func UpdateMicrocosmItemCounts() {
    SET comment_count = s.comment_count
       ,item_count = s.item_count
   FROM (
-           SELECT microcosm_id
-                 ,SUM(item_count) AS item_count
-                 ,SUM(comment_count) AS comment_count
-             FROM (
+           SELECT dm.microcosm_id
+                 ,COALESCE(SUM(counts.item_count), 0) AS item_count
+                 ,COALESCE(SUM(counts.comment_count), 0) AS comment_count
+             FROM microcosms dm
+             LEFT JOIN (
                       -- Calculate item counts
                       SELECT microcosm_id
                             ,COUNT(*) AS item_count
@@ -224,8 +225,8 @@ func UpdateMicrocosmItemCounts() {
                          AND item_is_deleted IS NOT TRUE
                          AND item_is_moderated IS NOT TRUE
                        GROUP BY microcosm_id
-                  ) counts
-            GROUP BY microcosm_id
+                  ) counts ON dm.microcosm_id = counts.microcosm_id
+            GROUP BY dm.microcosm_id
        ) s
  WHERE m.microcosm_id = s.microcosm_id
    AND (
