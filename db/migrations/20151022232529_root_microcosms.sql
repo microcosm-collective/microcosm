@@ -75,6 +75,7 @@ UPDATE roles r
    SET microcosm_id = m.microcosm_id
   FROM microcosms m
  WHERE r.site_id = m.site_id
+   AND r.microcosm_id IS NULL
    AND m.parent_id IS NULL;
 
 -- +goose StatementBegin
