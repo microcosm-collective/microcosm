@@ -159,8 +159,8 @@ func (m *CommentSummaryType) Validate(siteID int64, exists bool) (int, error) {
 	return http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates a partially populated struct
-func (m *CommentSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
+// Hydrate populates a partially populated struct
+func (m *CommentSummaryType) Hydrate(siteID int64) (int, error) {
 
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
@@ -898,7 +898,7 @@ func GetCommentSummary(
 	if val, ok := c.Get(mcKey, CommentSummaryType{}); ok {
 		m := val.(CommentSummaryType)
 
-		m.FetchProfileSummaries(siteID)
+		m.Hydrate(siteID)
 
 		return m, http.StatusOK, nil
 	}
@@ -1104,7 +1104,7 @@ UPDATE revisions
 	c.Set(mcKey, m, commentTTL)
 
 	// Profiles should be fetched after the item is cached.
-	m.FetchProfileSummaries(siteID)
+	m.Hydrate(siteID)
 
 	return m, http.StatusOK, nil
 }

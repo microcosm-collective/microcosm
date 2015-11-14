@@ -480,7 +480,7 @@ func GetRole(
 			return RoleType{}, status, err
 		}
 
-		m.FetchProfileSummaries(siteID)
+		m.Hydrate(siteID)
 
 		return m, http.StatusOK, nil
 	}
@@ -591,7 +591,7 @@ SELECT role_id
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	m.FetchProfileSummaries(siteID)
+	m.Hydrate(siteID)
 
 	return m, http.StatusOK, nil
 }
@@ -657,8 +657,8 @@ func GetRoleSummary(
 	return roleSummary, http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates the profile summaries for a role
-func (m *RoleType) FetchProfileSummaries(siteID int64) (int, error) {
+// Hydrate populates the profile summaries for a role
+func (m *RoleType) Hydrate(siteID int64) (int, error) {
 
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {

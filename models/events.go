@@ -178,8 +178,8 @@ func (m *EventType) Validate(
 	return http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates a partially populated struct
-func (m *EventType) FetchProfileSummaries(siteID int64) (int, error) {
+// Hydrate populates a partially populated struct
+func (m *EventType) Hydrate(siteID int64) (int, error) {
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
@@ -195,11 +195,15 @@ func (m *EventType) FetchProfileSummaries(siteID int64) (int, error) {
 		m.Meta.EditedBy = profile
 	}
 
+	if status, err := m.FetchBreadcrumb(); err != nil {
+		return status, err
+	}
+
 	return http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates a partially populated struct
-func (m *EventSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
+// Hydrate populates a partially populated struct
+func (m *EventSummaryType) Hydrate(siteID int64) (int, error) {
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		glog.Errorf(
@@ -231,6 +235,10 @@ func (m *EventSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
 
 		lastComment.CreatedBy = profile
 		m.LastComment = lastComment
+	}
+
+	if status, err := m.FetchBreadcrumb(); err != nil {
+		return status, err
 	}
 
 	return http.StatusOK, nil
@@ -656,9 +664,9 @@ func GetEvent(siteID int64, id int64, profileID int64) (EventType, int, error) {
 
 		// TODO(buro9) 2014-05-05: We are not verifying that the cached
 		// event belongs to this siteId
-		status, err := m.FetchProfileSummaries(siteID)
+		status, err := m.Hydrate(siteID)
 		if err != nil {
-			glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteID, err)
+			glog.Errorf("m.Hydrate(%d) %+v", siteID, err)
 			return EventType{}, status, err
 		}
 
@@ -805,9 +813,9 @@ SELECT e.event_id
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	status, err := m.FetchProfileSummaries(siteID)
+	status, err := m.Hydrate(siteID)
 	if err != nil {
-		glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteID, err)
+		glog.Errorf("m.Hydrate(%d) %+v", siteID, err)
 		return EventType{}, status, err
 	}
 	status, err = m.GetAttending(profileID)
@@ -840,9 +848,9 @@ func GetEventSummary(
 
 		m := val.(EventSummaryType)
 
-		status, err := m.FetchProfileSummaries(siteID)
+		status, err := m.Hydrate(siteID)
 		if err != nil {
-			glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteID, err)
+			glog.Errorf("m.Hydrate(%d) %+v", siteID, err)
 			return EventSummaryType{}, status, err
 		}
 
@@ -976,9 +984,9 @@ WHERE event_id = $1
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	status, err = m.FetchProfileSummaries(siteID)
+	status, err = m.Hydrate(siteID)
 	if err != nil {
-		glog.Errorf("m.FetchProfileSummaries(%d) %+v", siteID, err)
+		glog.Errorf("m.Hydrate(%d) %+v", siteID, err)
 		return EventSummaryType{}, status, err
 	}
 

@@ -15,12 +15,18 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+type ItemParent struct {
+	MicrocosmID int64                `json:"microcosmId"`
+	Breadcrumb  *[]MicrocosmLinkType `json:"breadcrumb,omitempty"`
+}
+
 // Item is a set of minimal and common fields used by items that exist on the
 // site, usually things that exist within a microcosm
 type Item struct {
-	MicrocosmID int64  `json:"microcosmId"`
-	ItemTypeID  int64  `json:"-"`
-	ItemType    string `json:"itemType"`
+	ItemParent
+
+	ItemTypeID int64  `json:"-"`
+	ItemType   string `json:"itemType"`
 
 	ID    int64  `json:"id"`
 	Title string `json:"title"`
@@ -61,9 +67,10 @@ func (v ItemRequestBySeq) Less(i, j int) bool { return v[i].Seq < v[j].Seq }
 // ItemSummary is used by all things that can be a child of a microcosm
 type ItemSummary struct {
 	// Common Fields
-	ID          int64  `json:"id"`
-	MicrocosmID int64  `json:"microcosmId,omitempty"`
-	Title       string `json:"title"`
+	ID    int64  `json:"id"`
+	Title string `json:"title"`
+
+	ItemParent
 }
 
 // ItemSummaryMeta is the meta object for an ItemSummary
@@ -84,9 +91,10 @@ type LastComment struct {
 // ItemDetail describes an item and the microcosm it belongs to
 type ItemDetail struct {
 	// Common Fields
-	ID          int64  `json:"id"`
-	MicrocosmID int64  `json:"microcosmId,omitempty"`
-	Title       string `json:"title"`
+	ID    int64  `json:"id"`
+	Title string `json:"title"`
+
+	ItemParent
 
 	// Used during import to set the view count
 	ViewCount int64 `json:"-"`
@@ -101,9 +109,8 @@ type ItemDetailCommentsAndMeta struct {
 	Meta h.DefaultMetaType `json:"meta"`
 }
 
-// FetchProfileSummaries populates a partially populated Item
-func (m *Item) FetchProfileSummaries(siteID int64) (int, error) {
-
+// Hydrate populates a partially populated Item
+func (m *Item) Hydrate(siteID int64) (int, error) {
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
@@ -122,9 +129,26 @@ func (m *Item) FetchProfileSummaries(siteID int64) (int, error) {
 	return http.StatusOK, nil
 }
 
+func (m *ItemParent) FetchBreadcrumb() (int, error) {
+	if m.MicrocosmID > 0 {
+		breadcrumb, status, err := getMicrocosmParents(m.MicrocosmID)
+		if err != nil {
+			return status, err
+		}
+
+		// Remove the top-level forums one
+		if len(breadcrumb) > 0 {
+			breadcrumb = breadcrumb[1:]
+
+			m.Breadcrumb = &breadcrumb
+		}
+	}
+
+	return http.StatusOK, nil
+}
+
 // IncrementViewCount increments the views of an item
 func IncrementViewCount(itemTypeID int64, itemID int64) {
-
 	// No transaction as we don't care for accuracy on these updates
 	// Note: This function doesn't even return errors, we don't even care
 	// if the occasional INSERT fails.

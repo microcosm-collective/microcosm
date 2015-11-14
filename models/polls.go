@@ -157,9 +157,8 @@ func (m *PollType) Validate(
 	return http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates a partially populated struct
-func (m *PollType) FetchProfileSummaries(siteID int64) (int, error) {
-
+// Hydrate populates a partially populated struct
+func (m *PollType) Hydrate(siteID int64) (int, error) {
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
@@ -175,17 +174,24 @@ func (m *PollType) FetchProfileSummaries(siteID int64) (int, error) {
 		m.Meta.EditedBy = profile
 	}
 
+	if status, err := m.FetchBreadcrumb(); err != nil {
+		return status, err
+	}
+
 	return http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates a partially populated struct
-func (m *PollSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
-
+// Hydrate populates a partially populated struct
+func (m *PollSummaryType) Hydrate(siteID int64) (int, error) {
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
 	}
 	m.Meta.CreatedBy = profile
+
+	if status, err := m.FetchBreadcrumb(); err != nil {
+		return status, err
+	}
 
 	return http.StatusOK, nil
 }
@@ -501,7 +507,7 @@ func GetPoll(siteID int64, id int64, profileID int64) (PollType, int, error) {
 	mcKey := fmt.Sprintf(mcPollKeys[c.CacheDetail], id)
 	if val, ok := c.Get(mcKey, PollType{}); ok {
 		m := val.(PollType)
-		m.FetchProfileSummaries(siteID)
+		m.Hydrate(siteID)
 		return m, http.StatusOK, nil
 	}
 
@@ -638,7 +644,7 @@ SELECT choice_id,
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	m.FetchProfileSummaries(siteID)
+	m.Hydrate(siteID)
 	return m, http.StatusOK, nil
 }
 
@@ -665,7 +671,7 @@ func GetPollSummary(
 		if err != nil {
 			return PollSummaryType{}, status, err
 		}
-		m.FetchProfileSummaries(siteID)
+		m.Hydrate(siteID)
 		return m, 0, nil
 	}
 
@@ -747,7 +753,7 @@ SELECT poll_id
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	m.FetchProfileSummaries(siteID)
+	m.Hydrate(siteID)
 	return m, http.StatusOK, nil
 }
 

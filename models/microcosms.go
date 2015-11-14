@@ -67,11 +67,6 @@ type MicrocosmSummaryRequest struct {
 	Seq    int
 }
 
-// MicrocosmLinkForestType is a collection of Microcosm links organised as trees
-type MicrocosmLinkForestType struct {
-	Links []MicrocosmLinkForestType `json:"forest"`
-}
-
 // MicrocosmLinkType is a link
 type MicrocosmLinkType struct {
 	Rel              string `json:"rel,omitempty"` // REST

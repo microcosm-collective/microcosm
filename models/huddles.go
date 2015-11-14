@@ -90,8 +90,8 @@ func (m *HuddleType) Validate(siteID int64, exists bool) (int, error) {
 	return http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates the partially populated huddle
-func (m *HuddleType) FetchProfileSummaries(siteID int64) (int, error) {
+// Hydrate populates the partially populated huddle
+func (m *HuddleType) Hydrate(siteID int64) (int, error) {
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
@@ -109,8 +109,8 @@ func (m *HuddleType) FetchProfileSummaries(siteID int64) (int, error) {
 	return http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates the partially populated huddle summary
-func (m *HuddleSummaryType) FetchProfileSummaries(siteID int64) (int, error) {
+// Hydrate populates the partially populated huddle summary
+func (m *HuddleSummaryType) Hydrate(siteID int64) (int, error) {
 
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
@@ -298,7 +298,7 @@ func GetHuddle(
 	mcKey := fmt.Sprintf(mcHuddleKeys[c.CacheDetail], id)
 	if val, ok := c.Get(mcKey, HuddleType{}); ok {
 		m := val.(HuddleType)
-		m.FetchProfileSummaries(siteID)
+		m.Hydrate(siteID)
 		return m, http.StatusOK, nil
 	}
 
@@ -371,7 +371,7 @@ SELECT h.huddle_id
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	m.FetchProfileSummaries(siteID)
+	m.Hydrate(siteID)
 
 	return m, http.StatusOK, nil
 }
@@ -425,7 +425,7 @@ func GetHuddleSummary(
 	mcKey := fmt.Sprintf(mcHuddleKeys[c.CacheSummary], id)
 	if val, ok := c.Get(mcKey, HuddleSummaryType{}); ok {
 		m := val.(HuddleSummaryType)
-		m.FetchProfileSummaries(siteID)
+		m.Hydrate(siteID)
 		return m, http.StatusOK, nil
 	}
 
@@ -554,7 +554,7 @@ SELECT h.huddle_id
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	m.FetchProfileSummaries(siteID)
+	m.Hydrate(siteID)
 
 	return m, http.StatusOK, nil
 }
