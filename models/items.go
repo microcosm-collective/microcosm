@@ -351,7 +351,7 @@ func GetAllItems(
 	sqlChildMicrocosms := `
 WITH m AS (
     SELECT m.microcosm_id
-          ,m.comment_count + m.item_count AS seq
+          ,m.sequence
       FROM microcosms m
       LEFT JOIN permissions_cache p ON p.site_id = m.site_id
                                    AND p.item_type_id = 2
@@ -427,7 +427,7 @@ SELECT item_type_id
         SELECT f.item_type_id
               ,f.item_id`+sqlFromWhere+`
          ORDER BY f.item_is_sticky DESC
-                 ,m2.seq DESC NULLS LAST
+                 ,m2.sequence ASC NULLS LAST
                  ,f.last_modified DESC
          LIMIT $4
         OFFSET $5
