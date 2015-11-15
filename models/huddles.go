@@ -565,6 +565,7 @@ func GetHuddles(
 	profileID int64,
 	limit int64,
 	offset int64,
+	filterUnread bool,
 ) (
 	[]HuddleSummaryType,
 	int64,
@@ -579,27 +580,51 @@ func GetHuddles(
 		return []HuddleSummaryType{}, 0, 0, http.StatusInternalServerError, err
 	}
 
-	var total int64
-	err = db.QueryRow(`
-SELECT COUNT(*) AS total
-  FROM huddles h
-  JOIN huddle_profiles hp ON hp.huddle_id = h.huddle_id
+	var (
+		total int64
+		query string
+	)
+	if filterUnread {
+		query = `--unreadHuddles
+SELECT COUNT(*) OVER() AS total
+      ,h.huddle_id
+      ,TRUE AS unread
+  FROM flags ff
+  JOIN (
+           SELECT hp.huddle_id
+                 ,f.last_modified
+             FROM huddle_profiles hp
+                  JOIN flags f ON f.item_type_id = 5
+                              AND f.item_id = hp.huddle_id
+             LEFT JOIN read r ON r.profile_id = $1
+                             AND r.item_type_id = 5
+                             AND r.item_id = f.item_id
+             LEFT JOIN read r2 ON r2.profile_id = $1
+                              AND r2.item_type_id = 5
+                              AND r2.item_id = 0
+            WHERE hp.profile_id = $1
+              AND f.last_modified > COALESCE(
+                                        COALESCE(
+                                            r.read,
+                                            r2.read
+                                        ),
+                                        TIMESTAMP WITH TIME ZONE '1970-01-01 12:00:00'
+                                    )
+       ) AS h ON ff.parent_item_id = h.huddle_id
+             AND ff.parent_item_type_id = 5
+             AND ff.last_modified >= h.last_modified
   LEFT JOIN ignores i ON i.profile_id = $1
                      AND i.item_type_id = 3
-                     AND i.item_id = h.created_by
- WHERE hp.profile_id = $1
-   AND i.profile_id IS NULL`,
-		profileID,
-	).Scan(&total)
-	if err != nil {
-		glog.Error(err)
-		return []HuddleSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
-	}
-
-	rows, err := db.Query(`
-SELECT huddle_id
-      ,has_unread(5, huddle_id, $1)
+                     AND i.item_id = ff.created_by
+ WHERE i.profile_id IS NULL
+ GROUP BY h.huddle_id
+ LIMIT $2
+OFFSET $3`
+	} else {
+		query = `--huddles
+SELECT 0 AS total
+      ,huddle_id
+      ,has_unread(5, huddle_id, $1) AS unread
   FROM (
             SELECT h.huddle_id
               FROM huddles h
@@ -614,11 +639,29 @@ SELECT huddle_id
              ORDER BY f.last_modified DESC
              LIMIT $2
             OFFSET $3
-       ) r`,
-		profileID,
-		limit,
-		offset,
-	)
+       ) r`
+
+		// We also need to get the total as the above query doesn't do it for
+		// performance reasons (potentially a huge number of huddles)
+		err = db.QueryRow(`
+SELECT COUNT(*) AS total
+  FROM huddles h
+  JOIN huddle_profiles hp ON hp.huddle_id = h.huddle_id
+  LEFT JOIN ignores i ON i.profile_id = $1
+                     AND i.item_type_id = 3
+                     AND i.item_id = h.created_by
+ WHERE hp.profile_id = $1
+   AND i.profile_id IS NULL`,
+			profileID,
+		).Scan(&total)
+		if err != nil {
+			glog.Error(err)
+			return []HuddleSummaryType{}, 0, 0, http.StatusInternalServerError,
+				fmt.Errorf("Database query failed")
+		}
+	}
+
+	rows, err := db.Query(query, profileID, limit, offset)
 	if err != nil {
 		glog.Errorf(
 			"db.Query(%d, %d, %d, %d) %+v",
@@ -637,10 +680,12 @@ SELECT huddle_id
 
 	for rows.Next() {
 		var (
+			tmpTotal  int64
 			id        int64
 			hasUnread bool
 		)
 		err = rows.Scan(
+			&tmpTotal,
 			&id,
 			&hasUnread,
 		)
@@ -648,6 +693,10 @@ SELECT huddle_id
 			glog.Errorf("rows.Scan() %+v", err)
 			return []HuddleSummaryType{}, 0, 0, http.StatusInternalServerError,
 				fmt.Errorf("Row parsing error")
+		}
+
+		if filterUnread {
+			total = tmpTotal
 		}
 
 		m, status, err := GetHuddleSummary(siteID, profileID, id)

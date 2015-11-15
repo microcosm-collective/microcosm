@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/microcosm-cc/microcosm/audit"
@@ -52,7 +53,13 @@ func (ctl *HuddlesController) ReadMany(c *models.Context) {
 		return
 	}
 
-	ems, total, pages, status, err := models.GetHuddles(c.Site.ID, c.Auth.ProfileID, limit, offset)
+	ems, total, pages, status, err := models.GetHuddles(
+		c.Site.ID,
+		c.Auth.ProfileID,
+		limit,
+		offset,
+		(strings.ToLower(c.Request.URL.Query().Get("unread")) == "true"),
+	)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
