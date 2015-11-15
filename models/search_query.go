@@ -712,13 +712,15 @@ func (sq *SearchQuery) Validate(siteID int64, profileID int64) {
 		}
 
 		rows, err := db.Query(`-- GetMicrocosmChildren
-SELECT microcosm_id
-  FROM microcosms
- WHERE path <@ (
-           SELECT path
-             FROM microcosms
-            WHERE microcosm_id = ANY ($1::bigint[])
-       );`,
+WITH p AS (
+    SELECT path
+      FROM microcosms
+     WHERE microcosm_id = ANY ($1::bigint[])
+)
+SELECT DISTINCT m.microcosm_id
+  FROM microcosms m
+      ,p
+ WHERE m.path <@ p.path;`,
 			microcosmIDs,
 		)
 		if err != nil {
