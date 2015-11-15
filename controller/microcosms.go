@@ -94,41 +94,66 @@ func (ctl *MicrocosmsController) Create(c *models.Context) {
 
 // ReadMany handles GET
 func (ctl *MicrocosmsController) ReadMany(c *models.Context) {
+	rootMicrocosmID := models.GetRootMicrocosmID(c.Site.ID)
 
 	perms := models.GetPermission(
-		models.MakeAuthorisationContext(c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.ID),
+		models.MakeAuthorisationContext(
+			c,
+			rootMicrocosmID,
+			h.ItemTypes[h.ItemTypeMicrocosm],
+			rootMicrocosmID,
+		),
 	)
+	if !perms.CanRead {
+		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
+		return
+	}
 
-	// Fetch query string args if any exist
-	limit, offset, status, err := h.GetLimitAndOffset(c.Request.URL.Query())
+	// Get Microcosm
+	m, status, err := models.GetMicrocosm(
+		c.Site.ID,
+		rootMicrocosmID,
+		c.Auth.ProfileID,
+	)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
-	// Fetch list of microcosms
-	ems, total, pages, status, err := models.GetMicrocosms(c.Site.ID, c.Auth.ProfileID, limit, offset)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
-
-	// Construct the response
-	thisLink := h.GetLinkToThisPage(*c.Request.URL, offset, limit, total)
-	m := models.MicrocosmsType{}
-	m.Microcosms = h.ConstructArray(
-		ems,
-		h.APITypeMicrocosm,
-		total,
-		limit,
-		offset,
-		pages,
+	// Get Items
+	m.Items, status, err = models.GetItems(
+		c.Site.ID,
+		m.ID,
+		c.Auth.ProfileID,
 		c.Request.URL,
 	)
-	m.Meta.Links = []h.LinkType{
-		h.LinkType{Rel: "self", Href: thisLink.String()},
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
 	}
 	m.Meta.Permissions = perms
+
+	if c.Auth.ProfileID > 0 {
+		// Get watcher status
+		watcherID, sendEmail, sendSms, ignored, status, err :=
+			models.GetWatcherAndIgnoreStatus(
+				h.ItemTypes[h.ItemTypeMicrocosm], m.ID, c.Auth.ProfileID,
+			)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
+
+		if ignored {
+			m.Meta.Flags.Ignored = true
+		}
+
+		if watcherID > 0 {
+			m.Meta.Flags.Watched = true
+			m.Meta.Flags.SendEmail = sendEmail
+			m.Meta.Flags.SendSMS = sendSms
+		}
+	}
 
 	c.RespondWithData(m)
 }

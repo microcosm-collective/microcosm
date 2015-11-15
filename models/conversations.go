@@ -53,7 +53,11 @@ func (m *ConversationType) Validate(
 
 	if !exists {
 		// Does the Microcosm specified exist on this site?
-		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmID, profileID)
+		_, status, err := GetMicrocosmSummary(
+			siteID,
+			m.MicrocosmID,
+			profileID,
+		)
 		if err != nil {
 			return status, err
 		}
@@ -88,8 +92,8 @@ func (m *ConversationType) Validate(
 	return http.StatusOK, nil
 }
 
-// FetchSummaries populates a partially populated struct
-func (m *ConversationType) FetchSummaries(siteID int64) (int, error) {
+// Hydrate populates a partially populated struct
+func (m *ConversationType) Hydrate(siteID int64) (int, error) {
 
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
@@ -106,11 +110,15 @@ func (m *ConversationType) FetchSummaries(siteID int64) (int, error) {
 		m.Meta.EditedBy = profile
 	}
 
+	if status, err := m.FetchBreadcrumb(); err != nil {
+		return status, err
+	}
+
 	return http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates a partially populated struct
-func (m *ConversationSummaryType) FetchProfileSummaries(
+// Hydrate populates a partially populated struct
+func (m *ConversationSummaryType) Hydrate(
 	siteID int64,
 ) (
 	int,
@@ -134,6 +142,10 @@ func (m *ConversationSummaryType) FetchProfileSummaries(
 
 		lastComment.CreatedBy = profile
 		m.LastComment = lastComment
+	}
+
+	if status, err := m.FetchBreadcrumb(); err != nil {
+		return status, err
 	}
 
 	return http.StatusOK, nil
@@ -417,9 +429,7 @@ func GetConversation(
 	if val, ok := c.Get(mcKey, ConversationType{}); ok {
 		m := val.(ConversationType)
 
-		// TODO(buro9) 2014-05-05: We are not verifying that the cached
-		// conversation belongs to this siteId
-		m.FetchSummaries(siteID)
+		m.Hydrate(siteID)
 
 		return m, http.StatusOK, nil
 	}
@@ -510,7 +520,7 @@ SELECT c.conversation_id
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	m.FetchSummaries(siteID)
+	m.Hydrate(siteID)
 	return m, http.StatusOK, nil
 }
 
@@ -528,7 +538,7 @@ func GetConversationSummary(
 	mcKey := fmt.Sprintf(mcConversationKeys[c.CacheSummary], id)
 	if val, ok := c.Get(mcKey, ConversationSummaryType{}); ok {
 		m := val.(ConversationSummaryType)
-		m.FetchProfileSummaries(siteID)
+		m.Hydrate(siteID)
 		return m, http.StatusOK, nil
 	}
 
@@ -615,7 +625,7 @@ SELECT conversation_id
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	m.FetchProfileSummaries(siteID)
+	m.Hydrate(siteID)
 	return m, http.StatusOK, nil
 }
 
@@ -643,9 +653,9 @@ func GetConversations(
 WITH m AS (
     SELECT m.microcosm_id
       FROM microcosms m
-      LEFT JOIN ignores i ON i.profile_id = $3
-                         AND i.item_type_id = 2
-                         AND i.item_id = m.microcosm_id
+      LEFT JOIN ignores_expanded i ON i.profile_id = $3
+                                  AND i.item_type_id = 2
+                                  AND i.item_id = m.microcosm_id
      WHERE i.profile_id IS NULL
        AND (get_effective_permissions(m.site_id, m.microcosm_id, 2, m.microcosm_id, $3)).can_read IS TRUE
 )

@@ -92,7 +92,11 @@ func (m *RoleType) Validate(
 
 	// Does the Microcosm specified exist on this site?
 	if !exists && m.MicrocosmID > 0 {
-		_, status, err := GetMicrocosmSummary(siteID, m.MicrocosmID, profileID)
+		_, status, err := GetMicrocosmSummary(
+			siteID,
+			m.MicrocosmID,
+			profileID,
+		)
 		if err != nil {
 			return status, err
 		}
@@ -462,19 +466,21 @@ func GetRole(
 	int,
 	error,
 ) {
-
 	// Get from cache if it's available
 	mcKey := fmt.Sprintf(mcRoleKeys[c.CacheDetail], roleID)
 	if val, ok := c.Get(mcKey, RoleType{}); ok {
 
 		m := val.(RoleType)
-
-		_, status, err := GetMicrocosmSummary(siteID, microcosmID, profileID)
+		_, status, err := GetMicrocosmSummary(
+			siteID,
+			microcosmID,
+			profileID,
+		)
 		if err != nil {
 			return RoleType{}, status, err
 		}
 
-		m.FetchProfileSummaries(siteID)
+		m.Hydrate(siteID)
 
 		return m, http.StatusOK, nil
 	}
@@ -585,7 +591,7 @@ SELECT role_id
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
-	m.FetchProfileSummaries(siteID)
+	m.Hydrate(siteID)
 
 	return m, http.StatusOK, nil
 }
@@ -651,8 +657,8 @@ func GetRoleSummary(
 	return roleSummary, http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates the profile summaries for a role
-func (m *RoleType) FetchProfileSummaries(siteID int64) (int, error) {
+// Hydrate populates the profile summaries for a role
+func (m *RoleType) Hydrate(siteID int64) (int, error) {
 
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {

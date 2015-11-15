@@ -66,14 +66,23 @@ func (ctl *MicrocosmController) Read(c *models.Context) {
 	// End Authorisation
 
 	// Get Microcosm
-	m, status, err := models.GetMicrocosm(c.Site.ID, itemID, c.Auth.ProfileID)
+	m, status, err := models.GetMicrocosm(
+		c.Site.ID,
+		itemID,
+		c.Auth.ProfileID,
+	)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
 
 	// Get Items
-	m.Items, status, err = models.GetItems(c.Site.ID, m.ID, c.Auth.ProfileID, c.Request.URL)
+	m.Items, status, err = models.GetItems(
+		c.Site.ID,
+		m.ID,
+		c.Auth.ProfileID,
+		c.Request.URL,
+	)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
@@ -82,9 +91,10 @@ func (ctl *MicrocosmController) Read(c *models.Context) {
 
 	if c.Auth.ProfileID > 0 {
 		// Get watcher status
-		watcherID, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
-			h.ItemTypes[h.ItemTypeMicrocosm], m.ID, c.Auth.ProfileID,
-		)
+		watcherID, sendEmail, sendSms, ignored, status, err :=
+			models.GetWatcherAndIgnoreStatus(
+				h.ItemTypes[h.ItemTypeMicrocosm], m.ID, c.Auth.ProfileID,
+			)
 		if err != nil {
 			c.RespondWithErrorDetail(err, status)
 			return

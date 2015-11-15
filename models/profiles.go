@@ -50,6 +50,7 @@ type ProfileType struct {
 	UserID            int64              `json:"userId"`
 	Email             string             `json:"email,omitempty"`
 	ProfileName       string             `json:"profileName"`
+	Member            bool               `json:"member,omitempty"`
 	GenderNullable    sql.NullString     `json:"-"`
 	Gender            string             `json:"gender,omitempty"`
 	Visible           bool               `json:"visible"`
@@ -504,6 +505,91 @@ UPDATE profiles
 	return http.StatusOK, nil
 }
 
+// Patch partially updates a profile
+func (m *ProfileType) Patch(
+	ac AuthContext,
+	patches []h.PatchType,
+) (
+	int,
+	error,
+) {
+	// Update resource
+	tx, err := h.GetTransaction()
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	defer tx.Rollback()
+
+	for _, patch := range patches {
+		patch.ScanRawValue()
+		switch patch.Path {
+		case "/member":
+			if !ac.IsSiteOwner {
+				return http.StatusUnauthorized, nil
+			}
+
+			// Revoke any existing status
+			var attributeID int64
+			err = tx.QueryRow(`--GetMemberStatus
+SELECT k.attribute_id
+  FROM attribute_keys k
+  JOIN attribute_values v ON v.attribute_id = k.attribute_id
+ WHERE k.item_type_id = 3
+   AND k.item_id = $1
+   AND k.key = 'is_member'`,
+				m.ID,
+			).Scan(&attributeID)
+			if err != nil && err != sql.ErrNoRows {
+				return http.StatusInternalServerError, err
+			}
+
+			if attributeID != 0 {
+				attr, status, err := GetAttribute(attributeID)
+				if err != nil {
+					return status, err
+				}
+
+				status, err = attr.delete(tx)
+				if err != nil {
+					return status, err
+				}
+			}
+
+			if patch.Bool.Bool {
+				// Grant membership status if necessary
+				attr := AttributeType{}
+				attr.Key = "is_member"
+				attr.Type = tBoolean
+				attr.Value = patch.Bool.Bool
+				// upsert manages the roles flush
+				status, err := attr.upsert(tx, h.ItemTypes[h.ItemTypeProfile], m.ID)
+				if err != nil {
+					return status, err
+				}
+			} else {
+				status, err := FlushRoleMembersCacheByProfileID(tx, m.ID)
+				if err != nil {
+					return status,
+						fmt.Errorf("Error flushing role members cache: %+v", err)
+				}
+			}
+		default:
+			return http.StatusBadRequest,
+				fmt.Errorf("Unsupported path in patch replace operation")
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
+	}
+
+	PurgeCache(h.ItemTypes[h.ItemTypeProfile], m.ID)
+
+	return http.StatusOK, nil
+}
+
 // IncrementProfileCommentCount increments the comment count
 func IncrementProfileCommentCount(profileID int64) {
 
@@ -624,6 +710,31 @@ UPDATE profiles AS p
 	}
 
 	return http.StatusOK, nil
+}
+
+// GetProfileEmail fetches the email address for a profile
+func GetProfileEmail(siteID int64, profileID int64) (email string) {
+	db, err := h.GetConnection()
+	if err != nil {
+		glog.Error(err)
+		return
+	}
+
+	err = db.QueryRow(`--GetProfileEmail
+SELECT u.email
+  FROM users u
+  JOIN profiles p ON p.user_id = u.user_id
+ WHERE p.profile_id = $2
+   AND p.site_id = $1`,
+		siteID,
+		profileID,
+	).Scan(&email)
+	if err != nil {
+		glog.Error(err)
+		return
+	}
+
+	return
 }
 
 // GetProfile fetches a single profile
@@ -788,31 +899,40 @@ func UpdateUnreadHuddleCount(profileID int64) {
 
 // updateUnreadHuddleCount updates the unread huddle count
 func updateUnreadHuddleCount(tx *sql.Tx, profileID int64) {
-
 	_, err := tx.Exec(`--updateUnreadHuddleCount
 UPDATE profiles
    SET unread_huddles = (
-           SELECT COALESCE(
-                      SUM(
-                          CASE WHEN COALESCE(f.last_modified > r.read, true) THEN
-                              1
-                          ELSE
-                              0
-                          END
-                      ),
-                      0
-                  ) as unreadHuddles
-             FROM huddle_profiles hp
-                  JOIN flags f ON f.item_type_id = 5
-                              AND f.item_id = hp.huddle_id
-             LEFT JOIN read r ON r.profile_id = $1
-                             AND r.item_type_id = 5
-                             AND r.item_id = f.item_id
-             LEFT JOIN read r2 ON r2.profile_id = $1
-                              AND r2.item_type_id = 5
-                              AND r2.item_id = 0
-            WHERE hp.profile_id = $1
-              AND f.last_modified > COALESCE(r2.read, TIMESTAMP WITH TIME ZONE '1970-01-01 12:00:00')
+           SELECT COUNT(*) OVER() AS total
+             FROM flags ff
+             JOIN (
+                      SELECT hp.huddle_id
+                            ,f.last_modified
+                        FROM huddle_profiles hp
+                             JOIN flags f ON f.item_type_id = 5
+                                         AND f.item_id = hp.huddle_id
+                        LEFT JOIN read r ON r.profile_id = $1
+                                        AND r.item_type_id = 5
+                                        AND r.item_id = f.item_id
+                        LEFT JOIN read r2 ON r2.profile_id = $1
+                                         AND r2.item_type_id = 5
+                                         AND r2.item_id = 0
+                       WHERE hp.profile_id = $1
+                         AND f.last_modified > COALESCE(
+                                                   COALESCE(
+                                                       r.read,
+                                                       r2.read
+                                                   ),
+                                                   TIMESTAMP WITH TIME ZONE '1970-01-01 12:00:00'
+                                               )
+                  ) AS h ON ff.parent_item_id = h.huddle_id
+                        AND ff.parent_item_type_id = 5
+                        AND ff.last_modified >= h.last_modified
+             LEFT JOIN ignores i ON i.profile_id = $1
+                                AND i.item_type_id = 3
+                                AND i.item_id = ff.created_by
+            WHERE i.profile_id IS NULL
+            GROUP BY h.huddle_id
+            LIMIT 1
        )
  WHERE profile_id = $1`,
 		profileID,

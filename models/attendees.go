@@ -116,8 +116,8 @@ SELECT rsvp_spaces
 	return http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates a partially populated struct
-func (m *AttendeeType) FetchProfileSummaries(siteID int64) (int, error) {
+// Hydrate populates a partially populated struct
+func (m *AttendeeType) Hydrate(siteID int64) (int, error) {
 
 	profile, status, err := GetProfileSummary(siteID, m.ProfileID)
 	if err != nil {
@@ -417,7 +417,7 @@ func GetAttendee(siteID int64, id int64) (AttendeeType, int, error) {
 	mcKey := fmt.Sprintf(mcAttendeeKeys[c.CacheDetail], id)
 	if val, ok := c.Get(mcKey, AttendeeType{}); ok {
 		m := val.(AttendeeType)
-		m.FetchProfileSummaries(siteID)
+		m.Hydrate(siteID)
 		return m, 0, nil
 	}
 
@@ -495,7 +495,7 @@ WHERE attendee_id = $1`,
 
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
-	m.FetchProfileSummaries(siteID)
+	m.Hydrate(siteID)
 
 	return m, http.StatusOK, nil
 }

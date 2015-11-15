@@ -205,7 +205,11 @@ func GetSummary(
 		return summary, status, err
 
 	case h.ItemTypes[h.ItemTypeMicrocosm]:
-		summary, status, err := GetMicrocosmSummary(siteID, itemID, profileID)
+		summary, status, err := GetMicrocosmSummary(
+			siteID,
+			itemID,
+			profileID,
+		)
 		if err != nil {
 			glog.Errorf(
 				"GetMicrocosmSummary(%d, %d, %d) %+v",

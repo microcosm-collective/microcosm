@@ -99,6 +99,7 @@ var (
 		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}/roles/{role_id:[0-9]+}/criteria":                       controller.RoleCriteriaHandler,
 		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}/roles/{role_id:[0-9]+}/criteria/{criterion_id:[0-9]+}": controller.RoleCriterionHandler,
 		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}/roles/{role_id:[0-9]+}/members":                        controller.RoleMembersHandler,
+		"/api/v1/{type:microcosms}/tree":                                                                        controller.MicrocosmsTreeHandler,
 
 		"/api/v1/permission": controller.PermissionHandler,
 

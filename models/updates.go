@@ -55,9 +55,9 @@ func (m *UpdateType) Validate(exists bool) (int, error) {
 	return http.StatusOK, nil
 }
 
-// FetchSummaries fetches profile/item summary for a update entry.
+// Hydrate fetches profile/item summary for a update entry.
 // Called post SELECT or post-GetFromCache
-func (m *UpdateType) FetchSummaries(siteID int64) (int, error) {
+func (m *UpdateType) Hydrate(siteID int64) (int, error) {
 
 	profile, status, err := GetSummary(
 		siteID,
@@ -251,7 +251,7 @@ func GetUpdate(
 	mcKey := fmt.Sprintf(mcUpdateKeys[c.CacheDetail], updateID)
 	if val, ok := c.Get(mcKey, UpdateType{}); ok {
 		m := val.(UpdateType)
-		m.FetchSummaries(siteID)
+		m.Hydrate(siteID)
 		return m, http.StatusOK, nil
 	}
 
@@ -300,7 +300,7 @@ SELECT update_id
 		return UpdateType{}, http.StatusInternalServerError, err
 	}
 	m.ItemType = itemType
-	m.FetchSummaries(siteID)
+	m.Hydrate(siteID)
 
 	c.Set(mcKey, m, mcTTL)
 	return m, http.StatusOK, nil
@@ -334,9 +334,9 @@ WITH m AS (
                                    AND p.item_type_id = 2
                                    AND p.item_id = m.microcosm_id
                                    AND p.profile_id = $2
-           LEFT JOIN ignores i ON i.profile_id = $2
-                              AND i.item_type_id = 2
-                              AND i.item_id = m.microcosm_id
+           LEFT JOIN ignores_expanded i ON i.profile_id = $2
+                                       AND i.item_type_id = 2
+                                       AND i.item_id = m.microcosm_id
      WHERE m.site_id = $1
        AND m.is_deleted IS NOT TRUE
        AND m.is_moderated IS NOT TRUE

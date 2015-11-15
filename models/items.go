@@ -15,12 +15,19 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// ItemParent describes the ancestor microcosms this item belongs to
+type ItemParent struct {
+	MicrocosmID int64                `json:"microcosmId"`
+	Breadcrumb  *[]MicrocosmLinkType `json:"breadcrumb,omitempty"`
+}
+
 // Item is a set of minimal and common fields used by items that exist on the
 // site, usually things that exist within a microcosm
 type Item struct {
-	MicrocosmID int64  `json:"microcosmId"`
-	ItemTypeID  int64  `json:"-"`
-	ItemType    string `json:"itemType"`
+	ItemParent
+
+	ItemTypeID int64  `json:"-"`
+	ItemType   string `json:"itemType"`
 
 	ID    int64  `json:"id"`
 	Title string `json:"title"`
@@ -61,9 +68,10 @@ func (v ItemRequestBySeq) Less(i, j int) bool { return v[i].Seq < v[j].Seq }
 // ItemSummary is used by all things that can be a child of a microcosm
 type ItemSummary struct {
 	// Common Fields
-	ID          int64  `json:"id"`
-	MicrocosmID int64  `json:"microcosmId,omitempty"`
-	Title       string `json:"title"`
+	ID    int64  `json:"id"`
+	Title string `json:"title"`
+
+	ItemParent
 }
 
 // ItemSummaryMeta is the meta object for an ItemSummary
@@ -84,9 +92,10 @@ type LastComment struct {
 // ItemDetail describes an item and the microcosm it belongs to
 type ItemDetail struct {
 	// Common Fields
-	ID          int64  `json:"id"`
-	MicrocosmID int64  `json:"microcosmId,omitempty"`
-	Title       string `json:"title"`
+	ID    int64  `json:"id"`
+	Title string `json:"title"`
+
+	ItemParent
 
 	// Used during import to set the view count
 	ViewCount int64 `json:"-"`
@@ -101,9 +110,8 @@ type ItemDetailCommentsAndMeta struct {
 	Meta h.DefaultMetaType `json:"meta"`
 }
 
-// FetchProfileSummaries populates a partially populated Item
-func (m *Item) FetchProfileSummaries(siteID int64) (int, error) {
-
+// Hydrate populates a partially populated Item
+func (m *Item) Hydrate(siteID int64) (int, error) {
 	profile, status, err := GetProfileSummary(siteID, m.Meta.CreatedByID)
 	if err != nil {
 		return status, err
@@ -122,9 +130,26 @@ func (m *Item) FetchProfileSummaries(siteID int64) (int, error) {
 	return http.StatusOK, nil
 }
 
+func (m *ItemParent) FetchBreadcrumb() (int, error) {
+	if m.MicrocosmID > 0 {
+		breadcrumb, status, err := getMicrocosmParents(m.MicrocosmID)
+		if err != nil {
+			return status, err
+		}
+
+		// Remove the top-level forums one
+		if len(breadcrumb) > 0 {
+			breadcrumb = breadcrumb[1:]
+
+			m.Breadcrumb = &breadcrumb
+		}
+	}
+
+	return http.StatusOK, nil
+}
+
 // IncrementViewCount increments the views of an item
 func IncrementViewCount(itemTypeID int64, itemID int64) {
-
 	// No transaction as we don't care for accuracy on these updates
 	// Note: This function doesn't even return errors, we don't even care
 	// if the occasional INSERT fails.
@@ -214,7 +239,16 @@ UPDATE microcosms
 			return
 		}
 
-		PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], microcosmID)
+		parents, _, err := getMicrocosmParents(microcosmID)
+		if err != nil {
+			glog.Error(err)
+			return
+		}
+		for _, link := range parents {
+			if link.Level > 1 {
+				PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], link.ID)
+			}
+		}
 	}
 }
 
@@ -281,7 +315,16 @@ UPDATE microcosms
 			return
 		}
 
-		PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], microcosmID)
+		parents, _, err := getMicrocosmParents(microcosmID)
+		if err != nil {
+			glog.Error(err)
+			return
+		}
+		for _, link := range parents {
+			if link.Level > 1 {
+				PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], link.ID)
+			}
+		}
 	}
 }
 
@@ -305,16 +348,49 @@ func GetAllItems(
 		return []SummaryContainer{}, 0, 0, http.StatusInternalServerError, err
 	}
 
+	sqlChildMicrocosms := `
+WITH m AS (
+    SELECT m.microcosm_id
+          ,m.comment_count + m.item_count AS seq
+      FROM microcosms m
+      LEFT JOIN permissions_cache p ON p.site_id = m.site_id
+                                   AND p.item_type_id = 2
+                                   AND p.item_id = m.microcosm_id
+                                   AND p.profile_id = $3
+           LEFT JOIN ignores_expanded i ON i.profile_id = $3
+                                       AND i.item_type_id = 2
+                                       AND i.item_id = m.microcosm_id
+     WHERE m.site_id = $1
+       AND m.parent_id = $2
+       AND m.is_deleted IS NOT TRUE
+       AND m.is_moderated IS NOT TRUE
+       AND i.profile_id IS NULL
+       AND (
+               (p.can_read IS NOT NULL AND p.can_read IS TRUE)
+            OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$3)).can_read IS TRUE
+           )
+),
+p AS (
+    SELECT $2::bigint AS microcosm_id
+     WHERE (get_effective_permissions($1, $2, 2, $2, $3)).can_read IS TRUE
+)`
+
 	sqlFromWhere := `
           FROM flags f
+          JOIN p ON f.microcosm_id = p.microcosm_id
           LEFT JOIN ignores i ON i.profile_id = $3
                              AND i.item_type_id = f.item_type_id
                              AND i.item_id = f.item_id
-         WHERE f.microcosm_id = (
-                   SELECT $2::bigint AS microcosm_id
-                    WHERE (get_effective_permissions($1, $2, 2, $2, $3)).can_read IS TRUE
+          LEFT JOIN m AS m2 ON f.item_type_id = 2
+                           AND f.item_id = m2.microcosm_id
+         WHERE f.microcosm_id = $2::BIGINT
+           AND (
+                   f.item_type_id IN (6, 9)
+                OR (
+                       f.item_type_id = 2
+                   AND m2.microcosm_id IS NOT NULL
+                   )
                )
-           AND (f.item_type_id = 6 OR f.item_type_id = 9)
            AND f.site_id = $1
            AND i.profile_id IS NULL
            AND f.microcosm_is_deleted IS NOT TRUE
@@ -325,7 +401,7 @@ func GetAllItems(
            AND f.item_is_moderated IS NOT TRUE`
 
 	var total int64
-	err = db.QueryRow(`
+	err = db.QueryRow(sqlChildMicrocosms+`
 SELECT COUNT(*) AS total`+sqlFromWhere,
 		siteID,
 		microcosmID,
@@ -339,7 +415,7 @@ SELECT COUNT(*) AS total`+sqlFromWhere,
 			fmt.Errorf("Database query failed: %v", err.Error())
 	}
 
-	rows, err := db.Query(`
+	rows, err := db.Query(sqlChildMicrocosms+`
 SELECT item_type_id
       ,item_id
       ,has_unread(item_type_id, item_id, $3)
@@ -351,6 +427,7 @@ SELECT item_type_id
         SELECT f.item_type_id
               ,f.item_id`+sqlFromWhere+`
          ORDER BY f.item_is_sticky DESC
+                 ,m2.seq DESC NULLS LAST
                  ,f.last_modified DESC
          LIMIT $4
         OFFSET $5
@@ -442,6 +519,14 @@ SELECT item_type_id
 		m := resp.Item
 
 		switch m.Summary.(type) {
+		case MicrocosmSummaryType:
+			summary := m.Summary.(MicrocosmSummaryType)
+			summary.Meta.Flags.Unread =
+				unread[strconv.FormatInt(m.ItemTypeID, 10)+`_`+
+					strconv.FormatInt(m.ItemID, 10)]
+
+			m.Summary = summary
+
 		case ConversationSummaryType:
 			summary := m.Summary.(ConversationSummaryType)
 			summary.Meta.Flags.Unread =
@@ -504,22 +589,45 @@ func GetMostRecentItem(
 		return SummaryContainer{}, http.StatusInternalServerError, err
 	}
 
-	rows, err := db.Query(`
+	// Fetch a summary of the most recent item that exists in this or a child
+	// forum that this person may see.
+	rows, err := db.Query(`--GetMostRecentItem
+WITH m AS (
+    SELECT m.microcosm_id
+      FROM (
+               SELECT path
+                 FROM microcosms
+                WHERE microcosm_id = $2
+           ) im
+      JOIN microcosms m ON m.path <@ im.path
+      LEFT JOIN permissions_cache p ON p.site_id = m.site_id
+                                   AND p.item_type_id = 2
+                                   AND p.item_id = m.microcosm_id
+                                   AND p.profile_id = $3
+      LEFT JOIN ignores_expanded i ON i.profile_id = $3
+                                  AND i.item_type_id = 2
+                                  AND i.item_id = m.microcosm_id
+     WHERE m.site_id = $1
+       AND m.is_deleted IS NOT TRUE
+       AND m.is_moderated IS NOT TRUE
+       AND i.profile_id IS NULL
+       AND (
+               (p.can_read IS NOT NULL AND p.can_read IS TRUE)
+            OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$3)).can_read IS TRUE
+           )
+)
 SELECT item_type_id
       ,item_id
   FROM flags
- WHERE microcosm_id = $1
-   AND microcosm_is_deleted IS NOT TRUE
-   AND microcosm_is_moderated IS NOT TRUE
-   AND parent_is_deleted IS NOT TRUE
-   AND parent_is_moderated IS NOT TRUE
+ WHERE microcosm_id IN (SELECT microcosm_id FROM m)
    AND item_is_deleted IS NOT TRUE
    AND item_is_moderated IS NOT TRUE
-   AND (item_type_id = 6
-    OR item_type_id = 9)
+   AND (item_type_id = 6 OR item_type_id = 9)
  ORDER BY last_modified DESC
  LIMIT 1`,
+		siteID,
 		microcosmID,
+		profileID,
 	)
 	if err != nil {
 		glog.Errorf("db.Query(%d) %+v", microcosmID, err)

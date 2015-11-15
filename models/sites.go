@@ -283,8 +283,8 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 	return http.StatusOK, nil
 }
 
-// FetchProfileSummaries populates a partially populated site
-func (m *SiteType) FetchProfileSummaries() (int, error) {
+// Hydrate populates a partially populated site
+func (m *SiteType) Hydrate() (int, error) {
 
 	profile, status, err := GetProfileSummary(m.ID, m.Meta.CreatedByID)
 	if err != nil {
@@ -640,7 +640,6 @@ SELECT title
 
 // GetSite returns a site
 func GetSite(id int64) (SiteType, int, error) {
-
 	// Try cache
 	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheDetail], id)
 	if val, ok := c.Get(mcKey, SiteType{}); ok {
@@ -648,7 +647,7 @@ func GetSite(id int64) (SiteType, int, error) {
 		// Site now caches the profile summaries as the benefits on performance
 		// are too great to do this every time as context.MakeContext for every
 		// controller uses a Site object
-		// m.FetchProfileSummaries()
+		// m.Hydrate()
 		return m, http.StatusOK, nil
 	}
 
@@ -739,7 +738,7 @@ SELECT s.site_id
 			h.GetLink("profile", "", h.ItemTypeProfile, 0),
 			h.LinkType{Rel: "legal", Href: "/api/v1/legal"},
 		}
-	m.FetchProfileSummaries()
+	m.Hydrate()
 
 	c.Set(mcKey, m, mcTTL)
 

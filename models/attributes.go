@@ -320,9 +320,10 @@ func DeleteManyAttributes(
 			if err != nil {
 				return status, err
 			}
+			m.ID = attributeID
 		}
 
-		status, err := m.delete(tx, attributeID)
+		status, err := m.delete(tx)
 		if err != nil {
 			return status, err
 		}
@@ -345,7 +346,7 @@ func (m *AttributeType) Delete() (int, error) {
 	}
 	defer tx.Rollback()
 
-	status, err := m.delete(tx, m.ID)
+	status, err := m.delete(tx)
 	if err != nil {
 		return status, err
 	}
@@ -359,11 +360,11 @@ func (m *AttributeType) Delete() (int, error) {
 	return http.StatusOK, nil
 }
 
-func (m *AttributeType) delete(tx *sql.Tx, attributeID int64) (int, error) {
+func (m *AttributeType) delete(tx *sql.Tx) (int, error) {
 	_, err := tx.Exec(`
 DELETE FROM attribute_values
  WHERE attribute_id = $1`,
-		attributeID,
+		m.ID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
@@ -373,7 +374,7 @@ DELETE FROM attribute_values
 	_, err = tx.Exec(`
 DELETE FROM attribute_keys
  WHERE attribute_id = $1`,
-		attributeID,
+		m.ID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
