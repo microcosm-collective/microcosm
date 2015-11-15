@@ -15,6 +15,7 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// ItemParent describes the ancestor microcosms this item belongs to
 type ItemParent struct {
 	MicrocosmID int64                `json:"microcosmId"`
 	Breadcrumb  *[]MicrocosmLinkType `json:"breadcrumb,omitempty"`

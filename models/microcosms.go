@@ -15,6 +15,19 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
+// MicrocosmCore describes the ancestor microcosms this item belongs to
+type MicrocosmCore struct {
+	ID               int64 `json:"id"`
+	ParentID         int64 `json:"parentId,omitempty"`
+	parentIDNullable sql.NullInt64
+	Breadcrumb       *[]MicrocosmLinkType `json:"breadcrumb,omitempty"`
+	SiteID           int64                `json:"siteId,omitempty"`
+	Visibility       string               `json:"visibility"`
+	Title            string               `json:"title"`
+	Description      string               `json:"description"`
+	ItemTypes        []string             `json:"itemTypes"`
+}
+
 // MicrocosmsType is a collection of microcosms
 type MicrocosmsType struct {
 	Microcosms h.ArrayType    `json:"microcosms"`
@@ -23,17 +36,11 @@ type MicrocosmsType struct {
 
 // MicrocosmSummaryType is a summary of a microcosm
 type MicrocosmSummaryType struct {
-	ID               int64 `json:"id"`
-	ParentID         int64 `json:"parentId,omitempty"`
-	parentIDNullable sql.NullInt64
-	SiteID           int64    `json:"siteId,omitempty"`
-	Visibility       string   `json:"visibility"`
-	Title            string   `json:"title"`
-	Description      string   `json:"description"`
-	Moderators       []int64  `json:"moderators"`
-	ItemCount        int64    `json:"totalItems"`
-	CommentCount     int64    `json:"totalComments"`
-	ItemTypes        []string `json:"itemTypes"`
+	MicrocosmCore
+
+	Moderators   []int64 `json:"moderators"`
+	ItemCount    int64   `json:"totalItems"`
+	CommentCount int64   `json:"totalComments"`
 
 	MRU interface{} `json:"mostRecentUpdate,omitempty"`
 
@@ -42,16 +49,9 @@ type MicrocosmSummaryType struct {
 
 // MicrocosmType is a microcosm
 type MicrocosmType struct {
-	ID               int64 `json:"id"`
-	ParentID         int64 `json:"parentId,omitempty"`
-	parentIDNullable sql.NullInt64
-	SiteID           int64               `json:"siteId,omitempty"`
-	Visibility       string              `json:"visibility"`
-	Title            string              `json:"title"`
-	Description      string              `json:"description"`
-	OwnedByID        int64               `json:"-"`
-	ItemTypes        []string            `json:"itemTypes"`
-	Parents          []MicrocosmLinkType `json:"parents,omitempty"`
+	MicrocosmCore
+
+	OwnedByID int64 `json:"-"`
 
 	Moderators []int64 `json:"moderators"`
 
@@ -180,6 +180,11 @@ func (m *MicrocosmType) Hydrate(
 	}
 	m.Meta.Flags.Unread = unread
 
+	status, err = m.FetchBreadcrumb()
+	if err != nil {
+		return status, err
+	}
+
 	return http.StatusOK, nil
 }
 
@@ -197,6 +202,31 @@ func (m *MicrocosmSummaryType) Hydrate(
 	}
 	m.Meta.CreatedBy = profile
 
+	status, err = m.FetchBreadcrumb()
+	if err != nil {
+		return status, err
+	}
+
+	return http.StatusOK, nil
+}
+
+// FetchBreadcrumb will determine the ancestor microcosms and establish the
+// breadcrumb trail
+func (m *MicrocosmCore) FetchBreadcrumb() (int, error) {
+	parents, status, err := getMicrocosmParents(m.ID)
+	if err != nil {
+		return status, err
+	}
+	breadcrumb := []MicrocosmLinkType{}
+	for _, parent := range parents {
+		if parent.ID == m.ID || parent.Level == 1 {
+			continue
+		}
+		breadcrumb = append(breadcrumb, parent)
+	}
+	if len(breadcrumb) > 0 {
+		m.Breadcrumb = &breadcrumb
+	}
 	return http.StatusOK, nil
 }
 
@@ -540,17 +570,6 @@ SELECT microcosm_id,
 
 	if m.parentIDNullable.Valid {
 		m.ParentID = m.parentIDNullable.Int64
-	}
-
-	parents, status, err := getMicrocosmParents(m.ID)
-	if err != nil {
-		return MicrocosmType{}, status, err
-	}
-	for _, parent := range parents {
-		if parent.ID == m.ID || parent.Level == 1 {
-			continue
-		}
-		m.Parents = append(m.Parents, parent)
 	}
 
 	if m.Meta.EditReasonNullable.Valid {
