@@ -900,40 +900,41 @@ func UpdateUnreadHuddleCount(profileID int64) {
 // updateUnreadHuddleCount updates the unread huddle count
 func updateUnreadHuddleCount(tx *sql.Tx, profileID int64) {
 	_, err := tx.Exec(`--updateUnreadHuddleCount
+WITH u AS (
+    SELECT COALESCE(COUNT(*) OVER(), 0) AS total
+      FROM flags ff
+      JOIN (
+               SELECT hp.huddle_id
+                     ,f.last_modified
+                 FROM huddle_profiles hp
+                      JOIN flags f ON f.item_type_id = 5
+                                  AND f.item_id = hp.huddle_id
+                 LEFT JOIN read r ON r.profile_id = $1
+                                 AND r.item_type_id = 5
+                                 AND r.item_id = f.item_id
+                 LEFT JOIN read r2 ON r2.profile_id = $1
+                                  AND r2.item_type_id = 5
+                                  AND r2.item_id = 0
+                WHERE hp.profile_id = $1
+                  AND f.last_modified > COALESCE(
+                                            COALESCE(
+                                                r.read,
+                                                r2.read
+                                            ),
+                                            TIMESTAMP WITH TIME ZONE '1970-01-01 12:00:00'
+                                        )
+           ) AS h ON ff.parent_item_id = h.huddle_id
+                 AND ff.parent_item_type_id = 5
+                 AND ff.last_modified >= h.last_modified
+      LEFT JOIN ignores i ON i.profile_id = $1
+                         AND i.item_type_id = 3
+                         AND i.item_id = ff.created_by
+     WHERE i.profile_id IS NULL
+     GROUP BY h.huddle_id
+     LIMIT 1
+)
 UPDATE profiles
-   SET unread_huddles = (
-           SELECT COUNT(*) OVER() AS total
-             FROM flags ff
-             JOIN (
-                      SELECT hp.huddle_id
-                            ,f.last_modified
-                        FROM huddle_profiles hp
-                             JOIN flags f ON f.item_type_id = 5
-                                         AND f.item_id = hp.huddle_id
-                        LEFT JOIN read r ON r.profile_id = $1
-                                        AND r.item_type_id = 5
-                                        AND r.item_id = f.item_id
-                        LEFT JOIN read r2 ON r2.profile_id = $1
-                                         AND r2.item_type_id = 5
-                                         AND r2.item_id = 0
-                       WHERE hp.profile_id = $1
-                         AND f.last_modified > COALESCE(
-                                                   COALESCE(
-                                                       r.read,
-                                                       r2.read
-                                                   ),
-                                                   TIMESTAMP WITH TIME ZONE '1970-01-01 12:00:00'
-                                               )
-                  ) AS h ON ff.parent_item_id = h.huddle_id
-                        AND ff.parent_item_type_id = 5
-                        AND ff.last_modified >= h.last_modified
-             LEFT JOIN ignores i ON i.profile_id = $1
-                                AND i.item_type_id = 3
-                                AND i.item_id = ff.created_by
-            WHERE i.profile_id IS NULL
-            GROUP BY h.huddle_id
-            LIMIT 1
-       )
+   SET unread_huddles = COALESCE((SELECT total FROM u), 0)
  WHERE profile_id = $1`,
 		profileID,
 	)
