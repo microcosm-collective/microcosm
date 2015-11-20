@@ -565,11 +565,6 @@ SELECT role_id
 			m.Meta.EditedNullable.Time.Format(time.RFC3339Nano)
 	}
 
-	if m.MicrocosmID != 0 && m.MicrocosmID != microcosmID {
-		return RoleType{}, http.StatusNotFound,
-			fmt.Errorf("Valid role resource with ID %d not found", roleID)
-	}
-
 	if m.MicrocosmID > 0 {
 		m.Meta.Links =
 			[]h.LinkType{

@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -238,7 +240,6 @@ func MarkAsRead(
 	int,
 	error,
 ) {
-
 	// Some validation
 	if profileID == 0 {
 		glog.Infof("profileId == 0")
@@ -274,16 +275,63 @@ func MarkAsRead(
 	}
 	defer tx.Rollback()
 
-	m := ReadType{
+	reads := []ReadType{}
+	initial := ReadType{
 		ItemTypeID: itemTypeID,
 		ItemID:     itemID,
 		ProfileID:  profileID,
 		Read:       updateTime,
 	}
-	status, err := m.upsert(tx)
-	if err != nil {
-		glog.Errorf("m.upsert(tx) %+v", err)
-		return status, err
+	reads = append(reads, initial)
+
+	// Mark all children as read too
+	if itemTypeID == h.ItemTypes[h.ItemTypeMicrocosm] {
+		rows, err := tx.Query(`--GetChildMicrocosms
+SELECT microcosm_id
+  FROM microcosms
+ WHERE path <@ (SELECT path FROM microcosms WHERE microcosm_id = $1)
+   AND microcosm_id != $1`,
+			initial.ItemID,
+		)
+		if err != nil {
+			glog.Errorf("tx.Query(%d) %+v", initial.ItemID, err)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Fetch of child microcosms failed")
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			read := ReadType{
+				ItemTypeID: initial.ItemTypeID,
+				ProfileID:  initial.ProfileID,
+				Read:       initial.Read,
+			}
+			err = rows.Scan(
+				&read.ItemID,
+			)
+			if err != nil {
+				glog.Errorf("Scan failed %+v", err)
+				return http.StatusInternalServerError,
+					fmt.Errorf("Scan failed")
+			}
+
+			reads = append(reads, read)
+		}
+		err = rows.Err()
+		if err != nil {
+			glog.Errorf("Error fetching rows %+v", err)
+			return http.StatusInternalServerError,
+				fmt.Errorf("Error fetching rows")
+		}
+		rows.Close()
+	}
+
+	for _, m := range reads {
+		status, err := m.upsert(tx)
+		if err != nil {
+			glog.Errorf("m.upsert(tx) %+v", err)
+			return status, err
+		}
 	}
 
 	switch itemTypeID {
@@ -296,14 +344,20 @@ func MarkAsRead(
 DELETE FROM read
  WHERE item_type_id NOT IN (1, 5) -- 1 = site, 5 = huddle
    AND profile_id = $1`,
-			m.ProfileID,
+			initial.ProfileID,
 		)
 		if err != nil {
-			glog.Errorf("tx.Exec(%d) %+v", m.ProfileID, err)
+			glog.Errorf("tx.Exec(%d) %+v", initial.ProfileID, err)
 			return http.StatusInternalServerError,
 				fmt.Errorf("Deletion of read items failed")
 		}
 	case h.ItemTypes[h.ItemTypeMicrocosm]:
+		it := []string{}
+		for _, read := range reads {
+			it = append(it, strconv.FormatInt(read.ItemID, 10))
+		}
+		microcosmIDs := `{` + strings.Join(it, `,`) + `}`
+
 		// Microcosm has been marked read, so delete all item level rows that
 		// belong to this Microcosm as those are implicitly read as of now
 		_, err = tx.Exec(`
@@ -314,19 +368,20 @@ DELETE FROM read
                      SELECT item_id
                            ,item_type_id 
                        FROM flags
-                      WHERE microcosm_id = $1
+                      WHERE microcosm_id = ANY ($1::bigint[])
                         AND parent_item_id IS NULL
+                        AND item_type_id != 2
                  ) i
-            LEFT JOIN read
-              ON read.item_id = i.item_id
-             AND read.item_type_id = i.item_type_id
+            JOIN read ON read.item_id = i.item_id
+                     AND read.item_type_id = i.item_type_id
+                     AND read.profile_id = $2
        )
    AND profile_id = $2`,
-			m.ItemID,
-			m.ProfileID,
+			microcosmIDs,
+			initial.ProfileID,
 		)
 		if err != nil {
-			glog.Errorf("tx.Exec(%d, %d) %+v", m.ItemID, m.ProfileID, err)
+			glog.Errorf("tx.Exec(%d, %d) %+v", initial.ItemID, initial.ProfileID, err)
 			return http.StatusInternalServerError,
 				fmt.Errorf("Deletion of read items failed")
 		}
@@ -340,10 +395,10 @@ DELETE FROM read
  WHERE item_type_id = 5 -- 5 = huddle
    AND item_id <> 0
    AND profile_id = $1`,
-				m.ProfileID,
+				initial.ProfileID,
 			)
 			if err != nil {
-				glog.Errorf("tx.Exec(%d) %+v", m.ProfileID, err)
+				glog.Errorf("tx.Exec(%d) %+v", initial.ProfileID, err)
 				return http.StatusInternalServerError,
 					fmt.Errorf("Deletion of read items failed")
 			}
@@ -364,7 +419,6 @@ DELETE FROM read
 
 // upsert inserts or updates the last read time
 func (m *ReadType) upsert(tx *sql.Tx) (int, error) {
-
 	res, err := tx.Exec(`
 UPDATE read
    SET read = GREATEST(read, $4)
@@ -391,11 +445,11 @@ UPDATE read
 
 	// If update did not create any rows then we need to insert
 	if rowsAffected, _ := res.RowsAffected(); rowsAffected == 0 {
-
 		// Note that even though we just proved that it didn't exist, we could
 		// have multiple transactions doing this and we'are playing safe and
 		// defensively by doing a NOT EXISTS check, this shouldn't fail at all.
-		_, err = tx.Exec(`
+		glog.Infof("INSERT (%d, %d)", m.ItemID, m.ProfileID)
+		res, err = tx.Exec(`
 INSERT INTO read
     (item_type_id, item_id, profile_id, read)
 SELECT $1, $2, $3, $4
@@ -434,15 +488,12 @@ SELECT $1, $2, $3, $4
 func MarkScopeAsRead(profileID int64, rs ReadScopeType) (int, error) {
 	if rs.ItemTypeID == h.ItemTypes[h.ItemTypeSite] {
 		return MarkAllAsRead(profileID)
-
 	} else if rs.ItemTypeID == h.ItemTypes[h.ItemTypeHuddle] && rs.ItemID >= 0 {
 		// It's fine to mark huddleId = 0 as read, this is equivalent to marking
 		// all huddles as read
 		return MarkAsRead(rs.ItemTypeID, rs.ItemID, profileID, time.Now())
-
 	} else if rs.ItemTypeID > 0 && rs.ItemID > 0 {
 		return MarkAsRead(rs.ItemTypeID, rs.ItemID, profileID, time.Now())
-
 	}
 
 	return http.StatusBadRequest,
