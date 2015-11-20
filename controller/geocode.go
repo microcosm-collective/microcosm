@@ -65,6 +65,9 @@ func (ctl *GeoCodeController) Read(c *models.Context) {
 
 	u, _ := url.Parse("http://open.mapquestapi.com/nominatim/v1/search.php")
 	q := u.Query()
+	// I would keep this secret, but that seems rather pointless whilst MapQuest
+	// have this API on http
+	q.Set("key", "JGABt9KIhdvTopRfGvJ67yiIyCMkOZOh")
 	q.Set("format", "json")
 	// We are not interested in the array returned, just the best match which is the first response
 	q.Set("limit", "1")
