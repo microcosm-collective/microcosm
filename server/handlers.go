@@ -101,6 +101,8 @@ var (
 		"/api/v1/{type:microcosms}/{microcosm_id:[0-9]+}/roles/{role_id:[0-9]+}/members":                        controller.RoleMembersHandler,
 		"/api/v1/{type:microcosms}/tree":                                                                        controller.MicrocosmsTreeHandler,
 
+		"/api/v1/out/{short_url:[2-9a-zA-Z]+}": controller.RedirectHandler,
+
 		"/api/v1/permission": controller.PermissionHandler,
 
 		"/api/v1/{type:polls}":                                                  controller.PollsHandler,
