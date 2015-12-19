@@ -63,7 +63,7 @@ func (m *HuddleType) GetLink() string {
 // Validate returns true if the huddle if valid
 func (m *HuddleType) Validate(siteID int64, exists bool) (int, error) {
 
-	m.Title = SanitiseText(m.Title)
+	m.Title = CleanSentence(m.Title)
 
 	if exists {
 		if m.ID < 1 {
@@ -85,7 +85,7 @@ func (m *HuddleType) Validate(siteID int64, exists bool) (int, error) {
 		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
 
-	m.Title = ShoutToWhisper(m.Title)
+	m.Title = CleanSentence(m.Title)
 
 	return http.StatusOK, nil
 }

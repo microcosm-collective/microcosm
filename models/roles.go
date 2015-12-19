@@ -88,7 +88,7 @@ func (m *RoleType) Validate(
 	error,
 ) {
 
-	m.Title = SanitiseText(m.Title)
+	m.Title = CleanSentence(m.Title)
 
 	// Does the Microcosm specified exist on this site?
 	if !exists && m.MicrocosmID > 0 {
@@ -113,15 +113,13 @@ func (m *RoleType) Validate(
 
 			m.Meta.EditReason = "No reason given"
 		} else {
-			m.Meta.EditReason = ShoutToWhisper(m.Meta.EditReason)
+			m.Meta.EditReason = CleanSentence(m.Meta.EditReason)
 		}
 	}
 
 	if strings.Trim(m.Title, " ") == "" {
 		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
-
-	m.Title = ShoutToWhisper(m.Title)
 
 	// Needs to be NULL if it's a default role
 	if m.MicrocosmID > 0 {

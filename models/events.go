@@ -95,9 +95,9 @@ func (m *EventType) Validate(
 	int,
 	error,
 ) {
-	m.Title = SanitiseText(m.Title)
-	m.Where = SanitiseText(m.Where)
-	m.Meta.EditReason = SanitiseText(m.Meta.EditReason)
+	m.Title = CleanSentence(m.Title)
+	m.Where = CleanBlockText(m.Where)
+	m.Meta.EditReason = CleanSentence(m.Meta.EditReason)
 
 	// Does the Microcosm specified exist on this site?
 	if !exists {
@@ -119,7 +119,7 @@ func (m *EventType) Validate(
 				fmt.Errorf("You must provide a reason for the update")
 		}
 
-		m.Meta.EditReason = ShoutToWhisper(m.Meta.EditReason)
+		m.Meta.EditReason = CleanSentence(m.Meta.EditReason)
 	}
 
 	if m.MicrocosmID <= 0 {
@@ -132,7 +132,6 @@ func (m *EventType) Validate(
 		glog.Info(`Title is a required field`)
 		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
-	m.Title = ShoutToWhisper(m.Title)
 
 	// Default status is 'upcoming' if not specified
 	if strings.Trim(m.When, ` `) == `` {
@@ -158,7 +157,6 @@ func (m *EventType) Validate(
 	}
 
 	if m.Where != `` {
-		m.Where = ShoutToWhisper(m.Where)
 		m.WhereNullable = sql.NullString{String: m.Where, Valid: true}
 	}
 

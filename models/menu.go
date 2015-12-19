@@ -47,7 +47,7 @@ func (m *MenuType) Validate() (int, error) {
 		return http.StatusBadRequest, fmt.Errorf("Text is a required field")
 	}
 
-	m.Text = SanitiseText(m.Text)
+	m.Text = CleanSentence(m.Text)
 	m.Text = strings.Trim(m.Text, " ")
 	if m.Href == "" {
 		return http.StatusBadRequest, fmt.Errorf("Text is a required field")
@@ -56,8 +56,7 @@ func (m *MenuType) Validate() (int, error) {
 	// Title
 	if m.Title.Valid {
 		m.Title.String = strings.Trim(m.Title.String, " ")
-		m.Title.String = SanitiseText(m.Title.String)
-		m.Title.String = strings.Trim(m.Title.String, " ")
+		m.Title.String = CleanSentence(m.Title.String)
 		if m.Title.String == "" {
 			m.Title.Valid = false
 		}

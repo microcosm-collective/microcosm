@@ -70,8 +70,8 @@ func (m *PollType) Validate(
 	error,
 ) {
 
-	m.Title = SanitiseText(m.Title)
-	m.PollQuestion = SanitiseText(m.PollQuestion)
+	m.Title = CleanSentence(m.Title)
+	m.PollQuestion = CleanSentence(m.PollQuestion)
 
 	// Does the Microcosm specified exist on this site?
 	if !exists {
@@ -93,7 +93,7 @@ func (m *PollType) Validate(
 				fmt.Errorf("You must provide a reason for the update")
 		}
 
-		m.Meta.EditReason = ShoutToWhisper(m.Meta.EditReason)
+		m.Meta.EditReason = CleanSentence(m.Meta.EditReason)
 	}
 
 	if m.MicrocosmID <= 0 {
@@ -105,14 +105,10 @@ func (m *PollType) Validate(
 		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
 
-	m.Title = ShoutToWhisper(m.Title)
-
 	if strings.Trim(m.PollQuestion, " ") == "" {
 		return http.StatusBadRequest,
 			fmt.Errorf("You must supply a question that the poll will answer")
 	}
-
-	m.PollQuestion = ShoutToWhisper(m.PollQuestion)
 
 	if m.Choices == nil || len(m.Choices) == 0 {
 		return http.StatusBadRequest,
@@ -120,14 +116,12 @@ func (m *PollType) Validate(
 	}
 
 	for ii := 0; ii < len(m.Choices); ii++ {
-		m.Choices[ii].Choice = SanitiseText(m.Choices[ii].Choice)
+		m.Choices[ii].Choice = CleanSentence(m.Choices[ii].Choice)
 
 		if strings.Trim(m.Choices[ii].Choice, " ") == "" {
 			return http.StatusBadRequest,
 				fmt.Errorf("Your poll choices must be populated")
 		}
-
-		m.Choices[ii].Choice = ShoutToWhisper(m.Choices[ii].Choice)
 	}
 
 	if strings.Trim(m.VotingEnds, " ") != "" {

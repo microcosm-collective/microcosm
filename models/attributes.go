@@ -69,7 +69,7 @@ func (v AttributeRequestBySeq) Less(i, j int) bool { return v[i].Seq < v[j].Seq 
 
 // Validate returns true if the attribute is valid
 func (m *AttributeType) Validate() (int, error) {
-	m.Key = SanitiseText(m.Key)
+	m.Key = CleanWord(m.Key)
 
 	if strings.Trim(m.Key, " ") == "" {
 		return http.StatusBadRequest,
@@ -100,7 +100,7 @@ func (m *AttributeType) Validate() (int, error) {
 	case string:
 		m.String =
 			sql.NullString{
-				String: strings.Trim(SanitiseText(m.Value.(string)), " "),
+				String: strings.Trim(CleanSentence(m.Value.(string)), " "),
 				Valid:  true,
 			}
 		m.Type = tString

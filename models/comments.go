@@ -153,9 +153,6 @@ func (m *CommentSummaryType) Validate(siteID int64, exists bool) (int, error) {
 		)
 	}
 
-	// Prevent shouting on text fields
-	m.Markdown = ShoutToWhisper(m.Markdown)
-
 	return http.StatusOK, nil
 }
 

@@ -43,13 +43,11 @@ func (m *ConversationType) Validate(
 	int,
 	error,
 ) {
-	m.Title = SanitiseText(m.Title)
+	m.Title = CleanSentence(m.Title)
 
 	if strings.Trim(m.Title, " ") == "" {
 		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
-
-	m.Title = ShoutToWhisper(m.Title)
 
 	if !exists {
 		// Does the Microcosm specified exist on this site?
@@ -79,7 +77,7 @@ func (m *ConversationType) Validate(
 
 		}
 
-		m.Meta.EditReason = ShoutToWhisper(m.Meta.EditReason)
+		m.Meta.EditReason = CleanSentence(m.Meta.EditReason)
 	}
 
 	if m.MicrocosmID <= 0 {

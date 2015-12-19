@@ -108,7 +108,7 @@ func (v ProfileSummaryRequestBySeq) Less(i, j int) bool {
 func ValidateProfileName(name string) (string, int, error) {
 	// Note: We are not preventing shouting in usernames as some people will
 	// use their initials for their username
-	name = SanitiseText(strings.Trim(name, " "))
+	name = CleanWord(strings.Trim(name, " "))
 
 	if name == "" {
 		return name, http.StatusBadRequest,
@@ -152,7 +152,7 @@ func ValidateProfileName(name string) (string, int, error) {
 // Validate returns true if the profile is valid
 func (m *ProfileType) Validate(exists bool) (int, error) {
 
-	m.Gender = SanitiseText(m.Gender)
+	m.Gender = CleanSentence(m.Gender)
 
 	if m.SiteID < 1 {
 		return http.StatusBadRequest, fmt.Errorf("Invalid site ID supplied")

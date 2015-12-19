@@ -34,6 +34,8 @@ func ProcessCommentMarkdown(
 	error,
 ) {
 
+	markdown = CleanBlockText(markdown)
+
 	src := []byte(markdown)
 
 	// Autolinkify

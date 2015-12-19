@@ -98,8 +98,8 @@ func (v MicrocosmSummaryRequestBySeq) Less(i, j int) bool {
 
 // Validate returns true if the microcosm is valid
 func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
-	m.Title = SanitiseText(m.Title)
-	m.Description = string(SanitiseHTML([]byte(m.Description)))
+	m.Title = CleanSentence(m.Title)
+	m.Description = string(SanitiseHTML([]byte(CleanBlockText(m.Description))))
 
 	if exists && !isImport {
 		if strings.Trim(m.Meta.EditReason, " ") == "" ||
@@ -121,14 +121,10 @@ func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
 		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
 
-	m.Title = ShoutToWhisper(m.Title)
-
 	if strings.Trim(m.Description, " ") == "" {
 		return http.StatusBadRequest,
 			fmt.Errorf("Description is a required field")
 	}
-
-	m.Description = ShoutToWhisper(m.Description)
 
 	if m.ParentID > 0 {
 		m.parentIDNullable.Valid = true
