@@ -43,21 +43,24 @@ type EventSummaryType struct {
 	ItemSummary
 
 	// Specific to events
-	WhenNullable  pq.NullTime    `json:"-"`
-	When          string         `json:"when,omitempty"`
-	Duration      int64          `json:"duration,omitempty"`
-	WhereNullable sql.NullString `json:"-"`
-	Where         string         `json:"where,omitempty"`
-	Lat           float64        `json:"lat,omitempty"`
-	Lon           float64        `json:"lon,omitempty"`
-	North         float64        `json:"north,omitempty"`
-	East          float64        `json:"east,omitempty"`
-	South         float64        `json:"south,omitempty"`
-	West          float64        `json:"west,omitempty"`
-	Status        string         `json:"status"`
-	RSVPLimit     int32          `json:"rsvpLimit"`
-	RSVPAttending int32          `json:"rsvpAttend,omitempty"`
-	RSVPSpaces    int32          `json:"rsvpSpaces,omitempty"`
+	WhenNullable   pq.NullTime    `json:"-"`
+	When           string         `json:"when,omitempty"`
+	TZ             string         `json:"tz,omitempty"`
+	WhenTzNullable pq.NullTime    `json:"-"`
+	WhenTz         string         `json:"whentz,omitempty"`
+	Duration       int64          `json:"duration,omitempty"`
+	WhereNullable  sql.NullString `json:"-"`
+	Where          string         `json:"where,omitempty"`
+	Lat            float64        `json:"lat,omitempty"`
+	Lon            float64        `json:"lon,omitempty"`
+	North          float64        `json:"north,omitempty"`
+	East           float64        `json:"east,omitempty"`
+	South          float64        `json:"south,omitempty"`
+	West           float64        `json:"west,omitempty"`
+	Status         string         `json:"status"`
+	RSVPLimit      int32          `json:"rsvpLimit"`
+	RSVPAttending  int32          `json:"rsvpAttend,omitempty"`
+	RSVPSpaces     int32          `json:"rsvpSpaces,omitempty"`
 
 	ItemSummaryMeta
 }
@@ -67,21 +70,24 @@ type EventType struct {
 	ItemDetail
 
 	// Specific to events
-	WhenNullable  pq.NullTime    `json:"-"`
-	When          string         `json:"when,omitempty"`
-	Duration      int32          `json:"duration,omitempty"`
-	Where         string         `json:"where,omitempty"`
-	WhereNullable sql.NullString `json:"-"`
-	Lat           float64        `json:"lat,omitempty"`
-	Lon           float64        `json:"lon,omitempty"`
-	North         float64        `json:"north,omitempty"`
-	East          float64        `json:"east,omitempty"`
-	South         float64        `json:"south,omitempty"`
-	West          float64        `json:"west,omitempty"`
-	Status        string         `json:"status"`
-	RSVPLimit     int32          `json:"rsvpLimit"`
-	RSVPAttending int32          `json:"rsvpAttend,omitempty"`
-	RSVPSpaces    int32          `json:"rsvpSpaces,omitempty"`
+	WhenNullable   pq.NullTime    `json:"-"`
+	When           string         `json:"when,omitempty"`
+	TZ             string         `json:"tz,omitempty"`
+	WhenTzNullable pq.NullTime    `json:"-"`
+	WhenTz         string         `json:"whentz,omitempty"`
+	Duration       int32          `json:"duration,omitempty"`
+	Where          string         `json:"where,omitempty"`
+	WhereNullable  sql.NullString `json:"-"`
+	Lat            float64        `json:"lat,omitempty"`
+	Lon            float64        `json:"lon,omitempty"`
+	North          float64        `json:"north,omitempty"`
+	East           float64        `json:"east,omitempty"`
+	South          float64        `json:"south,omitempty"`
+	West           float64        `json:"west,omitempty"`
+	Status         string         `json:"status"`
+	RSVPLimit      int32          `json:"rsvpLimit"`
+	RSVPAttending  int32          `json:"rsvpAttend,omitempty"`
+	RSVPSpaces     int32          `json:"rsvpSpaces,omitempty"`
 
 	ItemDetailCommentsAndMeta
 }
@@ -147,7 +153,11 @@ func (m *EventType) Validate(
 			return http.StatusBadRequest, err
 		}
 
-		m.WhenNullable = pq.NullTime{Time: eventTimestamp, Valid: true}
+		m.WhenNullable = pq.NullTime{Time: eventTimestamp.UTC(), Valid: true}
+	}
+
+	if strings.Trim(m.TZ, ` `) == `` {
+		m.TZ = "Europe/Belfast"
 	}
 
 	// If no duration is specified, default to 1 hour.
@@ -372,12 +382,12 @@ INSERT INTO events (
     microcosm_id, title, created, created_by, "when",
     duration, "where", lat, lon, bounds_north,
     bounds_east, bounds_south, bounds_west, status, rsvp_limit,
-    rsvp_spaces
+    rsvp_spaces, tz_name
 ) VALUES (
     $1, $2, $3, $4, $5,
     $6, $7, $8, $9, $10,
     $11, $12, $13, $14, $15,
-    $16
+    $16, $17
 ) RETURNING event_id`,
 		m.MicrocosmID,
 		m.Title,
@@ -395,6 +405,7 @@ INSERT INTO events (
 		m.Status,
 		m.RSVPLimit,
 		m.RSVPSpaces,
+		m.TZ,
 	).Scan(
 		&insertID,
 	)
@@ -458,6 +469,7 @@ UPDATE events
       ,bounds_west = $15
       ,status = $16
       ,rsvp_limit = $17
+      ,tz_name = $18
  WHERE event_id = $1`,
 
 		m.ID,
@@ -480,6 +492,7 @@ UPDATE events
 
 		m.Status,
 		m.RSVPLimit,
+		m.TZ,
 	)
 	if err != nil {
 		tx.Rollback()
@@ -717,6 +730,8 @@ SELECT e.event_id
       ,e.rsvp_attending
 
       ,e.rsvp_spaces
+      ,e.tz_name
+      ,e."when"::TIMESTAMP AT TIME ZONE e.tz_name AS whentz
   FROM events e
        JOIN flags f ON f.site_id = $2
                    AND f.item_type_id = 9
@@ -762,6 +777,8 @@ SELECT e.event_id
 		&m.RSVPAttending,
 
 		&m.RSVPSpaces,
+		&m.TZ,
+		&m.WhenTzNullable,
 	)
 	if err == sql.ErrNoRows {
 		return EventType{}, http.StatusNotFound,
@@ -780,6 +797,9 @@ SELECT e.event_id
 	}
 	if m.WhenNullable.Valid {
 		m.When = m.WhenNullable.Time.Format(time.RFC3339Nano)
+	}
+	if m.WhenTzNullable.Valid {
+		m.WhenTz = m.WhenTzNullable.Time.Format(time.RFC3339Nano)
 	}
 	if m.WhereNullable.Valid {
 		m.Where = m.WhereNullable.String
@@ -904,6 +924,8 @@ SELECT event_id
            AND item_is_deleted IS NOT TRUE
            AND item_is_moderated IS NOT TRUE) AS comment_count
       ,view_count
+      ,tz_name
+      ,"when"::TIMESTAMP AT TIME ZONE tz_name AS whentz
  FROM events
 WHERE event_id = $1
   AND is_deleted(9, event_id) IS FALSE`,
@@ -938,6 +960,8 @@ WHERE event_id = $1
 		&m.RSVPSpaces,
 		&m.CommentCount,
 		&m.ViewCount,
+		&m.TZ,
+		&m.WhenTzNullable,
 	)
 	if err == sql.ErrNoRows {
 		return EventSummaryType{}, http.StatusInternalServerError,
@@ -951,6 +975,9 @@ WHERE event_id = $1
 
 	if m.WhenNullable.Valid {
 		m.When = m.WhenNullable.Time.Format(time.RFC3339Nano)
+	}
+	if m.WhenTzNullable.Valid {
+		m.WhenTz = m.WhenTzNullable.Time.Format(time.RFC3339Nano)
 	}
 
 	if m.WhereNullable.Valid {

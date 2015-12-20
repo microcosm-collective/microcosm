@@ -252,18 +252,18 @@ func searchMetaData(
 
 		if m.Query.EventBeforeTime.IsZero() {
 			filterModified = fmt.Sprintf(`
-   AND e."when" > to_timestamp(%d)`,
+   AND e."when"::TIMESTAMP AT TIME ZONE e.tz_name > to_timestamp(%d)`,
 				m.Query.EventAfterTime.Unix(),
 			)
 
 		} else if m.Query.EventAfterTime.IsZero() {
 			filterModified = fmt.Sprintf(`
-   AND e."when" < to_timestamp(%d)`,
+   AND e."when"::TIMESTAMP AT TIME ZONE e.tz_name < to_timestamp(%d)`,
 				m.Query.EventBeforeTime.Unix(),
 			)
 		} else {
 			filterModified = fmt.Sprintf(`
-   AND e."when" BETWEEN to_timestamp(%d) AND to_timestamp(%d)`,
+   AND e."when"::TIMESTAMP AT TIME ZONE e.tz_name BETWEEN to_timestamp(%d) AND to_timestamp(%d)`,
 				m.Query.EventAfterTime.Unix(),
 				m.Query.EventBeforeTime.Unix(),
 			)
