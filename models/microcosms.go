@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -25,6 +26,8 @@ type MicrocosmCore struct {
 	Visibility       string               `json:"visibility"`
 	Title            string               `json:"title"`
 	Description      string               `json:"description"`
+	LogoURL          string               `json:"logoUrl"`
+	LogoURLNullable  sql.NullString       `json:"-"`
 	ItemTypes        []string             `json:"itemTypes"`
 }
 
@@ -50,6 +53,8 @@ type MicrocosmSummaryType struct {
 // MicrocosmType is a microcosm
 type MicrocosmType struct {
 	MicrocosmCore
+
+	RemoveLogo bool `json:"removeLogo,omitempty"`
 
 	OwnedByID int64 `json:"-"`
 
@@ -129,6 +134,20 @@ func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
 	if m.ParentID > 0 {
 		m.parentIDNullable.Valid = true
 		m.parentIDNullable.Int64 = m.ParentID
+	}
+
+	if strings.TrimSpace(m.LogoURL) != "" {
+		// Ensure that this is in fact a URL and not some malicious input
+		u, err := url.Parse(m.LogoURL)
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
+		m.LogoURLNullable.Valid = true
+		m.LogoURLNullable.String = u.String()
+	}
+
+	if m.RemoveLogo {
+		m.LogoURLNullable = sql.NullString{}
 	}
 
 	return http.StatusOK, nil
@@ -261,7 +280,7 @@ INSERT INTO microcosms (
     created_by, owned_by, item_types, parent_id
 ) VALUES (
     $1, $2, $3, $4, $5,
-    $6, $7, $8, $9
+    $6, $7, $8, $9, $10
 ) RETURNING microcosm_id`,
 		m.SiteID,
 		m.Visibility,
@@ -272,6 +291,7 @@ INSERT INTO microcosms (
 		m.OwnedByID,
 		itemTypesToPSQLArray(m.ItemTypes),
 		m.parentIDNullable,
+		m.LogoURLNullable,
 	).Scan(
 		&insertID,
 	)
@@ -305,6 +325,8 @@ func (m *MicrocosmType) Update() (int, error) {
 		return status, err
 	}
 
+	glog.Warningf("%+v", m)
+
 	// Update resource
 	tx, err := h.GetTransaction()
 	if err != nil {
@@ -322,7 +344,8 @@ UPDATE microcosms
        edited_by = $7,
        edit_reason = $8,
        item_types = $9,
-       parent_id = $10
+       parent_id = $10,
+       logo_url = $11
  WHERE microcosm_id = $1`,
 		m.ID,
 		m.SiteID,
@@ -334,6 +357,7 @@ UPDATE microcosms
 		m.Meta.EditReason,
 		itemTypesToPSQLArray(m.ItemTypes),
 		m.parentIDNullable,
+		m.LogoURLNullable,
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
@@ -516,6 +540,7 @@ SELECT microcosm_id,
        visibility,
        title,
        description,
+       logo_url,
        created,
        created_by,
        edited,
@@ -541,6 +566,7 @@ SELECT microcosm_id,
 		&m.Visibility,
 		&m.Title,
 		&m.Description,
+		&m.LogoURLNullable,
 		&m.Meta.Created,
 		&m.Meta.CreatedByID,
 		&m.Meta.EditedNullable,
@@ -566,6 +592,10 @@ SELECT microcosm_id,
 
 	if m.parentIDNullable.Valid {
 		m.ParentID = m.parentIDNullable.Int64
+	}
+
+	if m.LogoURLNullable.Valid {
+		m.LogoURL = m.LogoURLNullable.String
 	}
 
 	if m.Meta.EditReasonNullable.Valid {
@@ -658,6 +688,7 @@ SELECT m.microcosm_id
       ,m.visibility
       ,m.title
       ,m.description
+      ,m.logo_url
       ,m.created
       ,m.created_by
       ,m.is_sticky
@@ -690,6 +721,7 @@ SELECT m.microcosm_id
 		&m.Visibility,
 		&m.Title,
 		&m.Description,
+		&m.LogoURLNullable,
 		&m.Meta.Created,
 		&m.Meta.CreatedByID,
 		&m.Meta.Flags.Sticky,
@@ -718,6 +750,10 @@ SELECT m.microcosm_id
 
 	if m.parentIDNullable.Valid {
 		m.ParentID = m.parentIDNullable.Int64
+	}
+
+	if m.LogoURLNullable.Valid {
+		m.LogoURL = m.LogoURLNullable.String
 	}
 
 	mru, status, err := GetMostRecentItem(siteID, m.ID, profileID)
