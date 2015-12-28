@@ -325,8 +325,6 @@ func (m *MicrocosmType) Update() (int, error) {
 		return status, err
 	}
 
-	glog.Warningf("%+v", m)
-
 	// Update resource
 	tx, err := h.GetTransaction()
 	if err != nil {
