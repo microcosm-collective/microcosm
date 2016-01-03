@@ -100,7 +100,7 @@ func (m *AttributeType) Validate() (int, error) {
 	case string:
 		m.String =
 			sql.NullString{
-				String: strings.Trim(CleanSentence(m.Value.(string)), " "),
+				String: strings.Trim(CleanSentence(m.Value.(string), true), " "),
 				Valid:  true,
 			}
 		m.Type = tString

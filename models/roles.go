@@ -87,8 +87,8 @@ func (m *RoleType) Validate(
 	int,
 	error,
 ) {
-
-	m.Title = CleanSentence(m.Title)
+	preventShouting := false
+	m.Title = CleanSentence(m.Title, preventShouting)
 
 	// Does the Microcosm specified exist on this site?
 	if !exists && m.MicrocosmID > 0 {
@@ -113,7 +113,7 @@ func (m *RoleType) Validate(
 
 			m.Meta.EditReason = "No reason given"
 		} else {
-			m.Meta.EditReason = CleanSentence(m.Meta.EditReason)
+			m.Meta.EditReason = CleanSentence(m.Meta.EditReason, preventShouting)
 		}
 	}
 

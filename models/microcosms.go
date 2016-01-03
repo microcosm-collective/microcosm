@@ -41,9 +41,10 @@ type MicrocosmsType struct {
 type MicrocosmSummaryType struct {
 	MicrocosmCore
 
-	Moderators   []int64 `json:"moderators"`
-	ItemCount    int64   `json:"totalItems"`
-	CommentCount int64   `json:"totalComments"`
+	Children     interface{} `json:"children,omitempty"`
+	Moderators   []int64     `json:"moderators"`
+	ItemCount    int64       `json:"totalItems"`
+	CommentCount int64       `json:"totalComments"`
 
 	MRU interface{} `json:"mostRecentUpdate,omitempty"`
 
@@ -77,6 +78,7 @@ type MicrocosmLinkType struct {
 	Rel              string `json:"rel,omitempty"` // REST
 	Href             string `json:"href"`
 	Title            string `json:"title,omitempty"`
+	LogoURL          string `json:"logoUrl,omitempty"`
 	ID               int64  `json:"id"`
 	Level            int64  `json:"level,omitempty"`
 	ParentID         int64  `json:"parentId,omitempty"`
@@ -103,7 +105,8 @@ func (v MicrocosmSummaryRequestBySeq) Less(i, j int) bool {
 
 // Validate returns true if the microcosm is valid
 func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
-	m.Title = CleanSentence(m.Title)
+	preventShouting := false
+	m.Title = CleanSentence(m.Title, preventShouting)
 	m.Description = string(SanitiseHTML([]byte(CleanBlockText(m.Description))))
 
 	if exists && !isImport {
@@ -249,10 +252,17 @@ func (m *MicrocosmCore) FetchBreadcrumb() (int, error) {
 func (m *MicrocosmType) Insert() (int, error) {
 	status, err := m.Validate(false, false)
 	if err != nil {
+		glog.Error(err)
 		return status, err
 	}
 
-	return m.insert()
+	status, err = m.insert()
+	if err != nil {
+		glog.Error(err)
+		// No return, as we return below
+	}
+
+	return status, err
 }
 
 // Import saves the microcosm to the database
@@ -277,7 +287,7 @@ func (m *MicrocosmType) insert() (int, error) {
 	err = tx.QueryRow(`-- Create Microcosm
 INSERT INTO microcosms (
     site_id, visibility, title, description, created,
-    created_by, owned_by, item_types, parent_id
+    created_by, owned_by, item_types, parent_id, logo_url
 ) VALUES (
     $1, $2, $3, $4, $5,
     $6, $7, $8, $9, $10
@@ -779,6 +789,15 @@ SELECT m.microcosm_id
 
 	}
 
+	// Get child microcosms
+	children, status, err := getMicrocosmChildren(m.ID)
+	if err != nil {
+		return m, status, err
+	}
+	if len(children) > 0 {
+		m.Children = children
+	}
+
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
@@ -1113,6 +1132,67 @@ SELECT microcosm_id
 	rows.Close()
 
 	c.Set(mcKey, links, mcTTL)
+
+	return links, http.StatusOK, nil
+}
+
+func getMicrocosmChildren(microcosmID int64) ([]MicrocosmLinkType, int, error) {
+	// Retrieve resources
+	db, err := h.GetConnection()
+	if err != nil {
+		return []MicrocosmLinkType{},
+			http.StatusInternalServerError,
+			err
+	}
+
+	rows, err := db.Query(`--GetMicrocosmParents
+SELECT microcosm_id
+      ,title
+      ,logo_url
+  FROM microcosms m
+ WHERE parent_id = $1
+ ORDER BY title ASC`,
+		microcosmID,
+	)
+	if err != nil {
+		glog.Error(err)
+		return []MicrocosmLinkType{},
+			http.StatusInternalServerError,
+			fmt.Errorf("Database query failed: %v", err.Error())
+	}
+	defer rows.Close()
+
+	links := []MicrocosmLinkType{}
+	for rows.Next() {
+		link := MicrocosmLinkType{}
+		logoURLNullable := sql.NullString{}
+		err = rows.Scan(
+			&link.ID,
+			&link.Title,
+			&logoURLNullable,
+		)
+		if err != nil {
+			return []MicrocosmLinkType{},
+				http.StatusInternalServerError,
+				fmt.Errorf("Row parsing error: %v", err.Error())
+		}
+
+		link.Rel = "microcosm child"
+		link.Href = fmt.Sprintf("%s/%d", h.ItemTypesToAPIItem[h.ItemTypeMicrocosm], link.ID)
+
+		if logoURLNullable.Valid {
+			link.LogoURL = logoURLNullable.String
+		}
+
+		links = append(links, link)
+	}
+	err = rows.Err()
+	if err != nil {
+		return []MicrocosmLinkType{},
+			http.StatusInternalServerError,
+			fmt.Errorf("Error fetching rows: %v", err.Error())
+	}
+	rows.Close()
 
 	return links, http.StatusOK, nil
 }

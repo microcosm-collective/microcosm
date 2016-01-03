@@ -70,8 +70,9 @@ func (m *PollType) Validate(
 	error,
 ) {
 
-	m.Title = CleanSentence(m.Title)
-	m.PollQuestion = CleanSentence(m.PollQuestion)
+	preventShouting := true
+	m.Title = CleanSentence(m.Title, preventShouting)
+	m.PollQuestion = CleanSentence(m.PollQuestion, preventShouting)
 
 	// Does the Microcosm specified exist on this site?
 	if !exists {
@@ -93,7 +94,7 @@ func (m *PollType) Validate(
 				fmt.Errorf("You must provide a reason for the update")
 		}
 
-		m.Meta.EditReason = CleanSentence(m.Meta.EditReason)
+		m.Meta.EditReason = CleanSentence(m.Meta.EditReason, preventShouting)
 	}
 
 	if m.MicrocosmID <= 0 {
@@ -116,7 +117,7 @@ func (m *PollType) Validate(
 	}
 
 	for ii := 0; ii < len(m.Choices); ii++ {
-		m.Choices[ii].Choice = CleanSentence(m.Choices[ii].Choice)
+		m.Choices[ii].Choice = CleanSentence(m.Choices[ii].Choice, preventShouting)
 
 		if strings.Trim(m.Choices[ii].Choice, " ") == "" {
 			return http.StatusBadRequest,

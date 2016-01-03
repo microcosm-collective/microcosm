@@ -63,7 +63,8 @@ func (m *HuddleType) GetLink() string {
 // Validate returns true if the huddle if valid
 func (m *HuddleType) Validate(siteID int64, exists bool) (int, error) {
 
-	m.Title = CleanSentence(m.Title)
+	preventShouting := true
+	m.Title = CleanSentence(m.Title, preventShouting)
 
 	if exists {
 		if m.ID < 1 {
@@ -84,8 +85,6 @@ func (m *HuddleType) Validate(siteID int64, exists bool) (int, error) {
 	if strings.Trim(m.Title, " ") == "" {
 		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
 	}
-
-	m.Title = CleanSentence(m.Title)
 
 	return http.StatusOK, nil
 }

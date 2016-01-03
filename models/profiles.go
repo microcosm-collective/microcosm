@@ -152,7 +152,7 @@ func ValidateProfileName(name string) (string, int, error) {
 // Validate returns true if the profile is valid
 func (m *ProfileType) Validate(exists bool) (int, error) {
 
-	m.Gender = CleanSentence(m.Gender)
+	m.Gender = CleanSentence(m.Gender, false)
 
 	if m.SiteID < 1 {
 		return http.StatusBadRequest, fmt.Errorf("Invalid site ID supplied")

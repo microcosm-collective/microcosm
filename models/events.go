@@ -101,9 +101,10 @@ func (m *EventType) Validate(
 	int,
 	error,
 ) {
-	m.Title = CleanSentence(m.Title)
+	preventShouting := true
+	m.Title = CleanSentence(m.Title, preventShouting)
 	m.Where = CleanBlockText(m.Where)
-	m.Meta.EditReason = CleanSentence(m.Meta.EditReason)
+	m.Meta.EditReason = CleanSentence(m.Meta.EditReason, preventShouting)
 
 	// Does the Microcosm specified exist on this site?
 	if !exists {
@@ -124,8 +125,6 @@ func (m *EventType) Validate(
 			return http.StatusBadRequest,
 				fmt.Errorf("You must provide a reason for the update")
 		}
-
-		m.Meta.EditReason = CleanSentence(m.Meta.EditReason)
 	}
 
 	if m.MicrocosmID <= 0 {

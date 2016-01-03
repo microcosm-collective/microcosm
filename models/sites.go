@@ -188,8 +188,8 @@ var regAlphaNum = regexp.MustCompile(`[A-Za-z0-9]+`)
 
 // Validate returns true if the site data is good
 func (m *SiteType) Validate(exists bool) (int, error) {
-
-	m.Title = CleanSentence(m.Title)
+	preventShouting := false
+	m.Title = CleanSentence(m.Title, preventShouting)
 	m.Description = CleanBlockText(m.Description)
 	m.SubdomainKey = CleanWord(m.SubdomainKey)
 	m.Domain = CleanWord(m.Domain)

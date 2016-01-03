@@ -43,7 +43,8 @@ func (m *ConversationType) Validate(
 	int,
 	error,
 ) {
-	m.Title = CleanSentence(m.Title)
+	preventShouting := true
+	m.Title = CleanSentence(m.Title, preventShouting)
 
 	if strings.Trim(m.Title, " ") == "" {
 		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
@@ -77,7 +78,7 @@ func (m *ConversationType) Validate(
 
 		}
 
-		m.Meta.EditReason = CleanSentence(m.Meta.EditReason)
+		m.Meta.EditReason = CleanSentence(m.Meta.EditReason, preventShouting)
 	}
 
 	if m.MicrocosmID <= 0 {

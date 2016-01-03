@@ -20,8 +20,8 @@ func CleanWord(s string) string {
 }
 
 // CleanSentence strips all HTML tags, allows ASCII space
-func CleanSentence(s string) string {
-	return textPolicy.Sanitize(stripChars(s, true, true, false, true))
+func CleanSentence(s string, preventShouting bool) string {
+	return textPolicy.Sanitize(stripChars(s, true, true, false, preventShouting))
 }
 
 // CleanBlockText allows everything, allows tabs, newlines, ASCII space but
