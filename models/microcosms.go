@@ -225,6 +225,15 @@ func (m *MicrocosmSummaryType) Hydrate(
 		return status, err
 	}
 
+	// Get child microcosms
+	children, status, err := getMicrocosmChildren(m.ID, profileID)
+	if err != nil {
+		return status, err
+	}
+	if len(children) > 0 {
+		m.Children = children
+	}
+
 	return http.StatusOK, nil
 }
 
@@ -789,15 +798,6 @@ SELECT m.microcosm_id
 
 	}
 
-	// Get child microcosms
-	children, status, err := getMicrocosmChildren(m.ID)
-	if err != nil {
-		return m, status, err
-	}
-	if len(children) > 0 {
-		m.Children = children
-	}
-
 	// Update cache
 	c.Set(mcKey, m, mcTTL)
 
@@ -1136,7 +1136,7 @@ SELECT microcosm_id
 	return links, http.StatusOK, nil
 }
 
-func getMicrocosmChildren(microcosmID int64) ([]MicrocosmLinkType, int, error) {
+func getMicrocosmChildren(microcosmID int64, profileID int64) ([]MicrocosmLinkType, int, error) {
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
@@ -1151,8 +1151,12 @@ SELECT microcosm_id
       ,logo_url
   FROM microcosms m
  WHERE parent_id = $1
+   AND is_deleted IS NOT TRUE
+   AND is_moderated IS NOT TRUE
+   AND (get_effective_permissions(site_id,microcosm_id,2,microcosm_id,$2)).can_read IS TRUE
  ORDER BY title ASC`,
 		microcosmID,
+		profileID,
 	)
 	if err != nil {
 		glog.Error(err)
