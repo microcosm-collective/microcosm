@@ -1,5 +1,6 @@
 UPDATE sites
    SET title = 'LFGSS'
+      ,background_color = '#424143'
       ,description = '<p>London Fixed Gear and Single-Speed is a community of predominantly fixed gear and single-speed cyclists in and around London, UK.</p>
    <p>This site is supported almost exclusively by donations. Please consider <a href=https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JVANL7DPKDK8U>donating</a> a small amount regularly.</p>
 <form action=https://www.paypal.com/cgi-bin/webscr method=post target=_top style=text-align:center>
