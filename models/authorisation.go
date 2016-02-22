@@ -77,7 +77,7 @@ func GetPermission(ac AuthContext) PermissionType {
 	// race condition on the insert that will cause one of the queries (the
 	// latter) to fail.
 	m := PermissionType{Context: ac, Valid: true}
-	err = tx.QueryRow(`
+	err = tx.QueryRow(`--GetEffectivePermissions
 SELECT can_create
       ,can_read
       ,can_update

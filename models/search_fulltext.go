@@ -173,7 +173,11 @@ func searchFullText(
               AND si.profile_id = %d`, m.Query.ProfileID)
 	}
 
-	var filterMicrocosmIDs string
+	var (
+		filterMicrocosmIDs    string
+		filterHuddlesJoin     string
+		filterThingsInHuddles string
+	)
 	if len(m.Query.MicrocosmIDs) > 0 {
 		if len(m.Query.MicrocosmIDs) == 1 {
 			filterMicrocosmIDs = fmt.Sprintf(`
@@ -190,6 +194,14 @@ func searchFullText(
 			filterMicrocosmIDs = `
    AND f.microcosm_id IN (` + inList + `)`
 		}
+	} else {
+		filterHuddlesJoin = `
+             LEFT JOIN huddle_profiles h ON (f.parent_item_type_id = 5 OR f.item_type_id = 5)
+                                        AND h.huddle_id = COALESCE(f.parent_item_id, f.item_id)
+                                        AND h.profile_id = $2`
+		filterThingsInHuddles = `
+                   OR -- Things in huddles
+                      COALESCE(f.parent_item_id, f.item_id) = h.huddle_id`
 	}
 
 	var filterModified string
@@ -268,7 +280,7 @@ WITH m AS (
      WHERE m.site_id = $1
        AND m.is_deleted IS NOT TRUE
        AND m.is_moderated IS NOT TRUE
-       AND i.profile_id IS NULL
+       AND i.profile_id IS NULL` + strings.Replace(filterMicrocosmIDs, `f.microcosm_id`, `m.microcosm_id`, -1) + `
        AND (
                (p.can_read IS NOT NULL AND p.can_read IS TRUE)
             OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$2)).can_read IS TRUE
@@ -300,10 +312,8 @@ SELECT total
                                 AND i.item_type_id = f.item_type_id
                                 AND i.item_id = f.item_id` +
 		filterEventsJoin +
-		filterFollowing + `
-             LEFT JOIN huddle_profiles h ON (f.parent_item_type_id = 5 OR f.item_type_id = 5)
-                                        AND h.huddle_id = COALESCE(f.parent_item_id, f.item_id)
-                                        AND h.profile_id = $2
+		filterFollowing +
+		filterHuddlesJoin + `
                  ,plainto_tsquery($3) AS query
             WHERE f.site_id = $1
               AND i.profile_id IS NULL` +
@@ -326,9 +336,7 @@ SELECT total
                       -- Things that are public by default
                       COALESCE(f.parent_item_type_id, f.item_type_id) = 3
                    OR -- Things in microcosms
-                      COALESCE(f.microcosm_id, f.item_id) IN (SELECT microcosm_id FROM m)
-                   OR -- Things in huddles
-                      COALESCE(f.parent_item_id, f.item_id) = h.huddle_id
+                      COALESCE(f.microcosm_id, f.item_id) IN (SELECT microcosm_id FROM m)` + filterThingsInHuddles + `
                   )
             ORDER BY ` + orderBy + `
             LIMIT $4

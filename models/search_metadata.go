@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -303,7 +304,7 @@ WITH m AS (
      WHERE m.site_id = $1
        AND m.is_deleted IS NOT TRUE
        AND m.is_moderated IS NOT TRUE
-       AND i.profile_id IS NULL
+       AND i.profile_id IS NULL` + strings.Replace(filterMicrocosmIDs, `f.microcosm_id`, `m.microcosm_id`, -1) + `
        AND (
                (p.can_read IS NOT NULL AND p.can_read IS TRUE)
             OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$2)).can_read IS TRUE

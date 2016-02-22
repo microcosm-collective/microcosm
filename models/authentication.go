@@ -59,7 +59,7 @@ func (m *AccessTokenType) Insert() (int, error) {
 	}
 	defer tx.Rollback()
 
-	err = tx.QueryRow(`
+	err = tx.QueryRow(`--InsertAccessToken
 INSERT INTO access_tokens (
     token_value, user_id, client_id
 ) VALUES (
@@ -116,7 +116,7 @@ func GetAccessToken(token string) (AccessTokenType, int, error) {
 
 	var m AccessTokenType
 
-	err = db.QueryRow(`
+	err = db.QueryRow(`--GetAccessToken
 SELECT access_token_id
       ,token_value
       ,user_id
@@ -166,7 +166,7 @@ func (m *AccessTokenType) Delete() (int, error) {
 	}
 	defer tx.Rollback()
 
-	_, err = tx.Exec(`
+	_, err = tx.Exec(`--DeleteAccessToken
 DELETE FROM access_tokens 
  WHERE token_value = $1`,
 		m.TokenValue,
@@ -196,7 +196,7 @@ func RetrieveClientBySecret(secret string) (OAuthClientType, error) {
 		return OAuthClientType{}, err
 	}
 
-	rows, err := db.Query(`
+	rows, err := db.Query(`--GetOAuthClientBySecret
 SELECT client_id
       ,name
       ,created
