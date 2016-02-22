@@ -91,7 +91,7 @@ func searchMetaData(
 
 	// Process search options
 
-	var filterFollowing string
+	var filterFollowingJoin string
 	var filterItemTypes string
 	var filterItems string
 	var includeHuddles bool
@@ -113,7 +113,7 @@ func searchMetaData(
 	}
 
 	if m.Query.Following {
-		filterFollowing = `
+		filterFollowingJoin = `
        JOIN watchers w ON w.item_type_id = f.item_type_id
                       AND w.item_id = f.item_id
                       AND w.profile_id = $2`
@@ -283,6 +283,20 @@ func searchMetaData(
 		}
 	}
 
+	var filterHasAttachmentsJoin string
+	if len(m.Query.Has) > 0 {
+		for _, val := range m.Query.Has {
+			switch val {
+			case "attachment":
+				filterHasAttachmentsJoin = `
+  JOIN (SELECT DISTINCT item_type_id, item_id FROM attachments) AS a
+           ON a.item_type_id = f.item_type_id
+          AND a.item_id = f.item_id`
+			default:
+			}
+		}
+	}
+
 	// These make up our SQL query
 	sqlSelect := `
 SELECT 0,0,0,NULL,NULL,NOW(),0,''`
@@ -343,7 +357,8 @@ SELECT f.item_type_id
   LEFT JOIN ignores i ON i.profile_id = $2
                      AND i.item_type_id = f.item_type_id
                      AND i.item_id = f.item_id` +
-		filterFollowing +
+		filterHasAttachmentsJoin +
+		filterFollowingJoin +
 		filterEventsJoin + `
  WHERE f.site_id = $1
    AND i.profile_id IS NULL` +

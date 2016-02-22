@@ -59,9 +59,9 @@ func searchFullText(
 		orderBy = `e."when" DESC`
 	}
 
-	var filterFollowing string
+	var filterFollowingJoin string
 	if m.Query.Following {
-		filterFollowing = `
+		filterFollowingJoin = `
                   JOIN watchers w ON w.item_type_id = f.item_type_id
                                  AND w.item_id = f.item_id
                                  AND w.profile_id = $2`
@@ -266,7 +266,22 @@ func searchFullText(
 		}
 	}
 
-	sqlQuery := `
+	var filterHasAttachmentsJoin string
+	if len(m.Query.Has) > 0 {
+		for _, val := range m.Query.Has {
+			switch val {
+			case "attachment":
+				filterHasAttachmentsJoin = `
+  JOIN (SELECT DISTINCT item_type_id, item_id FROM attachments) AS a
+           ON a.item_type_id = f.item_type_id
+          AND a.item_id = f.item_id`
+			default:
+			}
+		}
+	}
+
+	// Now we define our SQL
+	sqlWith := `
 WITH m AS (
     SELECT m.microcosm_id
       FROM microcosms m
@@ -285,34 +300,18 @@ WITH m AS (
                (p.can_read IS NOT NULL AND p.can_read IS TRUE)
             OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$2)).can_read IS TRUE
            )
-)
-SELECT total
-      ,item_type_id
-      ,item_id
-      ,parent_item_type_id
-      ,parent_item_id
-      ,last_modified
-      ,rank
-      ,ts_headline(` + fullTextScope + `_text, query) AS highlight
-      ,has_unread(item_type_id, item_id, $2)
-  FROM (
-           SELECT COUNT(*) OVER() AS total
-                 ,f.item_type_id
-                 ,f.item_id
-                 ,f.parent_item_type_id
-                 ,f.parent_item_id
-                 ,f.last_modified
-                 ,ts_rank_cd(si.` + fullTextScope + `_vector, query, 8) AS rank
-                 ,si.` + fullTextScope + `_text
-                 ,query.query
+)`
+
+	sqlFromWhere := `
              FROM search_index si
                   JOIN flags f ON f.item_type_id = si.item_type_id
                               AND f.item_id = si.item_id
              LEFT JOIN ignores i ON i.profile_id = $2
                                 AND i.item_type_id = f.item_type_id
                                 AND i.item_id = f.item_id` +
+		filterHasAttachmentsJoin +
 		filterEventsJoin +
-		filterFollowing +
+		filterFollowingJoin +
 		filterHuddlesJoin + `
                  ,plainto_tsquery($3) AS query
             WHERE f.site_id = $1
@@ -337,7 +336,26 @@ SELECT total
                       COALESCE(f.parent_item_type_id, f.item_type_id) = 3
                    OR -- Things in microcosms
                       COALESCE(f.microcosm_id, f.item_id) IN (SELECT microcosm_id FROM m)` + filterThingsInHuddles + `
-                  )
+                  )`
+
+	sqlQuery := sqlWith + `
+SELECT item_type_id
+      ,item_id
+      ,parent_item_type_id
+      ,parent_item_id
+      ,last_modified
+      ,rank
+      ,ts_headline(` + fullTextScope + `_text, query) AS highlight
+      ,has_unread(item_type_id, item_id, $2)
+  FROM (
+           SELECT f.item_type_id
+                 ,f.item_id
+                 ,f.parent_item_type_id
+                 ,f.parent_item_id
+                 ,f.last_modified
+                 ,ts_rank_cd(si.` + fullTextScope + `_vector, query, 8) AS rank
+                 ,si.` + fullTextScope + `_text
+                 ,query.query` + sqlFromWhere + `
             ORDER BY ` + orderBy + `
             LIMIT $4
            OFFSET $5
@@ -350,8 +368,33 @@ SELECT total
 		return m, http.StatusInternalServerError, err
 	}
 
+	// The totals query
 	queryID := `Search` + randomString()
 	queryTimer := time.NewTimer(searchTimeout)
+	go func() {
+		<-queryTimer.C
+		db.Exec(`SELECT pg_cancel_backend(pid)
+  FROM pg_stat_activity
+ WHERE state = 'active'
+   AND query LIKE '--` + queryID + `%'`)
+	}()
+	var total int64
+	err = db.QueryRow(
+		`--`+queryID+
+			sqlWith+`SELECT COUNT(*)`+sqlFromWhere,
+		siteID,
+		profileID,
+		m.Query.Query,
+	).Scan(&total)
+	if err != nil {
+		glog.Error(err)
+		return m, http.StatusInternalServerError, err
+	}
+	queryTimer.Stop()
+
+	// The main query
+	queryID = `Search` + randomString()
+	queryTimer = time.NewTimer(searchTimeout)
 	go func() {
 		<-queryTimer.C
 		db.Exec(`SELECT pg_cancel_backend(pid)
@@ -416,12 +459,10 @@ SELECT total
 	}
 	defer rows.Close()
 
-	var total int64
 	rs := []SearchResult{}
 	for rows.Next() {
 		var r SearchResult
 		err = rows.Scan(
-			&total,
 			&r.ItemTypeID,
 			&r.ItemID,
 			&r.ParentItemTypeID,
