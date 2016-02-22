@@ -39,6 +39,7 @@ type SearchQuery struct {
 	EventBefore       string    `json:"eventBefore,omitempty"`
 	EventBeforeTime   time.Time `json:"-"`
 	Attendee          bool      `json:"attendee,omitempty"`
+	Has               []string  `json:"has,omitempty"`
 	Sort              string    `json:"sort,omitempty"`
 	Limit             int64     `json:"-"`
 	Offset            int64     `json:"-"`
@@ -156,6 +157,31 @@ func (sq *SearchQuery) ParseFullQueryString() {
 					if !found {
 						sq.ItemTypeIDs = append(sq.ItemTypeIDs, itemTypeID)
 					}
+				}
+			}
+		}
+
+		if k == "has" {
+			for _, t := range v {
+				val := strings.ToLower(t)
+				switch val {
+				case "attachment":
+					// Prevent duplicates
+					var found bool
+					for _, it := range sq.Has {
+						if it == "attachment" {
+							found = true
+							break
+						}
+					}
+					if !found {
+						sq.Has = append(sq.Has, "attachment")
+					}
+				default:
+					sq.IgnoredArr = append(
+						sq.IgnoredArr,
+						fmt.Sprintf("has=%s", t),
+					)
 				}
 			}
 		}
@@ -278,6 +304,26 @@ func (sq *SearchQuery) ParseSingleQueryValue() {
 					if !found {
 						sq.ItemTypeIDs = append(sq.ItemTypeIDs, itemTypeID)
 					}
+				}
+			case "has":
+				switch strings.ToLower(value) {
+				case "attachment":
+					// Prevent duplicates
+					var found bool
+					for _, it := range sq.Has {
+						if it == "attachment" {
+							found = true
+							break
+						}
+					}
+					if !found {
+						sq.Has = append(sq.Has, "attachment")
+					}
+				default:
+					sq.IgnoredArr = append(
+						sq.IgnoredArr,
+						fmt.Sprintf("has=%s", strings.ToLower(value)),
+					)
 				}
 			case "email":
 				// emails
@@ -767,6 +813,12 @@ SELECT DISTINCT m.microcosm_id
 			itemType, _ := h.GetMapStringFromInt(h.ItemTypes, v)
 			sq.ItemTypesQuery = append(sq.ItemTypesQuery, itemType)
 			searched = append(searched, fmt.Sprintf("type:%s", itemType))
+		}
+	}
+
+	if len(sq.Has) > 0 {
+		for _, v := range sq.Has {
+			searched = append(searched, fmt.Sprintf("has:%s", v))
 		}
 	}
 
