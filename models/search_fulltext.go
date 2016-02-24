@@ -301,6 +301,11 @@ func searchFullText(
 		)
 	}
 
+	var filterSRHasAttachmentsJoin string
+	if filterHasAttachmentsJoin != "" {
+		filterSRHasAttachmentsJoin = strings.Replace(filterHasAttachmentsJoin, `f.item`, `si.item`, -1)
+	}
+
 	// Now we define our SQL
 	sqlQuery := `
 WITH m AS (
@@ -324,7 +329,7 @@ WITH m AS (
 ), sr AS (
     SELECT si.item_type_id
           ,si.item_id
-      FROM search_index si
+      FROM search_index si` + filterSRHasAttachmentsJoin + `
           ,plainto_tsquery($3) AS query
      WHERE si.site_id = $1
        AND si.` + fullTextScope + `_vector @@ query` +
