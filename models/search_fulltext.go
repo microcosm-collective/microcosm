@@ -451,7 +451,7 @@ SELECT total
 			return m, http.StatusInternalServerError,
 				merrors.MicrocosmError{
 					ErrorCode:    24,
-					ErrorMessage: "The search query took too long and has been cancelled",
+					ErrorMessage: "Too many results to process, please make your search more specific.",
 				}
 		default:
 			glog.Errorf(
