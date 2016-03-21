@@ -56,26 +56,36 @@ func (m *affWinLink) getDestination() (bool, string) {
 	// Fetch a program ID based on domain
 	var programID int
 	switch m.Link.Domain {
+
 	case "www.bicyinsurance.com":
 		programID = 6213
+
 	case "www.chainreactioncycles.com":
 		programID = 2698
+
 	case "www.cyclestore.co.uk":
 		programID = 3462
+
 	case "www.evanscycles.com":
 		programID = 1302
+
 	case "www.hargrovescycles.co.uk":
 		programID = 2828
+
 	case "brainfood.howies.co.uk":
 		programID = 3167
 	case "www.howies.co.uk":
 		programID = 3167
+
 	case "www.merlincycles.co.uk":
 		programID = 3361
+
 	case "www.pedalsure.com":
 		programID = 6622
+
 	case "www.planetx.co.uk":
 		programID = 6502
+
 	case "www.probikekit.co.nz":
 		programID = 3977
 	case "www.probikekit.co.uk":
@@ -84,14 +94,19 @@ func (m *affWinLink) getDestination() (bool, string) {
 		programID = 3977
 	case "www.probikekit.com.au":
 		programID = 3977
+
 	case "www.ribblecycles.co.uk":
 		programID = 5923
+
 	case "www.rutlandcycling.com":
 		programID = 3395
+
 	case "www.scienceinsport.com":
 		programID = 6219
+
 	case "www.wheelies.co.uk":
 		programID = 6160
+
 	case "www.wiggle.co.uk":
 		programID = 1857
 	case "www.wiggle.es":
