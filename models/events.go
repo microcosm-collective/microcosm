@@ -152,7 +152,10 @@ func (m *EventType) Validate(
 			return http.StatusBadRequest, err
 		}
 
-		m.WhenNullable = pq.NullTime{Time: eventTimestamp.UTC(), Valid: true}
+		// The event timestamp is already at the time that the form submitter
+		// wishes, the timezone is ignored regardless as we don't store that
+		// part in PostgreSQL
+		m.WhenNullable = pq.NullTime{Time: eventTimestamp, Valid: true}
 	}
 
 	if strings.Trim(m.TZ, ` `) == `` {
