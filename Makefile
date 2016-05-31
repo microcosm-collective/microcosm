@@ -17,10 +17,7 @@ export GO15VENDOREXPERIMENT=1
 .PHONY: all fmt build vet test clean dep_restore dep_update
 
 # The first target is always the default action if `make` is called without args
-all: clean fmt vet test build
-
-fmt:
-	@gofmt -w ./$$*
+all: clean vet test build
 
 build: export GOOS=linux
 build: export GOARCH=amd64
@@ -36,31 +33,23 @@ test:
 clean:
 	@find . -maxdepth 1 -name microcosm -delete
 
-dep_restore:
-	@sudo apt-get -y install bzr
-	@go get -u github.com/tools/godep
-	@godep restore
-
-dep_update:
-	@go get -u github.com/bradfitz/gomemcache/memcache
-	@go get -u github.com/cloudflare/ahocorasick
-	@go get -u github.com/disintegration/imaging
-	@go get -u github.com/golang/glog
-	@go get -u github.com/gorilla/mux
-	@go get -u github.com/lib/pq
-	@go get -u github.com/microcosm-cc/bluemonday
-	@go get -u github.com/microcosm-cc/goconfig
-	@go get -u github.com/microcosm-cc/exifutil
-	@go get -u github.com/mitchellh/goamz/aws
-	@go get -u github.com/mitchellh/goamz/s3
-	@go get -u github.com/nytimes/gziphandler
-	@go get -u github.com/robfig/cron
-	@go get -u github.com/russross/blackfriday
-	@go get -u github.com/rwcarlsen/goexif/exif
-	@go get -u github.com/tools/godep
-	@go get -u github.com/xtgo/uuid
-	@go get -u golang.org/x/net/html
-	@go get -u golang.org/x/oauth2
-	@rm -rf Godeps/
-	@godep save ./...
-	@make fmt
+fetch:
+	-gvt fetch github.com/bradfitz/gomemcache/memcache
+	-gvt fetch github.com/cloudflare/ahocorasick
+	-gvt fetch github.com/disintegration/imaging
+	-gvt fetch github.com/golang/glog
+	-gvt fetch github.com/gorilla/mux
+	-gvt fetch github.com/lib/pq
+	-gvt fetch github.com/microcosm-cc/bluemonday
+	-gvt fetch github.com/microcosm-cc/goconfig
+	-gvt fetch github.com/microcosm-cc/exifutil
+	-gvt fetch github.com/mitchellh/goamz/aws
+	-gvt fetch github.com/mitchellh/goamz/s3
+	-gvt fetch github.com/nytimes/gziphandler
+	-gvt fetch github.com/robfig/cron
+	-gvt fetch github.com/russross/blackfriday
+	-gvt fetch github.com/rwcarlsen/goexif/exif
+	-gvt fetch github.com/tools/godep
+	-gvt fetch github.com/xtgo/uuid
+	-gvt fetch golang.org/x/net/html
+	-gvt fetch golang.org/x/oauth2
