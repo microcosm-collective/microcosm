@@ -130,6 +130,8 @@ func (m *Item) Hydrate(siteID int64) (int, error) {
 	return http.StatusOK, nil
 }
 
+// FetchBreadcrumb will populate the breadcrumb trail (parents) of the current
+// item
 func (m *ItemParent) FetchBreadcrumb() (int, error) {
 	if m.MicrocosmID > 0 {
 		breadcrumb, status, err := getMicrocosmParents(m.MicrocosmID)

@@ -12,6 +12,7 @@ var (
 	initHTMLPolicy bool
 )
 
+// ASCIISpace ...
 var ASCIISpace = rune(` `[0])
 
 // CleanWord strips all HTML tags and whitespace

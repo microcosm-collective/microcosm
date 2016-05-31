@@ -992,7 +992,7 @@ func psqlArrayToItemTypes(s string) []string {
 // updateMicrocosmPaths will update the parent paths for all microcosms, and if
 // this resulted in any rows in the database being updated then this will also
 // purge those from cache so that the updates are reflected
-func updateMicrocosmPaths(tx *sql.Tx, siteId int64, cachePurge bool) (int, error) {
+func updateMicrocosmPaths(tx *sql.Tx, siteID int64, cachePurge bool) (int, error) {
 	res, err := tx.Exec(`-- Update Microcosm Paths
 WITH RECURSIVE parent_microcosms AS (
     SELECT microcosm_id
@@ -1014,7 +1014,7 @@ UPDATE microcosms m
            m.path IS NULL
         OR CAST(m.path AS VARCHAR) <> p.path
        )`,
-		siteId,
+		siteID,
 	)
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -1033,7 +1033,7 @@ SELECT microcosm_id
  WHERE site_id = $1
    AND is_deleted IS NOT TRUE
    AND is_moderated IS NOT TRUE`,
-				siteId,
+				siteID,
 			)
 			if err != nil {
 				return http.StatusInternalServerError, err
@@ -1201,6 +1201,8 @@ SELECT microcosm_id
 	return links, http.StatusOK, nil
 }
 
+// GetMicrocosmTree will return a slice of microcosms that encapsulate a tree
+// of all microcosms
 func GetMicrocosmTree(siteID int64, profileID int64) ([]MicrocosmLinkType, int, error) {
 	// Retrieve resources
 	db, err := h.GetConnection()
