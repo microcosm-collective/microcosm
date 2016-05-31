@@ -13,9 +13,12 @@ const webGainsAffiliateID string = "104653"
 
 var webgainsDomainParts = []string{
 	"awcycles",
+	"biketart",
 	"cyclesurgery",
+	"ellis-brigham",
+	"nike",
 	"runnersneed",
-	"webgains",
+	"snowandrock",
 }
 
 type webgainsLink struct {
@@ -45,12 +48,18 @@ func (m *webgainsLink) getDestination() (bool, string) {
 	switch m.Link.Domain {
 	case "www.awcycles.co.uk":
 		programID = 2730
+	case "www.biketart.com":
+		programID = 9697
 	case "www.cyclesurgery.com":
 		programID = 5505
+	case "www.ellis-brigham.com":
+		programID = 5473
+	case "www.nike.com":
+		programID = 6373
 	case "www.runnersneed.com":
 		programID = 5503
-	case "www.westbrookcycles.co.uk":
-		programID = 7793
+	case "www.snowandrock.com":
+		programID = 5504
 	default:
 		return false, m.Link.URL
 	}
