@@ -255,6 +255,8 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 
 	validBackgroundPosition := map[string]bool{
 		"cover":  true,
+		"tall":   true,
+		"wide":   true,
 		"left":   true,
 		"center": true,
 		"right":  true,
