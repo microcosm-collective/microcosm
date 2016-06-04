@@ -22,7 +22,7 @@ var (
 		"  0  0  0/4  *   *   *": models.UpdateMetricsCron,         // Every day at midnight and every 4 hours thereafter
 		"  0  0  1    *   *   *": models.UpdateMicrocosmItemCounts, // Every day at 1am
 		"  0  0  2    *   *   *": models.DeleteOldUpdates,          // Every day at 2am
-		"  0  0  3    *   *   *": models.DeleteOrphanedHuddles,     // Every day at 3am
-		"  0  0  3    *   *   0": models.UpdateProfileCounts,       // Every Sunday at 3am
+		"  0  0  5    *   *   *": models.DeleteOrphanedHuddles,     // Every day at 5am
+		"  0  5  5    *   *   0": models.UpdateProfileCounts,       // Every Sunday at 5.05am
 	}
 )
