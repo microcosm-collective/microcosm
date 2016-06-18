@@ -448,7 +448,6 @@ UPDATE read
 		// Note that even though we just proved that it didn't exist, we could
 		// have multiple transactions doing this and we'are playing safe and
 		// defensively by doing a NOT EXISTS check, this shouldn't fail at all.
-		glog.Infof("INSERT (%d, %d)", m.ItemID, m.ProfileID)
 		res, err = tx.Exec(`
 INSERT INTO read
     (item_type_id, item_id, profile_id, read)
