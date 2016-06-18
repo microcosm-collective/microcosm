@@ -616,7 +616,8 @@ SELECT COUNT(*) OVER() AS total
                      AND i.item_type_id = 3
                      AND i.item_id = ff.created_by
  WHERE i.profile_id IS NULL
- GROUP BY h.huddle_id
+ GROUP BY h.huddle_id, ff.last_modified
+ ORDER BY ff.last_modified DESC
  LIMIT $2
 OFFSET $3`
 	} else {
