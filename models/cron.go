@@ -534,63 +534,51 @@ func DeleteOldUpdates() {
 
 	// Update knowledge of parent items
 	_, err = db.Exec(`--UpdateUpdatesParent
+WITH up AS (
+    SELECT u.update_id
+          ,f.parent_item_type_id
+          ,f.parent_item_id
+      FROM (SELECT * FROM updates WHERE item_type_id = 4 AND parent_item_type_id = 0 AND parent_item_id = 0) u
+      JOIN flags f ON f.item_type_id = u.item_type_id AND f.item_id = u.item_id
+     WHERE u.item_type_id = f.item_type_id
+       AND u.item_id = f.item_id
+)
 UPDATE updates u
-   SET parent_item_type_id = f.parent_item_type_id
-      ,parent_item_id = f.parent_item_id
-  FROM flags f 
- WHERE f.item_type_id = 4
-   AND u.parent_item_type_id = 0
-   AND u.parent_item_id = 0
-   AND u.item_type_id = f.item_type_id
-   AND u.item_id = f.item_id;`)
+   SET parent_item_type_id = up.parent_item_type_id
+      ,parent_item_id = up.parent_item_id
+  FROM (SELECT * FROM up) AS up
+ WHERE u.update_id = up.update_id;`)
 	if err != nil {
 		glog.Error(err)
 		return
 	}
 
-	// Remove all non-MAX items for a parent and for_profile pair
-	_, err = db.Exec(`TRUNCATE updates_latest;`)
+	_, err = db.Exec(`--DeleteOldUpdates
+WITH keep AS (
+SELECT MAX(u.update_id) update_id
+      ,u.for_profile_id
+      ,u.parent_item_type_id
+      ,u.parent_item_id
+  FROM updates u
+ WHERE u.update_type_id IN (1,4)
+ GROUP BY u.for_profile_id
+      ,u.parent_item_type_id
+      ,u.parent_item_id
+), lose AS (
+    SELECT update_id
+      FROM updates
+     WHERE update_type_id IN (1,4)
+       AND for_profile_id != 0
+       AND parent_item_type_id != 0
+       AND parent_item_id != 0
+       AND update_id NOT IN (SELECT update_id FROM keep)
+)
+DELETE FROM updates
+ WHERE update_id IN (SELECT * FROM lose);`)
 	if err != nil {
 		glog.Error(err)
 		return
 	}
 
-	// Remove all non-MAX items for a parent and for_profile pair
-	_, err = db.Exec(`--InsertUpdatesLatest
-INSERT INTO updates_latest
-SELECT MAX(update_id) update_id
-  FROM updates
- WHERE update_type_id IN (1,4)
- GROUP BY for_profile_id
-      ,parent_item_type_id
-      ,parent_item_id;
-`)
-	if err != nil {
-		glog.Error(err)
-		return
-	}
-
-	// Remove all non-MAX items for a parent and for_profile pair
-	_, err = db.Exec(`--PurgeOldUpdates
-DELETE FROM updates u
- WHERE update_type_id IN (1,4)
-   AND for_profile_id != 0
-   AND parent_item_type_id != 0
-   AND parent_item_id != 0
-   AND NOT EXISTS (
-           SELECT update_id
-             FROM updates_latest l
-            WHERE l.update_id = u.update_id
-       );
-`)
-	if err != nil {
-		glog.Error(err)
-		return
-	}
-
-	_, err = db.Exec(`VACUUM FULL ANALYZE updates;`)
-	if err != nil {
-		glog.Error(err)
-		return
-	}
+	glog.Info("Deleted old updates")
 }
