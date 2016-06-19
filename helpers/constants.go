@@ -140,14 +140,15 @@ var ItemTypesToAPIItem = map[string]string{
 
 // List of update_types
 const (
-	UpdateTypeEventReminder      string = "event_reminder"
-	UpdateTypeMentioned          string = "mentioned"
 	UpdateTypeNewComment         string = "new_comment"
+	UpdateTypeReplyToComment     string = "reply_to_comment"
+	UpdateTypeMentioned          string = "mentioned"
 	UpdateTypeNewCommentInHuddle string = "new_comment_in_huddle"
 	UpdateTypeNewEventAttendee   string = "new_attendee"
-	UpdateTypeNewItem            string = "new_item"
 	UpdateTypeNewPollVote        string = "new_vote"
-	UpdateTypeReplyToComment     string = "reply_to_comment"
+	UpdateTypeEventReminder      string = "event_reminder"
+	UpdateTypeNewItem            string = "new_item"
+	UpdateTypeNewUser            string = "new_user"
 )
 
 // UpdateTypes is a map of update_types
@@ -160,19 +161,20 @@ var UpdateTypes = map[string]int64{
 	UpdateTypeNewPollVote:        6, // Vote on a poll you're watching
 	UpdateTypeEventReminder:      7, // Reminder about an event you've RSVPd to
 	UpdateTypeNewItem:            8, // New item created in microcosm you're watching
+	UpdateTypeNewUser:            9, // New user on a site whose profiles you are watching
 }
 
 // List of texts for update_types
 const (
-	UpdateTextEventReminder      string = "You have an upcoming event"
-	UpdateTextMentioned          string = "You were mentioned in a comment"
-	UpdateTextMicrocosmActivity  string = "There is new activity in a microcosm you are subscribed to"
 	UpdateTextNewComment         string = "There is a new comment in an item you are subscribed to"
+	UpdateTextReplyToComment     string = "A user has replied to your post"
+	UpdateTextMentioned          string = "You were mentioned in a comment"
 	UpdateTextNewCommentInHuddle string = "There is a new comment in a huddle that you are part of"
 	UpdateTextNewEventAttendee   string = "A user has RSVPed to an event you are subscribed to"
-	UpdateTextNewItem            string = "There is a new item in a microcosm you are subscribed to"
 	UpdateTextNewPollVote        string = "A vote has been cast in a poll you are subscribed to"
-	UpdateTextReplyToComment     string = "A user has replied to your post"
+	UpdateTextEventReminder      string = "You have an upcoming event"
+	UpdateTextNewItem            string = "There is a new item in a microcosm you are subscribed to"
+	UpdateTextNewUser            string = "There is a new user and you are watching all profiles"
 )
 
 // UpdateTexts is a map of email titles for a given range of update_types
@@ -185,7 +187,7 @@ var UpdateTexts = map[int64]string{
 	6: UpdateTextNewPollVote,
 	7: UpdateTextEventReminder,
 	8: UpdateTextNewItem,
-	9: UpdateTextMicrocosmActivity,
+	9: UpdateTextNewUser,
 }
 
 // GetItemTypeFromInt returns the string itemType for the integer itemTypeID

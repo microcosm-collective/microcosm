@@ -1223,18 +1223,126 @@ func SendUpdatesForNewItemInAMicrocosm(
 	return http.StatusOK, nil
 }
 
-// SendUpdatesForNewProfileOnSite is Update Type #9 : A new item in a Microcosm
-func SendUpdatesForNewProfileOnSite(
+// SendUpdatesForNewUserOnSite is Update Type #9 : A new user on a site
+func SendUpdatesForNewUserOnSite(
 	siteID int64,
-	profileID int64,
+	p ProfileType,
 ) (
 	int,
 	error,
 ) {
+	updateType, status, err := GetUpdateType(
+		h.UpdateTypes[h.UpdateTypeNewUser],
+	)
+	if err != nil {
+		glog.Errorf("%s %+v", "GetUpdateType()", err)
+		return status, err
+	}
 
-	// Also send to watchers of the site
+	// WHO GETS THE UPDATES?
+	recipients, status, err := GetUpdateRecipients(
+		siteID,
+		h.ItemTypes[h.ItemTypeProfile],
+		p.ID,
+		updateType.ID,
+		p.ID,
+	)
+	if err != nil {
+		glog.Errorf("%s %+v", "GetUpdateRecipients()", err)
+		return status, err
+	}
 
-	// TODO(buro9): Not yet implemented but could be done
+	// SEND UPDATES
+	//
+	// Freely acknowledging that we're going to loop the same thing many
+	// times.
+	if len(recipients) == 0 {
+		glog.Info("No recipients to send updates to")
+		return http.StatusOK, nil
+	}
+
+	// We aren't doing local updates for this as those are visible the in the
+	// today page and make little sense on the following pages for the admins
+	// as it would be too noisy whereas the emails are still desired.
+	sendEmails := false
+	for _, recipient := range recipients {
+		if recipient.SendEmail {
+			sendEmails = true
+			break
+		}
+	}
+	if sendEmails {
+		glog.Info("Building email merge data")
+		mergeData := EmailMergeData{}
+
+		site, status, err := GetSite(siteID)
+		if err != nil {
+			glog.Errorf("%s %+v", "GetSite()", err)
+			return status, err
+		}
+		mergeData.SiteTitle = site.Title
+		mergeData.ProtoAndHost = site.GetURL()
+
+		mergeData.ContextLink = fmt.Sprintf(
+			"%s/profiles/%d/",
+			mergeData.ProtoAndHost,
+			p.ID,
+		)
+
+		ps := ProfileSummaryType{
+			ID:                p.ID,
+			SiteID:            p.SiteID,
+			UserID:            p.UserID,
+			ProfileName:       p.ProfileName,
+			Visible:           p.Visible,
+			AvatarURLNullable: p.AvatarURLNullable,
+			AvatarURL:         p.AvatarURL,
+			AvatarIDNullable:  p.AvatarIDNullable,
+			AvatarID:          p.AvatarID,
+			Meta:              p.Meta,
+		}
+
+		mergeData.ContextText = p.ProfileName
+		mergeData.ByProfile = ps
+
+		// And the templates
+		subjectTemplate, textTemplate, htmlTemplate, status, err :=
+			updateType.GetEmailTemplates()
+		if err != nil {
+			glog.Errorf("%s %+v", "updateType.GetEmailTemplates()", err)
+			return status, err
+		}
+
+		for _, recipient := range recipients {
+			// Everyone who wants an email gets an email:
+			if recipient.SendEmail {
+				// Personalisation of email
+				mergeData.ForProfile = recipient.ForProfile
+
+				user, status, err := GetUser(recipient.ForProfile.UserID)
+				if err != nil {
+					glog.Errorf("%s %+v", "GetUser()", err)
+					return status, err
+				}
+				mergeData.ForEmail = user.Email
+
+				status, err = MergeAndSendEmail(
+					siteID,
+					fmt.Sprintf(emailFrom, GetSiteTitle(siteID)),
+					mergeData.ForEmail,
+					subjectTemplate,
+					textTemplate,
+					htmlTemplate,
+					mergeData,
+				)
+				if err != nil {
+					glog.Errorf("%s %+v", "MergeAndSendEmail()", err)
+				}
+
+				recipient.Watcher.UpdateLastNotified()
+			}
+		}
+	}
 
 	return http.StatusOK, nil
 }

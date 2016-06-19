@@ -143,5 +143,26 @@ func (ctl *ProfilesController) ReadMany(c *models.Context) {
 	}
 	m.Meta.Permissions = perms
 
+	if c.Auth.ProfileID > 0 {
+		// Get watcher status
+		watcherID, sendEmail, sendSms, ignored, status, err := models.GetWatcherAndIgnoreStatus(
+			h.ItemTypes[h.ItemTypeProfile], 0, c.Auth.ProfileID,
+		)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
+
+		if ignored {
+			m.Meta.Flags.Ignored = true
+		}
+
+		if watcherID > 0 {
+			m.Meta.Flags.Watched = true
+			m.Meta.Flags.SendEmail = sendEmail
+			m.Meta.Flags.SendSMS = sendSms
+		}
+	}
+
 	c.RespondWithData(m)
 }

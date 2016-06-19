@@ -270,6 +270,17 @@ SELECT COALESCE(w.watcher_id, 0) AS watcher_id
                               AND i.profile_id = $3
  WHERE f.item_type_id = $1
    AND f.item_id = $2
+ UNION
+-- Deals with the item_id = 0 case as a flags row won't exist
+SELECT watcher_id
+      ,send_email
+      ,send_sms
+      ,FALSE
+  FROM watchers
+ WHERE item_type_id = $1
+   AND item_id = $2
+   AND item_id = 0
+   AND profile_id = $3
  ORDER BY 1 DESC
  LIMIT 1`,
 		itemTypeID,
@@ -407,17 +418,19 @@ SELECT watcher_id,
 	// Only fetch the item itself if valid siteId is given
 	if siteID > 0 {
 		if m.ItemTypeID != 2 {
-			item, _, err := GetSummary(
-				siteID,
-				m.ItemTypeID,
-				m.ItemID,
-				m.ProfileID,
-			)
-			if err != nil {
-				glog.Error(err)
-				return WatcherType{}, http.StatusInternalServerError, err
+			if m.ItemID != 0 {
+				item, _, err := GetSummary(
+					siteID,
+					m.ItemTypeID,
+					m.ItemID,
+					m.ProfileID,
+				)
+				if err != nil {
+					glog.Error(err)
+					return WatcherType{}, http.StatusInternalServerError, err
+				}
+				m.Item = item
 			}
-			m.Item = item
 		} else {
 			microcosm, _, err := GetMicrocosmSummary(
 				siteID,

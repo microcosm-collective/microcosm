@@ -25,8 +25,8 @@ const URLGravatar string = "https://secure.gravatar.com/avatar/"
 
 // ProfilesType encapsulates a collection of profiles
 type ProfilesType struct {
-	Profiles h.ArrayType    `json:"profiles"`
-	Meta     h.CoreMetaType `json:"meta"`
+	Profiles h.ArrayType        `json:"profiles"`
+	Meta     h.ExtendedMetaType `json:"meta"`
 }
 
 // ProfileSummaryType describes a profile, in summary
@@ -1157,13 +1157,17 @@ func GetOrCreateProfile(
 	int,
 	error,
 ) {
-
+	// Fetch profile by userID
 	profileID, status, err := GetProfileID(site.ID, user.ID)
 	if status == http.StatusOK {
+		// Exists, so we can return the existing profile
 		return GetProfile(site.ID, profileID)
 	}
 	if err != nil && status != http.StatusNotFound {
-		return ProfileType{}, http.StatusInternalServerError,
+		// Error finding existing profile and yet it wasn't a 404 so something
+		// went wrong.
+		return ProfileType{},
+			http.StatusInternalServerError,
 			fmt.Errorf("Error fetching profile: %v", err.Error())
 	}
 
@@ -1171,12 +1175,14 @@ func GetOrCreateProfile(
 	p := ProfileType{}
 	p.SiteID = site.ID
 	p.UserID = user.ID
+
 	// Create randomised username unless the profile is for Site ID 1 (root site)
 	if p.SiteID == 1 {
 		p.ProfileName = strings.Split(user.Email, "@")[0]
 	} else {
 		p.ProfileName = SuggestProfileName(user)
 	}
+
 	p.Visible = true
 
 	status, err = p.Insert()
@@ -1184,6 +1190,9 @@ func GetOrCreateProfile(
 		glog.Errorf("Creation of profile failed: %+v\n", err)
 		return ProfileType{}, status, err
 	}
+
+	go SendUpdatesForNewUserOnSite(site.ID, p)
+
 	return p, http.StatusOK, nil
 }
 

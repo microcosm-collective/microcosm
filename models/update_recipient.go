@@ -185,6 +185,21 @@ SELECT CASE WHEN BIT_AND(a.item_watcher) > 0 THEN
    AND f.item_id = $3
    AND (get_effective_permissions($1, COALESCE(f.microcosm_id, 0), $2, $3, w.profile_id)).can_read IS TRUE`
 
+	if updateTypeID == h.UpdateTypes[h.UpdateTypeNewUser] {
+		sql = `--NewUserEmails
+SELECT w.watcher_id
+      ,w.profile_id
+      ,w.last_notified
+      ,w.send_email
+      ,w.send_sms
+  FROM watchers w
+  JOIN profiles p ON p.profile_id = w.profile_id AND p.site_id = $1
+ WHERE w.item_type_id = $2
+   AND w.item_id = 0
+   AND w.send_email IS TRUE
+   AND $3::bigint = $4::bigint`
+	}
+
 	rows, err := db.Query(sql, siteID, itemTypeID, itemID, createdByID)
 	if err != nil {
 		return []UpdateRecipient{}, http.StatusInternalServerError,
