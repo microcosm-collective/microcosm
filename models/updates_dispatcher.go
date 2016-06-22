@@ -22,6 +22,15 @@ type EmailMergeData struct {
 	ContextLink  string
 	ContextText  string
 	Body         string
+	Site         SiteType
+	NewUser      NewUser
+}
+
+// NewUser encapsulates a newly registered user on the site, and provides the
+// structs with the email, profile_name, etc
+type NewUser struct {
+	User    UserType
+	Profile ProfileType
 }
 
 // The only public interfaces to this dispatcher are the following methods
@@ -1225,8 +1234,9 @@ func SendUpdatesForNewItemInAMicrocosm(
 
 // SendUpdatesForNewUserOnSite is Update Type #9 : A new user on a site
 func SendUpdatesForNewUserOnSite(
-	siteID int64,
-	p ProfileType,
+	site SiteType,
+	profile ProfileType,
+	user UserType,
 ) (
 	int,
 	error,
@@ -1241,11 +1251,11 @@ func SendUpdatesForNewUserOnSite(
 
 	// WHO GETS THE UPDATES?
 	recipients, status, err := GetUpdateRecipients(
-		siteID,
+		site.ID,
 		h.ItemTypes[h.ItemTypeProfile],
-		p.ID,
+		profile.ID,
 		updateType.ID,
-		p.ID,
+		profile.ID,
 	)
 	if err != nil {
 		glog.Errorf("%s %+v", "GetUpdateRecipients()", err)
@@ -1274,35 +1284,30 @@ func SendUpdatesForNewUserOnSite(
 	if sendEmails {
 		glog.Info("Building email merge data")
 		mergeData := EmailMergeData{}
-
-		site, status, err := GetSite(siteID)
-		if err != nil {
-			glog.Errorf("%s %+v", "GetSite()", err)
-			return status, err
-		}
 		mergeData.SiteTitle = site.Title
 		mergeData.ProtoAndHost = site.GetURL()
+		mergeData.Site = site
 
 		mergeData.ContextLink = fmt.Sprintf(
 			"%s/profiles/%d/",
 			mergeData.ProtoAndHost,
-			p.ID,
+			profile.ID,
 		)
 
 		ps := ProfileSummaryType{
-			ID:                p.ID,
-			SiteID:            p.SiteID,
-			UserID:            p.UserID,
-			ProfileName:       p.ProfileName,
-			Visible:           p.Visible,
-			AvatarURLNullable: p.AvatarURLNullable,
-			AvatarURL:         p.AvatarURL,
-			AvatarIDNullable:  p.AvatarIDNullable,
-			AvatarID:          p.AvatarID,
-			Meta:              p.Meta,
+			ID:                profile.ID,
+			SiteID:            profile.SiteID,
+			UserID:            profile.UserID,
+			ProfileName:       profile.ProfileName,
+			Visible:           profile.Visible,
+			AvatarURLNullable: profile.AvatarURLNullable,
+			AvatarURL:         profile.AvatarURL,
+			AvatarIDNullable:  profile.AvatarIDNullable,
+			AvatarID:          profile.AvatarID,
+			Meta:              profile.Meta,
 		}
 
-		mergeData.ContextText = p.ProfileName
+		mergeData.ContextText = profile.ProfileName
 		mergeData.ByProfile = ps
 
 		// And the templates
@@ -1319,16 +1324,29 @@ func SendUpdatesForNewUserOnSite(
 				// Personalisation of email
 				mergeData.ForProfile = recipient.ForProfile
 
-				user, status, err := GetUser(recipient.ForProfile.UserID)
+				// Site owners get additional information on the new user,
+				// including the email address.
+				//
+				// TODO: Add IP address and Country to the email data
+				if recipient.ForProfile.ID == site.OwnedByID {
+					mergeData.NewUser = NewUser{
+						User:    user,
+						Profile: profile,
+					}
+				} else {
+					mergeData.NewUser = NewUser{}
+				}
+
+				recipientUser, status, err := GetUser(recipient.ForProfile.UserID)
 				if err != nil {
 					glog.Errorf("%s %+v", "GetUser()", err)
 					return status, err
 				}
-				mergeData.ForEmail = user.Email
+				mergeData.ForEmail = recipientUser.Email
 
 				status, err = MergeAndSendEmail(
-					siteID,
-					fmt.Sprintf(emailFrom, GetSiteTitle(siteID)),
+					site.ID,
+					fmt.Sprintf(emailFrom, site.Title),
 					mergeData.ForEmail,
 					subjectTemplate,
 					textTemplate,

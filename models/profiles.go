@@ -1191,7 +1191,7 @@ func GetOrCreateProfile(
 		return ProfileType{}, status, err
 	}
 
-	go SendUpdatesForNewUserOnSite(site.ID, p)
+	go SendUpdatesForNewUserOnSite(site, p, user)
 
 	return p, http.StatusOK, nil
 }

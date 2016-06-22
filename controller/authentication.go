@@ -121,8 +121,10 @@ func (ctl *AuthController) Create(c *models.Context) {
 			parts := strings.Split(personaRequest.Assertion, "~")
 			moreParts := strings.Split(parts[0], ".")
 			if len(moreParts) > 1 {
-				data, err := base64.StdEncoding.DecodeString(moreParts[1] + "====")
-				if err == nil {
+				data, err := base64.StdEncoding.DecodeString(moreParts[1])
+				if err != nil {
+					glog.Errorf("Could not base64 decode %s: %s", moreParts[1], err)
+				} else {
 					decoded = true
 					glog.Errorf("Bad Persona response: %+v with decoded assertion: %+v", personaResponse, data)
 				}
