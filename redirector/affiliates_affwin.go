@@ -128,14 +128,20 @@ func (m *affWinLink) getDestination() (bool, string) {
 		return false, m.Link.URL
 	}
 
-	if programID == 3977 {
-		u, _ := url.Parse(m.Link.URL)
-		q := u.Query()
-		q.Del("affil")
-		u.RawQuery = q.Encode()
-		m.Link.URL = u.String()
-	}
+	// Remove old tracking info
+	link, _ := url.Parse(m.Link.URL)
+	query := link.Query()
+	query.Del("affil")
+	query.Del("referid")
+	query.Del("utm_campaign")
+	query.Del("utm_content")
+	query.Del("utm_medium")
+	query.Del("utm_term")
+	query.Del("utm_source")
+	link.RawQuery = query.Encode()
+	m.Link.URL = link.String()
 
+	// Create the affiliate URL
 	u, _ := url.Parse("http://www.awin1.com/cread.php")
 	q := u.Query()
 	q.Add("awinaffid", affWinAffiliateID)
