@@ -149,7 +149,7 @@ func SendUpdatesForNewCommentInItem(
 		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
-			"%s/comments/%d/incontext/",
+			"%s/comments/%d/incontext/?utm_source=notification&utm_medium=email&utm_campaign=new_comment",
 			mergeData.ProtoAndHost,
 			comment.ID,
 		)
@@ -359,7 +359,7 @@ func SendUpdatesForNewReplyToYourComment(
 		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
-			"%s/comments/%d/incontext/",
+			"%s/comments/%d/incontext/?utm_source=notification&utm_medium=email&utm_campaign=reply_to_comment",
 			mergeData.ProtoAndHost,
 			comment.ID,
 		)
@@ -498,7 +498,7 @@ func SendUpdatesForNewMentionInComment(
 		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
-			"%s/comments/%d/incontext/",
+			"%s/comments/%d/incontext/?utm_source=notification&utm_medium=email&utm_campaign=mentioned",
 			mergeData.ProtoAndHost,
 			comment.ID,
 		)
@@ -685,7 +685,7 @@ func SendUpdatesForNewCommentInHuddle(
 		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
-			"%s/comments/%d/incontext/",
+			"%s/comments/%d/incontext/?utm_source=notification&utm_medium=email&utm_campaign=new_comment_in_huddle",
 			mergeData.ProtoAndHost,
 			comment.ID,
 		)
@@ -910,7 +910,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
-			"%s/events/%d/",
+			"%s/events/%d/?utm_source=notification&utm_medium=email&utm_campaign=new_attendee",
 			mergeData.ProtoAndHost,
 			attendee.EventID,
 		)
@@ -1157,7 +1157,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 		mergeData.ProtoAndHost = site.GetURL()
 
 		mergeData.ContextLink = fmt.Sprintf(
-			"%s/%ss/%d/",
+			"%s/%ss/%d/?utm_source=notification&utm_medium=email&utm_campaign=new_item",
 			mergeData.ProtoAndHost,
 			itemType,
 			itemID,
@@ -1289,7 +1289,7 @@ func SendUpdatesForNewUserOnSite(
 		mergeData.Site = site
 
 		mergeData.ContextLink = fmt.Sprintf(
-			"%s/profiles/%d/",
+			"%s/profiles/%d/?utm_source=notification&utm_medium=email&utm_campaign=new_user",
 			mergeData.ProtoAndHost,
 			profile.ID,
 		)
