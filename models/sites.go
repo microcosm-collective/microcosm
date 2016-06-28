@@ -132,6 +132,7 @@ type SiteType struct {
 	SubdomainKey            string         `json:"subdomainKey"`
 	Domain                  string         `json:"domain"`
 	DomainNullable          sql.NullString `json:"-"`
+	ForceSSL                bool           `json:"forceSSL,omitempty"`
 	OwnedByID               int64          `json:"-"`
 	OwnedBy                 interface{}    `json:"ownedBy"`
 	ThemeID                 int64          `json:"themeId"`
@@ -603,6 +604,10 @@ func (m *SiteType) GetURL() string {
 		return "https://" + m.SubdomainKey + ".microco.sm"
 	}
 
+	if m.ForceSSL {
+		return "https://" + m.Domain
+	}
+
 	return "http://" + m.Domain
 }
 
@@ -686,6 +691,7 @@ SELECT s.site_id
       ,s.link_color
       ,ga_web_property_id
       ,is_deleted
+      ,force_ssl
   FROM sites s
       ,themes t
  WHERE s.theme_id = t.theme_id
@@ -709,6 +715,7 @@ SELECT s.site_id
 		&m.LinkColor,
 		&m.GaWebPropertyIDNullable,
 		&m.Meta.Flags.Deleted,
+		&m.ForceSSL,
 	)
 	if err == sql.ErrNoRows {
 		return SiteType{}, http.StatusNotFound,
