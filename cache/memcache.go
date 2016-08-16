@@ -28,6 +28,7 @@ const (
 	CacheOptions    int = 10
 	CacheRootID     int = 11 // Used only by the site type
 	CacheBreadcrumb int = 12
+	CacheAttributes int = 13
 )
 
 var (

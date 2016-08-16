@@ -12,6 +12,7 @@ import (
 
 	"github.com/lib/pq"
 
+	c "github.com/microcosm-cc/microcosm/cache"
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
@@ -163,6 +164,10 @@ func UpdateManyAttributes(
 			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
+	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
+		PurgeCache(itemTypeID, itemID)
+	}
+
 	return http.StatusOK, nil
 }
 
@@ -183,6 +188,10 @@ func (m *AttributeType) Update(itemTypeID int64, itemID int64) (int, error) {
 	if err != nil {
 		return http.StatusInternalServerError,
 			fmt.Errorf("Transaction failed: %v", err.Error())
+	}
+
+	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
+		PurgeCache(itemTypeID, itemID)
 	}
 
 	return http.StatusOK, nil
@@ -335,6 +344,10 @@ func DeleteManyAttributes(
 			fmt.Errorf("Transaction failed: %v", err.Error())
 	}
 
+	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
+		PurgeCache(itemTypeID, itemID)
+	}
+
 	return http.StatusOK, nil
 }
 
@@ -346,6 +359,22 @@ func (m *AttributeType) Delete() (int, error) {
 	}
 	defer tx.Rollback()
 
+	var itemTypeID, itemID int64
+	err = tx.QueryRow(`
+SELECT item_type_id
+      ,item_id
+  FROM attribute_keys
+ WHERE attribute_id = $1`,
+		m.ID,
+	).Scan(&itemTypeID, &itemID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Already deleted
+			return http.StatusOK, nil
+		}
+		return http.StatusInternalServerError, err
+	}
+
 	status, err := m.delete(tx)
 	if err != nil {
 		return status, err
@@ -355,6 +384,10 @@ func (m *AttributeType) Delete() (int, error) {
 	if err != nil {
 		return http.StatusInternalServerError,
 			fmt.Errorf("Transaction failed: %v", err.Error())
+	}
+
+	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
+		PurgeCache(itemTypeID, itemID)
 	}
 
 	return http.StatusOK, nil
@@ -532,6 +565,18 @@ func GetAttributes(
 	int,
 	error,
 ) {
+	// Let's cache attributes on profiles, they are hit a lot. We are at risk
+	// though as we're only cache the first page... so we'll check that
+	var mcKey string
+	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] && offset == 0 {
+		// Get from cache if it's available
+		mcKey = fmt.Sprintf(mcProfileKeys[c.CacheAttributes], itemID)
+		if val, ok := c.Get(mcKey, []AttributeType{}); ok {
+			ems := val.([]AttributeType)
+			return ems, int64(len(ems)), 1, http.StatusOK, nil
+		}
+	}
+
 	// Retrieve resources
 	db, err := h.GetConnection()
 	if err != nil {
@@ -625,6 +670,11 @@ OFFSET $4`,
 				"not enough records, offset (%d) would return an empty page",
 				offset,
 			)
+	}
+
+	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] && offset == 0 && pages == 1 {
+		// cacheable
+		c.Set(mcKey, ems, mcTTL)
 	}
 
 	return ems, total, pages, http.StatusOK, nil

@@ -56,11 +56,12 @@ var (
 		c.CacheBreadcrumb: "po_b%d",
 	}
 	mcProfileKeys = map[int]string{
-		c.CacheDetail:  "pr_d%d",
-		c.CacheSummary: "pr_s%d",
-		c.CacheUser:    "us_d%d",
-		c.CacheCounts:  "pr_c%d",
-		c.CacheOptions: "pr_o%d",
+		c.CacheDetail:     "pr_d%d",
+		c.CacheSummary:    "pr_s%d",
+		c.CacheUser:       "us_d%d",
+		c.CacheCounts:     "pr_c%d",
+		c.CacheOptions:    "pr_o%d",
+		c.CacheAttributes: "pr_a%d",
 	}
 	mcRoleKeys = map[int]string{
 		c.CacheDetail: "r_d%d",

@@ -3,7 +3,6 @@ package controller
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/models"
@@ -35,7 +34,6 @@ func WhoAmIHandler(w http.ResponseWriter, r *http.Request) {
 type WhoAmIController struct{}
 
 func (wc *WhoAmIController) Read(c *models.Context) {
-
 	if c.Request.Method != "GET" {
 		c.RespondWithNotImplemented()
 		return
@@ -57,7 +55,12 @@ func (wc *WhoAmIController) Read(c *models.Context) {
 		return
 	}
 
-	m, status, err := models.GetProfileSummary(c.Site.ID, c.Auth.ProfileID)
+	perms := models.GetPermission(
+		models.MakeAuthorisationContext(
+			c, 0, h.ItemTypes[h.ItemTypeProfile], c.Auth.ProfileID),
+	)
+
+	m, status, err := models.GetProfile(c.Site.ID, c.Auth.ProfileID)
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithErrorMessage(
@@ -66,29 +69,35 @@ func (wc *WhoAmIController) Read(c *models.Context) {
 			)
 			return
 		}
-
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("Could not retrieve profile: %v", err.Error()),
 			http.StatusInternalServerError,
 		)
 		return
 	}
+	m.Meta.Permissions = perms
 
-	location := fmt.Sprintf(
-		"%s/%d",
-		h.APITypeProfile,
-		m.ID,
-	)
+	if c.Auth.ProfileID > 0 {
+		m.GetUnreadHuddleCount()
 
-	if c.Auth.ProfileID > 0 && c.Auth.Method == "query" {
-		u, _ := url.Parse(location)
-		qs := u.Query()
-		qs.Del("access_token")
-		qs.Add("access_token", c.Auth.AccessToken.TokenValue)
-		u.RawQuery = qs.Encode()
-		location = u.String()
+		m.Email = models.GetProfileEmail(c.Site.ID, m.ID)
+
+		// Get member status
+		attrs, _, _, status, err := models.GetAttributes(
+			h.ItemTypes[h.ItemTypeProfile],
+			m.ID,
+			h.DefaultQueryLimit,
+			h.DefaultQueryOffset,
+		)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+		}
+		for _, attr := range attrs {
+			if attr.Key == "is_member" && attr.Boolean.Valid {
+				m.Member = attr.Boolean.Bool
+			}
+		}
 	}
 
-	c.ResponseWriter.Header().Set("Location", location)
-	c.RespondWithStatus(307)
+	c.RespondWithData(m)
 }

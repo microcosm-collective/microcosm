@@ -8,7 +8,9 @@ import (
 
 func init() {
 	// Required by the cache stuff
+	gob.Register([]AttributeType{})
 	gob.Register([]h.StatType{})
+	gob.Register([]MicrocosmLinkType{})
 	gob.Register(AccessTokenType{})
 	gob.Register(AttendeeType{})
 	gob.Register(CommentSummaryType{})
@@ -22,7 +24,6 @@ func init() {
 	gob.Register(LastComment{})
 	gob.Register(MicrocosmSummaryType{})
 	gob.Register(MicrocosmType{})
-	gob.Register([]MicrocosmLinkType{})
 	gob.Register(PollSummaryType{})
 	gob.Register(PollType{})
 	gob.Register(ProfileOptionType{})
