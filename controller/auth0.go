@@ -31,16 +31,14 @@ func Auth0Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctl := AuthController{}
+	ctl := Auth0Controller{}
 
 	switch c.GetHTTPMethod() {
 	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "POST", "HEAD"})
+		c.RespondWithOptions([]string{"OPTIONS", "POST"})
 		return
 	case "POST":
 		ctl.Create(c)
-	case "HEAD":
-		ctl.Read(c)
 	default:
 		c.RespondWithStatus(http.StatusMethodNotAllowed)
 		return
