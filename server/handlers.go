@@ -8,7 +8,8 @@ import (
 
 var (
 	rootHandlers = map[string]func(http.ResponseWriter, *http.Request){
-		"/api/v1/auth": controller.AuthHandler,
+		"/api/v1/auth":  controller.AuthHandler,
+		"/api/v1/auth0": controller.Auth0Handler,
 
 		"/api/v1/hosts/{host:[0-9a-zA-Z-.]+}": controller.SiteHostHandler,
 
@@ -37,10 +38,11 @@ var (
 		"/api/v1/whoami": controller.WhoAmIHandler,
 	}
 	siteHandlers = map[string]func(http.ResponseWriter, *http.Request){
-		"/":            controller.RootHandler,
-		"/api":         controller.APIHandler,
-		"/api/v1":      controller.V1Handler,
-		"/api/v1/auth": controller.AuthHandler,
+		"/":             controller.RootHandler,
+		"/api":          controller.APIHandler,
+		"/api/v1":       controller.V1Handler,
+		"/api/v1/auth":  controller.AuthHandler,
+		"/api/v1/auth0": controller.Auth0Handler,
 
 		"/api/v1/{type:comments}":                                                                controller.CommentsHandler,
 		"/api/v1/{type:comments}/{comment_id:[0-9]+}":                                            controller.CommentHandler,

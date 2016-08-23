@@ -126,25 +126,31 @@ type SitesType struct {
 
 // SiteType is the grandaddy of all types and describes a site
 type SiteType struct {
-	ID                      int64          `json:"siteId"`
-	Title                   string         `json:"title"`
-	Description             string         `json:"description"`
-	SubdomainKey            string         `json:"subdomainKey"`
-	Domain                  string         `json:"domain"`
-	DomainNullable          sql.NullString `json:"-"`
-	ForceSSL                bool           `json:"forceSSL,omitempty"`
-	OwnedByID               int64          `json:"-"`
-	OwnedBy                 interface{}    `json:"ownedBy"`
-	ThemeID                 int64          `json:"themeId"`
-	LogoURL                 string         `json:"logoUrl"`
-	FaviconURL              string         `json:"faviconUrl,omitempty"`
-	BackgroundColor         string         `json:"backgroundColor"`
-	BackgroundURL           string         `json:"backgroundUrl,omitempty"`
-	BackgroundPosition      string         `json:"backgroundPosition,omitempty"`
-	LinkColor               string         `json:"linkColor"`
-	GaWebPropertyID         string         `json:"gaWebPropertyId,omitempty"`
-	GaWebPropertyIDNullable sql.NullString `json:"-"`
-	Menu                    []h.LinkType   `json:"menu"`
+	ID                        int64          `json:"siteId"`
+	Title                     string         `json:"title"`
+	Description               string         `json:"description"`
+	SubdomainKey              string         `json:"subdomainKey"`
+	Domain                    string         `json:"domain"`
+	DomainNullable            sql.NullString `json:"-"`
+	ForceSSL                  bool           `json:"forceSSL,omitempty"`
+	OwnedByID                 int64          `json:"-"`
+	OwnedBy                   interface{}    `json:"ownedBy"`
+	ThemeID                   int64          `json:"themeId"`
+	LogoURL                   string         `json:"logoUrl"`
+	FaviconURL                string         `json:"faviconUrl,omitempty"`
+	BackgroundColor           string         `json:"backgroundColor"`
+	BackgroundURL             string         `json:"backgroundUrl,omitempty"`
+	BackgroundPosition        string         `json:"backgroundPosition,omitempty"`
+	LinkColor                 string         `json:"linkColor"`
+	GaWebPropertyID           string         `json:"gaWebPropertyId,omitempty"`
+	GaWebPropertyIDNullable   sql.NullString `json:"-"`
+	Menu                      []h.LinkType   `json:"menu"`
+	Auth0DomainNullable       sql.NullString `json:"-"`
+	Auth0Domain               string         `json:"auth0Domain,omitempty"`
+	Auth0ClientIDNullable     sql.NullString `json:"-"`
+	Auth0ClientID             string         `json:"auth0ClientId,omitempty"`
+	Auth0ClientSecretNullable sql.NullString `json:"-"`
+	Auth0ClientSecret         string         `json:"-"`
 
 	Meta struct {
 		h.CreatedType
@@ -692,6 +698,9 @@ SELECT s.site_id
       ,ga_web_property_id
       ,is_deleted
       ,force_ssl
+      ,auth0_domain
+      ,auth0_client_id
+      ,auth0_client_secret
   FROM sites s
       ,themes t
  WHERE s.theme_id = t.theme_id
@@ -716,6 +725,9 @@ SELECT s.site_id
 		&m.GaWebPropertyIDNullable,
 		&m.Meta.Flags.Deleted,
 		&m.ForceSSL,
+		&m.Auth0DomainNullable,
+		&m.Auth0ClientIDNullable,
+		&m.Auth0ClientSecretNullable,
 	)
 	if err == sql.ErrNoRows {
 		return SiteType{}, http.StatusNotFound,
@@ -730,6 +742,15 @@ SELECT s.site_id
 	}
 	if m.GaWebPropertyIDNullable.Valid {
 		m.GaWebPropertyID = m.GaWebPropertyIDNullable.String
+	}
+	if m.Auth0DomainNullable.Valid {
+		m.Auth0Domain = m.Auth0DomainNullable.String
+	}
+	if m.Auth0ClientIDNullable.Valid {
+		m.Auth0ClientID = m.Auth0ClientIDNullable.String
+	}
+	if m.Auth0ClientSecretNullable.Valid {
+		m.Auth0ClientSecret = m.Auth0ClientSecretNullable.String
 	}
 	menu, status, err := GetMenu(m.ID)
 	if err != nil {

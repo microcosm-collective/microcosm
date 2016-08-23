@@ -64,10 +64,13 @@ func (ctl *AuthController) Create(c *models.Context) {
 	// Audience is the host that Persona authenticates the user for
 	var audience string
 	if c.Site.Domain != "" {
+		// i.e. www.lfgss.com for CNAME
 		audience = c.Site.Domain
 	} else if c.Site.SubdomainKey == "root" {
+		// i.e. microco.sm for root
 		audience = conf.ConfigStrings[conf.MicrocosmDomain]
 	} else {
+		// i.e. lfgss.microco.sm for subdomain
 		audience = fmt.Sprintf("%s.%s", c.Site.SubdomainKey, conf.ConfigStrings[conf.MicrocosmDomain])
 	}
 
