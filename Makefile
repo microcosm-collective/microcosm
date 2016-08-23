@@ -44,22 +44,22 @@ clean:
 	@find . -maxdepth 1 -name microcosm -delete
 
 fetch:
-	-gvt fetch github.com/bradfitz/gomemcache/memcache
-	-gvt fetch github.com/cloudflare/ahocorasick
-	-gvt fetch github.com/disintegration/imaging
-	-gvt fetch github.com/golang/glog
-	-gvt fetch github.com/gorilla/mux
-	-gvt fetch github.com/lib/pq
-	-gvt fetch github.com/microcosm-cc/bluemonday
-	-gvt fetch github.com/microcosm-cc/goconfig
-	-gvt fetch github.com/microcosm-cc/exifutil
-	-gvt fetch github.com/mitchellh/goamz/aws
-	-gvt fetch github.com/mitchellh/goamz/s3
-	-gvt fetch github.com/nytimes/gziphandler
-	-gvt fetch github.com/robfig/cron
-	-gvt fetch github.com/russross/blackfriday
-	-gvt fetch github.com/rwcarlsen/goexif/exif
-	-gvt fetch github.com/tools/godep
-	-gvt fetch github.com/xtgo/uuid
-	-gvt fetch golang.org/x/net/html
-	-gvt fetch golang.org/x/oauth2
+	-gvt fetch -no-recurse github.com/bradfitz/gomemcache/memcache
+	-gvt fetch -no-recurse github.com/cloudflare/ahocorasick
+	-gvt fetch             github.com/disintegration/imaging
+	-gvt fetch -no-recurse github.com/golang/glog
+	-gvt fetch             github.com/gorilla/mux
+	-gvt fetch -no-recurse github.com/lib/pq
+	-gvt fetch             github.com/microcosm-cc/bluemonday
+	-gvt fetch -no-recurse github.com/microcosm-cc/goconfig
+	-gvt fetch -no-recurse github.com/microcosm-cc/exifutil
+	-gvt fetch             github.com/mitchellh/goamz/aws
+	-gvt fetch -no-recurse github.com/mitchellh/goamz/s3
+	-gvt fetch -no-recurse github.com/nytimes/gziphandler
+	-gvt fetch -no-recurse github.com/robfig/cron
+	-gvt fetch             github.com/russross/blackfriday
+	-gvt fetch             github.com/rwcarlsen/goexif/exif
+	-gvt fetch -no-recurse github.com/tools/godep
+	-gvt fetch -no-recurse github.com/xtgo/uuid
+	-gvt fetch -no-recurse golang.org/x/net/html
+	-gvt fetch -no-recurse golang.org/x/oauth2
