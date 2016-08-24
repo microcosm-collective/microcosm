@@ -131,8 +131,6 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		},
 	}
 
-	glog.Infof("code = %s , oauth = %+v", callback.Code, oauth2Config)
-
 	// Exchanging the code for a token
 	token, err := oauth2Config.Exchange(oauth2.NoContext, callback.Code)
 	if err != nil {
@@ -197,8 +195,6 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		)
 		return
 	}
-
-	glog.Infof("userInfo = %+v", userInfo)
 
 	////////////////////////////////////////////////
 	// Create or get a Microcosm user and profile //
