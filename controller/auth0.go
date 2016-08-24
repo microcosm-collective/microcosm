@@ -104,16 +104,16 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 	if c.Site.Domain != "" {
 		// i.e. www.lfgss.com for CNAME
 		if c.Site.ForceSSL {
-			callbackURL = "https://" + c.Site.Domain + "/auth0login"
+			callbackURL = "https://" + c.Site.Domain + "/auth0login/"
 		} else {
-			callbackURL = "http://" + c.Site.Domain + "/auth0login"
+			callbackURL = "http://" + c.Site.Domain + "/auth0login/"
 		}
 	} else if c.Site.SubdomainKey == "root" {
 		// i.e. microco.sm for root
-		callbackURL = "https://" + conf.ConfigStrings[conf.MicrocosmDomain] + "/auth0login"
+		callbackURL = "https://" + conf.ConfigStrings[conf.MicrocosmDomain] + "/auth0login/"
 	} else {
 		// i.e. lfgss.microco.sm for subdomain
-		callbackURL = "https://" + c.Site.SubdomainKey + "." + conf.ConfigStrings[conf.MicrocosmDomain] + "/auth0login"
+		callbackURL = "https://" + c.Site.SubdomainKey + "." + conf.ConfigStrings[conf.MicrocosmDomain] + "/auth0login/"
 	}
 
 	/////////////////////////////
@@ -124,12 +124,14 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		ClientID:     c.Site.Auth0ClientID,
 		ClientSecret: c.Site.Auth0ClientSecret,
 		RedirectURL:  callbackURL,
-		Scopes:       []string{"openid", "name", "email", "nickname"},
+		Scopes:       []string{"openid", "name", "email", "nickname", "picture"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://" + c.Site.Auth0Domain + "/authorize",
 			TokenURL: "https://" + c.Site.Auth0Domain + "/oauth/token",
 		},
 	}
+
+	glog.Infof("code = %s , oauth = %+v", callback.Code, oauth2Config)
 
 	// Exchanging the code for a token
 	token, err := oauth2Config.Exchange(oauth2.NoContext, callback.Code)
@@ -195,6 +197,8 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		)
 		return
 	}
+
+	glog.Infof("userInfo = %+v", userInfo)
 
 	////////////////////////////////////////////////
 	// Create or get a Microcosm user and profile //
