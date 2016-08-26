@@ -127,6 +127,7 @@ type SitesType struct {
 // SiteType is the grandaddy of all types and describes a site
 type SiteType struct {
 	ID                        int64          `json:"siteId"`
+	SiteURL                   string         `json:"siteURL"`
 	Title                     string         `json:"title"`
 	Description               string         `json:"description"`
 	SubdomainKey              string         `json:"subdomainKey"`
@@ -740,6 +741,9 @@ SELECT s.site_id
 	if m.DomainNullable.Valid {
 		m.Domain = m.DomainNullable.String
 	}
+	// Set the definitive siteURL
+	m.SiteURL = m.GetURL()
+
 	if m.GaWebPropertyIDNullable.Valid {
 		m.GaWebPropertyID = m.GaWebPropertyIDNullable.String
 	}
