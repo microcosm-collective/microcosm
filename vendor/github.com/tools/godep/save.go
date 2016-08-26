@@ -14,7 +14,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/tools/godep/Godeps/_workspace/src/github.com/kr/fs"
+	"github.com/kr/fs"
 )
 
 var cmdSave = &Command{
@@ -494,7 +494,7 @@ func copyFile(dst, src string) error {
 	if err != nil {
 		return err
 	}
-	if err := w.Chmod(si.Mode()); err != nil {
+	if err := os.Chmod(dst, si.Mode()); err != nil {
 		return err
 	}
 
