@@ -156,10 +156,10 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		)
 		return
 	}
+	defer resp.Body.Close()
 
 	// Reading the body
 	raw, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
 	if err != nil {
 		glog.Errorf(err.Error())
 		c.RespondWithErrorMessage(
@@ -213,6 +213,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 
 		user, status, err = models.CreateUserByEmailAddress(userInfo.Email)
 		if err != nil {
+			glog.Errorf("Couldn't create user: %v", err.Error())
 			c.RespondWithErrorMessage(
 				fmt.Sprintf("Couldn't create user: %v", err.Error()),
 				http.StatusInternalServerError,
@@ -220,6 +221,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 			return
 		}
 	} else if err != nil {
+		glog.Errorf("Error retrieving user: %v", err.Error())
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("Error retrieving user: %v", err.Error()),
 			http.StatusInternalServerError,
@@ -232,6 +234,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 	// a better job of creating the profile contextually
 	profile, status, err := models.GetOrCreateProfile(c.Site, user)
 	if err != nil {
+		glog.Errorf("Failed to create profile with ID %d: %v", profile.ID, err.Error())
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("Failed to create profile with ID %d: %v", profile.ID, err.Error()),
 			status,
