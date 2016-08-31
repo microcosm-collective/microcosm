@@ -78,56 +78,6 @@ WHEN 'gmx.us' THEN
 WHEN 'googlemail.com' THEN
 	domainpart = 'gmail.com';
 
--- Outlook
-WHEN 'hotmail.be' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.co.jp' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.com' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.com.au' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.com.tw' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.con' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.co.nz' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.co.uk' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.de' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.es' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.fi' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.fr' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.it' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.lt' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.lv' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.nl' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.no' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.org' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.se' THEN
-	domainpart = 'outlook.com';
-WHEN 'hotmail.sg' THEN
-	domainpart = 'outlook.com';
-WHEN 'live.com' THEN
-	domainpart = 'outlook.com';
-WHEN 'live.co.uk' THEN
-	domainpart = 'outlook.com';
-WHEN 'msn.com' THEN
-	domainpart = 'outlook.com';
-WHEN 'passport.com' THEN
-	domainpart = 'outlook.com';
-
 --Virgin
 WHEN 'virgin.net' THEN
 	domainpart = 'virginmedia.com';
@@ -138,8 +88,6 @@ WHEN 'yahoo.ca' THEN
 WHEN 'yahoo.co.id' THEN
 	domainpart = 'yahoo.com';
 WHEN 'yahoo.co.in' THEN
-	domainpart = 'yahoo.com';
-WHEN 'yahoo.co.jp' THEN
 	domainpart = 'yahoo.com';
 WHEN 'yahoo.com.ar' THEN
 	domainpart = 'yahoo.com';
