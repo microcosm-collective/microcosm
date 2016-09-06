@@ -63,3 +63,6 @@ fetch:
 	-gvt fetch -no-recurse github.com/xtgo/uuid
 	-gvt fetch -no-recurse golang.org/x/net/html
 	-gvt fetch -no-recurse golang.org/x/oauth2
+
+update:
+	-gvt update -all
