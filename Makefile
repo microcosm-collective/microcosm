@@ -59,6 +59,7 @@ fetch:
 	-gvt fetch -no-recurse github.com/robfig/cron
 	-gvt fetch             github.com/russross/blackfriday
 	-gvt fetch             github.com/rwcarlsen/goexif/exif
+	-gvt fetch             github.com/sendgrid/sendgrid-go
 	-gvt fetch -no-recurse github.com/tools/godep
 	-gvt fetch -no-recurse github.com/xtgo/uuid
 	-gvt fetch -no-recurse golang.org/x/net/html

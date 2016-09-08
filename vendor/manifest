@@ -143,6 +143,22 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/sendgrid/rest",
+			"repository": "https://github.com/sendgrid/rest",
+			"vcs": "git",
+			"revision": "d37acbf70185e33da36a233f4df95848b052427c",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/sendgrid/sendgrid-go",
+			"repository": "https://github.com/sendgrid/sendgrid-go",
+			"vcs": "git",
+			"revision": "e59d0c5754ee5f91ed5dabe77f97df58f85f7b05",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/shurcooL/sanitized_anchor_name",
 			"repository": "https://github.com/shurcooL/sanitized_anchor_name",
 			"vcs": "git",
@@ -178,7 +194,7 @@
 			"importpath": "golang.org/x/image/bmp",
 			"repository": "https://go.googlesource.com/image",
 			"vcs": "git",
-			"revision": "714f2e47f73aac52208d4f4260e4ba79358a9c28",
+			"revision": "bb355ba4424d077d404aafbb59b05776b2e88fa7",
 			"branch": "master",
 			"path": "/bmp",
 			"notests": true
@@ -187,7 +203,7 @@
 			"importpath": "golang.org/x/image/tiff",
 			"repository": "https://go.googlesource.com/image",
 			"vcs": "git",
-			"revision": "714f2e47f73aac52208d4f4260e4ba79358a9c28",
+			"revision": "bb355ba4424d077d404aafbb59b05776b2e88fa7",
 			"branch": "master",
 			"path": "tiff",
 			"notests": true
@@ -196,7 +212,7 @@
 			"importpath": "golang.org/x/net/html",
 			"repository": "https://go.googlesource.com/net",
 			"vcs": "git",
-			"revision": "1358eff22f0dd0c54fc521042cc607f6ff4b531a",
+			"revision": "9313baa13d9262e49d07b20ed57dceafcd7240cc",
 			"branch": "master",
 			"path": "/html",
 			"notests": true
@@ -213,7 +229,7 @@
 			"importpath": "golang.org/x/text/encoding",
 			"repository": "https://go.googlesource.com/text",
 			"vcs": "git",
-			"revision": "ceefd2213ed29504fff30155163c8f59827734f3",
+			"revision": "1e65e9bf72c307081cea196f47ef37aed17eb316",
 			"branch": "master",
 			"path": "encoding",
 			"notests": true
@@ -222,7 +238,7 @@
 			"importpath": "golang.org/x/text/internal/gen",
 			"repository": "https://go.googlesource.com/text",
 			"vcs": "git",
-			"revision": "ceefd2213ed29504fff30155163c8f59827734f3",
+			"revision": "1e65e9bf72c307081cea196f47ef37aed17eb316",
 			"branch": "master",
 			"path": "internal/gen",
 			"notests": true
@@ -231,7 +247,7 @@
 			"importpath": "golang.org/x/text/internal/tag",
 			"repository": "https://go.googlesource.com/text",
 			"vcs": "git",
-			"revision": "ceefd2213ed29504fff30155163c8f59827734f3",
+			"revision": "1e65e9bf72c307081cea196f47ef37aed17eb316",
 			"branch": "master",
 			"path": "internal/tag",
 			"notests": true
@@ -240,7 +256,7 @@
 			"importpath": "golang.org/x/text/internal/utf8internal",
 			"repository": "https://go.googlesource.com/text",
 			"vcs": "git",
-			"revision": "ceefd2213ed29504fff30155163c8f59827734f3",
+			"revision": "1e65e9bf72c307081cea196f47ef37aed17eb316",
 			"branch": "master",
 			"path": "internal/utf8internal",
 			"notests": true
@@ -249,7 +265,7 @@
 			"importpath": "golang.org/x/text/language",
 			"repository": "https://go.googlesource.com/text",
 			"vcs": "git",
-			"revision": "ceefd2213ed29504fff30155163c8f59827734f3",
+			"revision": "1e65e9bf72c307081cea196f47ef37aed17eb316",
 			"branch": "master",
 			"path": "language",
 			"notests": true
@@ -258,7 +274,7 @@
 			"importpath": "golang.org/x/text/runes",
 			"repository": "https://go.googlesource.com/text",
 			"vcs": "git",
-			"revision": "ceefd2213ed29504fff30155163c8f59827734f3",
+			"revision": "1e65e9bf72c307081cea196f47ef37aed17eb316",
 			"branch": "master",
 			"path": "runes",
 			"notests": true
@@ -267,7 +283,7 @@
 			"importpath": "golang.org/x/text/transform",
 			"repository": "https://go.googlesource.com/text",
 			"vcs": "git",
-			"revision": "ceefd2213ed29504fff30155163c8f59827734f3",
+			"revision": "1e65e9bf72c307081cea196f47ef37aed17eb316",
 			"branch": "master",
 			"path": "transform",
 			"notests": true
@@ -276,7 +292,7 @@
 			"importpath": "golang.org/x/text/unicode/cldr",
 			"repository": "https://go.googlesource.com/text",
 			"vcs": "git",
-			"revision": "ceefd2213ed29504fff30155163c8f59827734f3",
+			"revision": "1e65e9bf72c307081cea196f47ef37aed17eb316",
 			"branch": "master",
 			"path": "unicode/cldr",
 			"notests": true
