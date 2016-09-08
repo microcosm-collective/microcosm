@@ -19,18 +19,19 @@ type UsersType struct {
 
 // UserType encapsulates a user in the system
 type UserType struct {
-	ID           int64          `json:"userId"`
-	Email        string         `json:"email"`
-	Gender       sql.NullString `json:"gender,omitempty"`
-	Language     string         `json:"language,omitempty"`
-	Created      time.Time      `json:"created"`
-	State        sql.NullString `json:"state"`
-	Banned       bool           `json:"banned,omitempty"`
-	Password     string         `json:"-"`
-	PasswordDate time.Time      `json:"-"`
-	DobDay       sql.NullInt64  `json:"dobDay,omitempty"`
-	DobMonth     sql.NullInt64  `json:"dobMonth,omitempty"`
-	DobYear      sql.NullInt64  `json:"dobYear,omitempty"`
+	ID             int64          `json:"userId"`
+	Email          string         `json:"email"`
+	Gender         sql.NullString `json:"gender,omitempty"`
+	Language       string         `json:"language,omitempty"`
+	Created        time.Time      `json:"created"`
+	State          sql.NullString `json:"state"`
+	Banned         bool           `json:"banned,omitempty"`
+	Password       string         `json:"-"`
+	PasswordDate   time.Time      `json:"-"`
+	DobDay         sql.NullInt64  `json:"dobDay,omitempty"`
+	DobMonth       sql.NullInt64  `json:"dobMonth,omitempty"`
+	DobYear        sql.NullInt64  `json:"dobYear,omitempty"`
+	CanonicalEmail string         `json:"canonicalEmail,omitempty"`
 
 	Meta h.CoreMetaType `json:"meta"`
 }
@@ -76,14 +77,13 @@ func (m *UserType) Insert() (int, error) {
 	defer tx.Rollback()
 
 	var insertID int64
-	// TODO(buro9): language constraints, password flow
 	err = tx.QueryRow(`
 INSERT INTO users (
     email, created, language, is_banned, password,
-    password_date
+    password_date, canonical_email
 ) VALUES (
     $1, NOW(), $2, false, $3,
-    NOW()
+    NOW(), canonical_email($1)
 ) RETURNING user_id`,
 		m.Email,
 		m.Language,
@@ -162,6 +162,7 @@ SELECT user_id
       ,dob_day
       ,dob_month
       ,dob_year
+      ,canonical_email
   FROM users
  WHERE user_id = $1`,
 		id,
@@ -178,6 +179,7 @@ SELECT user_id
 		&m.DobDay,
 		&m.DobMonth,
 		&m.DobYear,
+		&m.CanonicalEmail,
 	)
 	if err == sql.ErrNoRows {
 		return UserType{}, http.StatusNotFound,
@@ -362,22 +364,15 @@ func GetUserByEmailAddress(email string) (UserType, int, error) {
 		return UserType{}, http.StatusInternalServerError, err
 	}
 
-	// Note that we match emails based on full case-insensitivity.
-	// The design decision behind this is that there are no major email
-	// providers out there that honour case sensitivity on the local part
-	// (before the @) of an email address, and that the benefits to the
-	// end user that incorrectly enters their email address (either with
-	// CAPS LOCK on, or using a mobile device that upper-cased the first
-	// char) far outweighs the risk to security.
-	//
-	// This scenario is far more likely when the users email has been
-	// provided and the user stubbed rather than created as a by-product
-	// of logging into the system
+	// Note that if multiple accounts exist for a given canonical email address
+	// then the oldest account wins.
 	var m UserType
-	err = db.QueryRow(`
+	err = db.QueryRow(`--get user by email
 SELECT user_id
   FROM users
- WHERE LOWER(email) = LOWER($1)`,
+ WHERE canonical_email = canonical_email($1)
+ ORDER BY created ASC
+ LIMIT 1`,
 		email,
 	).Scan(
 		&m.ID,
