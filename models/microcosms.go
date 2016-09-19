@@ -1154,7 +1154,7 @@ SELECT microcosm_id
    AND is_deleted IS NOT TRUE
    AND is_moderated IS NOT TRUE
    AND (get_effective_permissions(site_id,microcosm_id,2,microcosm_id,$2)).can_read IS TRUE
- ORDER BY title ASC`,
+ ORDER BY is_sticky DESC, comment_count DESC, title ASC`,
 		microcosmID,
 		profileID,
 	)
