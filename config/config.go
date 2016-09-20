@@ -36,6 +36,8 @@ const (
 	MailgunAPIURL = "mailgun_api_url"
 	MailgunAPIKey = "mailgun_api_key"
 
+	SendGridAPIKey = "sendgrid_api_key"
+
 	ErrorLogFilename = "error_log_filename"
 	WarnLogFilename  = "warn_log_filename"
 	DebugLogFilename = "debug_log_filename"
@@ -60,6 +62,7 @@ var configRequiredStrings = []string{
 	ErrorLogFilename,
 	MailgunAPIKey,
 	MailgunAPIURL,
+	SendGridAPIKey,
 	MemcachedHost,
 	MicrocosmDomain,
 	PersonaVerifierURL,

@@ -11,6 +11,8 @@ import (
 	"text/template"
 
 	"github.com/golang/glog"
+	sendgrid "github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
 	conf "github.com/microcosm-cc/microcosm/config"
 )
@@ -106,57 +108,92 @@ func (m *EmailType) Send(siteID int64) (int, error) {
 			fmt.Errorf("Not willing to send a blank email")
 	}
 
-	formBody := url.Values{}
-	formBody.Set("from", m.From)
+	if sendGridAPIKey, ok := conf.ConfigStrings[conf.SendGridAPIKey]; ok {
+		// SendGrid has priority
+		sgm := mail.NewV3MailInit(
+			&mail.Email{Name: GetSiteTitle(siteID), Address: m.From},
+			m.Subject,
+			&mail.Email{Address: m.To},
+			mail.NewContent("text/plain", m.BodyText),
+		)
+		sgm.AddContent(
+			mail.NewContent(
+				"text/html",
+				emailHTMLHeader+AnchorRelativeUrls(siteID, m.BodyHTML)+emailHTMLFooter,
+			),
+		)
 
-	if m.ReplyTo != "" {
-		formBody.Set("h:Reply-To", m.ReplyTo)
+		req := sendgrid.GetRequest(
+			sendGridAPIKey,
+			"/v3/mail/send",
+			"https://api.sendgrid.com",
+		)
+		req.Method = "POST"
+		req.Body = mail.GetRequestBody(sgm)
+		resp, err := sendgrid.API(req)
+		if err != nil {
+			glog.Errorf("SendGrid: %s", err.Error())
+			return http.StatusInternalServerError, err
+		}
+
+		glog.Infof("SendGrid: success %d %s %s", resp.StatusCode, m.To, resp.Body)
+
+	} else if mailgunAPIKey, ok := conf.ConfigStrings[conf.MailgunAPIKey]; ok {
+		// Then Mailgun
+		formBody := url.Values{}
+		formBody.Set("from", m.From)
+
+		if m.ReplyTo != "" {
+			formBody.Set("h:Reply-To", m.ReplyTo)
+		}
+
+		formBody.Set("to", m.To)
+		formBody.Set("subject", m.Subject)
+		formBody.Set("text", m.BodyText)
+		formBody.Set(
+			"html",
+			emailHTMLHeader+AnchorRelativeUrls(siteID, m.BodyHTML)+emailHTMLFooter,
+		)
+
+		// EmailType describes an email
+		req, err := http.NewRequest(
+			"POST",
+			conf.ConfigStrings[conf.MailgunAPIURL],
+			strings.NewReader(formBody.Encode()),
+		)
+
+		req.Header.Set(
+			"Content-Type",
+			"application/x-www-form-urlencoded; charset=UTF-8",
+		)
+
+		req.SetBasicAuth("api", mailgunAPIKey)
+
+		client := &http.Client{}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			glog.Errorf("Failed to send email: %s", err.Error())
+			return http.StatusInternalServerError, err
+		}
+		defer resp.Body.Close()
+
+		type MailgunResp struct {
+			ID      string `json:"id"`
+			Message string `json:"message"`
+		}
+
+		parsedResp := MailgunResp{}
+		err = json.NewDecoder(resp.Body).Decode(&parsedResp)
+		if err != nil {
+			glog.Errorf("Failed to read mailgun response: %s", err.Error())
+			return http.StatusInternalServerError, err
+		}
+
+		glog.Infof("Success: %v %s", parsedResp.ID, parsedResp.Message)
+	} else {
+		glog.Warningf("No email provider configured")
 	}
-
-	formBody.Set("to", m.To)
-	formBody.Set("subject", m.Subject)
-	formBody.Set("text", m.BodyText)
-	formBody.Set(
-		"html",
-		emailHTMLHeader+AnchorRelativeUrls(siteID, m.BodyHTML)+emailHTMLFooter,
-	)
-
-	// EmailType describes an email
-	req, err := http.NewRequest(
-		"POST",
-		conf.ConfigStrings[conf.MailgunAPIURL],
-		strings.NewReader(formBody.Encode()),
-	)
-
-	req.Header.Set(
-		"Content-Type",
-		"application/x-www-form-urlencoded; charset=UTF-8",
-	)
-
-	req.SetBasicAuth("api", conf.ConfigStrings[conf.MailgunAPIKey])
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		glog.Errorf("Failed to send email: %s", err.Error())
-		return http.StatusInternalServerError, err
-	}
-	defer resp.Body.Close()
-
-	type MailgunResp struct {
-		ID      string `json:"id"`
-		Message string `json:"message"`
-	}
-
-	parsedResp := MailgunResp{}
-	err = json.NewDecoder(resp.Body).Decode(&parsedResp)
-	if err != nil {
-		glog.Errorf("Failed to read mailgun response: %s", err.Error())
-		return http.StatusInternalServerError, err
-	}
-
-	glog.Infof("Success: %v %s", parsedResp.ID, parsedResp.Message)
 
 	return http.StatusOK, nil
 }

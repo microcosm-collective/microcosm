@@ -226,7 +226,7 @@ func (c *Context) authenticate() (int, error) {
 		storedToken, _, err := GetAccessToken(accessToken)
 		if err != nil {
 			c.Auth.UserID = -1
-			glog.Warningf(`Invalid access token: %s  %+v`, accessToken, err)
+			glog.Infof(`Invalid access token: %s  %+v`, accessToken, err)
 			return http.StatusUnauthorized,
 				fmt.Errorf("Invalid (bad or expired) access token")
 		}
