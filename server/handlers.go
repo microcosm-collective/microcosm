@@ -149,6 +149,7 @@ var (
 
 		"/api/v1/users":                  controller.UsersHandler,
 		"/api/v1/users/{user_id:[0-9]+}": controller.UserHandler,
+		"/api/v1/users/batch":            controller.UsersBatchHandler,
 
 		"/api/v1/watchers":                     controller.WatchersHandler,
 		"/api/v1/watchers/{watcher_id:[0-9]+}": controller.WatcherHandler,

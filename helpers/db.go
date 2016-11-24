@@ -72,3 +72,11 @@ func GetTransaction() (*sql.Tx, error) {
 
 	return tx, err
 }
+
+// Er provides an interface that both sql.DB and sql.Tx fulfil, allowing for
+// generic funcs that either can use.
+type Er interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
+}

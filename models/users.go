@@ -36,6 +36,14 @@ type UserType struct {
 	Meta h.CoreMetaType `json:"meta"`
 }
 
+// UserMembership
+type UserMembership struct {
+	Email    string `json:"email"`
+	IsMember bool   `json:"isMember"`
+	user     *UserType
+	profile  *ProfileType
+}
+
 // Validate checks that a given user has all the required information to be
 // created or updated successfully
 func (m *UserType) Validate(exists bool) (int, error) {
@@ -62,22 +70,35 @@ func (m *UserType) Validate(exists bool) (int, error) {
 
 // Insert creates a user
 func (m *UserType) Insert() (int, error) {
+	tx, err := h.GetTransaction()
+	if err != nil {
+		return http.StatusInternalServerError,
+			fmt.Errorf("Could not start transaction: %v", err.Error())
+	}
+	defer tx.Rollback()
+
+	status, err := m.insert(tx)
+	if err != nil {
+		return status, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return http.StatusInternalServerError,
+			fmt.Errorf("Transaction failed: %v", err.Error())
+	}
+
+	return http.StatusOK, nil
+}
+
+func (m *UserType) insert(q h.Er) (int, error) {
 
 	status, err := m.Validate(false)
 	if err != nil {
 		return status, err
 	}
 
-	tx, err := h.GetTransaction()
-	if err != nil {
-		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
-	}
-
-	defer tx.Rollback()
-
 	var insertID int64
-	err = tx.QueryRow(`
+	err = q.QueryRow(`
 INSERT INTO users (
     email, created, language, is_banned, password,
     password_date, canonical_email
@@ -96,12 +117,6 @@ INSERT INTO users (
 			fmt.Errorf("Error inserting data and returning ID: %+v", err)
 	}
 	m.ID = insertID
-
-	err = tx.Commit()
-	if err != nil {
-		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
-	}
 
 	return http.StatusOK, nil
 }
@@ -132,7 +147,15 @@ SELECT COUNT(*) > 0
 
 // GetUser will fetch a user for a given ID
 func GetUser(id int64) (UserType, int, error) {
+	db, err := h.GetConnection()
+	if err != nil {
+		return UserType{}, http.StatusInternalServerError, err
+	}
 
+	return getUser(db, id)
+}
+
+func getUser(q h.Er, id int64) (UserType, int, error) {
 	if id == 0 {
 		return UserType{}, http.StatusNotFound, fmt.Errorf("User not found")
 	}
@@ -143,13 +166,8 @@ func GetUser(id int64) (UserType, int, error) {
 		return val.(UserType), http.StatusOK, nil
 	}
 
-	db, err := h.GetConnection()
-	if err != nil {
-		return UserType{}, http.StatusInternalServerError, err
-	}
-
 	var m UserType
-	err = db.QueryRow(`
+	err := q.QueryRow(`
 SELECT user_id
       ,email
       ,gender
@@ -353,7 +371,6 @@ func CreateUserByEmailAddress(email string) (UserType, int, error) {
 // GetUserByEmailAddress performs a case-insensitive search for any matching
 // user and returns it.
 func GetUserByEmailAddress(email string) (UserType, int, error) {
-
 	if strings.Trim(email, " ") == "" {
 		return UserType{}, http.StatusBadRequest,
 			fmt.Errorf("You must specify an email address")
@@ -364,10 +381,15 @@ func GetUserByEmailAddress(email string) (UserType, int, error) {
 		return UserType{}, http.StatusInternalServerError, err
 	}
 
+	return getUserByEmailAddress(db, email)
+}
+
+func getUserByEmailAddress(q h.Er, email string) (UserType, int, error) {
+
 	// Note that if multiple accounts exist for a given canonical email address
 	// then the oldest account wins.
 	var m UserType
-	err = db.QueryRow(`--get user by email
+	err := q.QueryRow(`--get user by email
 SELECT user_id
   FROM users
  WHERE canonical_email = canonical_email($1)
@@ -385,5 +407,99 @@ SELECT user_id
 			fmt.Errorf("Database query failed: %+v", err)
 	}
 
-	return GetUser(m.ID)
+	return getUser(q, m.ID)
+}
+
+// ManageUsers provides a way to ensure that a batch of users exists as profiles
+// on a site (given their email address), and to grant/deny membership using the
+// attribute key/values.
+func ManageUsers(site SiteType, ems []UserMembership) (int, error) {
+	db, err := h.GetConnection()
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	// Create all users that we need to create first
+	tx, err := db.Begin()
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	defer tx.Rollback()
+
+	for ii, um := range ems {
+		u, status, err := getUserByEmailAddress(tx, um.Email)
+		if err == nil {
+			ems[ii].user = &u
+			continue
+		}
+		if status == http.StatusNotFound {
+			u := UserType{
+				Email: um.Email,
+			}
+			status, err := u.insert(tx)
+			if err != nil {
+				return status, err
+			}
+
+			u, status, err = getUserByEmailAddress(tx, um.Email)
+			if err != nil {
+				return status, err
+			}
+			ems[ii].user = &u
+			continue
+		}
+		return status, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	// Create all profiles and grant/revoke permissions
+	for _, um := range ems {
+		if um.user == nil {
+			continue
+		}
+
+		p, status, err := GetOrCreateProfile(site, *um.user)
+		if err != nil {
+			return status, err
+		}
+
+		key, status, err := GetAttributeID(h.ItemTypes[h.ItemTypeProfile], p.ID, "is_member")
+		if err != nil && status != http.StatusNotFound {
+			return status, err
+		}
+
+		if um.IsMember {
+			// Grant access
+			if key > 0 {
+				// already granted
+				continue
+			}
+
+			var at AttributeType
+			at.Key = "is_member"
+			at.Value = true
+			status, err := at.Update(h.ItemTypes[h.ItemTypeProfile], p.ID)
+			if err != nil {
+				return status, err
+			}
+		} else {
+			// Deny access
+			if key == 0 {
+				// already denied
+				continue
+			}
+
+			var at AttributeType
+			at.ID = key
+			status, err := at.Delete()
+			if err != nil {
+				return status, err
+			}
+		}
+	}
+
+	return http.StatusOK, nil
 }
