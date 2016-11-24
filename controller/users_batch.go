@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/golang/glog"
 	"github.com/microcosm-cc/microcosm/models"
 )
 
@@ -39,6 +40,7 @@ func UsersBatchHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Manage allows the management of users by a site admin
 func (ctl *UsersBatchController) Manage(c *models.Context) {
 	if !c.Auth.IsSiteOwner {
 		c.RespondWithErrorMessage(
@@ -72,6 +74,8 @@ func (ctl *UsersBatchController) Manage(c *models.Context) {
 		data := string(dat)
 		data = strings.Replace(data, "\r\n", "\n", -1)
 		data = strings.Replace(data, "\r", "\n", -1)
+
+		glog.Warningf("CSV received: %s", data)
 
 		reader := csv.NewReader(bytes.NewBufferString(data))
 

@@ -1128,7 +1128,7 @@ SELECT profile_id
 		&profileID,
 	)
 	if err == sql.ErrNoRows {
-		glog.Warning(err)
+		glog.Info(err)
 		return profileID, http.StatusNotFound,
 			fmt.Errorf(
 				"Profile for site (%d) and user (%d) not found.",

@@ -36,7 +36,7 @@ type UserType struct {
 	Meta h.CoreMetaType `json:"meta"`
 }
 
-// UserMembership
+// UserMembership is for managing user permissions
 type UserMembership struct {
 	Email    string `json:"email"`
 	IsMember bool   `json:"isMember"`
