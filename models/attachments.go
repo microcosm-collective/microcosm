@@ -35,30 +35,57 @@ type AttachmentType struct {
 
 // Import saves an attachment
 func (m *AttachmentType) Import() (int, error) {
-	return m.insert()
+	tx, err := h.GetTransaction()
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	defer tx.Rollback()
+
+	status, err := m.insert(tx)
+	if err != nil {
+		return status, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		glog.Errorf("tx.Commit() %+v", err)
+		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+	}
+
+	return http.StatusOK, nil
 }
 
 // Insert saves an attachment
 func (m *AttachmentType) Insert() (int, error) {
-	return m.insert()
+	tx, err := h.GetTransaction()
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	defer tx.Rollback()
+
+	status, err := m.insert(tx)
+	if err != nil {
+		return status, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		glog.Errorf("tx.Commit() %+v", err)
+		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+	}
+
+	return http.StatusOK, nil
 }
 
-func (m *AttachmentType) insert() (int, error) {
+func (m *AttachmentType) insert(q h.Er) (int, error) {
 	fileNameBits := strings.Split(m.FileName, ".")
 	m.FileExt = "unk"
 	if len(fileNameBits) > 0 {
 		m.FileExt = fileNameBits[len(fileNameBits)-1]
 	}
 
-	tx, err := h.GetTransaction()
-	if err != nil {
-		glog.Errorf("h.GetTransaction() %+v", err)
-		return http.StatusInternalServerError, err
-	}
-	defer tx.Rollback()
-
 	var insertID int64
-	err = tx.QueryRow(`
+	err := q.QueryRow(`
 INSERT INTO attachments (
 	profile_id, attachment_meta_id, item_type_id, file_sha1, item_id,
 	created, view_count, file_name, file_ext
@@ -80,7 +107,7 @@ INSERT INTO attachments (
 	)
 	if err != nil {
 		glog.Errorf(
-			"tx.QueryRow(%d, %d, %d, %s, %d, %v, %d, %s, %s).Scan() %+v",
+			"q.QueryRow(%d, %d, %d, %s, %d, %v, %d, %s, %s).Scan() %+v",
 			m.ProfileID,
 			m.AttachmentMetaID,
 			m.ItemTypeID,
@@ -96,13 +123,6 @@ INSERT INTO attachments (
 			fmt.Errorf("Error inserting data and returning ID")
 	}
 	m.AttachmentID = insertID
-
-	err = tx.Commit()
-	if err != nil {
-		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed")
-	}
 
 	go PurgeCache(m.ItemTypeID, m.ItemID)
 
