@@ -23,6 +23,11 @@ import (
 // avatars
 const URLGravatar string = "https://secure.gravatar.com/avatar/"
 
+// UserIDOffset tracks an unfortunate byproduct of early sites being created
+// and destroyed, in an effort to ensure that user names do not clash with other
+// usernames
+const UserIDOffset int64 = 5830
+
 // ProfilesType encapsulates a collection of profiles
 type ProfilesType struct {
 	Profiles h.ArrayType        `json:"profiles"`
@@ -1387,8 +1392,28 @@ func MakeGravatarURL(email string) string {
 
 // StoreGravatar stores the gravatar file in the database
 func StoreGravatar(gravatarURL string) (FileMetadataType, int, error) {
+	var file FileMetadataType
+	tx, err := h.GetTransaction()
+	if err != nil {
+		return file, http.StatusInternalServerError, err
+	}
+	defer tx.Rollback()
 
-	// TODO(matt): reduce duplication with models.FileController
+	file, status, err := storeGravatar(tx, gravatarURL)
+	if err != nil {
+		return file, status, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		glog.Errorf("tx.Commit() %+v", err)
+		return file, http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+	}
+
+	return file, http.StatusOK, nil
+}
+
+func storeGravatar(q h.Er, gravatarURL string) (FileMetadataType, int, error) {
 	resp, err := http.Get(gravatarURL)
 
 	if err != nil {
@@ -1418,7 +1443,7 @@ func StoreGravatar(gravatarURL string) (FileMetadataType, int, error) {
 	metadata.Created = time.Now()
 	metadata.AttachCount++
 
-	status, err := metadata.Insert(AvatarMaxWidth, AvatarMaxHeight)
+	status, err := metadata.insert(q, AvatarMaxWidth, AvatarMaxHeight, false)
 	if err != nil {
 		glog.Errorf("metadata.Insert(%d, %d) %+v", AvatarMaxWidth, AvatarMaxHeight, err)
 		return FileMetadataType{}, status,
@@ -1470,7 +1495,7 @@ func SuggestProfileName(user UserType) string {
 
 	// TODO(buro9): This is not duplication safe, and we will need to do a
 	// multiple pass generation thing eventually.
-	return "user" + strconv.FormatInt(user.ID+5830, 10)
+	return "user" + strconv.FormatInt(user.ID+UserIDOffset, 10)
 }
 
 // IsProfileNameTaken checks whether a profile name is taken for a given site,

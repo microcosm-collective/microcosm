@@ -39,7 +39,16 @@ func searchEmail(
 		return m, http.StatusInternalServerError, err
 	}
 
+	var emails []string
+	for _, email := range m.Query.Emails {
+		emails = append(emails, fmt.Sprintf(`"%s"`, email))
+	}
+
 	rows, err := db.Query(`--SearchEmails
+WITH e AS (
+    SELECT canonical_email(email) AS email
+      FROM (SELECT UNNEST($2::TEXT[]) AS email) AS a
+)
 SELECT *
   FROM (
            SELECT COUNT(*) OVER() AS total
@@ -50,14 +59,14 @@ SELECT *
                  ,'' AS highlight
              FROM users u
              JOIN profiles p ON p.user_id = u.user_id
-            WHERE LOWER(u.email) = ANY(string_to_array($2, '____'))
+            WHERE canonical_email IN (SELECT * FROM e)
               AND p.site_id = $1
             ORDER BY p.profile_name ASC
        ) AS r
  LIMIT $3
 OFFSET $4`,
 		siteID,
-		strings.Join(m.Query.Emails, `____`),
+		fmt.Sprintf(`{%s}`, strings.Join(emails, ",")),
 		limit,
 		offset,
 	)

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/glog"
 	c "github.com/microcosm-cc/microcosm/cache"
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
@@ -38,10 +39,12 @@ type UserType struct {
 
 // UserMembership is for managing user permissions
 type UserMembership struct {
-	Email    string `json:"email"`
-	IsMember bool   `json:"isMember"`
-	user     *UserType
-	profile  *ProfileType
+	Email     string `json:"email"`
+	IsMember  bool   `json:"isMember"`
+	userID    int64
+	user      *UserType
+	profileID int64
+	profile   *ProfileType
 }
 
 // Validate checks that a given user has all the required information to be
@@ -416,89 +419,471 @@ SELECT user_id
 func ManageUsers(site SiteType, ems []UserMembership) (int, error) {
 	db, err := h.GetConnection()
 	if err != nil {
+		glog.Errorf("Cannot get connection: %s", err.Error())
 		return http.StatusInternalServerError, err
 	}
 
 	// Create all users that we need to create first
 	tx, err := db.Begin()
 	if err != nil {
+		glog.Errorf("Cannot start transaction: %s", err.Error())
 		return http.StatusInternalServerError, err
 	}
 	defer tx.Rollback()
 
-	for ii, um := range ems {
-		u, status, err := getUserByEmailAddress(tx, um.Email)
-		if err == nil {
-			ems[ii].user = &u
-			continue
+	var emails []string
+	for _, m := range ems {
+		emails = append(emails, fmt.Sprintf(`"%s"`, m.Email))
+	}
+	emailSQLArr := fmt.Sprintf(`{%s}`, strings.Join(emails, ","))
+
+	// Return user ids for those users that exist, and return nulls for those
+	// that don't.
+	rows, err := tx.Query(`-- ManageUsers::GetUsers
+WITH e AS (
+    SELECT r.email
+          ,canonical_email(r.email)
+      FROM (
+               SELECT UNNEST($1::text[]) AS email
+           ) AS r
+)
+SELECT distinct ON (e.canonical_email)
+       e.canonical_email
+      ,e.email
+      ,u.user_id
+  FROM e
+  LEFT JOIN users u ON u.canonical_email = e.canonical_email
+ ORDER BY e.canonical_email, u.created ASC;`,
+		emailSQLArr,
+	)
+	if err != nil {
+		glog.Errorf("ManageUsers::GetUsers: %s", err.Error())
+		return http.StatusInternalServerError, err
+	}
+	defer rows.Close()
+
+	type User struct {
+		Email  string
+		UserID int64
+	}
+	var users []User
+
+	for rows.Next() {
+		var (
+			canonicalEmail string
+			email          string
+			userID         sql.NullInt64
+		)
+		err = rows.Scan(
+			&canonicalEmail,
+			&email,
+			&userID,
+		)
+		if err != nil {
+			glog.Errorf("ManageUsers::GetUsers::Scan: %s", err.Error())
+			return http.StatusInternalServerError, err
 		}
-		if status == http.StatusNotFound {
-			u := UserType{
-				Email: um.Email,
+
+		var u User
+		u.Email = email
+		if userID.Valid {
+			u.UserID = userID.Int64
+		}
+		users = append(users, u)
+	}
+	if err = rows.Err(); err != nil {
+		glog.Errorf("ManageUsers::GetUsers::Rows: %s", err.Error())
+		return http.StatusInternalServerError, err
+	}
+	rows.Close()
+
+	// Update the userIDs of those we have found, and for the rest mark them as
+	// to be created
+	var emailsToCreate []string
+	for mi, m := range ems {
+		for _, u := range users {
+			if m.Email != u.Email {
+				continue
 			}
-			status, err := u.insert(tx)
+
+			if u.UserID > 0 {
+				ems[mi].userID = u.UserID
+			} else {
+				emailsToCreate = append(emailsToCreate, fmt.Sprintf(`"%s"`, u.Email))
+			}
+		}
+	}
+
+	// Create the users that we need to create
+	if len(emailsToCreate) > 0 {
+		emailSQLArr = fmt.Sprintf(`{%s}`, strings.Join(emailsToCreate, ","))
+		rows2, err := tx.Query(`--ManageUsers::CreateUsers
+WITH e AS (
+    SELECT r.email
+          ,canonical_email(r.email)
+      FROM (
+               SELECT UNNEST($1::text[]) AS email
+           ) AS r
+)
+INSERT INTO users (email, created, language, is_banned, password, password_date, canonical_email)
+SELECT e.email, NOW(), '', false, '', NOW(), e.canonical_email
+  FROM e
+  RETURNING email, user_id;`,
+			emailSQLArr,
+		)
+		if err != nil {
+			glog.Errorf("ManageUsers::CreateUsers: %s", err.Error())
+			return http.StatusInternalServerError, err
+		}
+		defer rows2.Close()
+
+		users = []User{}
+		for rows2.Next() {
+			var u User
+			err = rows2.Scan(
+				&u.Email,
+				&u.UserID,
+			)
 			if err != nil {
+				glog.Errorf("ManageUsers::CreateUsers::Scan: %s", err.Error())
+				return http.StatusInternalServerError, err
+			}
+			users = append(users, u)
+		}
+		if err = rows2.Err(); err != nil {
+			glog.Errorf("ManageUsers::CreateUsers::Rows: %s", err.Error())
+			return http.StatusInternalServerError, err
+		}
+		rows2.Close()
+
+		// Update the remaining users so that after this every single user has a
+		// valid user_id
+		for mi, m := range ems {
+			for _, u := range users {
+				if m.Email != u.Email {
+					continue
+				}
+				ems[mi].userID = u.UserID
+			}
+		}
+	}
+
+	// Assert that we are in a good place
+	for _, m := range ems {
+		if m.userID == 0 {
+			glog.Errorf("%s does not have a user_id", m.Email)
+			return http.StatusInternalServerError, fmt.Errorf("%s does not have a user_id", m.Email)
+		}
+	}
+
+	// Find out which users do not yet have profiles, and get the profiles of
+	// the users who do have profiles.
+	var userIDStr []string
+	for _, m := range ems {
+		userIDStr = append(userIDStr, fmt.Sprintf(`%d`, m.userID))
+	}
+
+	rows3, err := tx.Query(`--ManageUsers::GetProfiles
+with e AS (
+    SELECT UNNEST($1::bigint[]) AS user_id
+)
+SELECT e.user_id
+      ,p.profile_id
+  FROM e
+  LEFT outer JOIN profiles p ON p.user_id = e.user_id and site_id = $2;`,
+		fmt.Sprintf(`{%s}`, strings.Join(userIDStr, ",")),
+		site.ID,
+	)
+	if err != nil {
+		glog.Errorf("ManageUsers::GetProfiles: %s", err.Error())
+		return http.StatusInternalServerError, err
+	}
+	defer rows3.Close()
+
+	type U2P struct {
+		userID    int64
+		profileID int64
+	}
+	var u2ps []U2P
+	for rows3.Next() {
+		var (
+			u2p U2P
+			pid sql.NullInt64
+		)
+		err = rows3.Scan(
+			&u2p.userID,
+			&pid,
+		)
+		if err != nil {
+			glog.Errorf("ManageUsers::GetProfiles::Scan: %s", err.Error())
+			return http.StatusInternalServerError, err
+		}
+		if pid.Valid {
+			u2p.profileID = pid.Int64
+		}
+		u2ps = append(u2ps, u2p)
+	}
+	if err = rows3.Err(); err != nil {
+		glog.Errorf("ManageUsers::GetProfiles::Rows: %s", err.Error())
+		return http.StatusInternalServerError, err
+	}
+	rows3.Close()
+
+	// Track the found profiles and
+	type ProfileNeeded struct {
+		UserID    int64
+		Username  string
+		Email     string
+		ProfileID int64
+	}
+	var profilesToCreate []ProfileNeeded
+	for mi, m := range ems {
+		for _, u2p := range u2ps {
+			if m.userID != u2p.userID {
+				continue
+			}
+			if u2p.profileID > 0 {
+				ems[mi].profileID = u2p.profileID
+			} else {
+				profilesToCreate = append(
+					profilesToCreate,
+					ProfileNeeded{
+						UserID:   u2p.userID,
+						Username: fmt.Sprintf("user%d", u2p.userID+UserIDOffset),
+						Email:    m.Email,
+					},
+				)
+			}
+		}
+	}
+	if len(profilesToCreate) > 0 {
+		profileOptions, status, err := GetProfileOptionsDefaults(site.ID)
+		if err != nil {
+			glog.Errorf("GetProfileOptionsDefaults: %s", err.Error())
+			return status, err
+		}
+
+		for pi, p := range profilesToCreate {
+			// Create profile
+			var insertID int64
+			err = tx.QueryRow(`--Create Profile
+INSERT INTO profiles (
+    site_id
+   ,user_id
+   ,profile_name
+   ,gender
+   ,is_visible
+
+   ,style_id
+   ,item_count
+   ,comment_count
+   ,avatar_url
+   ,avatar_id
+
+   ,created
+   ,last_active
+) VALUES (
+    $1
+   ,$2
+   ,$3
+   ,NULL
+   ,TRUE
+
+   ,0
+   ,0
+   ,0
+   ,NULL
+   ,NULL
+
+   ,NOW()
+   ,NOW()
+) RETURNING profile_id`,
+				site.ID,
+				p.UserID,
+				p.Username,
+			).Scan(
+				&insertID,
+			)
+			if err != nil {
+				glog.Errorf("Create Profile: %s", err.Error())
+				return http.StatusInternalServerError, err
+			}
+
+			profileOptions.ProfileID = insertID
+
+			status, err = profileOptions.Insert(tx)
+			if err != nil {
+				glog.Errorf("profileOptions.Insert: %s", err.Error())
+				return status,
+					fmt.Errorf("Could not insert new profile options: %+v", err)
+			}
+
+			gravatarURL := MakeGravatarURL(p.Email)
+
+			file, status, err := storeGravatar(tx, gravatarURL)
+			if err != nil {
+				glog.Errorf("storeGravatar: %s", err.Error())
 				return status, err
 			}
 
-			u, status, err = getUserByEmailAddress(tx, um.Email)
+			// TODO: This needs to take the tx
+			attachment := AttachmentType{}
+			attachment.AttachmentMetaID = file.AttachmentMetaID
+			attachment.FileHash = file.FileHash
+			attachment.Created = time.Now()
+			attachment.ItemTypeID = h.ItemTypes[h.ItemTypeProfile]
+			attachment.ItemID = insertID
+			attachment.ProfileID = insertID
+
+			_, err = attachment.insert(tx)
 			if err != nil {
-				return status, err
+				glog.Errorf("attachment.insert: %s", err.Error())
+				return http.StatusInternalServerError,
+					fmt.Errorf(
+						"Could not create avatar attachment to profile: %+v",
+						err,
+					)
 			}
-			ems[ii].user = &u
-			continue
+
+			_, err = tx.Exec(
+				`UPDATE profiles SET avatar_id = $2 WHERE profile_id = $1`,
+				insertID,
+				sql.NullInt64{
+					Int64: attachment.AttachmentID,
+					Valid: true,
+				},
+			)
+			if err != nil {
+				glog.Errorf("SET avatar_id: %s", err.Error())
+				return http.StatusInternalServerError, err
+			}
+
+			// Update our profileID
+			profilesToCreate[pi].ProfileID = insertID
 		}
-		return status, err
+
+		// Update the profile IDs
+		for mi, m := range ems {
+			for _, p := range profilesToCreate {
+				if m.userID != p.UserID {
+					continue
+				}
+				ems[mi].profileID = p.ProfileID
+			}
+		}
+	}
+
+	// Assert that we have all of the profiles
+	for _, m := range ems {
+		if m.profileID == 0 {
+			glog.Errorf("%s does not have a profile_id", m.Email)
+			return http.StatusInternalServerError,
+				fmt.Errorf("%s does not have a profile_id", m.Email)
+		}
+	}
+
+	// Handle removal of privileges
+	var revocations []string
+	for _, m := range ems {
+		if !m.IsMember {
+			revocations = append(revocations, fmt.Sprintf("%d", m.profileID))
+		}
+	}
+	if len(revocations) > 0 {
+		_, err := tx.Exec(`--ManageUsers::Revoke
+WITH a AS (
+    SELECT attribute_id
+      FROM attribute_keys ak
+     WHERE item_type_id = 3
+       AND item_id = ANY($1::bigint[])
+       AND "key" = 'is_member'
+), av AS (
+    DELETE
+      FROM attribute_values
+     WHERE attribute_id IN (SELECT * FROM a)
+)
+DELETE
+  FROM attribute_keys
+ WHERE attribute_id IN (SELECT * FROM a)
+`,
+			fmt.Sprintf(`{%s}`, strings.Join(revocations, ",")),
+		)
+		if err != nil {
+			glog.Errorf("ManageUsers::Revoke: %s", err.Error())
+			return http.StatusInternalServerError,
+				fmt.Errorf("Revoke failed: %s", err.Error())
+		}
+	}
+
+	// Handle grant of privileges
+	var grant []string
+	for _, m := range ems {
+		if m.IsMember {
+			grant = append(grant, fmt.Sprintf("%d", m.profileID))
+		}
+	}
+
+	if len(grant) > 0 {
+		// Check whether they need the permission granted (if they don't have it)
+		rows4, err := tx.Query(`--ManageUsers::CheckGrant
+WITH a AS (
+    SELECT UNNEST($1::bigint[]) AS pid
+)
+SELECT a.pid
+  FROM a
+  LEFT JOIN attribute_keys ak ON ak.item_id = a.pid AND ak.item_type_id = 3 AND ak."key" = 'is_member'
+ WHERE ak.item_id IS NULL;`,
+			fmt.Sprintf(`{%s}`, strings.Join(grant, ",")),
+		)
+		if err != nil {
+			glog.Errorf("ManageUsers::CheckGrant: %s", err.Error())
+			return http.StatusInternalServerError,
+				fmt.Errorf("Check grant failed: %s", err.Error())
+		}
+		defer rows4.Close()
+
+		grant = []string{}
+		for rows4.Next() {
+			var pid int64
+			if err := rows4.Scan(&pid); err != nil {
+				glog.Errorf("ManageUsers::CheckGrant::Scan: %s", err.Error())
+				return http.StatusInternalServerError,
+					fmt.Errorf("ManageUsers::CheckGrant::Scan: %s", err.Error())
+			}
+			grant = append(grant, fmt.Sprintf("%d", pid))
+		}
+		if err := rows4.Err(); err != nil {
+			glog.Errorf("ManageUsers::CheckGrant::Rows: %s", err.Error())
+			return http.StatusInternalServerError,
+				fmt.Errorf("ManageUsers::CheckGrant::Rows: %s", err.Error())
+		}
+
+		// Grant if we have any to grant
+		if len(grant) > 0 {
+			_, err := tx.Exec(`-- ManageUsers::Grant
+WITH a AS (
+    INSERT INTO attribute_keys (item_type_id, item_id, "key")
+    SELECT 3, pid, 'is_member'
+      FROM UNNEST($1::bigint[]) AS pid
+ RETURNING attribute_id
+)
+INSERT INTO attribute_values (attribute_id, value_type_id, "boolean")
+SELECT a.attribute_id, 4, TRUE
+  FROM a;`,
+				fmt.Sprintf(`{%s}`, strings.Join(grant, ",")),
+			)
+			if err != nil {
+				glog.Errorf("ManageUsers::Grant: %s", err.Error())
+				return http.StatusInternalServerError,
+					fmt.Errorf("Grant failed: %s", err.Error())
+			}
+		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		return http.StatusInternalServerError, err
-	}
-
-	// Create all profiles and grant/revoke permissions
-	for _, um := range ems {
-		if um.user == nil {
-			continue
-		}
-
-		p, status, err := GetOrCreateProfile(site, *um.user)
-		if err != nil {
-			return status, err
-		}
-
-		key, status, err := GetAttributeID(h.ItemTypes[h.ItemTypeProfile], p.ID, "is_member")
-		if err != nil && status != http.StatusNotFound {
-			return status, err
-		}
-
-		if um.IsMember {
-			// Grant access
-			if key > 0 {
-				// already granted
-				continue
-			}
-
-			var at AttributeType
-			at.Key = "is_member"
-			at.Value = true
-			status, err := at.Update(h.ItemTypes[h.ItemTypeProfile], p.ID)
-			if err != nil {
-				return status, err
-			}
-		} else {
-			// Deny access
-			if key == 0 {
-				// already denied
-				continue
-			}
-
-			var at AttributeType
-			at.ID = key
-			status, err := at.Delete()
-			if err != nil {
-				return status, err
-			}
-		}
+		glog.Errorf("Commit: %s", err.Error())
+		return http.StatusInternalServerError,
+			fmt.Errorf("Commit failed: %s", err.Error())
 	}
 
 	return http.StatusOK, nil

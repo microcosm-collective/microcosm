@@ -131,7 +131,24 @@ func (f *FileMetadataType) Insert(
 	int,
 	error,
 ) {
-	return f.insert(maxWidth, maxHeight, false)
+	tx, err := h.GetTransaction()
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	defer tx.Rollback()
+
+	status, err := f.insert(tx, maxWidth, maxHeight, false)
+	if err != nil {
+		return status, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		glog.Errorf("tx.Commit() %+v", err)
+		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+	}
+
+	return http.StatusOK, nil
 }
 
 // Import saves a file metadata to the database without validating it
@@ -142,11 +159,29 @@ func (f *FileMetadataType) Import(
 	int,
 	error,
 ) {
-	return f.insert(maxWidth, maxHeight, true)
+	tx, err := h.GetTransaction()
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	defer tx.Rollback()
+
+	status, err := f.insert(tx, maxWidth, maxHeight, true)
+	if err != nil {
+		return status, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		glog.Errorf("tx.Commit() %+v", err)
+		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+	}
+
+	return http.StatusOK, nil
 }
 
 // Insert uploads the file to S3 and inserts the metadata into attachment_meta
 func (f *FileMetadataType) insert(
+	q h.Er,
 	maxWidth int64,
 	maxHeight int64,
 	isImport bool,
@@ -308,7 +343,7 @@ func (f *FileMetadataType) insert(
 	defer tx.Rollback()
 
 	var insertID int64
-	err = tx.QueryRow(`
+	err = q.QueryRow(`
 INSERT INTO attachment_meta (
     created, file_size, file_sha1, mime_type, width,
     height, thumbnail_width, thumbnail_height, attach_count, file_name,
@@ -338,12 +373,6 @@ INSERT INTO attachment_meta (
 			fmt.Errorf("Error inserting data and returning ID")
 	}
 	f.AttachmentMetaID = insertID
-
-	err = tx.Commit()
-	if err != nil {
-		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
-	}
 
 	return http.StatusOK, nil
 }
