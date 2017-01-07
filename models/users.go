@@ -782,11 +782,16 @@ INSERT INTO profiles (
 		}
 	}
 
+	// Create a list of every profileID that we change permission on, as we
+	// will need to flush the cached privileges later.
+	var touchedProfiles []string
+
 	// Handle removal of privileges
 	var revocations []string
 	for _, m := range ems {
 		if !m.IsMember {
 			revocations = append(revocations, fmt.Sprintf("%d", m.profileID))
+			touchedProfiles = append(touchedProfiles, fmt.Sprintf("%d", m.profileID))
 		}
 	}
 	if len(revocations) > 0 {
@@ -820,6 +825,7 @@ DELETE
 	for _, m := range ems {
 		if m.IsMember {
 			grant = append(grant, fmt.Sprintf("%d", m.profileID))
+			touchedProfiles = append(touchedProfiles, fmt.Sprintf("%d", m.profileID))
 		}
 	}
 
@@ -877,6 +883,28 @@ SELECT a.attribute_id, 4, TRUE
 				return http.StatusInternalServerError,
 					fmt.Errorf("Grant failed: %s", err.Error())
 			}
+		}
+	}
+
+	// Now we flush the cache permissions
+	if len(touchedProfiles) > 0 {
+		_, err := tx.Exec(
+			`DELETE FROM permissions_cache WHERE profile_id IN (SELECT UNNEST($1::bigint[]))`,
+			fmt.Sprintf(`{%s}`, strings.Join(touchedProfiles, ",")),
+		)
+		if err != nil {
+			glog.Errorf("ManageUsers::FlushPermissionsCache: %s", err.Error())
+			return http.StatusInternalServerError,
+				fmt.Errorf("FlushPermissionsCache failed: %s", err.Error())
+		}
+		_, err = tx.Exec(
+			`DELETE FROM role_members_cache WHERE profile_id IN (SELECT UNNEST($1::bigint[]))`,
+			fmt.Sprintf(`{%s}`, strings.Join(touchedProfiles, ",")),
+		)
+		if err != nil {
+			glog.Errorf("ManageUsers::FlushRoleMembersCache: %s", err.Error())
+			return http.StatusInternalServerError,
+				fmt.Errorf("FlushRoleMembersCache failed: %s", err.Error())
 		}
 	}
 
