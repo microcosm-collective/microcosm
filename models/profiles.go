@@ -1136,7 +1136,7 @@ SELECT profile_id
 		glog.Info(err)
 		return profileID, http.StatusNotFound,
 			fmt.Errorf(
-				"Profile for site (%d) and user (%d) not found.",
+				"Profile for site (%d) and user (%d) not found",
 				siteID,
 				userID,
 			)

@@ -40,7 +40,7 @@ func (m *WatcherType) validate(exists bool) (int, error) {
 		if m.ID < 1 {
 			return http.StatusBadRequest,
 				fmt.Errorf(
-					"The supplied ID ('%d') cannot be zero or negative.",
+					"The supplied ID ('%d') cannot be zero or negative",
 					m.ID,
 				)
 		}

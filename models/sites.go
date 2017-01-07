@@ -1203,7 +1203,7 @@ OFFSET $2`
 
 	if offset > maxOffset {
 		return []SiteType{}, 0, 0, http.StatusBadRequest,
-			fmt.Errorf("Offset (%d) would return an empty page.", offset)
+			fmt.Errorf("Offset (%d) would return an empty page", offset)
 	}
 
 	return sites, total, pages, http.StatusOK, nil
@@ -1216,7 +1216,7 @@ func CheckSiteHealth(site SiteType) (SiteHealthType, int, error) {
 	siteHealth := SiteHealthType{}
 	if site.ID == 1 {
 		return siteHealth, http.StatusBadRequest,
-			fmt.Errorf("Cannot fetch status of root site.")
+			fmt.Errorf("Cannot fetch status of root site")
 	}
 	siteHealth.Site = site
 

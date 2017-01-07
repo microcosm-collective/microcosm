@@ -460,7 +460,7 @@ SELECT attribute_id
 		&attrID,
 	)
 	if err == sql.ErrNoRows {
-		return attrID, http.StatusNotFound, fmt.Errorf("Attribute not found.")
+		return attrID, http.StatusNotFound, fmt.Errorf("attribute not found")
 
 	} else if err != nil {
 		return attrID, http.StatusInternalServerError,
