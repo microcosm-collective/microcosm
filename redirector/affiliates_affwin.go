@@ -73,6 +73,8 @@ func (m *affWinLink) getDestination() (bool, string) {
 
 	case "www.merlincycles.co.uk":
 		programID = 3361
+	case "www.merlincycles.com":
+		programID = 3361
 
 	case "www.pedalsure.com":
 		programID = 6622
