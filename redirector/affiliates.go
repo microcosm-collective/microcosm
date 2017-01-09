@@ -12,7 +12,10 @@ var affDomainParts = append(
 	append(
 		append(
 			append(
-				[]string{},
+				append(
+					[]string{},
+					lfgssDomainParts...,
+				),
 				affwinDomainParts...,
 			),
 			ebayDomainParts...,
@@ -58,6 +61,14 @@ func getAffiliateLink(link models.Link) string {
 	// Amazon
 	if !(len(ahocorasick.NewStringMatcher(amazonDomainParts).Match([]byte(strings.ToLower(link.Domain)))) == 0) {
 		m := amazonLink{Link: link}
+		if ok, u := m.getDestination(); ok {
+			return u
+		}
+	}
+
+	// Site specific, LFGSS
+	if !(len(ahocorasick.NewStringMatcher(lfgssDomainParts).Match([]byte(strings.ToLower(link.Domain)))) == 0) {
+		m := lfgssLink{Link: link}
 		if ok, u := m.getDestination(); ok {
 			return u
 		}
