@@ -88,7 +88,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		return
 	}
 
-	if callback.Code == "" {
+	if callback.Code == "" && (callback.AccessToken == "" || callback.TokenType == "") {
 		glog.Errorf("code is a required POST parameter and is the auth0 code")
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("code is a required POST parameter and is the auth0 code"),
