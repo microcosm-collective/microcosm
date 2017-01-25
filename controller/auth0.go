@@ -70,6 +70,11 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		Code string
 		// the microcosm oauth client secret
 		ClientSecret string
+		// the auth0 access_token if the sender already has it (ios lib
+		// performs the exchange implicitly)
+		AccessToken string
+		// the auth0 token_type, typically "bearer"
+		TokenType string
 	}
 
 	callback := auth0Callback{}
@@ -83,7 +88,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		return
 	}
 
-	if callback.Code == "" {
+	if callback.Code == "" && (callback.AccessToken == "" || callback.TokenType == "") {
 		glog.Errorf("code is a required POST parameter and is the auth0 code")
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("code is a required POST parameter and is the auth0 code"),
@@ -131,15 +136,25 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		},
 	}
 
-	// Exchanging the code for a token
-	token, err := oauth2Config.Exchange(oauth2.NoContext, callback.Code)
-	if err != nil {
-		glog.Errorf(err.Error())
-		c.RespondWithErrorMessage(
-			fmt.Sprintf(err.Error()),
-			http.StatusInternalServerError,
-		)
-		return
+	var token *oauth2.Token
+	if callback.AccessToken != "" && callback.TokenType != "" {
+		// The callee has already perform the auth0 dance and has an access
+		// token
+		token = &oauth2.Token{
+			AccessToken: callback.AccessToken,
+			TokenType:   callback.TokenType,
+		}
+	} else {
+		// Exchanging the code for a token
+		token, err = oauth2Config.Exchange(oauth2.NoContext, callback.Code)
+		if err != nil {
+			glog.Errorf(err.Error())
+			c.RespondWithErrorMessage(
+				fmt.Sprintf(err.Error()),
+				http.StatusInternalServerError,
+			)
+			return
+		}
 	}
 
 	//////////////////////////////////
