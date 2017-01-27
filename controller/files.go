@@ -184,7 +184,7 @@ func (ctl *FileController) Read(c *models.Context) {
 
 	oneYear := time.Hour * 24 * 365
 	nextYear := time.Now().Add(oneYear)
-	c.ResponseWriter.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", oneYear/time.Second))
+	c.ResponseWriter.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, immutable", oneYear/time.Second))
 	c.ResponseWriter.Header().Set("Expires", nextYear.Format(time.RFC1123))
 
 	for h, v := range headers {
