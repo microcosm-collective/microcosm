@@ -20,6 +20,7 @@ var affwinDomainParts = []string{
 	".cyclestore.",
 	".evanscycles.",
 	".hargrovescycles.",
+	".hiscox.",
 	".merlincycles.",
 	".pedalsure.",
 	".probikekit.",
@@ -74,6 +75,15 @@ func (m *affWinLink) getDestination() (bool, string) {
 
 	case "www.hargrovescycles.co.uk":
 		programID = 2828
+
+	case "www.hiscox.co.uk":
+		programID = 6290
+	case "www.hiscox.com":
+		programID = 6290
+	case "www.hiscoxbroker.co.uk":
+		programID = 6290
+	case "www.hiscoxgroup.com":
+		programID = 6290
 
 	case "www.merlincycles.co.uk":
 		programID = 3361
