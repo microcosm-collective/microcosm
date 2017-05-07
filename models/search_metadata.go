@@ -434,7 +434,7 @@ OFFSET $4`
 	// This nested query is used to run the `has_unread` query on only the rows
 	// that are returned, rather than on all rows in the underlying query before
 	// limit has been applied.
-	rows, err := db.Query(`
+	sqlQuery := `
 SELECT item_type_id
       ,item_id
       ,parent_item_type_id
@@ -443,12 +443,17 @@ SELECT item_type_id
       ,rank
       ,highlight
       ,has_unread(item_type_id, item_id, $2)
-  FROM (`+
-		sqlWith+
-		sqlSelect+
-		sqlFromWhere+
-		sqlOrderLimit+
-		`) r`,
+  FROM (` +
+		sqlWith +
+		sqlSelect +
+		sqlFromWhere +
+		sqlOrderLimit +
+		`) r`
+
+	//glog.Error(sqlQuery)
+
+	rows, err := db.Query(
+		sqlQuery,
 		siteID,
 		profileID,
 		limit,
