@@ -128,28 +128,28 @@ func searchFullText(
 			if len(m.Query.ItemIDs) == 1 {
 				if includeComments {
 					filterItems = fmt.Sprintf(`
-              AND (   (si.item_type_id IN (`+strings.Join(itemTypeSansCommentsInList, `,`)+`) AND si.item_id = %d)
-                   OR (si.item_type_id = 4 AND si.parent_item_id = %d AND si.parent_item_type_id IN (`+strings.Join(itemTypeSansCommentsInList, `,`)+`))
+              AND (   (f.item_type_id IN (`+strings.Join(itemTypeSansCommentsInList, `,`)+`) AND f.item_id = %d)
+                   OR (f.item_type_id = 4 AND f.parent_item_id = %d AND f.parent_item_type_id IN (`+strings.Join(itemTypeSansCommentsInList, `,`)+`))
                   )`,
 						m.Query.ItemIDs[0],
 						m.Query.ItemIDs[0],
 					)
 				} else {
 					filterItems = fmt.Sprintf(`
-              AND si.item_id = %d`,
+              AND f.item_id = %d`,
 						m.Query.ItemIDs[0],
 					)
 				}
 			} else {
 				if includeComments {
 					filterItems = `
-              AND (   (si.item_type_id IN (` + strings.Join(itemTypeSansCommentsInList, `,`) + `) AND si.item_id IN (` + strings.Join(itemIdsInList, `,`) + `))
-                   OR (si.item_type_id = 4 AND si.parent_item_type_id IN (` + strings.Join(itemTypeSansCommentsInList, `,`) + `) AND si.parent_item_id IN (` + strings.Join(itemIdsInList, `,`) + `))
+              AND (   (f.item_type_id IN (` + strings.Join(itemTypeSansCommentsInList, `,`) + `) AND f.item_id IN (` + strings.Join(itemIdsInList, `,`) + `))
+                   OR (f.item_type_id = 4 AND f.parent_item_type_id IN (` + strings.Join(itemTypeSansCommentsInList, `,`) + `) AND f.parent_item_id IN (` + strings.Join(itemIdsInList, `,`) + `))
                   )`
 				} else {
 					filterItems = `
-              AND si.item_type_id IN (` + strings.Join(itemTypeInList, `,`) + `)
-              AND si.item_id IN (` + strings.Join(itemIdsInList, `,`) + `)`
+              AND f.item_type_id IN (` + strings.Join(itemTypeInList, `,`) + `)
+              AND f.item_id IN (` + strings.Join(itemIdsInList, `,`) + `)`
 				}
 			}
 		}
@@ -170,7 +170,7 @@ func searchFullText(
 	var filterProfileID string
 	if m.Query.ProfileID > 0 {
 		filterProfileID = fmt.Sprintf(`
-              AND si.profile_id = %d`, m.Query.ProfileID)
+              AND f.profile_id = %d`, m.Query.ProfileID)
 	}
 
 	var (
@@ -280,32 +280,6 @@ func searchFullText(
 		}
 	}
 
-	var filterSRToMicrocosms string
-	if filterMicrocosmIDs != "" {
-		filterSRToMicrocosms = `
-       AND si.microcosm_id IN (SELECT microcosm_id FROM m)`
-	}
-
-	var filterSRToItemTypes string
-	if filterItemTypes != "" {
-		filterSRToItemTypes = strings.Replace(
-			strings.Replace(
-				filterItemTypes,
-				`f.item_type_id`,
-				`si.item_type_id`,
-				-1,
-			),
-			`f.parent_item_type_id`,
-			`si.parent_item_type_id`,
-			-1,
-		)
-	}
-
-	var filterSRHasAttachmentsJoin string
-	if filterHasAttachmentsJoin != "" {
-		filterSRHasAttachmentsJoin = strings.Replace(filterHasAttachmentsJoin, `f.item`, `si.item`, -1)
-	}
-
 	// Now we define our SQL
 	sqlQuery := `
 WITH m AS (
@@ -327,24 +301,46 @@ WITH m AS (
             OR (get_effective_permissions($1,m.microcosm_id,2,m.microcosm_id,$2)).can_read IS TRUE
            )
 ), sr AS (
-    SELECT si.item_type_id
-          ,si.item_id
-      FROM search_index si` + filterSRHasAttachmentsJoin + `
+    SELECT f.*
+          ,ts_rank_cd(si.title_vector, query, 8) AS rank
+          ,query.query
+      FROM search_index si
+      JOIN flags f ON f.item_type_id = si.item_type_id
+                  AND f.item_id = si.item_id` +
+		filterHasAttachmentsJoin +
+		filterFollowingJoin +
+		filterHuddlesJoin + `
           ,plainto_tsquery($3) AS query
      WHERE si.site_id = $1
-       AND si.` + fullTextScope + `_vector @@ query` +
-		filterSRToMicrocosms +
-		filterSRToItemTypes + `
+       AND si.` + fullTextScope + `_vector @@ query
+       AND f.microcosm_is_deleted IS NOT TRUE
+       AND f.microcosm_is_moderated IS NOT TRUE
+       AND f.parent_is_deleted IS NOT TRUE
+       AND f.parent_is_moderated IS NOT TRUE
+       AND f.item_is_deleted IS NOT TRUE
+       AND f.item_is_moderated IS NOT TRUE
+       AND (
+             -- Things that are public by default
+                COALESCE(f.parent_item_type_id, f.item_type_id) = 3
+             OR -- Things in microcosms
+                COALESCE(f.microcosm_id, f.item_id) IN (SELECT microcosm_id FROM m)` + filterThingsInHuddles + `
+           )` +
+		filterTitle +
+		filterItemTypes +
+		filterItems +
+		filterMicrocosmIDs +
+		filterProfileID +
+		filterHashTag + `
 )
-SELECT total
-      ,item_type_id
-      ,item_id
-      ,parent_item_type_id
-      ,parent_item_id
-      ,last_modified
-      ,rank
-      ,ts_headline(` + fullTextScope + `_text, query) AS highlight
-      ,has_unread(item_type_id, item_id, $2)
+SELECT r.total
+      ,r.item_type_id
+      ,r.item_id
+      ,r.parent_item_type_id
+      ,r.parent_item_id
+      ,r.last_modified
+      ,COALESCE(r.rank, 0) AS rank
+      ,ts_headline(osi.` + fullTextScope + `_text, r.query) AS highlight
+      ,has_unread(r.item_type_id, r.item_id, $2)
   FROM (
            SELECT COUNT(*) OVER() AS total
                  ,f.item_type_id
@@ -352,48 +348,23 @@ SELECT total
                  ,f.parent_item_type_id
                  ,f.parent_item_id
                  ,f.last_modified
-                 ,ts_rank_cd(si.` + fullTextScope + `_vector, query, 8) AS rank
-                 ,si.` + fullTextScope + `_text
-                 ,query.query
-             FROM sr
-                  JOIN search_index si ON sr.item_type_id = si.item_type_id
-                                      AND sr.item_id = si.item_id
-                  JOIN flags f ON f.item_type_id = si.item_type_id
-                              AND f.item_id = si.item_id
+                 ,f.rank
+                 ,f.query
+             FROM sr AS f
              LEFT JOIN ignores i ON i.profile_id = $2
                                 AND i.item_type_id = f.item_type_id
                                 AND i.item_id = f.item_id` +
-		filterHasAttachmentsJoin +
-		filterEventsJoin +
-		filterFollowingJoin +
-		filterHuddlesJoin + `
-                 ,plainto_tsquery($3) AS query
+		filterEventsJoin + `
             WHERE f.site_id = $1
               AND i.profile_id IS NULL` +
 		filterModified +
-		filterMicrocosmIDs +
-		filterTitle +
-		filterItemTypes +
-		filterItems +
-		filterHashTag +
-		filterEventsWhere +
-		filterProfileID + `
-              AND f.microcosm_is_deleted IS NOT TRUE
-              AND f.microcosm_is_moderated IS NOT TRUE
-              AND f.parent_is_deleted IS NOT TRUE
-              AND f.parent_is_moderated IS NOT TRUE
-              AND f.item_is_deleted IS NOT TRUE
-              AND f.item_is_moderated IS NOT TRUE
-              AND (
-                      -- Things that are public by default
-                      COALESCE(f.parent_item_type_id, f.item_type_id) = 3
-                   OR -- Things in microcosms
-                      COALESCE(f.microcosm_id, f.item_id) IN (SELECT microcosm_id FROM m)` + filterThingsInHuddles + `
-                  )
+		filterEventsWhere + `
             ORDER BY ` + orderBy + `
             LIMIT $4
            OFFSET $5
        ) r
+  JOIN search_index osi ON osi.item_type_id = r.item_type_id
+                       AND osi.item_id = r.item_id
 `
 
 	db, err := h.GetConnection()
