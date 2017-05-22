@@ -358,18 +358,17 @@ SELECT total
       ,has_unread(COALESCE(parent_item_type_id, item_type_id), COALESCE(parent_item_id, item_id), $2)
   FROM (
           SELECT COUNT(*) OVER() AS total
-                ,rollup.update_id
-                ,rollup.for_profile_id
-                ,rollup.update_type_id
-                ,rollup.item_type_id
-                ,rollup.item_id
-                ,rollup.created_by
-                ,rollup.created
-                ,rollup.site_id
-                ,f.parent_item_type_id
-                ,f.parent_item_id
-            FROM flags f
-                 JOIN (
+                ,update_id
+                ,for_profile_id
+                ,update_type_id
+                ,item_type_id
+                ,item_id
+                ,created_by
+                ,created
+                ,site_id
+                ,parent_item_type_id
+                ,parent_item_id
+            FROM (
                           -- 1;'new_comment';'When a comment has been posted in an item you are watching'
                           -- 4;'new_comment_in_huddle';'When you receive a new comment in a private message'
                           SELECT u.update_id
@@ -380,7 +379,11 @@ SELECT total
                                 ,u.created_by
                                 ,u.created
                                 ,$1 AS site_id
+                                ,f.parent_item_type_id
+                                ,f.parent_item_id
                             FROM updates u
+                            JOIN flags f ON f.item_type_id = u.item_type_id
+                                        AND f.item_id = u.item_id
                                  JOIN (
                                           SELECT MAX(u.update_id) AS update_id
                                                 ,f.parent_item_type_id AS item_type_id
@@ -399,8 +402,6 @@ SELECT total
                                            WHERE u.for_profile_id = $2
                                              AND i.profile_id IS NULL
                                              AND u.update_type_id IN (1, 4)
-                                             AND f.microcosm_is_deleted IS NOT TRUE
-                                             AND f.microcosm_is_moderated IS NOT TRUE
                                              AND f.item_is_deleted IS NOT TRUE
                                              AND f.item_is_moderated IS NOT TRUE
                                              AND f.parent_is_deleted IS NOT TRUE
@@ -427,6 +428,8 @@ SELECT total
                                 ,u.created_by
                                 ,u.created
                                 ,$1 AS site_id
+                                ,u.parent_item_type_id
+                                ,u.parent_item_id
                             FROM updates u
                            WHERE update_id IN (
                                      SELECT MAX(u.update_id)
@@ -445,8 +448,6 @@ SELECT total
                                         AND i.profile_id IS NULL
                                         AND (u.update_type_id = 2 OR u.update_type_id = 3) -- replies (2) & mentions (3)
                                         AND f.site_id = $1
-                                        AND f.microcosm_is_deleted IS NOT TRUE
-                                        AND f.microcosm_is_moderated IS NOT TRUE
                                         AND f.item_is_deleted IS NOT TRUE
                                         AND f.item_is_moderated IS NOT TRUE
                                         AND f.parent_is_deleted IS NOT TRUE
@@ -469,6 +470,8 @@ SELECT total
                                 ,u.created_by
                                 ,u.created
                                 ,$1 AS site_id
+                                ,u.parent_item_type_id
+                                ,u.parent_item_id
                             FROM updates u
                            WHERE update_id IN (
                                      SELECT MAX(u.update_id)
@@ -478,23 +481,16 @@ SELECT total
                                                         AND f.microcosm_id IN (SELECT microcosm_id FROM m)
                                             JOIN watchers w ON w.profile_id = $2
                                                            AND w.item_type_id = 2
-                                                           AND w.item_id = f.microcosm_id
+                                                           AND w.item_id IN (SELECT microcosm_id FROM m)
                                             LEFT JOIN ignores i ON i.profile_id = $2
                                                                AND i.item_type_id = 3
                                                                AND i.item_id = u.created_by
                                       WHERE u.for_profile_id = $2
                                         AND i.profile_id IS NULL
                                         AND u.update_type_id = 8
-                                        AND f.microcosm_is_deleted IS NOT TRUE
-                                        AND f.microcosm_is_moderated IS NOT TRUE
-                                        AND f.item_is_deleted IS NOT TRUE
-                                        AND f.item_is_moderated IS NOT TRUE
-                                        AND f.parent_is_deleted IS NOT TRUE
-                                        AND f.parent_is_moderated IS NOT TRUE
                                       GROUP BY u.item_type_id, u.item_id
                                  )
-                          ) AS rollup ON rollup.item_type_id = f.item_type_id
-                                     AND rollup.item_id = f.item_id
+                 ) AS rollup
            ORDER BY created DESC
            LIMIT $3
           OFFSET $4
