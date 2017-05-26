@@ -391,6 +391,10 @@ SELECT total
                                             FROM updates u
                                                  JOIN flags f ON f.item_type_id = u.item_type_id
                                                              AND f.item_id = u.item_id
+				                                             AND f.item_is_deleted IS NOT TRUE
+				                                             AND f.item_is_moderated IS NOT TRUE
+				                                             AND f.parent_is_deleted IS NOT TRUE
+				                                             AND f.parent_is_moderated IS NOT TRUE
                                             LEFT JOIN ignores i ON i.profile_id = $2
                                                                AND (
                                                                        (i.item_type_id = 3 AND i.item_id = u.created_by)
@@ -402,10 +406,6 @@ SELECT total
                                            WHERE u.for_profile_id = $2
                                              AND i.profile_id IS NULL
                                              AND u.update_type_id IN (1, 4)
-                                             AND f.item_is_deleted IS NOT TRUE
-                                             AND f.item_is_moderated IS NOT TRUE
-                                             AND f.parent_is_deleted IS NOT TRUE
-                                             AND f.parent_is_moderated IS NOT TRUE
                                              AND (
                                                      f.microcosm_id IN (SELECT microcosm_id FROM m)
                                                   OR hp.profile_id = u.for_profile_id
@@ -436,6 +436,10 @@ SELECT total
                                        FROM updates u
                                             JOIN flags f ON f.item_type_id = u.item_type_id
                                                         AND f.item_id = u.item_id
+			                                            AND f.item_is_deleted IS NOT TRUE
+			                                            AND f.item_is_moderated IS NOT TRUE
+			                                            AND f.parent_is_deleted IS NOT TRUE
+			                                            AND f.parent_is_moderated IS NOT TRUE
                                             LEFT JOIN huddle_profiles hp ON hp.huddle_id = f.parent_item_id
                                                                         AND hp.profile_id = u.for_profile_id
                                                                         AND f.parent_item_type_id = 5
@@ -479,6 +483,10 @@ SELECT total
                                             JOIN flags f ON f.item_type_id = u.item_type_id
                                                         AND f.item_id = u.item_id
                                                         AND f.microcosm_id IN (SELECT microcosm_id FROM m)
+			                                            AND f.item_is_deleted IS NOT TRUE
+			                                            AND f.item_is_moderated IS NOT TRUE
+			                                            AND f.parent_is_deleted IS NOT TRUE
+			                                            AND f.parent_is_moderated IS NOT TRUE
                                             JOIN watchers w ON w.profile_id = $2
                                                            AND w.item_type_id = 2
                                                            AND w.item_id IN (SELECT microcosm_id FROM m)
