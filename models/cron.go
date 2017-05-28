@@ -580,5 +580,14 @@ DELETE FROM updates
 		return
 	}
 
+	_, err = db.Exec(`--DeleteOldUpdatesFromItemsMicrocosm
+DELETE FROM updates
+ WHERE update_type_id = 8
+   AND created < NOW() - '1 month'::INTERVAL;`)
+	if err != nil {
+		glog.Error(err)
+		return
+	}
+
 	glog.Info("Deleted old updates")
 }

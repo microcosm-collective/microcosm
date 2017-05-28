@@ -348,42 +348,32 @@ WITH m AS (
 )
 SELECT total
       ,update_id
-      ,for_profile_id
+      ,$2 AS for_profile_id
       ,update_type_id
       ,item_type_id
       ,item_id
       ,created_by
       ,created
-      ,site_id
-      ,has_unread(COALESCE(parent_item_type_id, item_type_id), COALESCE(parent_item_id, item_id), $2)
+      ,$1 AS site_id
+      ,has_unread(item_type_id, item_id, $2)
   FROM (
           SELECT COUNT(*) OVER() AS total
                 ,update_id
-                ,for_profile_id
                 ,update_type_id
                 ,item_type_id
                 ,item_id
                 ,created_by
                 ,created
-                ,site_id
-                ,parent_item_type_id
-                ,parent_item_id
             FROM (
                           -- 1;'new_comment';'When a comment has been posted in an item you are watching'
                           -- 4;'new_comment_in_huddle';'When you receive a new comment in a private message'
                           SELECT u.update_id
-                                ,u.for_profile_id
                                 ,u.update_type_id
                                 ,u.item_type_id
                                 ,u.item_id
                                 ,u.created_by
                                 ,u.created
-                                ,$1 AS site_id
-                                ,f.parent_item_type_id
-                                ,f.parent_item_id
                             FROM updates u
-                            JOIN flags f ON f.item_type_id = u.item_type_id
-                                        AND f.item_id = u.item_id
                                  JOIN (
                                           SELECT MAX(u.update_id) AS update_id
                                                 ,f.parent_item_type_id AS item_type_id
@@ -421,15 +411,11 @@ SELECT total
                           -- 2;'reply_to_comment';'When a comment of yours is replied to'
                           -- 3;'mentioned';'When you are @mentioned in a comment'
                           SELECT u.update_id
-                                ,u.for_profile_id
                                 ,u.update_type_id
                                 ,u.item_type_id
                                 ,u.item_id
                                 ,u.created_by
                                 ,u.created
-                                ,$1 AS site_id
-                                ,u.parent_item_type_id
-                                ,u.parent_item_id
                             FROM updates u
                            WHERE update_id IN (
                                      SELECT MAX(u.update_id)
@@ -467,15 +453,11 @@ SELECT total
                            UNION
                           -- 8;'new_item';'When a new item is created in a microcosm you are watching'
                           SELECT u.update_id
-                                ,u.for_profile_id
-                                ,u.update_type_id
+                                ,8 AS update_type_id
                                 ,u.item_type_id
                                 ,u.item_id
                                 ,u.created_by
                                 ,u.created
-                                ,$1 AS site_id
-                                ,u.parent_item_type_id
-                                ,u.parent_item_id
                             FROM updates u
                            WHERE update_id IN (
                                      SELECT MAX(u.update_id)
