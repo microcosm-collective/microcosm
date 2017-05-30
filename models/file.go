@@ -32,7 +32,7 @@ const (
 	AvatarMaxHeight int64 = 100
 
 	// MaxFileSize is the maximum size (in bytes) of an attachment
-	MaxFileSize int32 = 5242880 * 2 // 10MB
+	MaxFileSize int32 = 5242880 * 2 * 3 // 30MB
 
 	// ImageGifMimeType is the mime type for GIF images
 	ImageGifMimeType string = "image/gif"
@@ -82,7 +82,7 @@ func (f *FileMetadataType) Validate() (int, error) {
 
 	if f.FileSize > MaxFileSize {
 		return http.StatusBadRequest,
-			fmt.Errorf("Files must be below 5MB in size")
+			fmt.Errorf("Files must be below 30MB in size")
 	}
 
 	// SHA-1 output encoded as string is 40 characters
