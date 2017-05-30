@@ -8,7 +8,6 @@ import (
 	"math"
 	mrand "math/rand"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/golang/glog"
@@ -18,8 +17,6 @@ import (
 
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
-
-var regURLHead = regexp.MustCompile(`^(https?:\/\/)(www\.)?`)
 
 // ProcessLinks will fetch the HTML for a revision and extract and shorten all
 // hyperlinks
@@ -249,10 +246,6 @@ func ShortenLink(
 		return fullURL, text, "", nil
 	}
 
-	var b bytes.Buffer
-	b.Write(regURLHead.ReplaceAll([]byte(text), []byte("")))
-	text = string(b.Bytes())
-
 	// Provide a meaningful title only if the contents of the anchor is not
 	// the fullURL
 	var title string
@@ -262,9 +255,6 @@ func ShortenLink(
 		if len(fullURL) > upperBound {
 			title += "..."
 		}
-		var b2 bytes.Buffer
-		b2.Write(regURLHead.ReplaceAll([]byte(title), []byte("")))
-		title = string(b2.Bytes())
 	}
 
 	var (
