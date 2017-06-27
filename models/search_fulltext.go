@@ -170,7 +170,7 @@ func searchFullText(
 	var filterProfileID string
 	if m.Query.ProfileID > 0 {
 		filterProfileID = fmt.Sprintf(`
-              AND f.profile_id = %d`, m.Query.ProfileID)
+              AND si.profile_id = %d`, m.Query.ProfileID)
 	}
 
 	var (
