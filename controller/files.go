@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/glog"
+
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/models"
 )
@@ -91,6 +93,7 @@ func (ctl *FilesController) Create(c *models.Context) {
 
 				md.Content, err = ioutil.ReadAll(part)
 				if err != nil {
+					glog.Errorf("+%v", err)
 					c.RespondWithErrorMessage(
 						fmt.Sprintf("Couldn't not read form part: %v", err.Error()),
 						http.StatusBadRequest,
@@ -100,6 +103,7 @@ func (ctl *FilesController) Create(c *models.Context) {
 
 				sha1, err := h.SHA1(md.Content)
 				if err != nil {
+					glog.Errorf("+%v", err)
 					c.RespondWithErrorMessage(
 						fmt.Sprintf("Couldn't generate SHA-1: %v", err.Error()),
 						http.StatusInternalServerError,
@@ -144,6 +148,7 @@ func (ctl *FilesController) Create(c *models.Context) {
 
 				status, err := md.Insert(maxWidth, maxHeight)
 				if err != nil {
+					glog.Errorf("+%v", err)
 					c.RespondWithErrorMessage(
 						fmt.Sprintf("Couldn't upload file and metadata: %v", err.Error()),
 						status,

@@ -160,8 +160,8 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 			return
 		}
 
-		if metadata.FileSize > 3145728 {
-			c.RespondWithErrorMessage(fmt.Sprintf("File size must be under 3 megabytes"), http.StatusBadRequest)
+		if metadata.FileSize > models.MaxFileSize {
+			c.RespondWithErrorMessage(fmt.Sprintf("File size must be under 30 megabytes"), http.StatusBadRequest)
 			return
 		}
 
