@@ -29,6 +29,16 @@ type Request struct {
 	Body        []byte
 }
 
+// RestError is a struct for an error handling.
+type RestError struct {
+	Response *Response
+}
+
+// Error is the implementation of the error interface.
+func (e *RestError) Error() string {
+	return e.Response.Body
+}
+
 // DefaultClient is used if no custom HTTP client is defined
 var DefaultClient = &Client{HTTPClient: http.DefaultClient}
 
@@ -58,11 +68,16 @@ func AddQueryParameters(baseURL string, queryParams map[string]string) string {
 
 // BuildRequestObject creates the HTTP request object.
 func BuildRequestObject(request Request) (*http.Request, error) {
+	// Add any query parameters to the URL.
+	if len(request.QueryParams) != 0 {
+		request.BaseURL = AddQueryParameters(request.BaseURL, request.QueryParams)
+	}
 	req, err := http.NewRequest(string(request.Method), request.BaseURL, bytes.NewBuffer(request.Body))
 	for key, value := range request.Headers {
 		req.Header.Set(key, value)
 	}
-	if len(request.Body) > 0 {
+	_, exists := req.Header["Content-Type"]
+	if len(request.Body) > 0 && !exists {
 		req.Header.Set("Content-Type", "application/json")
 	}
 	return req, err
@@ -103,11 +118,6 @@ func (c *Client) MakeRequest(req *http.Request) (*http.Response, error) {
 
 // API is the main interface to the API.
 func (c *Client) API(request Request) (*Response, error) {
-	// Add any query parameters to the URL.
-	if len(request.QueryParams) != 0 {
-		request.BaseURL = AddQueryParameters(request.BaseURL, request.QueryParams)
-	}
-
 	// Build the HTTP request object.
 	req, err := BuildRequestObject(request)
 	if err != nil {

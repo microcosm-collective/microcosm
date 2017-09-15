@@ -3,7 +3,7 @@ package helpers
 import (
 	"github.com/golang/glog"
 
-	"github.com/microcosm-cc/goconfig"
+	"github.com/robfig/config"
 )
 
 // ConfigFilePath is the path to the config file
@@ -86,13 +86,13 @@ var ConfigInt64s = map[string]int64{}
 var ConfigBool = map[string]bool{}
 
 func init() {
-	c, err := goconfig.ReadConfigFile(ConfigFilePath)
+	c, err := config.ReadDefault(ConfigFilePath)
 	if err != nil {
 		glog.Fatal(err)
 	}
 
 	for _, key := range configRequiredStrings {
-		s, err := c.GetString(APISection, key)
+		s, err := c.String(APISection, key)
 		if err != nil {
 			glog.Fatal(err)
 		}
@@ -100,10 +100,10 @@ func init() {
 	}
 
 	for _, key := range configRequiredInt64s {
-		ii, err := c.GetInt64(APISection, key)
+		ii, err := c.Int(APISection, key)
 		if err != nil {
 			glog.Fatal(err)
 		}
-		ConfigInt64s[key] = ii
+		ConfigInt64s[key] = int64(ii)
 	}
 }
