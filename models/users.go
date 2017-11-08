@@ -782,6 +782,17 @@ INSERT INTO profiles (
 		}
 	}
 
+	// Update any profile without an avatar to have one
+	_, err = tx.Exec(`--Add Gravatars
+UPDATE profiles AS p
+   SET avatar_url = 'https://secure.gravatar.com/avatar/' || MD5(LOWER(u.email)) || '?d=identicon'
+  FROM users AS u
+ WHERE p.user_id = u.user_id
+   AND p.avatar_url IS NULL`)
+	if err != nil {
+		glog.Errorf("error updating avatars: %s", err.Error())
+	}
+
 	// Create a list of every profileID that we change permission on, as we
 	// will need to flush the cached privileges later.
 	var touchedProfiles []string
