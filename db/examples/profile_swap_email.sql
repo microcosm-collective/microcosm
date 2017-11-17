@@ -2,16 +2,24 @@
 -- address, and then has signed up with a new email and actually wants to use that
 -- to access their original account
 
-SELECT p.profile_id
+SELECT s.subdomain_key
+      ,p.profile_id
       ,p.profile_name
       ,u.user_id
       ,u.email
       ,u.canonical_email
+      ,p.comment_count
+      ,p.last_active
+      ,CASE WHEN ak.attribute_id IS NULL THEN NULL ELSE 'member' END AS member
   FROM profiles p
-      ,users u
- WHERE p.user_id = u.user_id
-   AND p.site_id = 234
-   AND p.profile_name IN ('user12345','profile1');
+  JOIN users u ON p.user_id = u.user_id
+  JOIN sites s ON p.site_id = s.site_id
+ LEFT JOIN attribute_keys ak ON ak.item_id = p.profile_id AND ak.item_type_id = 3 
+ WHERE u.canonical_email IN (
+           canonical_email('profile1@gmail.com'),
+           canonical_email('user12345@gmail.com')
+      );
+   --AND p.profile_name IN ('user12345','profile1');
 
 -- This is in a transaction, does nothing unless we run the parts without the ROLLBACK
 BEGIN;
