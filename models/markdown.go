@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"regexp"
+	"strings"
 
 	"github.com/russross/blackfriday"
 	"golang.org/x/net/html"
@@ -87,7 +88,13 @@ func ProcessCommentMarkdown(
 	// security vulnerability
 	src = SanitiseHTML(src)
 
-	return string(src), nil
+	// This is to allow the image tags within content to be trivially matched
+	// and replaced by Cloudflare Edge Workers
+	out := string(src)
+	out = strings.Replace(out, `<img `, `<img class="ip" `, -1)
+	out = strings.Replace(out, ` alt=""`, ``, -1)
+
+	return out, nil
 }
 
 // MarkdownToHTML wraps Black Friday and provides default settings for Black Friday
