@@ -12,7 +12,6 @@ import (
 const webGainsAffiliateID string = "104653"
 
 var webgainsDomainParts = []string{
-	"awcycles",
 	"biketart",
 	"cyclesurgery",
 	"ellis-brigham",
@@ -46,8 +45,6 @@ func (m *webgainsLink) getDestination() (bool, string) {
 	// Fetch a program ID based on domain
 	var programID int
 	switch m.Link.Domain {
-	case "www.awcycles.co.uk":
-		programID = 2730
 	case "www.biketart.com":
 		programID = 9697
 	case "www.cyclesurgery.com":
