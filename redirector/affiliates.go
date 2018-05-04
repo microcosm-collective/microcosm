@@ -12,17 +12,14 @@ var affDomainParts = append(
 	append(
 		append(
 			append(
-				append(
-					[]string{},
-					lfgssDomainParts...,
-				),
-				affwinDomainParts...,
+				[]string{},
+				lfgssDomainParts...,
 			),
-			ebayDomainParts...,
+			affwinDomainParts...,
 		),
-		amazonDomainParts...,
+		ebayDomainParts...,
 	),
-	webgainsDomainParts...,
+	amazonDomainParts...,
 )
 
 func affiliateMayExist(domain string) bool {
@@ -45,14 +42,6 @@ func getAffiliateLink(link models.Link) string {
 	// Ebay Partner Network
 	if !(len(ahocorasick.NewStringMatcher(ebayDomainParts).Match([]byte(strings.ToLower(link.Domain)))) == 0) {
 		m := ebayLink{Link: link}
-		if ok, u := m.getDestination(); ok {
-			return u
-		}
-	}
-
-	// Webgains
-	if !(len(ahocorasick.NewStringMatcher(webgainsDomainParts).Match([]byte(strings.ToLower(link.Domain)))) == 0) {
-		m := webgainsLink{Link: link}
 		if ok, u := m.getDestination(); ok {
 			return u
 		}
