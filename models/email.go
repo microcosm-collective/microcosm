@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html"
 	"net/http"
+	netmail "net/mail"
 	"net/url"
 	"strings"
 	"text/template"
@@ -18,7 +19,8 @@ import (
 )
 
 const (
-	emailFrom string = `%s <notify@microco.sm>`
+	notificationEmail string = `<notify@microco.sm>`
+	emailFrom         string = `%s ` + notificationEmail
 
 	emailHTMLHeader string = `<!DOCTYPE html>
 <meta charset="utf-8"><div>`
@@ -63,9 +65,7 @@ func MergeAndSendEmail(
 	}
 
 	var email = EmailType{}
-
 	email.From = from
-
 	email.To = to
 
 	var emailSubject bytes.Buffer
@@ -97,6 +97,14 @@ func MergeAndSendEmail(
 
 // Send uses mailgun to send an email and logs any errors.
 func (m *EmailType) Send(siteID int64) (int, error) {
+	//m.From = fmt.Sprintf(emailFrom, GetSiteTitle(siteID))
+	m.From = notificationEmail
+	f, err := netmail.ParseAddress(m.From)
+	if err != nil {
+		return http.StatusPreconditionFailed, err
+	}
+	m.From = f.String()
+
 	if m.From == "" || m.To == "" {
 		return http.StatusPreconditionFailed,
 			fmt.Errorf("Cannot send an email without " +
