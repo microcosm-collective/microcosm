@@ -92,8 +92,6 @@ type ThreadedMetaType struct {
 
 // CommentFlagsMetaType is a flags meta struct for comments
 type CommentFlagsMetaType struct {
-	h.CreatedType
-	h.EditedType
 	ThreadedMetaType
 }
 
