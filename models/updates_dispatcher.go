@@ -234,7 +234,7 @@ func SendUpdatesForNewCommentInItem(
 
 				status, err = MergeAndSendEmail(
 					siteID,
-					fmt.Sprintf(emailFrom, GetSiteTitle(siteID)),
+					emailFrom,
 					mergeData.ForEmail,
 					subjectTemplate,
 					textTemplate,
@@ -408,7 +408,7 @@ func SendUpdatesForNewReplyToYourComment(
 
 		status, err = MergeAndSendEmail(
 			siteID,
-			fmt.Sprintf(emailFrom, GetSiteTitle(siteID)),
+			emailFrom,
 			mergeData.ForEmail,
 			subjectTemplate,
 			textTemplate,
@@ -547,7 +547,7 @@ func SendUpdatesForNewMentionInComment(
 
 		status, err = MergeAndSendEmail(
 			siteID,
-			fmt.Sprintf(emailFrom, GetSiteTitle(siteID)),
+			emailFrom,
 			mergeData.ForEmail,
 			subjectTemplate,
 			textTemplate,
@@ -770,7 +770,7 @@ func SendUpdatesForNewCommentInHuddle(
 
 				status, err = MergeAndSendEmail(
 					siteID,
-					fmt.Sprintf(emailFrom, GetSiteTitle(siteID)),
+					emailFrom,
 					mergeData.ForEmail,
 					subjectTemplate,
 					textTemplate,
@@ -975,7 +975,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 
 				status, err = MergeAndSendEmail(
 					siteID,
-					fmt.Sprintf(emailFrom, GetSiteTitle(siteID)),
+					emailFrom,
 					mergeData.ForEmail,
 					subjectTemplate,
 					textTemplate,
@@ -1203,7 +1203,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 
 				status, err = MergeAndSendEmail(
 					siteID,
-					fmt.Sprintf(emailFrom, GetSiteTitle(siteID)),
+					emailFrom,
 					mergeData.ForEmail,
 					subjectTemplate,
 					textTemplate,
@@ -1346,7 +1346,7 @@ func SendUpdatesForNewUserOnSite(
 
 				status, err = MergeAndSendEmail(
 					site.ID,
-					fmt.Sprintf(emailFrom, site.Title),
+					emailFrom,
 					mergeData.ForEmail,
 					subjectTemplate,
 					textTemplate,

@@ -19,8 +19,7 @@ import (
 )
 
 const (
-	notificationEmail string = `<notify@microco.sm>`
-	emailFrom         string = `%s ` + notificationEmail
+	emailFrom string = `notify@microco.sm`
 
 	emailHTMLHeader string = `<!DOCTYPE html>
 <meta charset="utf-8"><div>`
@@ -97,13 +96,9 @@ func MergeAndSendEmail(
 
 // Send uses mailgun to send an email and logs any errors.
 func (m *EmailType) Send(siteID int64) (int, error) {
-	//m.From = fmt.Sprintf(emailFrom, GetSiteTitle(siteID))
-	m.From = notificationEmail
-	f, err := netmail.ParseAddress(m.From)
-	if err != nil {
+	if _, err := netmail.ParseAddress(emailFrom); err != nil {
 		return http.StatusPreconditionFailed, err
 	}
-	m.From = f.String()
 
 	if m.From == "" || m.To == "" {
 		return http.StatusPreconditionFailed,
@@ -119,7 +114,7 @@ func (m *EmailType) Send(siteID int64) (int, error) {
 	if sendGridAPIKey, ok := conf.ConfigStrings[conf.SendGridAPIKey]; ok {
 		// SendGrid has priority
 		sgm := mail.NewV3MailInit(
-			&mail.Email{Name: GetSiteTitle(siteID), Address: m.From},
+			&mail.Email{Name: GetSiteTitle(siteID), Address: emailFrom},
 			m.Subject,
 			&mail.Email{Address: m.To},
 			mail.NewContent("text/plain", m.BodyText),
@@ -149,7 +144,7 @@ func (m *EmailType) Send(siteID int64) (int, error) {
 	} else if mailgunAPIKey, ok := conf.ConfigStrings[conf.MailgunAPIKey]; ok {
 		// Then Mailgun
 		formBody := url.Values{}
-		formBody.Set("from", m.From)
+		formBody.Set("from", emailFrom)
 
 		if m.ReplyTo != "" {
 			formBody.Set("h:Reply-To", m.ReplyTo)
