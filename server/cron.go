@@ -18,10 +18,10 @@ var (
 		//SS MI HH  DOM MON DOW
 		"  0  *     *    *   *   *": models.UpdateViewCounts,          // Every minute
 		" 30  *     *    *   *   *": models.UpdateWhosOnline,          // Every minute at 30s
-		"  0  0/10  *    *   *   *": models.DeleteOldUpdates,          // Every 10 minutes
 		"  0 30     *    *   *   *": models.UpdateAllSiteStats,        // Every hour at half past
 		"  0  0     0/4  *   *   *": models.UpdateMetricsCron,         // Every day at midnight and every 4 hours thereafter
 		"  0  0     1    *   *   *": models.UpdateMicrocosmItemCounts, // Every day at 1am
+		"  0  0     4    *   *   *": models.DeleteOldUpdates,          // Every day at 4am
 		"  0  0     5    *   *   *": models.DeleteOrphanedHuddles,     // Every day at 5am
 		"  0  5     5    *   *   0": models.UpdateProfileCounts,       // Every Sunday at 5.05am
 	}
