@@ -1027,6 +1027,9 @@ func GetSiteStats(siteID int64) ([]h.StatType, error) {
 
 // GetSiteBySubdomain returns a site for a given subdomain key
 func GetSiteBySubdomain(subdomain string) (SiteType, int, error) {
+	if subdomain == "gfora" {
+		subdomain = "lfgss"
+	}
 
 	if strings.Trim(subdomain, " ") == "" {
 		return SiteType{}, http.StatusBadRequest,
@@ -1073,6 +1076,10 @@ SELECT site_id
 
 // GetSiteByDomain returns a site for a given custom domain name
 func GetSiteByDomain(domain string) (SiteType, int, error) {
+
+	if domain == "www.gfora.com" {
+		domain = "www.lfgss.com"
+	}
 
 	if strings.Trim(domain, " ") == "" {
 		return SiteType{}, http.StatusBadRequest,
