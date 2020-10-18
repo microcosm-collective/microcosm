@@ -14,10 +14,10 @@ const affWinAffiliateID string = "101164"
 
 var affwinDomainParts = []string{
 	".awin1.",
+	".alloutdoor.",
 	".bicyinsurance.",
 	".chainreactioncycles.",
 	".cyclestore.",
-	".evanscycles.",
 	".hargrovescycles.",
 	".pedalsure.",
 	".probikekit.",
@@ -55,6 +55,9 @@ func (m *affWinLink) getDestination() (bool, string) {
 	var programID int
 	switch m.Link.Domain {
 
+	case "www.alloutdoor.co.uk":
+		programID = 6342
+
 	case "www.bicyinsurance.com":
 		programID = 6213
 
@@ -63,9 +66,6 @@ func (m *affWinLink) getDestination() (bool, string) {
 
 	case "www.cyclestore.co.uk":
 		programID = 3462
-
-	case "www.evanscycles.com":
-		programID = 1302
 
 	case "www.hargrovescycles.co.uk":
 		programID = 2828
