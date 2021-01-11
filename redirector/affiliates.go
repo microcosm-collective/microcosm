@@ -10,13 +10,7 @@ import (
 
 var affDomainParts = append(
 	append(
-		append(
-			append(
-				[]string{},
-				lfgssDomainParts...,
-			),
-			affwinDomainParts...,
-		),
+		[]string{},
 		ebayDomainParts...,
 	),
 	amazonDomainParts...,
@@ -31,14 +25,6 @@ func affiliateMayExist(domain string) bool {
 
 func getAffiliateLink(link models.Link) string {
 
-	// Affiliate Window
-	if !(len(ahocorasick.NewStringMatcher(affwinDomainParts).Match([]byte(strings.ToLower(link.Domain)))) == 0) {
-		m := affWinLink{Link: link}
-		if ok, u := m.getDestination(); ok {
-			return u
-		}
-	}
-
 	// Ebay Partner Network
 	if !(len(ahocorasick.NewStringMatcher(ebayDomainParts).Match([]byte(strings.ToLower(link.Domain)))) == 0) {
 		m := ebayLink{Link: link}
@@ -50,14 +36,6 @@ func getAffiliateLink(link models.Link) string {
 	// Amazon
 	if !(len(ahocorasick.NewStringMatcher(amazonDomainParts).Match([]byte(strings.ToLower(link.Domain)))) == 0) {
 		m := amazonLink{Link: link}
-		if ok, u := m.getDestination(); ok {
-			return u
-		}
-	}
-
-	// Site specific, LFGSS
-	if !(len(ahocorasick.NewStringMatcher(lfgssDomainParts).Match([]byte(strings.ToLower(link.Domain)))) == 0) {
-		m := lfgssLink{Link: link}
 		if ok, u := m.getDestination(); ok {
 			return u
 		}
