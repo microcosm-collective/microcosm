@@ -1,6 +1,7 @@
 package redirector
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 
@@ -91,22 +92,15 @@ func (m *ebayLink) getDestination() (bool, string) {
 	// custom url link.
 	itemID := ebayItemIDRegexp.FindString(m.Link.URL)
 	if isEbayLink && itemID != "" {
-		u, _ := url.Parse("http://rover.ebay.com/rover/1/710-53481-19255-0/1")
+		u, _ := url.Parse(fmt.Sprintf(`https://www.ebay.co.uk/itm/%s`, itemID))
 		q := u.Query()
 
-		// These do not vary
-		q.Add("toolid", "1001")
-		q.Add("icep_ff3", "2")
-		q.Add("ipn", "psmain")
-		q.Add("icep_vectorid", "229508")
-		q.Add("kwid", "902099")
-		q.Add("mtid", "824")
-		q.Add("kw", "lg")
-
-		// These vary
+		q.Add("mkrid", "710-53481-19255-0")
+		q.Add("siteid", "3")
+		q.Add("mkcid", "1")
 		q.Add("campid", ebayCampaignID)
-		q.Add("pub", ebayPublisherID)
-		q.Add("icep_item", itemID)
+		q.Add("toolid", "1001")
+		q.Add("mkevt", "1")
 
 		u.RawQuery = q.Encode()
 
