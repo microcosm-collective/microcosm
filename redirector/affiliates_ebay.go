@@ -107,19 +107,25 @@ func (m *ebayLink) getDestination() (bool, string) {
 		return true, u.String()
 	}
 
-	// Create our affiliate link
-	u, _ := url.Parse("http://rover.ebay.com/rover/1/710-53481-19255-0/1")
+	u, err := url.Parse(m.Link.URL)
+	if err != nil {
+		glog.Errorf("url.Parse(`%s`) %+v", m.Link.URL, err)
+		return false, m.Link.URL
+	}
+
 	q := u.Query()
-
-	// These do not vary
-	q.Add("toolid", "1001")
-	q.Add("ff3", "4")
-
-	// These vary
+	q.Del("mkrid")
+	q.Add("mkrid", "710-53481-19255-0")
+	q.Del("campid")
 	q.Add("campid", ebayCampaignID)
-	q.Add("pub", ebayPublisherID)
-	q.Add("mpre", m.Link.URL)
-
+	q.Del("siteid")
+	q.Add("siteid", "3")
+	q.Del("mkcid")
+	q.Add("mkcid", "1")
+	q.Del("toolid")
+	q.Add("toolid", "1001")
+	q.Del("mkevt")
+	q.Add("mkevt", "1")
 	u.RawQuery = q.Encode()
 
 	return true, u.String()
