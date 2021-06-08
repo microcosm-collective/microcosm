@@ -164,7 +164,7 @@ func searchFullText(
 	var filterHashTag string
 	for _, hashtag := range m.Query.Hashtags {
 		filterHashTag += `
-              AND si.` + fullTextScope + `_text ~* '\W` + hashtag + `\W'`
+              AND si.` + fullTextScope + `_text ~* '(^|\W)` + hashtag + `(\W|$)'`
 	}
 
 	var filterProfileID string
