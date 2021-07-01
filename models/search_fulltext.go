@@ -322,8 +322,13 @@ WITH m AS (
        AND (
              -- Things that are public by default
                 COALESCE(f.parent_item_type_id, f.item_type_id) = 3
-             OR -- Things in microcosms
-                COALESCE(f.microcosm_id, f.item_id) IN (SELECT microcosm_id FROM m)` + filterThingsInHuddles + `
+             OR (
+             	  -- Things in microcosms
+                  (f.item_type_id <> 2 AND COALESCE(f.microcosm_id, f.item_id) IN (SELECT microcosm_id FROM m))
+                  OR
+                  -- Microcosms
+                  (f.item_type_id = 2 AND (get_effective_permissions($1,f.item_id,2,f.item_id,$2)).can_read IS TRUE)
+                )` + filterThingsInHuddles + `
            )` +
 		filterTitle +
 		filterItemTypes +

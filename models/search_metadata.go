@@ -379,9 +379,14 @@ SELECT f.item_type_id
            f.item_type_id IN (1,3)
         OR f.parent_item_type_id IN (3)
        )
-    OR (-- Things directly in microcosms
-           f.item_type_id IN (2,6,7,9)
-       AND COALESCE(f.microcosm_id, f.item_id) IN (SELECT microcosm_id FROM m)
+    OR (
+          (
+          	-- Things directly in microcosms
+            (f.item_type_id IN (6,7,9) AND COALESCE(f.microcosm_id, f.item_id) IN (SELECT microcosm_id FROM m))
+            OR
+            -- Microcosms
+            (f.item_type_id = 2 AND (get_effective_permissions($1,f.item_id,2,f.item_id,$2)).can_read IS TRUE)
+          )
        )`
 
 	if includeComments {
