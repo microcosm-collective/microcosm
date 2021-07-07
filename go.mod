@@ -10,7 +10,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/lib/pq v1.10.2
-	github.com/microcosm-cc/bluemonday v1.0.14
+	github.com/microcosm-cc/bluemonday v1.0.15
 	github.com/microcosm-cc/exifutil v0.0.0-20140910154058-36de169162e2
 	github.com/mitchellh/goamz v0.0.0-20150317174335-caaaea8b30ee
 	github.com/motain/gocheck v0.0.0-20131023154940-9beb271d26e6 // indirect
