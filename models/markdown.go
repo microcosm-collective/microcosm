@@ -15,10 +15,11 @@ import (
 const htmlCruft = `<html><head></head><body>`
 
 var (
-	longWords      = regexp.MustCompile(`([^\s]{40})`)
-	breakLongWords = "${1}\u00AD"
-	unlinkedURLs   = regexp.MustCompile(`(?i)(^|[^\/>\]\w])(www\.[^\s<\[]+)`)
-	linkURLs       = []byte(`${1}http://${2}`)
+	longWords            = regexp.MustCompile(`([^\s]{40})`)
+	breakLongWords       = "${1}\u00AD"
+	unlinkedURLs         = regexp.MustCompile(`(?i)(^|[^\/>\]\w])(www\.[^\s<\[]+)`)
+	linkURLs             = []byte(`${1}http://${2}`)
+	singleLineCodeBlocks = regexp.MustCompile("(?m)^`{3}([^`]*)`{3}$")
 )
 
 // ProcessCommentMarkdown will turn the latest revision markdown into HTML
@@ -41,15 +42,14 @@ func ProcessCommentMarkdown(
 	// Autolinkify
 	src = unlinkedURLs.ReplaceAll(src, linkURLs)
 
-	// 2014-09-15 (DK): Commented out as it affects code blocks as it is not
-	// context aware.
-	//src = PreProcessMentions(src)
-
 	// Convert any BBCode to Markdown
 	src = ProcessBBCode(src)
 
 	// Find and link hashtags
 	src = ProcessHashtags(siteID, src)
+
+	// Allow single line code blocks
+	src = string(singleLineCodeBlocks.ReplaceAllString(src, "`$1`"))
 
 	// Use blackfriday to convert MarkDown to HTML
 	src = MarkdownToHTML(src)
@@ -87,12 +87,6 @@ func ProcessCommentMarkdown(
 	// NOTE: This *MUST* always be the last thing to avoid introducing a
 	// security vulnerability
 	src = SanitiseHTML(src)
-
-	// This is to allow the image tags within content to be trivially matched
-	// and replaced by Cloudflare Edge Workers
-	out := string(src)
-	out = strings.Replace(out, `<img `, `<img class="ip" `, -1)
-	out = strings.Replace(out, ` alt=""`, ``, -1)
 
 	return out, nil
 }

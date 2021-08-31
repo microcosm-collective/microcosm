@@ -94,14 +94,16 @@ func (m *ebayLink) getDestination() (bool, string) {
 	if isEbayLink && itemID != "" {
 		u, _ := url.Parse(fmt.Sprintf(`https://www.ebay.co.uk/itm/%s`, itemID))
 		q := u.Query()
-
-		q.Add("mkrid", "710-53481-19255-0")
-		q.Add("siteid", "3")
-		q.Add("mkcid", "1")
-		q.Add("campid", ebayCampaignID)
-		q.Add("toolid", "1001")
+		q.Del("mkevt")
 		q.Add("mkevt", "1")
-
+		q.Del("mkcid")
+		q.Add("mkcid", "1")
+		q.Del("mkrid")
+		q.Add("mkrid", "710-53481-19255-0")
+		q.Del("campid")
+		q.Add("campid", ebayCampaignID)
+		q.Del("toolid")
+		q.Add("toolid", "1001")
 		u.RawQuery = q.Encode()
 
 		return true, u.String()
@@ -114,18 +116,16 @@ func (m *ebayLink) getDestination() (bool, string) {
 	}
 
 	q := u.Query()
+	q.Del("mkevt")
+	q.Add("mkevt", "1")
+	q.Del("mkcid")
+	q.Add("mkcid", "1")
 	q.Del("mkrid")
 	q.Add("mkrid", "710-53481-19255-0")
 	q.Del("campid")
 	q.Add("campid", ebayCampaignID)
-	q.Del("siteid")
-	q.Add("siteid", "3")
-	q.Del("mkcid")
-	q.Add("mkcid", "1")
 	q.Del("toolid")
 	q.Add("toolid", "1001")
-	q.Del("mkevt")
-	q.Add("mkevt", "1")
 	u.RawQuery = q.Encode()
 
 	return true, u.String()

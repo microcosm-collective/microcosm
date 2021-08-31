@@ -70,7 +70,7 @@ var (
 		"/api/v1/{type:events}/{event_id:[0-9]+}/lastcomment":                     controller.LastCommentHandler,
 		"/api/v1/{type:events}/{event_id:[0-9]+}/newcomment":                      controller.NewCommentHandler,
 
-		"/api/v1/files":                                controller.FilesHandler,
+		"/api/v1/files": controller.FilesHandler,
 		"/api/v1/files/{fileHash:[0-9A-Za-z]+}.{null}": controller.FileHandler,
 		"/api/v1/files/{fileHash:[0-9A-Za-z]+}":        controller.FileHandler,
 
