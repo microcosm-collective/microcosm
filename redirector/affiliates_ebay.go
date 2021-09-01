@@ -15,7 +15,9 @@ const (
 	ebayCampaignID  string = "5336525415"
 )
 
-var ebayItemIDRegexp = regexp.MustCompile("[0-9]{10,}")
+// https://developer.ebay.com/devzone/shopping/docs/callref/getsingleitem.html
+// Max length: 19 (Note: The eBay database specifies 38. Currently, Item IDs are usually 9 to 12 digits).
+var ebayItemIDRegexp = regexp.MustCompile("[0-9]{9,19}")
 
 var ebayDomainParts = []string{
 	".ebay.",
@@ -90,7 +92,7 @@ func (m *ebayLink) getDestination() (bool, string) {
 	// least 10 digits long, in the URL.
 	// If so, we will want to link directly to the item rather than use the
 	// custom url link.
-	itemID := ebayItemIDRegexp.FindString(m.Link.URL)
+	itemID := getEbayItemIDFromURL(m.Link.URL)
 	if isEbayLink && itemID != "" {
 		u, _ := url.Parse(fmt.Sprintf(`https://www.ebay.co.uk/itm/%s`, itemID))
 		q := u.Query()
@@ -129,4 +131,16 @@ func (m *ebayLink) getDestination() (bool, string) {
 	u.RawQuery = q.Encode()
 
 	return true, u.String()
+}
+
+func getEbayItemIDFromURL(str string) string {
+	u, _ := url.Parse(str)
+	q := u.Query()
+	q.Del("mkevt")
+	q.Del("mkcid")
+	q.Del("mkrid")
+	q.Del("campid")
+	q.Del("toolid")
+	u.RawQuery = q.Encode()
+	return ebayItemIDRegexp.FindString(u.String())
 }
