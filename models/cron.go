@@ -532,7 +532,26 @@ func DeleteOldUpdates() {
 		return
 	}
 
-	// Update knowledge of parent items
+	// New thing in a microcosm that you are watching
+	_, err = db.Exec(`--DeleteOldUpdatesFromItemsMicrocosm
+DELETE FROM updates
+ WHERE update_type_id = 8
+   AND created < NOW() - INTERVAL '1 MONTH';`)
+	if err != nil {
+		glog.Error(err)
+		return
+	}
+
+	// Updates older than 1 year
+	_, err = db.Exec(`--DeleteOldUpdatesOlderThan1Year
+DELETE FROM updates
+ WHERE created < NOW() - INTERVAL '1 YEAR';`)
+	if err != nil {
+		glog.Error(err)
+		return
+	}
+
+	// Update knowledge of parent items so that the subsequent queries are more effective
 	_, err = db.Exec(`--UpdateUpdatesParent
 WITH up AS (
     SELECT u.update_id
@@ -553,37 +572,51 @@ UPDATE updates u
 		return
 	}
 
-	_, err = db.Exec(`--DeleteOldUpdates
-WITH keep AS (
-SELECT MAX(u.update_id) update_id
-      ,u.for_profile_id
-      ,u.parent_item_type_id
-      ,u.parent_item_id
-  FROM updates u
- WHERE u.update_type_id IN (1,4)
- GROUP BY u.for_profile_id
-      ,u.parent_item_type_id
-      ,u.parent_item_id
-), lose AS (
-    SELECT update_id
-      FROM updates
-     WHERE update_type_id IN (1,4)
-       AND for_profile_id != 0
-       AND parent_item_type_id != 0
-       AND parent_item_id != 0
-       AND update_id NOT IN (SELECT update_id FROM keep)
-)
-DELETE FROM updates
- WHERE update_id IN (SELECT * FROM lose);`)
+	_, err = db.Exec(`--DeleteOldUpdatesForNewCommentOnItem
+DELETE
+  FROM updates
+ WHERE update_id IN (
+          -- All updates for an item
+          SELECT update_id
+            FROM updates
+           WHERE update_type_id = 1
+             AND parent_item_type_id > 0
+          EXCEPT 
+          -- Latest update for an item
+          SELECT update_id
+            FROM (
+                    SELECT DISTINCT ON (for_profile_id, parent_item_type_id, parent_item_id) update_id
+                      FROM updates
+                     WHERE update_type_id = 1
+                       AND parent_item_type_id > 0
+                     ORDER BY for_profile_id, parent_item_type_id, parent_item_id, created DESC
+                 ) AS latest
+       );`)
 	if err != nil {
 		glog.Error(err)
 		return
 	}
 
-	_, err = db.Exec(`--DeleteOldUpdatesFromItemsMicrocosm
-DELETE FROM updates
- WHERE update_type_id = 8
-   AND created < NOW() - '1 month'::INTERVAL;`)
+	_, err = db.Exec(`--DeleteOldUpdatesForNewCommentInHuddle
+DELETE
+  FROM updates
+ WHERE update_id IN (
+          -- All updates for an item
+          SELECT update_id
+            FROM updates
+           WHERE update_type_id = 4
+             AND parent_item_type_id > 0
+          EXCEPT 
+          -- Latest update for an item
+          SELECT update_id
+            FROM (
+                    SELECT DISTINCT ON (for_profile_id, parent_item_type_id, parent_item_id) update_id
+                      FROM updates
+                     WHERE update_type_id = 4
+                       AND parent_item_type_id > 0
+                     ORDER BY for_profile_id, parent_item_type_id, parent_item_id, created DESC
+                 ) AS latest
+       );`)
 	if err != nil {
 		glog.Error(err)
 		return
