@@ -113,7 +113,7 @@ func SendUsage(
 		m.Error = strings.Join(errors, ", ")
 	}
 
-	m.Send()
+	//m.Send()
 }
 
 // Send usage data using ElasticSearch's bulk load UDP API
