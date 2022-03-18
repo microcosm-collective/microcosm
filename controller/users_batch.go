@@ -75,12 +75,13 @@ func (ctl *UsersBatchController) Manage(c *models.Context) {
 		data = strings.Replace(data, "\r\n", "\n", -1)
 		data = strings.Replace(data, "\r", "\n", -1)
 
-		glog.Warningf("CSV received: %s", data)
+		glog.Warningf("CSV received for site %d (%s): %s", c.Site.ID, c.Site.SubdomainKey, data)
 
 		reader := csv.NewReader(bytes.NewBufferString(data))
 
 		rows, err := reader.ReadAll()
 		if err != nil {
+			glog.Errorf("That was not a CSV file: %s", err.Error())
 			c.RespondWithErrorMessage(
 				fmt.Sprintf("That was not a CSV file: %s", err.Error()),
 				http.StatusBadRequest,
@@ -90,6 +91,7 @@ func (ctl *UsersBatchController) Manage(c *models.Context) {
 
 		for _, row := range rows {
 			if len(row) < 2 {
+				glog.Errorf("Each line in the CSV file must have at least 2 fields: email,integer")
 				c.RespondWithErrorMessage(
 					"Each line in the CSV file must have at least 2 fields: email,integer",
 					http.StatusBadRequest,
@@ -103,12 +105,14 @@ func (ctl *UsersBatchController) Manage(c *models.Context) {
 
 			email, err := mail.ParseAddress(row[0])
 			if err != nil {
+				glog.Errorf("Not an email: %s %s", row[0], err.Error())
 				c.RespondWithErrorMessage(err.Error(), http.StatusBadRequest)
 				return
 			}
 
 			isMember, err := strconv.ParseBool(row[1])
 			if err != nil {
+				glog.Errorf("Not a bool: %s %s", row[1], err.Error())
 				c.RespondWithErrorMessage(err.Error(), http.StatusBadRequest)
 				return
 			}
@@ -120,6 +124,7 @@ func (ctl *UsersBatchController) Manage(c *models.Context) {
 			ems = append(ems, m)
 		}
 	default:
+		glog.Errorf("Only application/json or text/csv can be POST'd")
 		c.RespondWithErrorMessage(
 			"Only application/json or text/csv can be POST'd",
 			http.StatusBadRequest,
@@ -128,6 +133,7 @@ func (ctl *UsersBatchController) Manage(c *models.Context) {
 	}
 
 	if len(ems) == 0 {
+		glog.Errorf("Input empty, no rows to process")
 		c.RespondWithErrorMessage(
 			"Input empty, no rows to process",
 			http.StatusBadRequest,
@@ -137,6 +143,7 @@ func (ctl *UsersBatchController) Manage(c *models.Context) {
 
 	status, err := models.ManageUsers(c.Site, ems)
 	if err != nil {
+		glog.Errorf("models.ManageUsers(%d, ems): %s", c.Site.ID, err.Error())
 		c.RespondWithErrorMessage(err.Error(), status)
 		return
 	}
