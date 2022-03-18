@@ -71,7 +71,7 @@ func (ctl *UsersBatchController) Manage(c *models.Context) {
 			return
 		}
 
-		data := string(dat)
+		data := string(bytes.Trim(dat, "\xef\xbb\xbf"))
 		data = strings.Replace(data, "\r\n", "\n", -1)
 		data = strings.Replace(data, "\r", "\n", -1)
 
@@ -100,17 +100,18 @@ func (ctl *UsersBatchController) Manage(c *models.Context) {
 			}
 
 			if row[0] == "" || row[1] == "" {
+				glog.Warningf("Invalid (empty) values: %s %s", row[0], row[1])
 				continue
 			}
 
-			email, err := mail.ParseAddress(row[0])
+			email, err := mail.ParseAddress(strings.TrimSpace(row[0]))
 			if err != nil {
 				glog.Errorf("Not an email: %s %s", row[0], err.Error())
 				c.RespondWithErrorMessage(err.Error(), http.StatusBadRequest)
 				return
 			}
 
-			isMember, err := strconv.ParseBool(row[1])
+			isMember, err := strconv.ParseBool(strings.TrimSpace(row[1]))
 			if err != nil {
 				glog.Errorf("Not a bool: %s %s", row[1], err.Error())
 				c.RespondWithErrorMessage(err.Error(), http.StatusBadRequest)
