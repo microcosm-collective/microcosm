@@ -59,7 +59,7 @@ func SendUpdatesForNewCommentInItem(
 
 	// WHO GETS THE UPDATES?
 
-	// Nobody watchers a comment, so we need to get the recipients for the item
+	// Nobody watches a comment, so we need to get the recipients for the item
 	// the comment is attached to
 	recipients, status, err := GetUpdateRecipients(
 		siteID,
@@ -456,6 +456,9 @@ func SendUpdatesForNewMentionInComment(
 	//
 	// It's our job to send the email and/or SMS, but we need to sleep so that
 	// the transaction finishes and everything is ready
+	//
+	// 5 seconds was chosen arbritratily.. 1 second was probably enough but it
+	// just doesn't hurt to make this 5 seconds, it's still soon enough
 	time.Sleep(5 * time.Second)
 
 	updateOptions, status, err := GetCommunicationOptions(
@@ -1393,8 +1396,8 @@ func GetCommunicationOptions(
 	}
 
 	rows, err := db.Query(`
-SELECT send_email
-      ,send_sms
+SELECT CASE WHEN (get_effective_permissions($1, 0, $3, $2, $4)).can_read IS TRUE THEN send_email ELSE FALSE END AS send_email
+      ,CASE WHEN (get_effective_permissions($1, 0, $3, $2, $4)).can_read IS TRUE THEN send_sms ELSE FALSE END AS send_sms
       ,description
   FROM get_communication_options($1, $2, $3, $4, $5)
        LEFT JOIN update_types a ON update_type_id = $5`,
