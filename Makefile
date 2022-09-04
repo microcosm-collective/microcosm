@@ -10,6 +10,7 @@
 #
 #   dep_restore:  Ensures all dependent packages are at the correct version
 #   dep_update:   Ensures all dependent packages are at the latest version
+GOCMD := go1.19
 
 .PHONY: all fmt build vet test clean
 
@@ -19,13 +20,20 @@ all: clean vet test build
 build: export GOOS=linux
 build: export GOARCH=amd64
 build: clean
-	@go build cmd/microcosm/microcosm.go
+	@$(GOCMD) build cmd/microcosm/microcosm.go
 
 vet:
-	@go vet $$(go list ./... | grep -v /vendor/)
+	@$(GOCMD) vet $$($(GOCMD) list ./... | grep -v /vendor/)
 
 test:
-	@go test $$(go list ./... | grep -v /vendor/)
+	@$(GOCMD) test $$($(GOCMD) list ./... | grep -v /vendor/)
 
 clean:
 	@find . -maxdepth 1 -name microcosm -delete
+
+.PHONY: deps
+deps:
+	@$(GOCMD) list -m -u -mod=mod all
+	@$(GOCMD) mod tidy
+	@$(GOCMD) get -d -u ./...
+	@$(GOCMD) mod vendor

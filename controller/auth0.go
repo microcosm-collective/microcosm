@@ -120,6 +120,10 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		// i.e. lfgss.microco.sm for subdomain
 		callbackURL = "https://" + c.Site.SubdomainKey + "." + conf.ConfigStrings[conf.MicrocosmDomain] + "/auth0login/"
 	}
+	if c.Request.URL.Host == "www.gfora.com" {
+		callbackURL = "https://www.gfora.com/auth0login/"
+	}
+
 
 	/////////////////////////////
 	// Exchange code for token //
