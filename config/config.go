@@ -29,9 +29,10 @@ const (
 	MemcachedHost = "memcached_host"
 	MemcachedPort = "memcached_port"
 
-	AWSAccessKeyID     = "aws_access_key_id"
-	AWSSecretAccessKey = "aws_secret_access_key"
-	AWSS3BucketName    = "s3_bucket"
+	S3Endpoint        = "s3_endpoint"
+	S3BucketName      = "s3_bucket_name"
+	S3AccessKeyID     = "s3_access_key_id"
+	S3SecretAccessKey = "s3_secret_access_key"
 
 	MailgunAPIURL = "mailgun_api_url"
 	MailgunAPIKey = "mailgun_api_key"
@@ -42,36 +43,32 @@ const (
 	WarnLogFilename  = "warn_log_filename"
 	DebugLogFilename = "debug_log_filename"
 
-	ElasticSearchHost = "elasticsearch_host"
-	ElasticSearchPort = "elasticsearch_port"
-
 	PersonaVerifierURL = "persona_verifier_url"
 )
 
 var configRequiredStrings = []string{
-	AWSAccessKeyID,
-	AWSS3BucketName,
-	AWSSecretAccessKey,
 	DatabaseHost,
 	DatabaseName,
 	DatabasePassword,
 	DatabaseUsername,
 	DebugLogFilename,
-	ElasticSearchHost,
 	Environment,
 	ErrorLogFilename,
 	MailgunAPIKey,
 	MailgunAPIURL,
-	SendGridAPIKey,
 	MemcachedHost,
 	MicrocosmDomain,
 	PersonaVerifierURL,
+	S3AccessKeyID,
+	S3BucketName,
+	S3Endpoint,
+	S3SecretAccessKey,
+	SendGridAPIKey,
 	WarnLogFilename,
 }
 
 var configRequiredInt64s = []string{
 	DatabasePort,
-	ElasticSearchPort,
 	ListenPort,
 	MemcachedPort,
 }

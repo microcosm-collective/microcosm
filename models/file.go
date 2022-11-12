@@ -2,13 +2,14 @@ package models
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"fmt"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -16,8 +17,8 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/golang/glog"
 	"github.com/microcosm-cc/exifutil"
-	"github.com/mitchellh/goamz/aws"
-	"github.com/mitchellh/goamz/s3"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/rwcarlsen/goexif/exif"
 
 	conf "github.com/microcosm-cc/microcosm/config"
@@ -289,8 +290,8 @@ func (f *FileMetadataType) insert(
 	}
 
 	meta, status, err := GetMetadata(f.FileHash)
-	// File metadata exists, since this upload is
-	// idempotent, simply return 'OK'
+	// File metadata exists meaning we've already uploaded it, since this
+	// upload is idempotent, simply return 'OK'
 	if err == nil {
 		f.AttachmentMetaID = meta.AttachmentMetaID
 		return http.StatusOK, nil
@@ -302,36 +303,14 @@ func (f *FileMetadataType) insert(
 		return status, err
 	}
 
-	// Check whether we've already uploaded this image as we can save ourselves
-	// some network effort if we have.
-	auth := aws.Auth{
-		AccessKey: conf.ConfigStrings[conf.AWSAccessKeyID],
-		SecretKey: conf.ConfigStrings[conf.AWSSecretAccessKey],
-	}
-
-	s3Instance := s3.New(auth, aws.EUWest)
-	bucket := s3Instance.Bucket(conf.ConfigStrings[conf.AWSS3BucketName])
-
-	uploaded := false
-	key, _ := bucket.GetKey(f.FileHash)
-	// TODO: verify the file content is the same, rather than just
-	// having the expected SHA-1 filename and non-zero size (e.g. a
-	// previous failed uploaded could have partially uploaded the file)
-	if key != nil && key.Size > 0 {
-		uploaded = true
-	}
-
-	if !uploaded {
-		err = bucket.Put(f.FileHash, f.Content, f.MimeType, s3.Private)
-		if err != nil {
-			glog.Errorf(
-				"bucket.Put(`%s`, f.Content, `%s`, s3.Private) %+v",
-				f.FileHash,
-				f.MimeType,
-				err,
-			)
-			return http.StatusInternalServerError, err
-		}
+	if err := filePut(f.FileHash, f.Content, f.MimeType); err != nil {
+		glog.Errorf(
+			"filePut(`%s`, f.Content, `%s`,) %+v",
+			f.FileHash,
+			f.MimeType,
+			err,
+		)
+		return http.StatusInternalServerError, err
 	}
 
 	// File is now uploaded, but we haven't stored metadata for it yet.
@@ -434,44 +413,11 @@ UPDATE attachment_meta
 
 // GetFile retrieves a file by its file hash
 func GetFile(fileHash string) ([]byte, map[string]string, int, error) {
-	headersOut := map[string]string{}
-
-	auth := aws.Auth{
-		AccessKey: conf.ConfigStrings[conf.AWSAccessKeyID],
-		SecretKey: conf.ConfigStrings[conf.AWSSecretAccessKey],
-	}
-
-	s3Instance := s3.New(auth, aws.EUWest)
-	bucket := s3Instance.Bucket(conf.ConfigStrings[conf.AWSS3BucketName])
-
-	resp, err := bucket.GetResponse(fileHash)
+	content, headers, err := fileGet(fileHash)
 	if err != nil {
-		return []byte{}, headersOut, http.StatusInternalServerError, err
+		return content, headers, http.StatusInternalServerError, err
 	}
-
-	headers := []string{
-		"Content-Disposition",
-		"Content-Encoding",
-		"Content-Length",
-		"Content-Type",
-		"ETag",
-		"Last-Modified",
-	}
-
-	for _, h := range headers {
-		v := resp.Header.Get(h)
-		if v != "" {
-			headersOut[h] = v
-		}
-	}
-
-	data, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return []byte{}, headersOut, http.StatusInternalServerError, err
-	}
-
-	return data, headersOut, http.StatusOK, nil
+	return content, headers, http.StatusOK, nil
 }
 
 // GetMetadata returns a file's metadata by it's hash
@@ -696,4 +642,82 @@ func (f *FileMetadataType) processExif() error {
 	f.FileSize = int32(len(f.Content))
 
 	return nil
+}
+
+func filePut(fileHash string, content []byte, mimeType string) error {
+	var (
+		endpoint        = conf.ConfigStrings[conf.S3Endpoint]
+		bucketName      = conf.ConfigStrings[conf.S3BucketName]
+		accessKeyID     = conf.ConfigStrings[conf.S3AccessKeyID]
+		secretAccessKey = conf.ConfigStrings[conf.S3SecretAccessKey]
+	)
+
+	client, err := minio.New(endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+		Secure: true, // of course
+	})
+	if err != nil {
+		return err
+	}
+
+	// check whether the object already exists in the bucket
+	_, err = client.StatObject(context.Background(), bucketName, fileHash, minio.StatObjectOptions{})
+	if err == nil {
+		// it exists... we're done
+		return nil
+	}
+
+	// it does not exist, so we're uploading it
+	_, err = client.PutObject(
+		context.Background(),
+		bucketName,
+		fileHash,                 // object name
+		bytes.NewReader(content), // object bytes
+		int64(len(content)),      // object size
+		minio.PutObjectOptions{
+			ContentType: mimeType, // mime type
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func fileGet(fileHash string) ([]byte, map[string]string, error) {
+	var (
+		content = []byte{}
+		headers = map[string]string{}
+	)
+
+	var (
+		endpoint        = conf.ConfigStrings[conf.S3Endpoint]
+		bucketName      = conf.ConfigStrings[conf.S3BucketName]
+		accessKeyID     = conf.ConfigStrings[conf.S3AccessKeyID]
+		secretAccessKey = conf.ConfigStrings[conf.S3SecretAccessKey]
+	)
+
+	client, err := minio.New(endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+		Secure: true, // of course
+	})
+	if err != nil {
+		return content, headers, err
+	}
+
+	// get the file
+	reader, err := client.GetObject(context.Background(), bucketName, fileHash, minio.GetObjectOptions{})
+	if err != nil {
+		return content, headers, err
+	}
+	defer reader.Close()
+
+	return readerToBytes(reader), headers, nil
+}
+
+func readerToBytes(reader io.Reader) []byte {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(reader)
+	return buf.Bytes()
 }

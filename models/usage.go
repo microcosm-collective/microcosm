@@ -1,17 +1,10 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
-	"net"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/golang/glog"
-	"github.com/xtgo/uuid"
-
-	conf "github.com/microcosm-cc/microcosm/config"
 )
 
 // Usage encapsulates a request and the key metrics and info around the request
@@ -42,16 +35,6 @@ const repURLIDs string = `/{id}`
 var regJumpLink = regexp.MustCompile(`^(/out/)(.*)$`)
 
 const repJumpLink string = `$1{id}`
-
-var elasticSearchConnString string
-
-func init() {
-	elasticSearchConnString = fmt.Sprintf(
-		"%s:%d",
-		conf.ConfigStrings[conf.ElasticSearchHost],
-		conf.ConfigInt64s[conf.ElasticSearchPort],
-	)
-}
 
 // SendUsage is called at the end of processing a request and will record info
 // about the request for analytics and error detection later
@@ -113,36 +96,5 @@ func SendUsage(
 		m.Error = strings.Join(errors, ", ")
 	}
 
-	//m.Send()
-}
-
-// Send usage data using ElasticSearch's bulk load UDP API
-func (m *Usage) Send() {
-	conn, err := net.Dial("udp", elasticSearchConnString)
-	if err != nil {
-		glog.Warningf("Couldn't dial: %s", err.Error())
-	}
-	defer conn.Close()
-
-	coord, err := json.Marshal(map[string]interface{}{
-		"index": map[string]string{
-			"_index": "microcosm",
-			"_type":  "log",
-			"_id":    uuid.NewRandom().String(),
-		},
-	})
-	if err != nil {
-		glog.Warningf("Failed to marshal log coord: %s", err.Error())
-	}
-	usage, err := json.Marshal(m)
-	if err != nil {
-		glog.Warningf("Failed to marshal usage: %s", err.Error())
-	}
-
-	payload := fmt.Sprintf("%s\n%s\n", string(coord), string(usage))
-
-	_, err = conn.Write([]byte(payload))
-	if err != nil {
-		glog.Warningf("Couldn't write usage to conn: %s", err.Error())
-	}
+	fmt.Printf(`%v\n`, m)
 }
