@@ -7,19 +7,13 @@
 [![GitHub contributors](https://img.shields.io/github/contributors/sendgrid/sendgrid-go.svg)](https://github.com/sendgrid/sendgrid-go/graphs/contributors)
 [![Open Source Helpers](https://www.codetriage.com/sendgrid/sendgrid-go/badges/users.svg)](https://www.codetriage.com/sendgrid/sendgrid-go)
 
-**NEW:** Subscribe to email [notifications](https://dx.sendgrid.com/newsletter/go) for releases and breaking changes.
-
-**The default branch name for this repository has been changed to `main` as of 07/27/2020.**
-
 **This library allows you to quickly and easily use the Twilio SendGrid Web API v3 via Go.**
 
 Version 3.X.X of this library provides full support for all Twilio SendGrid [Web API v3](https://sendgrid.com/docs/API_Reference/Web_API_v3/index.html) endpoints, including the new [v3 /mail/send](https://sendgrid.com/blog/introducing-v3mailsend-sendgrids-new-mail-endpoint).
 
 This library represents the beginning of a new path for Twilio SendGrid. We want this library to be community driven and Twilio SendGrid led. We need your help to realize this goal. To help make sure we are building the right things in the right order, we ask that you create [issues](https://github.com/sendgrid/sendgrid-go/issues) and [pull requests](CONTRIBUTING.md) or simply upvote or comment on existing issues or pull requests.
 
-Please browse the rest of this README for further detail.
-
-We appreciate your continued support, thank you!
+**If you need help using SendGrid, please check the [Twilio SendGrid Support Help Center](https://support.sendgrid.com).**
 
 # Table of Contents
 
@@ -45,6 +39,8 @@ This library supports the following Go implementations:
 * Go 1.15
 * Go 1.16
 * Go 1.17
+* Go 1.18
+* Go 1.19
 
 ## Prerequisites
 
@@ -227,9 +223,7 @@ Please see [our helper](helpers/inbound) for utilizing our Inbound Parse webhook
 <a name="announcements"></a>
 # Announcements
 
-Please see our announcement regarding [breaking changes](https://github.com/sendgrid/sendgrid-go/issues/81). Your support is appreciated!
-
-All updates to this library are documented in our [CHANGELOG](CHANGELOG.md) and [releases](https://github.com/sendgrid/sendgrid-go/releases). You may also subscribe to email [release notifications](https://dx.sendgrid.com/newsletter/go) for releases and breaking changes.
+All updates to this library are documented in our [CHANGELOG](CHANGELOG.md) and [releases](https://github.com/sendgrid/sendgrid-go/releases).
 
 <a name="contribute"></a>
 # How to Contribute
@@ -253,9 +247,10 @@ Please see our [troubleshooting guide](TROUBLESHOOTING.md) for common library is
 
 sendgrid-go is maintained and funded by Twilio SendGrid, Inc. The names and logos for sendgrid-go are trademarks of Twilio SendGrid, Inc.
 
-If you need help installing or using the library, please check the [Twilio SendGrid Support Help Center](https://support.sendgrid.com).
+<a name="support"><a>
+# Support
 
-If you've instead found a bug in the library or would like new features added, go ahead and open issues or pull requests against this repo!
+If you need help using SendGrid, please check the [Twilio SendGrid Support Help Center](https://support.sendgrid.com).
 
 # License
 [The MIT License (MIT)](LICENSE)
