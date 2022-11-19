@@ -1616,9 +1616,11 @@ func GetProfileSearchOptions(query url.Values) ProfileSearchOptions {
 }
 
 // Allows you to define a list of profile names that are reserved.
-// i.e. var reservedProfileNames = map[string]string{
-//    "someone@example.com": "someone",
-// }
+//
+//	i.e. var reservedProfileNames = map[string]string{
+//	   "someone@example.com": "someone",
+//	}
+//
 // That would result in the username 'someone' only being available to the
 // person whose email address is 'someone@example.com'. This applies across
 // all sites, and can be used to prohibit certain profile names from being

@@ -81,8 +81,10 @@ func GetSearchQueryFromURL(
 
 // ParseFullQueryString takes ?q=term&type=conversation
 // And makes it
-// 	q = term
-// 	type = conversation
+//
+//	q = term
+//	type = conversation
+//
 // Within the sq object
 func (sq *SearchQuery) ParseFullQueryString() {
 	// Get the named values first

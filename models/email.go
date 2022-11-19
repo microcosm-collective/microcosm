@@ -202,9 +202,12 @@ func (m *EmailType) Send(siteID int64) (int, error) {
 }
 
 // AnchorRelativeUrls takes a HTML string that contains links like:
-//   href="/profiles/"
+//
+//	href="/profiles/"
+//
 // and adds the given site's absolute URL so that it becomes:
-//   href="https://key.microco.sm/profiles/"
+//
+//	href="https://key.microco.sm/profiles/"
 func AnchorRelativeUrls(siteID int64, bodyText string) string {
 	site, _, err := GetSite(siteID)
 	if err != nil {

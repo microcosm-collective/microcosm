@@ -11,8 +11,10 @@ import (
 
 // Maintains a list of constants that determine the type of content held in a
 // key. A single ID may have multiple bits of data, i.e.
-//   key_1 = 'detail for ID 1'
-//   key_2 = 'summary for ID 1'
+//
+//	key_1 = 'detail for ID 1'
+//	key_2 = 'summary for ID 1'
+//
 // This allows us to nuke item 1 from cache and to purge the detail and summary
 // for the item at the same time
 const (

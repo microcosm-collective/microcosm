@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"strconv"
 	"strings"
@@ -191,6 +192,11 @@ func (ctl *FileController) Read(c *models.Context) {
 	nextYear := time.Now().Add(oneYear)
 	c.ResponseWriter.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, immutable", oneYear/time.Second))
 	c.ResponseWriter.Header().Set("Expires", nextYear.Format(time.RFC1123))
+
+	mimetype := mime.TypeByExtension("." + c.RouteVars["fileExt"])
+	if mimetype != "" {
+		c.ResponseWriter.Header().Set("Content-Type", mimetype)
+	}
 
 	for h, v := range headers {
 		c.ResponseWriter.Header().Set(h, v)

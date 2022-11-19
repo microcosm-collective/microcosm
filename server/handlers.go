@@ -26,12 +26,12 @@ var (
 
 		"/out/{short_url:[2-9a-zA-Z]+}": controller.RedirectHandler,
 
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}":                                            controller.ProfileHandler,
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments":                                controller.AttachmentsHandler,
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}.{null}": controller.AttachmentHandler,
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}":        controller.AttachmentHandler,
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attributes":                                 controller.AttributesHandler,
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attributes/{key:[0-9a-zA-Z_-]+}":            controller.AttributeHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}":                                                         controller.ProfileHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments":                                             controller.AttachmentsHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}.{fileExt:[A-Za-z]+}": controller.AttachmentHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}":                     controller.AttachmentHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attributes":                                              controller.AttributesHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attributes/{key:[0-9a-zA-Z_-]+}":                         controller.AttributeHandler,
 
 		"/api/v1/reserved/{subdomain:[0-9a-zA-Z]+}": controller.SiteReservedHandler,
 
@@ -44,14 +44,14 @@ var (
 		"/api/v1/auth":  controller.AuthHandler,
 		"/api/v1/auth0": controller.Auth0Handler,
 
-		"/api/v1/{type:comments}":                                                                controller.CommentsHandler,
-		"/api/v1/{type:comments}/{comment_id:[0-9]+}":                                            controller.CommentHandler,
-		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attachments":                                controller.AttachmentsHandler,
-		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}.{null}": controller.AttachmentHandler,
-		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}":        controller.AttachmentHandler,
-		"/api/v1/{type:comments}/{comment_id:[0-9]+}/incontext":                                  controller.CommentContextHandler,
-		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attributes":                                 controller.AttributesHandler,
-		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attributes/{key:[0-9a-zA-Z_-]+}":            controller.AttributeHandler,
+		"/api/v1/{type:comments}":                                 controller.CommentsHandler,
+		"/api/v1/{type:comments}/{comment_id:[0-9]+}":             controller.CommentHandler,
+		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attachments": controller.AttachmentsHandler,
+		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}.{fileExt:[A-Za-z]+}": controller.AttachmentHandler,
+		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}":                     controller.AttachmentHandler,
+		"/api/v1/{type:comments}/{comment_id:[0-9]+}/incontext":                                               controller.CommentContextHandler,
+		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attributes":                                              controller.AttributesHandler,
+		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attributes/{key:[0-9a-zA-Z_-]+}":                         controller.AttributeHandler,
 
 		"/api/v1/{type:conversations}":                                                          controller.ConversationsHandler,
 		"/api/v1/{type:conversations}/{conversation_id:[0-9]+}":                                 controller.ConversationHandler,
@@ -71,8 +71,8 @@ var (
 		"/api/v1/{type:events}/{event_id:[0-9]+}/newcomment":                      controller.NewCommentHandler,
 
 		"/api/v1/files": controller.FilesHandler,
-		"/api/v1/files/{fileHash:[0-9A-Za-z]+}.{null}": controller.FileHandler,
-		"/api/v1/files/{fileHash:[0-9A-Za-z]+}":        controller.FileHandler,
+		"/api/v1/files/{fileHash:[0-9A-Za-z]+}.{fileExt:[A-Za-z]+}": controller.FileHandler,
+		"/api/v1/files/{fileHash:[0-9A-Za-z]+}":                     controller.FileHandler,
 
 		"/api/v1/geocode": controller.GeoCodeHandler,
 
@@ -114,15 +114,15 @@ var (
 		"/api/v1/{type:polls}/{poll_id:[0-9]+}/attributes":                      controller.AttributesHandler,
 		"/api/v1/{type:polls}/{poll_id:[0-9]+}/attributes/{key:[0-9a-zA-Z_-]+}": controller.AttributeHandler,
 
-		"/api/v1/{type:profiles}":                                                                controller.ProfilesHandler,
-		"/api/v1/{type:profiles}/options":                                                        controller.ProfileOptionsHandler,
-		"/api/v1/{type:profiles}/read":                                                           controller.ProfileReadHandler,
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}":                                            controller.ProfileHandler,
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments":                                controller.AttachmentsHandler,
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}.{null}": controller.AttachmentHandler,
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}":        controller.AttachmentHandler,
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attributes":                                 controller.AttributesHandler,
-		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attributes/{key:[0-9a-zA-Z_-]+}":            controller.AttributeHandler,
+		"/api/v1/{type:profiles}":                                 controller.ProfilesHandler,
+		"/api/v1/{type:profiles}/options":                         controller.ProfileOptionsHandler,
+		"/api/v1/{type:profiles}/read":                            controller.ProfileReadHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}":             controller.ProfileHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments": controller.AttachmentsHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}.{fileExt:[A-Za-z]+}": controller.AttachmentHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attachments/{fileHash:[0-9A-Za-z]+}":                     controller.AttachmentHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attributes":                                              controller.AttributesHandler,
+		"/api/v1/{type:profiles}/{profile_id:[0-9]+}/attributes/{key:[0-9a-zA-Z_-]+}":                         controller.AttributeHandler,
 
 		"/api/v1/resolve": controller.Redirect404Handler,
 
