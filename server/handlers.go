@@ -71,8 +71,8 @@ var (
 		"/api/v1/{type:events}/{event_id:[0-9]+}/newcomment":                      controller.NewCommentHandler,
 
 		"/api/v1/files": controller.FilesHandler,
-		"/api/v1/files/{fileHash:[0-9A-Za-z]+}.{fileExt:[A-Za-z]+}": controller.FileHandler,
-		"/api/v1/files/{fileHash:[0-9A-Za-z]+}":                     controller.FileHandler,
+		"/api/v1/files/{fileHash:[0-9A-Za-z]+}.{fileExt:[0-9A-Za-z]+}": controller.FileHandler,
+		"/api/v1/files/{fileHash:[0-9A-Za-z]+}":                        controller.FileHandler,
 
 		"/api/v1/geocode": controller.GeoCodeHandler,
 
