@@ -1,15 +1,15 @@
 ﻿-- deleting content and banning spammer:
--- with the profile ID of 110714
+-- with the profile ID of 200446
 -- for the site ID 234
 
-UPDATE conversations SET is_deleted = TRUE WHERE created_by = 110714;
+UPDATE conversations SET is_deleted = TRUE WHERE created_by = 200446;
 
-UPDATE events SET is_deleted = TRUE WHERE created_by = 110714;
+UPDATE events SET is_deleted = TRUE WHERE created_by = 200446;
 
-UPDATE comments SET is_deleted = TRUE WHERE profile_id = 110714;
+UPDATE comments SET is_deleted = TRUE WHERE profile_id = 200446;
 
 DELETE FROM huddle_profiles WHERE huddle_id IN (
-	SELECT huddle_id FROM huddle_profiles WHERE profile_id = 110714
+	SELECT huddle_id FROM huddle_profiles WHERE profile_id = 200446
 );
 
 INSERT INTO bans (
@@ -19,22 +19,22 @@ INSERT INTO bans (
 	display_reason,
 	admin_reason
 ) VALUES (
-	234,
-	(SELECT user_id FROM profiles WHERE profile_id = 110714),
+	(SELECT site_id FROM profiles WHERE profile_id = 200446),
+	(SELECT user_id FROM profiles WHERE profile_id = 200446),
 	NOW(),
 	'Spammer',
 	'Spammer'
 );
 
-DELETE FROM role_members_cache WHERE profile_id = 110714;
+DELETE FROM role_members_cache WHERE profile_id = 200446;
 
-DELETE FROM permissions_cache WHERE profile_id = 110714;
+DELETE FROM permissions_cache WHERE profile_id = 200446;
 
 DELETE FROM access_tokens WHERE user_id IN (
-    SELECT user_id FROM profiles WHERE profile_id = 110714
+    SELECT user_id FROM profiles WHERE profile_id = 200446
 );
 
 SELECT email
   FROM users u
   JOIN profiles p ON u.user_id = p.user_id
- WHERE p.profile_id = 110714;
+ WHERE p.profile_id = 200446;
