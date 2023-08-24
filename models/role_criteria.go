@@ -74,49 +74,49 @@ var (
 	// ProfileColumns is a hard-coded list of columns on the profiles table on
 	// the database that we can filter against
 	ProfileColumns = []ProfileColumn{
-		ProfileColumn{
+		{
 			Camel:      "id",
 			Snake:      "profile_id",
 			Type:       "int64",
 			Predicates: Int64Predicates,
 		},
-		ProfileColumn{
+		{
 			Camel:      "profileName",
 			Snake:      "profile_name",
 			Type:       "string",
 			Predicates: StringPredicates,
 		},
-		ProfileColumn{
+		{
 			Camel:      "gender",
 			Snake:      "gender",
 			Type:       "string",
 			Predicates: StringPredicates,
 		},
-		ProfileColumn{
+		{
 			Camel:      "email",
 			Snake:      "email",
 			Type:       "string",
 			Predicates: StringPredicates,
 		},
-		ProfileColumn{
+		{
 			Camel:      "itemCount",
 			Snake:      "item_count",
 			Type:       "int64",
 			Predicates: Int64Predicates,
 		},
-		ProfileColumn{
+		{
 			Camel:      "commentCount",
 			Snake:      "comment_count",
 			Type:       "int64",
 			Predicates: Int64Predicates,
 		},
-		ProfileColumn{
+		{
 			Camel:      "created",
 			Snake:      "created",
 			Type:       "time",
 			Predicates: TimePredicates,
 		},
-		ProfileColumn{
+		{
 			Camel:      "isBanned",
 			Snake:      "is_banned",
 			Type:       "bool",

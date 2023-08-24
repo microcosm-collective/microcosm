@@ -143,7 +143,7 @@ func (ctl *PollsController) ReadMany(c *models.Context) {
 		c.Request.URL,
 	)
 	m.Meta.Links = []h.LinkType{
-		h.LinkType{Rel: "self", Href: thisLink.String()},
+		{Rel: "self", Href: thisLink.String()},
 	}
 	m.Meta.Permissions = perms
 

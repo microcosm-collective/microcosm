@@ -25,7 +25,7 @@ func LegalsHandler(w http.ResponseWriter, r *http.Request) {
 			// Root site
 			c.RespondWithData(
 				h.LinkArrayType{Links: []h.LinkType{
-					h.LinkType{Rel: "api", Href: "/api/v1/legal/service"},
+					{Rel: "api", Href: "/api/v1/legal/service"},
 				}},
 			)
 			return
@@ -34,9 +34,9 @@ func LegalsHandler(w http.ResponseWriter, r *http.Request) {
 		// A customer site
 		c.RespondWithData(
 			h.LinkArrayType{Links: []h.LinkType{
-				h.LinkType{Rel: "cookies", Href: "/api/v1/legal/cookies"},
-				h.LinkType{Rel: "privacy", Href: "/api/v1/legal/privacy"},
-				h.LinkType{Rel: "terms", Href: "/api/v1/legal/terms"},
+				{Rel: "cookies", Href: "/api/v1/legal/cookies"},
+				{Rel: "privacy", Href: "/api/v1/legal/privacy"},
+				{Rel: "terms", Href: "/api/v1/legal/terms"},
 			}},
 		)
 		return

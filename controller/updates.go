@@ -66,7 +66,7 @@ func (ctl *UpdatesController) ReadMany(c *models.Context) {
 	)
 	m.Meta.Links =
 		[]h.LinkType{
-			h.LinkType{Rel: "self", Href: thisLink.String()},
+			{Rel: "self", Href: thisLink.String()},
 		}
 
 	c.RespondWithData(m)

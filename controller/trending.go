@@ -60,7 +60,7 @@ func (ctl *TrendingController) ReadMany(c *models.Context) {
 	thisLink := h.GetLinkToThisPage(*c.Request.URL, offset, limit, total)
 	response.Meta.Links =
 		[]h.LinkType{
-			h.LinkType{Rel: "self", Href: thisLink.String()},
+			{Rel: "self", Href: thisLink.String()},
 		}
 
 	c.RespondWithData(response)

@@ -18,15 +18,15 @@ type vbq struct {
 
 var (
 	vbqs = []vbq{
-		vbq{key: "f", itemTypeID: h.ItemTypes[h.ItemTypeMicrocosm]},
-		vbq{key: "forumid", itemTypeID: h.ItemTypes[h.ItemTypeMicrocosm]},
-		vbq{key: "p", itemTypeID: h.ItemTypes[h.ItemTypeComment]},
-		vbq{key: "pmid", itemTypeID: h.ItemTypes[h.ItemTypeHuddle]},
-		vbq{key: "postid", itemTypeID: h.ItemTypes[h.ItemTypeComment]},
-		vbq{key: "t", itemTypeID: h.ItemTypes[h.ItemTypeConversation]},
-		vbq{key: "threadid", itemTypeID: h.ItemTypes[h.ItemTypeConversation]},
-		vbq{key: "u", itemTypeID: h.ItemTypes[h.ItemTypeProfile]},
-		vbq{key: "userid", itemTypeID: h.ItemTypes[h.ItemTypeProfile]},
+		{key: "f", itemTypeID: h.ItemTypes[h.ItemTypeMicrocosm]},
+		{key: "forumid", itemTypeID: h.ItemTypes[h.ItemTypeMicrocosm]},
+		{key: "p", itemTypeID: h.ItemTypes[h.ItemTypeComment]},
+		{key: "pmid", itemTypeID: h.ItemTypes[h.ItemTypeHuddle]},
+		{key: "postid", itemTypeID: h.ItemTypes[h.ItemTypeComment]},
+		{key: "t", itemTypeID: h.ItemTypes[h.ItemTypeConversation]},
+		{key: "threadid", itemTypeID: h.ItemTypes[h.ItemTypeConversation]},
+		{key: "u", itemTypeID: h.ItemTypes[h.ItemTypeProfile]},
+		{key: "userid", itemTypeID: h.ItemTypes[h.ItemTypeProfile]},
 	}
 
 	// yields forumid

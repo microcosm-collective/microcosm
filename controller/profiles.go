@@ -139,7 +139,7 @@ func (ctl *ProfilesController) ReadMany(c *models.Context) {
 	m := models.ProfilesType{}
 	m.Profiles = h.ConstructArray(ems, h.APITypeProfile, total, limit, offset, pages, c.Request.URL)
 	m.Meta.Links = []h.LinkType{
-		h.LinkType{Rel: "self", Href: thisLink.String()},
+		{Rel: "self", Href: thisLink.String()},
 	}
 	m.Meta.Permissions = perms
 

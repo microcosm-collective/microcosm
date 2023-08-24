@@ -307,7 +307,7 @@ func (ctl *AttachmentsController) ReadMany(c *models.Context) {
 	)
 	m.Meta.Links =
 		[]h.LinkType{
-			h.LinkType{Rel: "self", Href: thisLink.String()},
+			{Rel: "self", Href: thisLink.String()},
 		}
 	m.Meta.Permissions = perms
 

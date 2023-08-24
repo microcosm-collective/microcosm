@@ -22,7 +22,7 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		c.RespondWithData(
 			h.LinkArrayType{Links: []h.LinkType{
-				h.LinkType{Rel: "api", Href: "/api"},
+				{Rel: "api", Href: "/api"},
 			}},
 		)
 		return
@@ -47,7 +47,7 @@ func APIHandler(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		c.RespondWithData(
 			h.LinkArrayType{Links: []h.LinkType{
-				h.LinkType{Rel: "v1", Href: "/api/v1"},
+				{Rel: "v1", Href: "/api/v1"},
 			}},
 		)
 		return
@@ -80,7 +80,7 @@ func V1Handler(w http.ResponseWriter, r *http.Request) {
 				h.GetLink("microcosm", "", h.ItemTypeMicrocosm, 0),
 				h.GetLink("poll", "", h.ItemTypePoll, 0),
 				h.GetLink("profile", "", h.ItemTypeProfile, 0),
-				h.LinkType{Rel: "site", Href: "/api/v1/site"},
+				{Rel: "site", Href: "/api/v1/site"},
 				h.GetLink("update", "", h.ItemTypeUpdate, 0),
 				h.GetLink("watcher", "", h.ItemTypeWatcher, 0),
 				h.GetLink("whoami", "", h.ItemTypeWhoAmI, 0),

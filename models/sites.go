@@ -770,7 +770,7 @@ SELECT s.site_id
 			h.GetLink("self", "", h.ItemTypeSite, m.ID),
 			h.GetLink("microcosm", "", h.ItemTypeMicrocosm, 0),
 			h.GetLink("profile", "", h.ItemTypeProfile, 0),
-			h.LinkType{Rel: "legal", Href: "/api/v1/legal"},
+			{Rel: "legal", Href: "/api/v1/legal"},
 		}
 	m.Hydrate()
 
@@ -1015,12 +1015,12 @@ func GetSiteStats(siteID int64) ([]h.StatType, error) {
 	}
 
 	jsonStats := []h.StatType{
-		h.StatType{Metric: "activeProfiles", Value: stats.ActiveProfiles},
-		h.StatType{Metric: "onlineProfiles", Value: stats.OnlineProfiles},
-		h.StatType{Metric: "totalProfiles", Value: stats.TotalProfiles},
-		h.StatType{Metric: "totalConversations", Value: stats.TotalConvs},
-		h.StatType{Metric: "totalEvents", Value: stats.TotalEvents},
-		h.StatType{Metric: "totalComments", Value: stats.TotalComments},
+		{Metric: "activeProfiles", Value: stats.ActiveProfiles},
+		{Metric: "onlineProfiles", Value: stats.OnlineProfiles},
+		{Metric: "totalProfiles", Value: stats.TotalProfiles},
+		{Metric: "totalConversations", Value: stats.TotalConvs},
+		{Metric: "totalEvents", Value: stats.TotalEvents},
+		{Metric: "totalComments", Value: stats.TotalComments},
 	}
 	return jsonStats, nil
 }
