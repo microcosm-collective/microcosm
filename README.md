@@ -25,17 +25,6 @@ Layout was loosely inspired by Django and Rails with the aim of providing a vagu
 
 ## Dependencies
 
-Dependencies are managed by [godep](https://github.com/tools/godep). If you add a new dependency to the project, remember to run `godep save ./...` to save it.
-
-See the godep documentation for more details.
-
-You can also:
-
-* `make dep_restore` = Restores all dependencies
-* `make dep_update` = Updates all dependencies
-
-For the Makefile to work, you should add the dependencies to that.
-
 For the database migrations you will need [goose](https://bitbucket.org/liamstask/goose) installed:
 
 ```bash
