@@ -10,7 +10,7 @@
 #
 #   dep_restore:  Ensures all dependent packages are at the correct version
 #   dep_update:   Ensures all dependent packages are at the latest version
-GOCMD := go1.19
+GOCMD := go
 
 .PHONY: all fmt build vet test clean
 
@@ -19,6 +19,7 @@ all: clean vet test build
 
 build: export GOOS=linux
 build: export GOARCH=amd64
+build: export CGO_ENABLED=0
 build: clean
 	@$(GOCMD) build cmd/microcosm/microcosm.go
 
