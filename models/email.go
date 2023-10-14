@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	emailFrom string = `notify@microco.sm`
+	emailFrom string = `notify@microcosm.app`
 
 	emailHTMLHeader string = `<!DOCTYPE html>
 <meta charset="utf-8"><div>`
@@ -207,7 +207,7 @@ func (m *EmailType) Send(siteID int64) (int, error) {
 //
 // and adds the given site's absolute URL so that it becomes:
 //
-//	href="https://key.microco.sm/profiles/"
+//	href="https://key.microcosm.app/profiles/"
 func AnchorRelativeUrls(siteID int64, bodyText string) string {
 	site, _, err := GetSite(siteID)
 	if err != nil {

@@ -47,7 +47,7 @@ func (ctl *SiteHostController) Read(c *models.Context) {
 		c.RespondWithErrorDetail(err, status)
 		return
 	}
-	microcosmHost := site.SubdomainKey + ".microco.sm"
+	microcosmHost := site.SubdomainKey + ".microcosm.app"
 
 	contentLen := len(microcosmHost)
 	c.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(contentLen))

@@ -117,15 +117,15 @@ func GetLegalDataForSite(site SiteType) (LegalData, int, error) {
 
 	// Links
 	data.LinkToCookiePolicy = data.CustomerURL + "/legal/cookies"
-	data.LinkToFees = "http://microco.sm/compare"
+	data.LinkToFees = "http://microcosm.app/compare"
 	data.LinkToOpenSourceLicenses =
 		"https://github.com/microcosm-cc/microweb/blob/master/OPENSOURCE.md"
 	data.LinkToPrivacyPolicy = data.CustomerURL + "/legal/privacy"
 
 	// Links in forum content
-	data.LinkToAccountDeactivation = "http://meta.microco.sm"
-	data.LinkToBestPractises = "http://meta.microco.sm"
-	data.LinkToVerificationPolicy = "http://meta.microco.sm"
+	data.LinkToAccountDeactivation = "http://meta.microcosm.app"
+	data.LinkToBestPractises = "http://meta.microcosm.app"
+	data.LinkToVerificationPolicy = "http://meta.microcosm.app"
 
 	return data, http.StatusOK, nil
 }

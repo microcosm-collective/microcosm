@@ -37,7 +37,7 @@ func (ctl *Redirect404Controller) Read(c *models.Context) {
 	// Just call this with authentication (if you have it) and pass in the
 	// unknown URL as a GET param:
 	//
-	//   https://dev1.microco.sm/api/v1/resolve?url=http%3A%2F%2Fwww.lfgss.com%2Fforumdisplay.php%3Ff%3D1
+	//   https://dev1.microcosm.app/api/v1/resolve?url=http%3A%2F%2Fwww.lfgss.com%2Fforumdisplay.php%3Ff%3D1
 	//
 	// The URL in the GET param should be URL encoded to ensure that if it has
 	// any querystring, nothing goes awry. An example querystring URL might be:

@@ -449,7 +449,7 @@ issuing of a warning to you;</li>
 
 <h3 id="24">24. Amendments</h3>
 
-<p>We may amend this Agreement at any time. We will post a copy of the amended Terms of Service to our website <a href="http://microco.sm">http://microco.sm</a>. Your continued use of the Service after this Agreement has been amended will be considered as your acceptance of the amended Agreement. We will notify you of any material changes to this Agreement and give you at least 30 days' notice.</p>
+<p>We may amend this Agreement at any time. We will post a copy of the amended Terms of Service to our website <a href="http://microcosm.app">http://microcosm.app</a>. Your continued use of the Service after this Agreement has been amended will be considered as your acceptance of the amended Agreement. We will notify you of any material changes to this Agreement and give you at least 30 days' notice.</p>
 
 <h3 id="25">25. Assignment</h3>
 

@@ -8,7 +8,7 @@ import (
 
 func TestSearchQueryParsing(t *testing.T) {
 	// Simple query
-	u, _ := url.Parse("https://test.microco.sm/api/v1/search?q=searchTerm&type=event&type=conversation")
+	u, _ := url.Parse("https://test.microcosm.app/api/v1/search?q=searchTerm&type=event&type=conversation")
 
 	sq := GetSearchQueryFromURL(1, *u, 1)
 
@@ -41,7 +41,7 @@ func TestSearchQueryParsing(t *testing.T) {
 	}
 
 	// Parse Q
-	u, _ = url.Parse("https://test.microco.sm/api/v1/search?q=searchTerm+type:event+type:conversation")
+	u, _ = url.Parse("https://test.microcosm.app/api/v1/search?q=searchTerm+type:event+type:conversation")
 
 	sq = GetSearchQueryFromURL(1, *u, 1)
 
@@ -74,7 +74,7 @@ func TestSearchQueryParsing(t *testing.T) {
 	}
 
 	// Mix of Q and Query
-	u, _ = url.Parse("https://test.microco.sm/api/v1/search?q=searchTerm+type:event+type:conversation&type=poll")
+	u, _ = url.Parse("https://test.microcosm.app/api/v1/search?q=searchTerm+type:event+type:conversation&type=poll")
 
 	sq = GetSearchQueryFromURL(1, *u, 1)
 
@@ -113,7 +113,7 @@ func TestSearchQueryParsing(t *testing.T) {
 	}
 
 	// Mix of Q and Query
-	u, _ = url.Parse("https://test.microco.sm/api/v1/search?q=searchTerm&eventAfter=2012-06-07&type=event")
+	u, _ = url.Parse("https://test.microcosm.app/api/v1/search?q=searchTerm&eventAfter=2012-06-07&type=event")
 
 	sq = GetSearchQueryFromURL(1, *u, 1)
 

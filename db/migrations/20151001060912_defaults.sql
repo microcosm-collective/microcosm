@@ -98,7 +98,7 @@ INSERT INTO rewrite_domain_rules (domain_id, rule_id) VALUES (12, 19);
 
 SELECT pg_catalog.setval('rewrite_domains_domain_id_seq', 12, true);
 
-INSERT INTO themes (theme_id, title, logo_url, background_url, background_color, background_position, link_color, favicon_url) VALUES (1, 'Microcosm Default', 'https://meta.microco.sm/static/themes/1/logo.png', 'https://meta.microco.sm/static/themes/1/background.png', '#FFFFFF', 'cover', '#4082C3', '/static/img/favico.png');
+INSERT INTO themes (theme_id, title, logo_url, background_url, background_color, background_position, link_color, favicon_url) VALUES (1, 'Microcosm Default', 'https://meta.microcosm.app/static/themes/1/logo.png', 'https://meta.microcosm.app/static/themes/1/background.png', '#FFFFFF', 'cover', '#4082C3', '/static/img/favico.png');
 
 SELECT pg_catalog.setval('themes_theme_id_seq', 1, true);
 

@@ -114,10 +114,10 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 			callbackURL = "http://" + c.Site.Domain + "/auth0login/"
 		}
 	} else if c.Site.SubdomainKey == "root" {
-		// i.e. microco.sm for root
+		// i.e. microcosm.app for root
 		callbackURL = "https://" + conf.ConfigStrings[conf.MicrocosmDomain] + "/auth0login/"
 	} else {
-		// i.e. lfgss.microco.sm for subdomain
+		// i.e. lfgss.microcosm.app for subdomain
 		callbackURL = "https://" + c.Site.SubdomainKey + "." + conf.ConfigStrings[conf.MicrocosmDomain] + "/auth0login/"
 	}
 	if c.RouteVars["subdomain"] == "gfora" {

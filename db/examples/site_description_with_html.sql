@@ -6,6 +6,6 @@ UPDATE sites
 <form action=https://www.paypal.com/cgi-bin/webscr method=post target=_top style=text-align:center>
 <input type=hidden name=cmd value=_s-xclick>
 <input type=hidden name=hosted_button_id value=9ZKHFRC7LGD3L>
-<input type=image src=https://lfgss.microco.sm/api/v1/files/93b38f3c307e06ac7815ca4c29629b0de231a4c8.gif border=0 name=submit alt=Donate>
+<input type=image src=https://lfgss.microcosm.app/api/v1/files/93b38f3c307e06ac7815ca4c29629b0de231a4c8.gif border=0 name=submit alt=Donate>
 </form>'
  WHERE site_id = 234;

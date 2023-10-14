@@ -491,10 +491,10 @@ SELECT new_ids.new_site_id,
 	email.Subject = "New site created: " + site.Title
 	email.BodyText = fmt.Sprintf(
 		`Title: %s
-Url: http://%s.microco.sm/
+Url: http://%s.microcosm.app/
 Email: %s`, site.Title, site.SubdomainKey, user.Email)
 	email.BodyHTML = fmt.Sprintf(`<p>Title: %s</p>
-<p>Url: <a href="http://%s.microco.sm/">http://%s.microco.sm/</a></p>
+<p>Url: <a href="http://%s.microcosm.app/">http://%s.microcosm.app/</a></p>
 <p>Description: %s</p>
 <p>Email: %s</p>`,
 		site.Title,
@@ -608,7 +608,7 @@ DELETE FROM sites
 // custom domain
 func (m *SiteType) GetURL() string {
 	if m.Domain == "" {
-		return "https://" + m.SubdomainKey + ".microco.sm"
+		return "https://" + m.SubdomainKey + ".microcosm.app"
 	}
 
 	if m.ForceSSL {
@@ -1228,7 +1228,7 @@ func CheckSiteHealth(site SiteType) (SiteHealthType, int, error) {
 	siteHealth.Site = site
 
 	// If site has a custom domain set, check that a CNAME record with value
-	// subdomain.microco.sm exists.
+	// subdomain.microcosm.app exists.
 	if site.DomainNullable.Valid {
 		siteHealth.DomainHealth.Set = true
 		cname, err := net.LookupCNAME(site.Domain)
@@ -1236,7 +1236,7 @@ func CheckSiteHealth(site SiteType) (SiteHealthType, int, error) {
 			siteHealth.DomainHealth.Valid = false
 			siteHealth.DomainHealth.Error = err.Error()
 		}
-		siteURL := site.SubdomainKey + ".microco.sm"
+		siteURL := site.SubdomainKey + ".microcosm.app"
 		if cname != siteURL {
 			siteHealth.DomainHealth.Valid = false
 			siteHealth.DomainHealth.Error = fmt.Sprintf(
@@ -1317,7 +1317,7 @@ func CheckSiteResource(resource string, site SiteType) error {
 		if site.DomainNullable.Valid {
 			resourceURL.Host = site.Domain
 		} else {
-			resourceURL.Host = site.SubdomainKey + ".microco.sm"
+			resourceURL.Host = site.SubdomainKey + ".microcosm.app"
 		}
 	}
 

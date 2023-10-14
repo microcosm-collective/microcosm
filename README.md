@@ -39,7 +39,7 @@ For the microcosm binary to run, /etc/microcosm/api.conf needs to exist with the
 [api]
 
 listen_port=8080
-microcosm_domain=microco.sm
+microcosm_domain=microcosm.app
 
 database_host=sql.dev.microcosm.cc
 database_port=5432
@@ -53,7 +53,7 @@ memcached_port=11211
 
 *listen_port* is the port that the microcosm daemon will listen and serve HTTP requests to the world (or probably to the load balancer).
 
-*microcosm_domain* is the domain that is sub-domained. So if meta.microco.sm is the site, then microco.sm is the microcosm_domain.
+*microcosm_domain* is the domain that is sub-domained. So if meta.microcosm.app is the site, then microcosm.app is the microcosm_domain.
 
 ## Design Principles
 

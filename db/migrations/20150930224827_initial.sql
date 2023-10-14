@@ -4854,7 +4854,7 @@ ALTER TABLE development.sites OWNER TO microcosm;
 
 COMMENT ON TABLE sites IS 'Basic knowledge of which sites exist. These are essentially collections of microcosms for a given URL with an assigned administrator. Dull stuff.';
 
-COMMENT ON COLUMN sites.domain IS 'If NULL then all requests to this site must be in the form https?://<subdomain_key>.microco.sm/
+COMMENT ON COLUMN sites.domain IS 'If NULL then all requests to this site must be in the form https?://<subdomain_key>.microcosm.app/
 
 If NOT NULL then all requests to this site must be in the form http://<domain>/';
 

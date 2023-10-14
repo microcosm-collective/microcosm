@@ -23,12 +23,12 @@ func StartServer(port int64) {
 
 	r := mux.NewRouter()
 
-	// Register all handlers for the root site (e.g. http://microco.sm)
+	// Register all handlers for the root site (e.g. http://microcosm.app)
 	for url, handler := range rootHandlers {
 		r.HandleFunc(url, handler).Host(conf.ConfigStrings[conf.MicrocosmDomain])
 	}
 
-	// Register all handlers for sites (e.g. http://{[A-Za-z0-9]+}.microco.sm)
+	// Register all handlers for sites (e.g. http://{[A-Za-z0-9]+}.microcosm.app)
 	for url, handler := range siteHandlers {
 		r.HandleFunc(url, handler).Host("{subdomain:[a-z0-9]+}." + conf.ConfigStrings[conf.MicrocosmDomain])
 	}

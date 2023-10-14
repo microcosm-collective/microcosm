@@ -11,7 +11,7 @@ import (
 	h "github.com/microcosm-cc/microcosm/helpers"
 )
 
-var defaultLogoURL = "https://meta.microco.sm/static/themes/1/logo.png"
+var defaultLogoURL = "https://meta.microcosm.app/static/themes/1/logo.png"
 
 // MetricType describes the attributes of all sites on Microcosm
 type MetricType struct {

@@ -3,7 +3,7 @@ package helpers
 import "fmt"
 
 // JumpURL is the URL to use for external URL redirects
-const JumpURL string = "http://microco.sm/out/"
+const JumpURL string = "http://microcosm.app/out/"
 
 // Constants for all of the itemTypes
 const (

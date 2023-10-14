@@ -506,7 +506,7 @@ SELECT file_sha1
 		}
 
 		redirect.URL.Href = fmt.Sprintf(
-			"https://%s.microco.sm%s/%s",
+			"https://%s.microcosm.app%s/%s",
 			site.SubdomainKey,
 			h.APITypeFile,
 			fileSha1,

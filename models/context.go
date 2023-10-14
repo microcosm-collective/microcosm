@@ -319,7 +319,7 @@ func (c *Context) getSiteContext() error {
 
 	var err error
 	if host == mcDomain {
-		// Request is for the root site (http://microco.sm) which has ID 1
+		// Request is for the root site (http://microcosm.app) which has ID 1
 		c.Site, _, err = GetSite(rootSiteID)
 		if err != nil {
 			return err
@@ -327,14 +327,14 @@ func (c *Context) getSiteContext() error {
 
 	} else if len(hostParts) == 3 &&
 		strings.Join(hostParts[1:], ".") == mcDomain {
-		// Request is for site.microco.sm, so fetch by subdomain key
+		// Request is for site.microcosm.app, so fetch by subdomain key
 		c.Site, _, err = GetSiteBySubdomain(hostParts[0])
 		if err != nil {
 			return err
 		}
 
 		// If this is the root site, then we shouldn't be accessed via
-		// root.microco.sm and being accessed via microco.sm was already handled
+		// root.microcosm.app and being accessed via microcosm.app was already handled
 		// above. We'll claim we don't exist.
 		if c.Site.ID == rootSiteID {
 			return fmt.Errorf("Unknown site requested")
