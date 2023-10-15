@@ -879,6 +879,4 @@ SELECT DISTINCT m.microcosm_id
 	if valid {
 		sq.Valid = true
 	}
-
-	return
 }

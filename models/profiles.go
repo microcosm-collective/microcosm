@@ -117,37 +117,37 @@ func ValidateProfileName(name string) (string, int, error) {
 
 	if name == "" {
 		return name, http.StatusBadRequest,
-			fmt.Errorf("You must supply a profile name")
+			fmt.Errorf("you must supply a profile name")
 	}
 
 	nameLen := utf8.RuneCountInString(name)
 	if nameLen < 2 {
 		return name, http.StatusBadRequest,
-			fmt.Errorf("Profile name is too short, " +
+			fmt.Errorf("profile name is too short, " +
 				"it must be 2 characters or more")
 	}
 
 	if nameLen > 25 {
 		return name, http.StatusBadRequest,
-			fmt.Errorf("Profile name is too long, " +
+			fmt.Errorf("profile name is too long, " +
 				"it must be 25 or fewer characters in length")
 	}
 
 	if strings.Contains(name, " ") {
 		return name, http.StatusBadRequest,
-			fmt.Errorf("Profile name cannot contain a space, " +
+			fmt.Errorf("profile name cannot contain a space, " +
 				"have you considered using an underscore instead?")
 	}
 
 	if strings.Contains(name, "@") {
 		return name, http.StatusBadRequest,
-			fmt.Errorf("Profile name cannot contain an @, " +
+			fmt.Errorf("profile name cannot contain an @, " +
 				"have you considered using an underscore instead?")
 	}
 
 	if strings.Contains(name, "+") {
 		return name, http.StatusBadRequest,
-			fmt.Errorf("Profile name cannot contain a +, " +
+			fmt.Errorf("profile name cannot contain a +, " +
 				"have you considered using an underscore instead?")
 	}
 
@@ -160,15 +160,15 @@ func (m *ProfileType) Validate(exists bool) (int, error) {
 	m.Gender = CleanSentence(m.Gender, false)
 
 	if m.SiteID < 1 {
-		return http.StatusBadRequest, fmt.Errorf("Invalid site ID supplied")
+		return http.StatusBadRequest, fmt.Errorf("invalid site ID supplied")
 	}
 
 	if m.UserID < 1 {
-		return http.StatusBadRequest, fmt.Errorf("Invalid user ID supplied")
+		return http.StatusBadRequest, fmt.Errorf("invalid user ID supplied")
 	}
 
 	if m.StyleID < 0 {
-		return http.StatusBadRequest, fmt.Errorf("Invalid style ID supplied")
+		return http.StatusBadRequest, fmt.Errorf("invalid style ID supplied")
 	}
 
 	name, status, err := ValidateProfileName(m.ProfileName)
@@ -196,27 +196,27 @@ func (m *ProfileType) Validate(exists bool) (int, error) {
 	if !exists {
 		if m.ID != 0 {
 			return http.StatusBadRequest,
-				fmt.Errorf("You cannot specify an ID")
+				fmt.Errorf("you cannot specify an ID")
 		}
 
 		if m.ItemCount != 0 {
 			return http.StatusBadRequest,
-				fmt.Errorf("You cannot specify item count")
+				fmt.Errorf("you cannot specify item count")
 		}
 
 		if m.CommentCount != 0 {
 			return http.StatusBadRequest,
-				fmt.Errorf("You cannot specify comment count")
+				fmt.Errorf("you cannot specify comment count")
 		}
 
 		if !m.Created.IsZero() {
 			return http.StatusBadRequest,
-				fmt.Errorf("You cannot specify creation time")
+				fmt.Errorf("you cannot specify creation time")
 		}
 
 		if !m.LastActive.IsZero() {
 			return http.StatusBadRequest,
-				fmt.Errorf("You cannot specify last active time")
+				fmt.Errorf("you cannot specify last active time")
 		}
 	}
 
@@ -271,7 +271,7 @@ func (m *ProfileType) insert(isImport bool) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf(
-			fmt.Sprintf("Could not start transaction: %v", err.Error()),
+			fmt.Sprintf("could not start transaction: %v", err.Error()),
 		)
 	}
 
@@ -330,7 +330,7 @@ INSERT INTO profiles (
 
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %+v", err)
+			fmt.Errorf("error inserting data and returning ID: %+v", err)
 	}
 	m.ID = insertID
 
@@ -338,27 +338,27 @@ INSERT INTO profiles (
 	profileOptions, status, err := GetProfileOptionsDefaults(m.SiteID)
 	if err != nil {
 		return status,
-			fmt.Errorf("Could not load default profile options: %+v", err)
+			fmt.Errorf("could not load default profile options: %+v", err)
 	}
 	profileOptions.ProfileID = insertID
 
 	status, err = profileOptions.Insert(tx)
 	if err != nil {
 		return status,
-			fmt.Errorf("Could not insert new profile options: %+v", err)
+			fmt.Errorf("could not insert new profile options: %+v", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %+v", err)
+			fmt.Errorf("transaction failed: %+v", err)
 	}
 
 	// Fetch gravatar (or default to pattern based on email address)
 	user, _, err := GetUser(m.UserID)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("No user found for profile: %+v", err)
+			fmt.Errorf("no user found for profile: %+v", err)
 	}
 
 	// Create attachment for avatar and attach it to profile
@@ -367,14 +367,14 @@ INSERT INTO profiles (
 		fm, _, err := StoreGravatar(avatarURL)
 		if err != nil {
 			return http.StatusInternalServerError,
-				fmt.Errorf("Could not store gravatar for profile: %+v", err)
+				fmt.Errorf("could not store gravatar for profile: %+v", err)
 		}
 
 		// Attach avatar to profile
 		attachment, status, err := AttachAvatar(m.ID, fm)
 		if err != nil {
 			return status,
-				fmt.Errorf("Could not attach avatar to profile: %+v", err)
+				fmt.Errorf("could not attach avatar to profile: %+v", err)
 		}
 		m.AvatarIDNullable = sql.NullInt64{
 			Int64: attachment.AttachmentID,
@@ -395,7 +395,7 @@ INSERT INTO profiles (
 	status, err = m.Update()
 	if err != nil {
 		return status,
-			fmt.Errorf("Could not update profile with avatar: %+v", err)
+			fmt.Errorf("could not update profile with avatar: %+v", err)
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeProfile], m.ID)
@@ -407,7 +407,7 @@ INSERT INTO profiles (
 // Delete removes a profile from the database
 func (m *ProfileType) Delete() (int, error) {
 	return http.StatusNotImplemented,
-		fmt.Errorf("Delete Profile is not yet implemented")
+		fmt.Errorf("delete Profile is not yet implemented")
 }
 
 // Update saves the current version of the profile to the database
@@ -421,7 +421,7 @@ func (m *ProfileType) Update() (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -451,13 +451,13 @@ UPDATE profiles
 	if err != nil {
 		tx.Rollback()
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update of profile failed: %v", err.Error())
+			fmt.Errorf("update of profile failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeProfile], m.ID)
@@ -472,13 +472,13 @@ func UpdateLastActive(profileID int64, lastActive time.Time) (int, error) {
 	if err != nil {
 		glog.Errorf("h.GetConnection() %+v", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not get a database connection: %v", err.Error())
+			fmt.Errorf("could not get a database connection: %v", err.Error())
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -496,13 +496,13 @@ UPDATE profiles
 		}
 
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update of last active failed: %v", err.Error())
+			fmt.Errorf("update of last active failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCacheByScope(c.CacheDetail, h.ItemTypes[h.ItemTypeProfile], profileID)
@@ -575,19 +575,19 @@ SELECT k.attribute_id
 				status, err := FlushRoleMembersCacheByProfileID(tx, m.ID)
 				if err != nil {
 					return status,
-						fmt.Errorf("Error flushing role members cache: %+v", err)
+						fmt.Errorf("error flushing role members cache: %+v", err)
 				}
 			}
 		default:
 			return http.StatusBadRequest,
-				fmt.Errorf("Unsupported path in patch replace operation")
+				fmt.Errorf("unsupported path in patch replace operation")
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeProfile], m.ID)
@@ -649,7 +649,7 @@ func UpdateCommentCountForAllProfiles(siteID int64) (int, error) {
 	db, err := h.GetConnection()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not get db connection: %v", err.Error())
+			fmt.Errorf("could not get db connection: %v", err.Error())
 	}
 
 	_, err = db.Exec(`-- Reset Profile Counts for All Profiles on Site
@@ -661,7 +661,7 @@ UPDATE profiles
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update of comment count failed: %v", err.Error())
+			fmt.Errorf("update of comment count failed: %v", err.Error())
 	}
 
 	_, err = db.Exec(`-- Update Comment Counts for All Profiles on Site
@@ -686,7 +686,7 @@ UPDATE profiles AS p
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update of comment count failed: %v", err.Error())
+			fmt.Errorf("update of comment count failed: %v", err.Error())
 	}
 
 	_, err = db.Exec(`-- Update Item Counts for All Profiles on Site
@@ -711,7 +711,7 @@ UPDATE profiles AS p
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update of comment count failed: %v", err.Error())
+			fmt.Errorf("update of comment count failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -747,7 +747,7 @@ func GetProfile(siteID int64, id int64) (ProfileType, int, error) {
 
 	if id == 0 {
 		return ProfileType{}, http.StatusNotFound,
-			fmt.Errorf("Profile not found")
+			fmt.Errorf("profile not found")
 	}
 
 	// Get from cache if it's available
@@ -756,7 +756,7 @@ func GetProfile(siteID int64, id int64) (ProfileType, int, error) {
 		m := val.(ProfileType)
 
 		if m.SiteID != siteID {
-			return ProfileType{}, http.StatusNotFound, fmt.Errorf("Not found")
+			return ProfileType{}, http.StatusNotFound, fmt.Errorf("not found")
 		}
 		return m, http.StatusOK, nil
 	}
@@ -835,12 +835,12 @@ SELECT p.profile_id
 
 	if err == sql.ErrNoRows {
 		return ProfileType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with profile ID %d not found", id)
+			fmt.Errorf("resource with profile ID %d not found", id)
 
 	} else if err != nil {
 		glog.Error(err)
 		return ProfileType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	if m.GenderNullable.Valid {
@@ -982,7 +982,7 @@ SELECT unread_huddles
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error fetching row: %v", err.Error())
+			fmt.Errorf("error fetching row: %v", err.Error())
 	}
 
 	m.Meta.Stats = append(
@@ -1026,7 +1026,7 @@ func GetProfileSummary(
 
 	if id == 0 {
 		return ProfileSummaryType{}, http.StatusNotFound,
-			fmt.Errorf("Profile not found")
+			fmt.Errorf("profile not found")
 	}
 
 	// Get from cache if it's available
@@ -1035,7 +1035,7 @@ func GetProfileSummary(
 		m := val.(ProfileSummaryType)
 		if m.SiteID != siteID {
 			return ProfileSummaryType{}, http.StatusNotFound,
-				fmt.Errorf("Not found")
+				fmt.Errorf("not found")
 		}
 		return m, http.StatusOK, nil
 	}
@@ -1072,12 +1072,12 @@ SELECT profile_id
 	if err == sql.ErrNoRows {
 		glog.Warning(err)
 		return ProfileSummaryType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with profile ID %d not found", id)
+			fmt.Errorf("resource with profile ID %d not found", id)
 
 	} else if err != nil {
 		glog.Error(err)
 		return ProfileSummaryType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	if m.AvatarIDNullable.Valid {
@@ -1136,7 +1136,7 @@ SELECT profile_id
 		glog.Info(err)
 		return profileID, http.StatusNotFound,
 			fmt.Errorf(
-				"Profile for site (%d) and user (%d) not found",
+				"profile for site (%d) and user (%d) not found",
 				siteID,
 				userID,
 			)
@@ -1144,7 +1144,7 @@ SELECT profile_id
 	} else if err != nil {
 		glog.Error(err)
 		return profileID, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	c.SetInt64(mcKey, profileID, mcTTL)
@@ -1173,7 +1173,7 @@ func GetOrCreateProfile(
 		// went wrong.
 		return ProfileType{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Error fetching profile: %v", err.Error())
+			fmt.Errorf("error fetching profile: %v", err.Error())
 	}
 
 	// Profile not found, so create one
@@ -1295,7 +1295,7 @@ OFFSET $4`
 	if err != nil {
 		glog.Error(err)
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 
 	rows, err := db.Query(
@@ -1312,7 +1312,7 @@ OFFSET $4`
 			err,
 		)
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 	defer rows.Close()
 
@@ -1324,7 +1324,7 @@ OFFSET $4`
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 
 		ids = append(ids, id)
@@ -1333,7 +1333,7 @@ OFFSET $4`
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 
@@ -1375,7 +1375,7 @@ OFFSET $4`
 		glog.Infoln("offset > maxOffset")
 		return []ProfileSummaryType{}, 0, 0, http.StatusBadRequest,
 			fmt.Errorf("not enough records, "+
-				"offset (%d) would return an empty page.", offset)
+				"offset (%d) would return an empty page", offset)
 	}
 
 	return ems, total, pages, http.StatusOK, nil
@@ -1407,7 +1407,7 @@ func StoreGravatar(gravatarURL string) (FileMetadataType, int, error) {
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return file, http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+		return file, http.StatusInternalServerError, fmt.Errorf("transaction failed")
 	}
 
 	return file, http.StatusOK, nil
@@ -1419,7 +1419,7 @@ func storeGravatar(q h.Er, gravatarURL string) (FileMetadataType, int, error) {
 	if err != nil {
 		glog.Errorf("http.Get(`%s`) %+v", gravatarURL, err)
 		return FileMetadataType{}, http.StatusInternalServerError,
-			fmt.Errorf("Could not retrieve gravatar")
+			fmt.Errorf("could not retrieve gravatar")
 	}
 	defer resp.Body.Close()
 
@@ -1427,7 +1427,7 @@ func storeGravatar(q h.Er, gravatarURL string) (FileMetadataType, int, error) {
 	if err != nil {
 		glog.Errorf("ioutil.ReadAll(resp.Body) %+v", err)
 		return FileMetadataType{}, http.StatusInternalServerError,
-			fmt.Errorf("Could not read gravatar response")
+			fmt.Errorf("could not read gravatar response")
 	}
 
 	metadata := FileMetadataType{}
@@ -1437,7 +1437,7 @@ func storeGravatar(q h.Er, gravatarURL string) (FileMetadataType, int, error) {
 	if err != nil {
 		glog.Errorf("h.Sha1(metadata.Content) %+v", err)
 		return FileMetadataType{}, http.StatusInternalServerError,
-			fmt.Errorf("Could not generate file SHA-1")
+			fmt.Errorf("could not generate file SHA-1")
 	}
 	metadata.MimeType = resp.Header.Get("Content-Type")
 	metadata.Created = time.Now()
@@ -1447,7 +1447,7 @@ func storeGravatar(q h.Er, gravatarURL string) (FileMetadataType, int, error) {
 	if err != nil {
 		glog.Errorf("metadata.Insert(%d, %d) %+v", AvatarMaxWidth, AvatarMaxHeight, err)
 		return FileMetadataType{}, status,
-			fmt.Errorf("Could not insert gravatar file metadata")
+			fmt.Errorf("could not insert gravatar file metadata")
 	}
 
 	return metadata, http.StatusOK, nil
@@ -1475,7 +1475,7 @@ func AttachAvatar(
 	if err != nil {
 		return AttachmentType{}, http.StatusInternalServerError,
 			fmt.Errorf(
-				"Could not create avatar attachment to profile: %+v",
+				"could not create avatar attachment to profile: %+v",
 				err,
 			)
 	}
@@ -1538,7 +1538,7 @@ SELECT u.email
 	)
 	if err != nil {
 		return true, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -1553,13 +1553,13 @@ SELECT u.email
 		)
 		if err != nil {
 			return true, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 	}
 	err = rows.Err()
 	if err != nil {
 		return true, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

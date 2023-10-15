@@ -40,14 +40,14 @@ func (m *WatcherType) validate(exists bool) (int, error) {
 		if m.ID < 1 {
 			return http.StatusBadRequest,
 				fmt.Errorf(
-					"The supplied ID ('%d') cannot be zero or negative",
+					"the supplied ID ('%d') cannot be zero or negative",
 					m.ID,
 				)
 		}
 	} else {
 		if m.ID < 0 || m.ID > 0 {
 			return http.StatusBadRequest,
-				fmt.Errorf("You cannot specify an ID when creating a resource")
+				fmt.Errorf("you cannot specify an ID when creating a resource")
 		}
 	}
 
@@ -106,7 +106,7 @@ INSERT INTO watchers (
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %+v", err)
+			fmt.Errorf("error inserting data and returning ID: %+v", err)
 	}
 	m.ID = insertID
 
@@ -114,7 +114,7 @@ INSERT INTO watchers (
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeWatcher], m.ID)
@@ -150,14 +150,14 @@ UPDATE watchers
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update failed: %v", err.Error())
+			fmt.Errorf("update failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeWatcher], m.ID)
@@ -185,7 +185,7 @@ DELETE
 		if err != nil {
 			glog.Error(err)
 			return http.StatusInternalServerError,
-				fmt.Errorf("Delete failed: %v", err.Error())
+				fmt.Errorf("delete failed: %v", err.Error())
 		}
 	} else {
 		err = tx.QueryRow(`
@@ -216,7 +216,7 @@ SELECT watcher_id
 
 			glog.Error(err)
 			return http.StatusInternalServerError,
-				fmt.Errorf("Delete failed: %v", err.Error())
+				fmt.Errorf("delete failed: %v", err.Error())
 		}
 	}
 
@@ -224,7 +224,7 @@ SELECT watcher_id
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeWatcher], m.ID)
@@ -290,7 +290,7 @@ SELECT watcher_id
 	if err != nil {
 		glog.Error(err)
 		return 0, false, false, false, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -309,14 +309,14 @@ SELECT watcher_id
 		if err != nil {
 			glog.Error(err)
 			return 0, false, false, false, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 	}
 	err = rows.Err()
 	if err != nil {
 		glog.Error(err)
 		return 0, false, false, false, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -396,11 +396,11 @@ SELECT watcher_id,
 	)
 	if err == sql.ErrNoRows {
 		return WatcherType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with ID %d not found", watcherID)
+			fmt.Errorf("resource with ID %d not found", watcherID)
 	} else if err != nil {
 		glog.Error(err)
 		return WatcherType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	if m.LastNotifiedNullable.Valid {
@@ -489,7 +489,7 @@ OFFSET $3`,
 	if err != nil {
 		glog.Error(err)
 		return []WatcherType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -505,7 +505,7 @@ OFFSET $3`,
 		if err != nil {
 			glog.Error(err)
 			return []WatcherType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		m, status, err := GetWatcher(id, siteID)
@@ -520,7 +520,7 @@ OFFSET $3`,
 	if err != nil {
 		glog.Error(err)
 		return []WatcherType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -529,8 +529,8 @@ OFFSET $3`,
 
 	if offset > maxOffset {
 		return []WatcherType{}, 0, 0, http.StatusBadRequest,
-			fmt.Errorf("Not enough records, "+
-				"offset (%d) would return an empty page.", offset)
+			fmt.Errorf("not enough records, "+
+				"offset (%d) would return an empty page", offset)
 	}
 
 	return ems, total, pages, http.StatusOK, nil
@@ -559,7 +559,7 @@ func RegisterWatcher(
 	if err != nil {
 		glog.Error(err)
 		return false, status,
-			fmt.Errorf("Failed to get watcher: %s", err.Error())
+			fmt.Errorf("failed to get watcher: %s", err.Error())
 	}
 	if watcherID > 0 {
 		return sendEmail, http.StatusOK, nil
@@ -576,7 +576,7 @@ func RegisterWatcher(
 	if err != nil {
 		glog.Error(err)
 		return false, status,
-			fmt.Errorf("Failed to get update options for profile %d: %s", profileID, err.Error())
+			fmt.Errorf("failed to get update options for profile %d: %s", profileID, err.Error())
 	}
 
 	m := WatcherType{}
@@ -590,7 +590,7 @@ func RegisterWatcher(
 	if err != nil {
 		glog.Error(err)
 		return false, status,
-			fmt.Errorf("Failed to set watcher: %s", err.Error())
+			fmt.Errorf("failed to set watcher: %s", err.Error())
 	}
 
 	return updateOptions.SendEmail, http.StatusOK, nil

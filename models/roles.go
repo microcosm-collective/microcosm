@@ -105,7 +105,7 @@ func (m *RoleType) Validate(
 	if exists {
 		if m.ID < 1 {
 			return http.StatusBadRequest,
-				fmt.Errorf("ID ('%d') cannot be zero or negative", m.ID)
+				fmt.Errorf("iD ('%d') cannot be zero or negative", m.ID)
 		}
 
 		if strings.Trim(m.Meta.EditReason, " ") == "" ||
@@ -118,7 +118,7 @@ func (m *RoleType) Validate(
 	}
 
 	if strings.Trim(m.Title, " ") == "" {
-		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
+		return http.StatusBadRequest, fmt.Errorf("title is a required field")
 	}
 
 	// Needs to be NULL if it's a default role
@@ -192,14 +192,14 @@ INSERT INTO roles (
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %+v", err)
+			fmt.Errorf("error inserting data and returning ID: %+v", err)
 	}
 	m.ID = insertID
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.ID)
@@ -261,13 +261,13 @@ UPDATE roles
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update failed: %v", err.Error())
+			fmt.Errorf("update failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.ID)
@@ -350,7 +350,7 @@ func (m *RoleType) Patch(ac AuthContext, patches []h.PatchType) (int, error) {
 				fmt.Sprintf("Set %s to %t", patch.Path, m.IncludeUsers)
 		default:
 			return http.StatusBadRequest,
-				fmt.Errorf("Unsupported path in patch replace operation")
+				fmt.Errorf("unsupported path in patch replace operation")
 		}
 
 		_, err = tx.Exec(`
@@ -368,14 +368,14 @@ UPDATE roles
 		)
 		if err != nil {
 			return http.StatusInternalServerError,
-				fmt.Errorf("Update failed: %v", err.Error())
+				fmt.Errorf("update failed: %v", err.Error())
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.ID)
@@ -395,7 +395,7 @@ func (m *RoleType) Delete() (int, error) {
 	_, err = tx.Exec(`TRUNCATE permissions_cache`)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %v", err.Error())
+			fmt.Errorf("delete failed: %v", err.Error())
 	}
 
 	_, err = tx.Exec(`
@@ -406,7 +406,7 @@ DELETE
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %v", err.Error())
+			fmt.Errorf("delete failed: %v", err.Error())
 	}
 
 	_, err = tx.Exec(`
@@ -417,7 +417,7 @@ DELETE
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %v", err.Error())
+			fmt.Errorf("delete failed: %v", err.Error())
 	}
 
 	_, err = tx.Exec(`
@@ -428,7 +428,7 @@ DELETE
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %v", err.Error())
+			fmt.Errorf("delete failed: %v", err.Error())
 	}
 
 	_, err = tx.Exec(`
@@ -439,13 +439,13 @@ DELETE
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %v", err.Error())
+			fmt.Errorf("delete failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeRole], m.ID)
@@ -544,10 +544,10 @@ SELECT role_id
 	)
 	if err == sql.ErrNoRows {
 		return RoleType{}, http.StatusNotFound,
-			fmt.Errorf("Role resource with ID %d not found", roleID)
+			fmt.Errorf("role resource with ID %d not found", roleID)
 	} else if err != nil {
 		return RoleType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	if m.MicrocosmIDNullable.Valid {
@@ -712,7 +712,7 @@ OFFSET $4`,
 	)
 	if err != nil {
 		return []RoleSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -729,7 +729,7 @@ OFFSET $4`,
 		if err != nil {
 			return []RoleSummaryType{}, 0, 0,
 				http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		m, status, err := GetRoleSummary(siteID, microcosmID, id, profileID)
@@ -742,7 +742,7 @@ OFFSET $4`,
 	err = rows.Err()
 	if err != nil {
 		return []RoleSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -752,7 +752,7 @@ OFFSET $4`,
 	if offset > maxOffset {
 		return []RoleSummaryType{}, 0, 0, http.StatusBadRequest,
 			fmt.Errorf("not enough records, "+
-				"offset (%d) would return an empty page.", offset)
+				"offset (%d) would return an empty page", offset)
 	}
 
 	return ems, total, pages, http.StatusOK, nil

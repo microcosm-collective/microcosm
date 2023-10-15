@@ -102,13 +102,13 @@ func (m *EmailType) Send(siteID int64) (int, error) {
 
 	if m.From == "" || m.To == "" {
 		return http.StatusPreconditionFailed,
-			fmt.Errorf("Cannot send an email without " +
+			fmt.Errorf("cannot send an email without " +
 				"both from: and to: email addresses")
 	}
 
 	if m.Subject == "" && m.BodyText == "" && m.BodyHTML == "" {
 		return http.StatusPreconditionFailed,
-			fmt.Errorf("Not willing to send a blank email")
+			fmt.Errorf("not willing to send a blank email")
 	}
 
 	if sendGridAPIKey, ok := conf.ConfigStrings[conf.SendGridAPIKey]; ok {
@@ -159,7 +159,7 @@ func (m *EmailType) Send(siteID int64) (int, error) {
 		)
 
 		// EmailType describes an email
-		req, err := http.NewRequest(
+		req, _ := http.NewRequest(
 			"POST",
 			conf.ConfigStrings[conf.MailgunAPIURL],
 			strings.NewReader(formBody.Encode()),

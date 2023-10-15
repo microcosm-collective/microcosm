@@ -68,7 +68,7 @@ func GetAuthContext(c *models.Context) (models.AuthContext, int, error) {
 	if itemType != "" {
 		if _, exists := h.ItemTypes[itemType]; !exists {
 			return models.AuthContext{}, http.StatusBadRequest,
-				fmt.Errorf("You must specify a valid itemType")
+				fmt.Errorf("you must specify a valid itemType")
 		}
 		itemTypeID = h.ItemTypes[itemType]
 	}

@@ -73,7 +73,6 @@ func (ctl *SiteController) Read(c *models.Context) {
 			c, 0, h.ItemTypes[h.ItemTypeSite], c.Site.ID),
 	)
 	c.RespondWithData(c.Site)
-	return
 }
 
 // Update handles PUT
@@ -100,7 +99,7 @@ func (ctl *SiteController) Update(c *models.Context) {
 
 	if owner.UserID != c.Auth.UserID {
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("You must be the owner of the site to update it"),
+			"you must be the owner of the site to update it",
 			http.StatusForbidden,
 		)
 		return
@@ -109,7 +108,7 @@ func (ctl *SiteController) Update(c *models.Context) {
 	err = c.Fill(&m)
 	if err != nil {
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("The post data is invalid: %v", err.Error()),
+			fmt.Sprintf("the post data is invalid: %v", err.Error()),
 			http.StatusBadRequest,
 		)
 		return

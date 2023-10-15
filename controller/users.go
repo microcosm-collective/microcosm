@@ -73,7 +73,7 @@ func (ctl *UsersController) Create(c *models.Context) {
 		user, status, err := models.GetUserByEmailAddress(m.Email)
 		if status == http.StatusNotFound {
 
-			user, status, err = models.CreateUserByEmailAddress(m.Email)
+			user, _, err = models.CreateUserByEmailAddress(m.Email)
 			if err != nil {
 				c.RespondWithErrorMessage(
 					fmt.Sprintf("Couldn't create user: %v", err.Error()),

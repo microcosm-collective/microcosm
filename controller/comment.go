@@ -200,7 +200,7 @@ func (ctl *CommentController) Patch(c *models.Context) {
 				c.RespondWithErrorMessage("/meta/flags/deleted requires a bool value", http.StatusBadRequest)
 				return
 			}
-			if (patch.Bool.Bool == false && !(perms.IsModerator || perms.IsOwner)) || !perms.IsModerator {
+			if (!patch.Bool.Bool && !(perms.IsModerator || perms.IsOwner)) || !perms.IsModerator {
 				c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 				return
 			}

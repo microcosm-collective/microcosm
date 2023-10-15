@@ -71,7 +71,7 @@ func GetLegalDocument(
 		err = legalTermsOfUse.Execute(&buff, data)
 		doc.LastModified = legalTermsOfUseLastModified
 	default:
-		return doc, http.StatusBadRequest, fmt.Errorf("Document does not exist")
+		return doc, http.StatusBadRequest, fmt.Errorf("document does not exist")
 	}
 
 	if err != nil {

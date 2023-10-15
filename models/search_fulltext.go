@@ -415,7 +415,7 @@ SELECT r.total
 				err,
 			)
 			return m, http.StatusInternalServerError,
-				fmt.Errorf("Database query failed")
+				fmt.Errorf("database query failed")
 		}
 
 		switch e.Code.Name() {
@@ -440,7 +440,7 @@ SELECT r.total
 				err,
 			)
 			return m, http.StatusInternalServerError,
-				fmt.Errorf("Database query failed")
+				fmt.Errorf("database query failed")
 		}
 	}
 	defer rows.Close()
@@ -463,7 +463,7 @@ SELECT r.total
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return m, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 
 		itemType, err := h.GetMapStringFromInt(h.ItemTypes, r.ItemTypeID)
@@ -497,7 +497,7 @@ SELECT r.total
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return m, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 
@@ -508,7 +508,7 @@ SELECT r.total
 		glog.Infoln("offset > maxOffset")
 		return m, http.StatusBadRequest,
 			fmt.Errorf("not enough records, "+
-				"offset (%d) would return an empty page.", offset)
+				"offset (%d) would return an empty page", offset)
 	}
 
 	// Extract the summaries
@@ -582,7 +582,7 @@ SELECT r.total
 	)
 
 	// return milliseconds
-	m.TimeTaken = time.Now().Sub(start).Nanoseconds() / 1000000
+	m.TimeTaken = time.Since(start).Nanoseconds() / 1000000
 
 	return m, http.StatusOK, nil
 
@@ -615,9 +615,6 @@ func randomString() string {
 	const (
 		// Standard length of uniuri string to achive ~95 bits of entropy.
 		length = 16
-		// Length of uniurl string to achive ~119 bits of entropy, closest
-		// to what can be losslessly converted to UUIDv4 (122 bits).
-		UUIDLen = 20
 	)
 
 	// Standard characters allowed in uniuri string.

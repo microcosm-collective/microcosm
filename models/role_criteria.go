@@ -256,7 +256,7 @@ func (m *RoleCriterionType) Validate(exists bool) (int, error) {
 		m.Type = tBoolean
 	default:
 		return http.StatusBadRequest,
-			fmt.Errorf("The type of `value` cannot be determined or is invalid")
+			fmt.Errorf("the type of `value` cannot be determined or is invalid")
 	}
 
 	if m.Type == "" {
@@ -271,12 +271,12 @@ func (m *RoleCriterionType) Validate(exists bool) (int, error) {
 			GetProfileColumnByCamel(strings.Trim(m.ProfileColumn, " "))
 		if !exists {
 			return http.StatusBadRequest,
-				fmt.Errorf("The profileColumn is not valid")
+				fmt.Errorf("the profileColumn is not valid")
 		}
 
 		if !col.ValidPredicate(m.Predicate) {
 			return http.StatusBadRequest,
-				fmt.Errorf("The predicate for the profileColumn is not valid")
+				fmt.Errorf("the predicate for the profileColumn is not valid")
 		}
 
 		m.ProfileColumnNullable = sql.NullString{
@@ -303,7 +303,7 @@ func (m *RoleCriterionType) Validate(exists bool) (int, error) {
 				if !found {
 					return http.StatusBadRequest,
 						fmt.Errorf(
-							"The predicate for the attribute type is not valid",
+							"the predicate for the attribute type is not valid",
 						)
 				}
 			case tNumber:
@@ -316,7 +316,7 @@ func (m *RoleCriterionType) Validate(exists bool) (int, error) {
 				if !found {
 					return http.StatusBadRequest,
 						fmt.Errorf(
-							"The predicate for the attribute type is not valid",
+							"the predicate for the attribute type is not valid",
 						)
 				}
 			case tBoolean:
@@ -329,7 +329,7 @@ func (m *RoleCriterionType) Validate(exists bool) (int, error) {
 				if !found {
 					return http.StatusBadRequest,
 						fmt.Errorf(
-							"The predicate for the attribute type is not valid",
+							"the predicate for the attribute type is not valid",
 						)
 				}
 			default:
@@ -338,7 +338,7 @@ func (m *RoleCriterionType) Validate(exists bool) (int, error) {
 		} else {
 			return http.StatusBadRequest,
 				fmt.Errorf(
-					"Either profileColumn or attrKey MUST be supplied",
+					"either profileColumn or attrKey MUST be supplied",
 				)
 		}
 	}
@@ -382,14 +382,14 @@ INSERT INTO criteria (
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing insert: %v", err.Error())
+			fmt.Errorf("error executing insert: %v", err.Error())
 	}
 	m.ID = insertID
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleID)
@@ -431,13 +431,13 @@ UPDATE criteria
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing insert: %v", err.Error())
+			fmt.Errorf("error executing insert: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleID)
@@ -462,7 +462,7 @@ DELETE FROM criteria
 		)
 		if err != nil {
 			return http.StatusInternalServerError,
-				fmt.Errorf("Error executing delete: %+v", err)
+				fmt.Errorf("error executing delete: %+v", err)
 		}
 	} else {
 		// Delete specific profiles
@@ -477,7 +477,7 @@ DELETE FROM criteria
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleID)
@@ -501,7 +501,7 @@ func (m *RoleCriterionType) Delete(roleID int64) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeRole], roleID)
@@ -522,7 +522,7 @@ DELETE FROM criteria
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing delete: %v", err.Error())
+			fmt.Errorf("error executing delete: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -582,7 +582,7 @@ SELECT or_group
 			fmt.Errorf("criterion not found")
 	} else if err != nil {
 		return RoleCriterionType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	m.ID = id
@@ -612,7 +612,7 @@ SELECT or_group
 		m.Value = s
 	default:
 		return RoleCriterionType{}, http.StatusInternalServerError,
-			fmt.Errorf("Type was not one of string|date|number|boolean")
+			fmt.Errorf("type was not one of string|date|number|boolean")
 	}
 
 	return m, http.StatusOK, nil
@@ -651,7 +651,7 @@ OFFSET $3`,
 	)
 	if err != nil {
 		return []RoleCriterionType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -666,7 +666,7 @@ OFFSET $3`,
 		)
 		if err != nil {
 			return []RoleCriterionType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		ids = append(ids, id)
@@ -674,7 +674,7 @@ OFFSET $3`,
 	err = rows.Err()
 	if err != nil {
 		return []RoleCriterionType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

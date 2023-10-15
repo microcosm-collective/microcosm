@@ -73,52 +73,52 @@ type FileMetadataType struct {
 func (f *FileMetadataType) Validate() (int, error) {
 
 	if f.Created.IsZero() {
-		return http.StatusBadRequest, fmt.Errorf("Created time must be set")
+		return http.StatusBadRequest, fmt.Errorf("created time must be set")
 	}
 
 	if f.FileSize < 1 {
 		return http.StatusBadRequest,
-			fmt.Errorf("File size (in bytes) must be set")
+			fmt.Errorf("file size (in bytes) must be set")
 	}
 
 	if f.FileSize > MaxFileSize {
 		return http.StatusBadRequest,
-			fmt.Errorf("Files must be below 30MB in size")
+			fmt.Errorf("files must be below 30MB in size")
 	}
 
 	// SHA-1 output encoded as string is 40 characters
 	if f.FileHash == "" || len(f.FileHash) != 40 {
 		return http.StatusBadRequest,
-			fmt.Errorf("File hash (SHA-1) must be set")
+			fmt.Errorf("file hash (SHA-1) must be set")
 	}
 
 	if f.MimeType == "" {
-		return http.StatusBadRequest, fmt.Errorf("File mime type must be set")
+		return http.StatusBadRequest, fmt.Errorf("file mime type must be set")
 	}
 
 	if f.Width < 0 {
 		return http.StatusBadRequest,
-			fmt.Errorf("Width must be a positive integer, if set")
+			fmt.Errorf("width must be a positive integer, if set")
 	}
 
 	if f.Height < 0 {
 		return http.StatusBadRequest,
-			fmt.Errorf("Height must be a positive integer, if set")
+			fmt.Errorf("height must be a positive integer, if set")
 	}
 
 	if f.ThumbnailWidth < 0 {
 		return http.StatusBadRequest,
-			fmt.Errorf("Thumbnail width must be a positive integer, if set")
+			fmt.Errorf("thumbnail width must be a positive integer, if set")
 	}
 
 	if f.ThumbnailHeight < 0 {
 		return http.StatusBadRequest,
-			fmt.Errorf("Thumbnail height must be a positive integer, if set")
+			fmt.Errorf("thumbnail height must be a positive integer, if set")
 	}
 
 	if f.AttachCount < 0 {
 		return http.StatusBadRequest,
-			fmt.Errorf("Attach count must be a positive integer, if set")
+			fmt.Errorf("attach count must be a positive integer, if set")
 	}
 
 	return http.StatusOK, nil
@@ -146,7 +146,7 @@ func (f *FileMetadataType) Insert(
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("transaction failed")
 	}
 
 	return http.StatusOK, nil
@@ -174,7 +174,7 @@ func (f *FileMetadataType) Import(
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("transaction failed")
 	}
 
 	return http.StatusOK, nil
@@ -349,7 +349,7 @@ INSERT INTO attachment_meta (
 	if err != nil {
 		glog.Errorf("row.Scan() %+v", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID")
+			fmt.Errorf("error inserting data and returning ID")
 	}
 	f.AttachmentMetaID = insertID
 
@@ -399,13 +399,13 @@ UPDATE attachment_meta
 	if err != nil {
 		tx.Rollback()
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not update attachment metadata: %+v", err)
+			fmt.Errorf("could not update attachment metadata: %+v", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %+v", err)
+			fmt.Errorf("transaction failed: %+v", err)
 	}
 
 	return http.StatusOK, nil
@@ -460,12 +460,12 @@ SELECT m.attachment_meta_id
 	)
 	if err == sql.ErrNoRows {
 		return FileMetadataType{}, http.StatusNotFound,
-			fmt.Errorf("File metadata with hash %s not found", fileHash)
+			fmt.Errorf("file metadata with hash %s not found", fileHash)
 
 	}
 	if err != nil {
 		return FileMetadataType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	if m.WidthNullable.Valid {
@@ -561,7 +561,7 @@ func (f *FileMetadataType) ResizeImage(
 	if err != nil {
 		glog.Errorf("h.Sha1(f.Content) %+v", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Couldn't generate SHA-1")
+			fmt.Errorf("couldn't generate SHA-1")
 	}
 	f.FileHash = sha1
 	f.FileSize = int32(len(f.Content))

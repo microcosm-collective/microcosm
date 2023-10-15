@@ -70,7 +70,7 @@ func (m *AttendeeType) Validate(tx *sql.Tx) (int, error) {
 	if m.ProfileID <= 0 {
 		glog.Infoln("m.ProfileId <= 0")
 		return http.StatusBadRequest,
-			fmt.Errorf("You must specify the attendees Profile ID")
+			fmt.Errorf("you must specify the attendees Profile ID")
 	}
 
 	if strings.Trim(m.RSVP, " ") == "" {
@@ -80,7 +80,7 @@ func (m *AttendeeType) Validate(tx *sql.Tx) (int, error) {
 	if _, inList := RSVPStates[m.RSVP]; !inList {
 		glog.Infoln("inList := RSVPStates[m.RSVP]; !inList")
 		return http.StatusBadRequest,
-			fmt.Errorf("You must specify a valid rsvp value " +
+			fmt.Errorf("you must specify a valid rsvp value " +
 				"('invited', 'yes', 'maybe', or 'no')")
 	}
 
@@ -101,12 +101,12 @@ SELECT rsvp_spaces
 		if err != nil {
 			glog.Errorf("tx.QueryRow(%d).Scan() %+v", m.EventID, err)
 			return http.StatusInternalServerError,
-				fmt.Errorf("Error fetching row")
+				fmt.Errorf("error fetching row")
 		}
 
 		if spaces <= 0 && rsvpLimit != 0 {
 			glog.Infoln("spaces <= 0 && rsvpLimit != 0")
-			return http.StatusBadRequest, fmt.Errorf("Event is full")
+			return http.StatusBadRequest, fmt.Errorf("event is full")
 		}
 	}
 
@@ -193,7 +193,7 @@ func UpdateManyAttendees(siteID int64, ems []AttendeeType) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("transaction failed")
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeEvent], event.ID)
@@ -232,7 +232,7 @@ func (m *AttendeeType) Update(siteID int64) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("transaction failed")
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.EventID)
@@ -282,7 +282,7 @@ func (m *AttendeeType) upsert(tx *sql.Tx) (int, error) {
 
 		glog.Errorf("tx.QueryRow(...).Scan() %+v", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error updating data and returning ID")
+			fmt.Errorf("error updating data and returning ID")
 	}
 
 	_, err = tx.Exec(`
@@ -303,7 +303,7 @@ INSERT INTO attendees (
 	if err != nil {
 		glog.Errorf("tx.Exec(...) %+v", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing insert")
+			fmt.Errorf("error executing insert")
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeAttendee], m.ID)
@@ -340,7 +340,7 @@ DELETE FROM attendees
 	)
 	if err != nil {
 		glog.Errorf("tx.Exec(%d) %+v", m.ID, err)
-		return http.StatusInternalServerError, fmt.Errorf("Delete failed")
+		return http.StatusInternalServerError, fmt.Errorf("delete failed")
 	}
 
 	status, err = event.UpdateAttendees(tx)
@@ -352,7 +352,7 @@ DELETE FROM attendees
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("transaction failed")
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeAttendee], m.ID)
@@ -388,7 +388,7 @@ SELECT attendee_id
 	} else if err != nil {
 		glog.Errorf("db.QueryRow(%d, %d) %+v", eventID, profileID, err)
 		return 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 
 	return attendeeID, http.StatusOK, nil
@@ -457,11 +457,11 @@ WHERE attendee_id = $1`,
 	)
 	if err == sql.ErrNoRows {
 		return AttendeeType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with ID %d not found", id)
+			fmt.Errorf("resource with ID %d not found", id)
 	} else if err != nil {
 		glog.Errorf("db.QueryRow(%d) %+v", id, err)
 		return AttendeeType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 
 	if m.Meta.EditReasonNullable.Valid {
@@ -543,7 +543,7 @@ OFFSET $3`,
 	)
 	if err != nil {
 		return []AttendeeType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -558,7 +558,7 @@ OFFSET $3`,
 		)
 		if err != nil {
 			return []AttendeeType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		ids = append(ids, id)
@@ -566,7 +566,7 @@ OFFSET $3`,
 	err = rows.Err()
 	if err != nil {
 		return []AttendeeType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -654,7 +654,7 @@ SELECT p.profile_name
 	)
 	if err != nil {
 		return "", http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -676,7 +676,7 @@ SELECT p.profile_name
 		)
 		if err != nil {
 			return "", http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		csv += fmt.Sprintf("\"%s\",%d,\"%s\",\"%s\"\r\n", name, id, email, date.Format(time.RFC3339))
@@ -684,7 +684,7 @@ SELECT p.profile_name
 	err = rows.Err()
 	if err != nil {
 		return "", http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

@@ -119,7 +119,7 @@ func (v CommentRequestBySeq) Less(i, j int) bool { return v[i].Seq < v[j].Seq }
 func (m *CommentSummaryType) Validate(siteID int64, exists bool) (int, error) {
 	if _, inMap := h.ItemTypesCommentable[m.ItemType]; !inMap {
 		return http.StatusBadRequest,
-			fmt.Errorf("You must specify a valid item type")
+			fmt.Errorf("you must specify a valid item type")
 	}
 	m.ItemTypeID = h.ItemTypesCommentable[m.ItemType]
 
@@ -138,14 +138,14 @@ func (m *CommentSummaryType) Validate(siteID int64, exists bool) (int, error) {
 
 	if m.ItemID <= 0 {
 		return http.StatusBadRequest,
-			fmt.Errorf("You must specify an Item ID this comment belongs to")
+			fmt.Errorf("you must specify an Item ID this comment belongs to")
 	}
 
 	if strings.Trim(m.Markdown, " ") == "" ||
 		len(m.Markdown) < minimumPostLength {
 
 		return http.StatusBadRequest, fmt.Errorf(
-			"Markdown is a required field and "+
+			"markdown is a required field and "+
 				"must be of decent length (more than %d chars)",
 			minimumPostLength,
 		)
@@ -297,7 +297,7 @@ INSERT INTO comments (
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %+v", err)
+			fmt.Errorf("error inserting data and returning ID: %+v", err)
 	}
 	m.ID = insertID
 
@@ -318,7 +318,7 @@ INSERT INTO comments (
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	EmbedAllMedia(revisionID)
@@ -341,21 +341,21 @@ INSERT INTO comments (
 			return status, err
 		}
 
-		switch summary.(type) {
+		switch summary := summary.(type) {
 		case ConversationSummaryType:
 			PurgeCache(
 				h.ItemTypes[h.ItemTypeMicrocosm],
-				summary.(ConversationSummaryType).MicrocosmID,
+				summary.MicrocosmID,
 			)
 		case EventSummaryType:
 			PurgeCache(
 				h.ItemTypes[h.ItemTypeMicrocosm],
-				summary.(EventSummaryType).MicrocosmID,
+				summary.MicrocosmID,
 			)
 		case PollSummaryType:
 			PurgeCache(
 				h.ItemTypes[h.ItemTypeMicrocosm],
-				summary.(PollSummaryType).MicrocosmID,
+				summary.MicrocosmID,
 			)
 		default:
 		}
@@ -386,7 +386,7 @@ UPDATE revisions
 	)
 	if err != nil {
 		return 0, http.StatusInternalServerError,
-			fmt.Errorf("Update 'is_current = false' failed: %v", err.Error())
+			fmt.Errorf("update 'is_current = false' failed: %v", err.Error())
 	}
 
 	sqlQuery := `
@@ -421,7 +421,7 @@ INSERT INTO revisions (
 	err = row.Scan(&revisionID)
 	if err != nil {
 		return 0, http.StatusInternalServerError,
-			fmt.Errorf("Insert failed: %v", err.Error())
+			fmt.Errorf("insert failed: %v", err.Error())
 	}
 
 	html, err := ProcessCommentMarkdown(
@@ -448,7 +448,7 @@ UPDATE revisions
 	)
 	if err != nil {
 		return revisionID, http.StatusInternalServerError,
-			fmt.Errorf("Error updating HTML: %v", err.Error())
+			fmt.Errorf("error updating HTML: %v", err.Error())
 	}
 
 	return revisionID, http.StatusOK, nil
@@ -483,7 +483,7 @@ func (m *CommentSummaryType) Update(siteID int64) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %+v", err)
+			fmt.Errorf("transaction failed: %+v", err)
 	}
 
 	EmbedAllMedia(revisionID)
@@ -501,21 +501,21 @@ func (m *CommentSummaryType) Update(siteID int64) (int, error) {
 		return status, err
 	}
 
-	switch summary.(type) {
+	switch summary := summary.(type) {
 	case ConversationSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(ConversationSummaryType).MicrocosmID,
+			summary.MicrocosmID,
 		)
 	case EventSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(EventSummaryType).MicrocosmID,
+			summary.MicrocosmID,
 		)
 	case PollSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(PollSummaryType).MicrocosmID,
+			summary.MicrocosmID,
 		)
 	default:
 	}
@@ -556,7 +556,7 @@ func (m *CommentSummaryType) Patch(
 			cst.Meta.Flags.Moderated = patch.Bool.Bool
 		default:
 			return http.StatusBadRequest,
-				fmt.Errorf("Unsupported path in patch replace operation")
+				fmt.Errorf("unsupported path in patch replace operation")
 		}
 
 		cst.Meta.Flags.Visible = !(cst.Meta.Flags.Moderated || cst.Meta.Flags.Deleted)
@@ -571,14 +571,14 @@ UPDATE comments
 		)
 		if err != nil {
 			return http.StatusInternalServerError,
-				fmt.Errorf("Update failed: %v", err.Error())
+				fmt.Errorf("update failed: %v", err.Error())
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeComment], cst.ID)
@@ -594,21 +594,21 @@ UPDATE comments
 		return status, err
 	}
 
-	switch summary.(type) {
+	switch summary := summary.(type) {
 	case ConversationSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(ConversationSummaryType).MicrocosmID,
+			summary.MicrocosmID,
 		)
 	case EventSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(EventSummaryType).MicrocosmID,
+			summary.MicrocosmID,
 		)
 	case PollSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(PollSummaryType).MicrocosmID,
+			summary.MicrocosmID,
 		)
 	default:
 	}
@@ -644,7 +644,7 @@ UPDATE comments
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %+v", err)
+			fmt.Errorf("delete failed: %+v", err)
 	}
 
 	_, err = tx.Exec(`
@@ -668,14 +668,14 @@ SELECT c1.item_type_id
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %+v", err)
+			fmt.Errorf("delete failed: %+v", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %+v", err)
+			fmt.Errorf("transaction failed: %+v", err)
 	}
 
 	go DecrementProfileCommentCount(cst.Meta.CreatedByID)
@@ -702,21 +702,21 @@ SELECT c1.item_type_id
 		return status, err
 	}
 
-	switch summary.(type) {
+	switch summary := summary.(type) {
 	case ConversationSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(ConversationSummaryType).MicrocosmID,
+			summary.MicrocosmID,
 		)
 	case EventSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(EventSummaryType).MicrocosmID,
+			summary.MicrocosmID,
 		)
 	case PollSummaryType:
 		PurgeCache(
 			h.ItemTypes[h.ItemTypeMicrocosm],
-			summary.(PollSummaryType).MicrocosmID,
+			summary.MicrocosmID,
 		)
 	default:
 	}
@@ -776,7 +776,7 @@ SELECT oc.item_type_id
 	)
 	if err != nil {
 		return 0, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Get page link failed: %v", err.Error())
+			fmt.Errorf("get page link failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -793,18 +793,18 @@ SELECT oc.item_type_id
 		)
 		if err != nil {
 			return 0, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 	}
 	err = rows.Err()
 	if err != nil {
 		return 0, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
 	if itemTypeID < 1 || itemID < 1 {
-		return 0, 0, 0, http.StatusNotFound, fmt.Errorf("Comment not found")
+		return 0, 0, 0, http.StatusNotFound, fmt.Errorf("comment not found")
 	}
 
 	return itemTypeID, itemID, offset, http.StatusOK, nil
@@ -885,7 +885,7 @@ func GetCommentSummary(
 ) {
 	if commentID == 0 {
 		return CommentSummaryType{}, http.StatusNotFound,
-			fmt.Errorf("Comment not found")
+			fmt.Errorf("comment not found")
 	}
 
 	// Get from cache if it's available
@@ -970,11 +970,11 @@ OFFSET 0`,
 	)
 	if err == sql.ErrNoRows {
 		return CommentSummaryType{}, http.StatusNotFound,
-			fmt.Errorf("Comment with ID %d not found", commentID)
+			fmt.Errorf("comment with ID %d not found", commentID)
 	} else if err != nil {
 		glog.Errorf("db.QueryRow(%d) %+v", commentID, err)
 		return CommentSummaryType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 
 	if m.Meta.EditedNullable.Valid &&
@@ -1004,7 +1004,7 @@ OFFSET 0`,
 		if strings.Trim(m.Markdown, " ") == "" {
 			glog.Errorln(`strings.Trim(m.Markdown, " ") == ""`)
 			return CommentSummaryType{}, http.StatusInternalServerError,
-				fmt.Errorf("Markdown is empty")
+				fmt.Errorf("markdown is empty")
 		}
 
 		tx, err := h.GetTransaction()
@@ -1048,14 +1048,14 @@ UPDATE revisions
 
 				glog.Errorf("tx.Exec(%d, m.HTML) %+v", revisionID, err)
 				return CommentSummaryType{}, http.StatusInternalServerError,
-					fmt.Errorf("Error updating HTML")
+					fmt.Errorf("error updating HTML")
 			}
 
 			err = tx.Commit()
 			if err != nil {
 				glog.Errorf("tx.Commit() %+v", err)
 				return CommentSummaryType{}, http.StatusInternalServerError,
-					fmt.Errorf("Transaction failed")
+					fmt.Errorf("transaction failed")
 			}
 
 			EmbedAllMedia(revisionID)
@@ -1075,7 +1075,7 @@ UPDATE revisions
 	if m.ID == 0 {
 		glog.Warningf("m.Id == 0 (expected %d)", commentID)
 		return CommentSummaryType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with ID %d not found", commentID)
+			fmt.Errorf("resource with ID %d not found", commentID)
 	}
 
 	itemTitle, _, err := GetTitle(siteID, h.ItemTypes[m.ItemType], m.ItemID, 0)
@@ -1204,12 +1204,12 @@ func GetItemComments(
 	if itemType != "" {
 		if _, exists := h.ItemTypesCommentable[itemType]; !exists {
 			return []CommentSummaryType{}, 0, 0, http.StatusBadRequest,
-				fmt.Errorf("You must specify a valid item type")
+				fmt.Errorf("you must specify a valid item type")
 		}
 
 		if itemID <= 0 {
 			return []CommentSummaryType{}, 0, 0, http.StatusBadRequest,
-				fmt.Errorf("If you provide an itemType, then you must " +
+				fmt.Errorf("if you provide an itemType, then you must " +
 					"provide a non-zero and not negative itemId")
 		}
 		fetchForItem = true
@@ -1282,7 +1282,7 @@ SELECT total
 	defer rows.Close()
 	if err != nil {
 		return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	// Get a list of the identifiers of the items to return
@@ -1301,7 +1301,7 @@ SELECT total
 		)
 		if err != nil {
 			return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		unread[id] = isUnread
@@ -1310,7 +1310,7 @@ SELECT total
 	err = rows.Err()
 	if err != nil {
 		return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -1355,7 +1355,7 @@ SELECT total
 
 	if offset > maxOffset {
 		return []CommentSummaryType{}, 0, 0, http.StatusBadRequest,
-			fmt.Errorf("Not enough records, "+
+			fmt.Errorf("not enough records, "+
 				"offset (%d) would return an empty page",
 				offset,
 			)
@@ -1377,7 +1377,7 @@ func GetComment(
 ) {
 	if commentID == 0 {
 		return CommentType{}, http.StatusNotFound,
-			fmt.Errorf("Comment not found")
+			fmt.Errorf("comment not found")
 	}
 
 	var m CommentType
@@ -1451,7 +1451,7 @@ SELECT c.comment_id
 	)
 	if err != nil {
 		return CommentType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -1464,14 +1464,14 @@ SELECT c.comment_id
 		)
 		if err != nil {
 			return CommentType{}, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 		ids = append(ids, id)
 	}
 	err = rows.Err()
 	if err != nil {
 		return CommentType{}, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -1589,7 +1589,7 @@ SELECT comment_id
 	)
 	if err != nil {
 		return 0, http.StatusInternalServerError,
-			fmt.Errorf("Error getting next commentid for item: %+v", err)
+			fmt.Errorf("error getting next commentid for item: %+v", err)
 	}
 
 	return commentID, http.StatusOK, nil
@@ -1659,7 +1659,7 @@ SELECT c.comment_id
 // it has been set.
 func SetCommentInReplyTo(siteID int64, commentID int64, inReplyTo int64) error {
 	if siteID == 0 || commentID == 0 || inReplyTo == 0 {
-		return fmt.Errorf("Cannot accept zero input value")
+		return fmt.Errorf("cannot accept zero input value")
 	}
 
 	tx, err := h.GetTransaction()

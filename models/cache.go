@@ -80,9 +80,6 @@ var (
 	mcUpdateTypeKeys = map[int]string{
 		c.CacheDetail: "ut_d%d",
 	}
-	mcUpdateCountKeys = map[int]string{
-		c.CacheDetail: "uc_d%d",
-	}
 	mcWatcherKeys = map[int]string{
 		c.CacheDetail: "w_d%d",
 	}

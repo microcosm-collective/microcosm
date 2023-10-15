@@ -60,7 +60,7 @@ func (ctl *AttachmentController) Delete(c *models.Context) {
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithErrorMessage(
-				fmt.Sprintf("File does not have a metadata record"),
+				"File does not have a metadata record",
 				http.StatusBadRequest,
 			)
 			return
@@ -103,7 +103,7 @@ func ParseItemInfo(c *models.Context) (int64, int64, models.PermissionType, int,
 		if err != nil {
 			return 0, 0, models.PermissionType{}, http.StatusBadRequest,
 				fmt.Errorf(
-					"The supplied profile ID ('%s') is not a number",
+					"the supplied profile ID ('%s') is not a number",
 					c.RouteVars["profile_id"],
 				)
 		}
@@ -112,7 +112,7 @@ func ParseItemInfo(c *models.Context) (int64, int64, models.PermissionType, int,
 			if status == http.StatusNotFound {
 				return 0, 0, models.PermissionType{}, http.StatusBadRequest,
 					fmt.Errorf(
-						"Profile with ID ('%d') does not exist", profileID,
+						"profile with ID ('%d') does not exist", profileID,
 					)
 			}
 
@@ -128,7 +128,7 @@ func ParseItemInfo(c *models.Context) (int64, int64, models.PermissionType, int,
 		if err != nil {
 			return 0, 0, models.PermissionType{}, http.StatusBadRequest,
 				fmt.Errorf(
-					"The supplied comment ID ('%s') is not a number",
+					"the supplied comment ID ('%s') is not a number",
 					c.RouteVars["comment_id"],
 				)
 		}
@@ -137,7 +137,7 @@ func ParseItemInfo(c *models.Context) (int64, int64, models.PermissionType, int,
 			if status == http.StatusNotFound {
 				return 0, 0, models.PermissionType{}, http.StatusBadRequest,
 					fmt.Errorf(
-						"Comment with ID ('%d') does not exist", commentID,
+						"comment with ID ('%d') does not exist", commentID,
 					)
 			}
 
@@ -149,7 +149,7 @@ func ParseItemInfo(c *models.Context) (int64, int64, models.PermissionType, int,
 
 	} else {
 		return 0, 0, models.PermissionType{}, http.StatusBadRequest,
-			fmt.Errorf("You must supply a profile_id or comment_id as a RouteVar")
+			fmt.Errorf("you must supply a profile_id or comment_id as a RouteVar")
 	}
 
 	perms := models.GetPermission(

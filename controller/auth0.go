@@ -2,11 +2,12 @@ package controller
 
 import (
 	// This is required by auth0
+	"context"
 	_ "crypto/sha512"
 
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -58,7 +59,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 
 		glog.Errorf("auth0 is not configured for this site")
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("auth0 is not configured for this site"),
+			"auth0 is not configured for this site",
 			http.StatusBadRequest,
 		)
 		return
@@ -91,7 +92,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 	if callback.Code == "" && (callback.AccessToken == "" || callback.TokenType == "") {
 		glog.Errorf("code is a required POST parameter and is the auth0 code")
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("code is a required POST parameter and is the auth0 code"),
+			"code is a required POST parameter and is the auth0 code",
 			http.StatusBadRequest,
 		)
 		return
@@ -99,7 +100,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 	if callback.ClientSecret == "" {
 		glog.Errorf("clientsecret is a required POST parameter and is the microcosm client secret")
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("clientsecret is a required POST parameter and is the microcosm client secret"),
+			"clientsecret is a required POST parameter and is the microcosm client secret",
 			http.StatusBadRequest,
 		)
 		return
@@ -149,11 +150,11 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		}
 	} else {
 		// Exchanging the code for a token
-		token, err = oauth2Config.Exchange(oauth2.NoContext, callback.Code)
+		token, err = oauth2Config.Exchange(context.Background(), callback.Code)
 		if err != nil {
 			glog.Errorf(err.Error())
 			c.RespondWithErrorMessage(
-				fmt.Sprintf(err.Error()),
+				err.Error(),
 				http.StatusInternalServerError,
 			)
 			return
@@ -164,12 +165,12 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 	// Exchange token for user info //
 	//////////////////////////////////
 
-	client := oauth2Config.Client(oauth2.NoContext, token)
+	client := oauth2Config.Client(context.Background(), token)
 	resp, err := client.Get("https://" + c.Site.Auth0Domain + "/userinfo")
 	if err != nil {
 		glog.Errorf(err.Error())
 		c.RespondWithErrorMessage(
-			fmt.Sprintf(err.Error()),
+			err.Error(),
 			http.StatusInternalServerError,
 		)
 		return
@@ -177,11 +178,11 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 	defer resp.Body.Close()
 
 	// Reading the body
-	raw, err := ioutil.ReadAll(resp.Body)
+	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		glog.Errorf(err.Error())
 		c.RespondWithErrorMessage(
-			fmt.Sprintf(err.Error()),
+			err.Error(),
 			http.StatusInternalServerError,
 		)
 		return
@@ -199,7 +200,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 	if err := json.Unmarshal(raw, &userInfo); err != nil {
 		glog.Errorf(err.Error())
 		c.RespondWithErrorMessage(
-			fmt.Sprintf(err.Error()),
+			err.Error(),
 			http.StatusInternalServerError,
 		)
 		return
@@ -229,7 +230,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 			return
 		}
 
-		user, status, err = models.CreateUserByEmailAddress(userInfo.Email)
+		user, _, err = models.CreateUserByEmailAddress(userInfo.Email)
 		if err != nil {
 			glog.Errorf("Couldn't create user: %v", err.Error())
 			c.RespondWithErrorMessage(

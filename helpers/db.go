@@ -67,7 +67,7 @@ func GetConnection() (*sql.DB, error) {
 func GetTransaction() (*sql.Tx, error) {
 	tx, err := db.Begin()
 	if err != nil {
-		return nil, fmt.Errorf("Could not start a transaction: %v", err.Error())
+		return nil, fmt.Errorf("could not start a transaction: %v", err.Error())
 	}
 
 	return tx, err

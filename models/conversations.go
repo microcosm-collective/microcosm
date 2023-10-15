@@ -47,7 +47,7 @@ func (m *ConversationType) Validate(
 	m.Title = CleanSentence(m.Title, preventShouting)
 
 	if strings.Trim(m.Title, " ") == "" {
-		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
+		return http.StatusBadRequest, fmt.Errorf("title is a required field")
 	}
 
 	if !exists {
@@ -65,7 +65,7 @@ func (m *ConversationType) Validate(
 	if exists && !isImport {
 		if m.ID < 1 {
 			return http.StatusBadRequest, fmt.Errorf(
-				"The supplied ID ('%d') cannot be zero or negative",
+				"the supplied ID ('%d') cannot be zero or negative",
 				m.ID,
 			)
 		}
@@ -74,7 +74,7 @@ func (m *ConversationType) Validate(
 			len(m.Meta.EditReason) == 0 {
 
 			return http.StatusBadRequest,
-				fmt.Errorf("You must provide a reason for the update")
+				fmt.Errorf("you must provide a reason for the update")
 
 		}
 
@@ -83,7 +83,7 @@ func (m *ConversationType) Validate(
 
 	if m.MicrocosmID <= 0 {
 		return http.StatusBadRequest,
-			fmt.Errorf("You must specify a Microcosm ID")
+			fmt.Errorf("you must specify a Microcosm ID")
 	}
 
 	m.Meta.Flags.SetVisible()
@@ -219,7 +219,7 @@ INSERT INTO conversations (
 	if err != nil {
 		return http.StatusInternalServerError,
 			fmt.Errorf(
-				"Error inserting data and returning ID: %v",
+				"error inserting data and returning ID: %v",
 				err.Error(),
 			)
 	}
@@ -234,7 +234,7 @@ INSERT INTO conversations (
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
@@ -274,13 +274,13 @@ UPDATE conversations
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update failed: %v", err.Error())
+			fmt.Errorf("update failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
@@ -333,7 +333,7 @@ func (m *ConversationType) Patch(
 				fmt.Sprintf("Set moderated to %t", m.Meta.Flags.Moderated)
 		default:
 			return http.StatusBadRequest,
-				fmt.Errorf("Unsupported path in patch replace operation")
+				fmt.Errorf("unsupported path in patch replace operation")
 		}
 
 		m.Meta.Flags.SetVisible()
@@ -355,14 +355,14 @@ UPDATE conversations
 		)
 		if err != nil {
 			return http.StatusInternalServerError,
-				fmt.Errorf("Update failed: %v", err.Error())
+				fmt.Errorf("update failed: %v", err.Error())
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
@@ -388,7 +388,7 @@ UPDATE conversations
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %v", err.Error())
+			fmt.Errorf("delete failed: %v", err.Error())
 	}
 
 	err = DecrementMicrocosmItemCount(tx, m.MicrocosmID)
@@ -399,7 +399,7 @@ UPDATE conversations
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeConversation], m.ID)
@@ -420,7 +420,7 @@ func GetConversation(
 ) {
 	if id == 0 {
 		return ConversationType{}, http.StatusNotFound,
-			fmt.Errorf("Conversation not found")
+			fmt.Errorf("conversation not found")
 	}
 
 	// Get from cache if it's available
@@ -488,12 +488,12 @@ SELECT c.conversation_id
 	if err == sql.ErrNoRows {
 		glog.Warningf("Conversation not found for id %d", id)
 		return ConversationType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with ID %d not found", id)
+			fmt.Errorf("resource with ID %d not found", id)
 
 	} else if err != nil {
 		glog.Errorf("db.Query(%d) %+v", id, err)
 		return ConversationType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 
 	if m.Meta.EditReasonNullable.Valid {
@@ -592,18 +592,18 @@ SELECT conversation_id
 	)
 	if err == sql.ErrNoRows {
 		return ConversationSummaryType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with ID %d not found", id)
+			fmt.Errorf("resource with ID %d not found", id)
 
 	} else if err != nil {
 		return ConversationSummaryType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	lastComment, status, err :=
 		GetLastComment(h.ItemTypes[h.ItemTypeConversation], m.ID)
 	if err != nil {
 		return ConversationSummaryType{}, status,
-			fmt.Errorf("Error fetching last comment: %v", err.Error())
+			fmt.Errorf("error fetching last comment: %v", err.Error())
 	}
 
 	if lastComment.Valid {
@@ -687,7 +687,7 @@ OFFSET $5`,
 	if err != nil {
 		return []ConversationSummaryType{}, 0, 0,
 			http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -703,7 +703,7 @@ OFFSET $5`,
 		if err != nil {
 			return []ConversationSummaryType{}, 0, 0,
 				http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		m, status, err := GetConversationSummary(siteID, id, profileID)
@@ -717,7 +717,7 @@ OFFSET $5`,
 	if err != nil {
 		return []ConversationSummaryType{}, 0, 0,
 			http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

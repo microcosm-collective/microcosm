@@ -322,7 +322,7 @@ SELECT link_id
 	var links []Link
 	for rows.Next() {
 		tmpLink := Link{}
-		err = rows.Scan(
+		rows.Scan(
 			&tmpLink.ID,
 			&tmpLink.ShortURL,
 			&tmpLink.Domain,
@@ -386,7 +386,7 @@ INSERT INTO links(
 	)
 	if err != nil {
 		return Link{},
-			fmt.Errorf("Could not create link (%s): %+v", link.URL, err)
+			fmt.Errorf("could not create link (%s): %+v", link.URL, err)
 	}
 
 	err = CreateRevisionLink(db, revisionID, link.ID)
@@ -413,7 +413,7 @@ INSERT INTO revision_links(
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"Could not create revision_link (%d, %d): %v",
+			"could not create revision_link (%d, %d): %v",
 			revisionID,
 			linkID,
 			err.Error(),
@@ -431,7 +431,7 @@ func getNextLinkID(db *sql.DB) (int64, error) {
 		&insertID,
 	)
 	if err != nil {
-		return 0, fmt.Errorf("Error fetching nextval: %+v", err)
+		return 0, fmt.Errorf("error fetching nextval: %+v", err)
 	}
 
 	return insertID, nil

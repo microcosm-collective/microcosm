@@ -59,10 +59,10 @@ func (m *UpdateOptionType) Insert() (int, error) {
 	// otherwise profile_id constraint will fail.
 	// TODO(lewi): check receive_email doesn't contradict
 	// profile_options.email_updates
-	_, status, err = GetProfileOptions(m.ProfileID)
+	_, _, err = GetProfileOptions(m.ProfileID)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Insert of update preference failed: %v", err.Error())
+			fmt.Errorf("insert of update preference failed: %v", err.Error())
 	}
 
 	tx, err := h.GetTransaction()
@@ -91,13 +91,13 @@ INSERT INTO update_options (
 	if err != nil {
 		tx.Rollback()
 		return http.StatusInternalServerError,
-			fmt.Errorf("Insert of update option failed: %v", err.Error())
+			fmt.Errorf("insert of update option failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -116,7 +116,7 @@ func (m *UpdateOptionType) Update() (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -134,13 +134,13 @@ UPDATE update_options
 	if err != nil {
 		tx.Rollback()
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update of update option failed: %v", err.Error())
+			fmt.Errorf("update of update option failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -167,13 +167,13 @@ DELETE FROM update_options
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %v", err.Error())
+			fmt.Errorf("delete failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -218,10 +218,10 @@ SELECT uo.profile_id
 	)
 	if err == sql.ErrNoRows {
 		return UpdateOptionType{}, http.StatusNotFound,
-			fmt.Errorf("Update options for profile ID %d not found", profileID)
+			fmt.Errorf("update options for profile ID %d not found", profileID)
 	} else if err != nil {
 		return UpdateOptionType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	return m, http.StatusOK, nil

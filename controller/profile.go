@@ -327,7 +327,6 @@ func (ctl *ProfileController) Delete(c *models.Context) {
 	// Right now no-one can delete as it would break attribution
 	// of things like Comments
 	c.RespondWithNotImplemented()
-	return
 
 	/*
 		_, itemTypeID, itemID, status, err := c.GetItemTypeAndItemID()

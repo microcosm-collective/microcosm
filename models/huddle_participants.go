@@ -69,7 +69,7 @@ func UpdateManyHuddleParticipants(
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf(fmt.Sprintf("Transaction failed: %+v", err))
+			fmt.Errorf(fmt.Sprintf("transaction failed: %+v", err))
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeHuddle], huddleID)
@@ -99,7 +99,7 @@ func (m *HuddleParticipantType) Update(
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -135,7 +135,7 @@ SELECT $1, $2
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing upsert: %v", err.Error())
+			fmt.Errorf("error executing upsert: %v", err.Error())
 	}
 
 	go RegisterWatcher(m.ID, 4, huddleID, h.ItemTypes[h.ItemTypeHuddle], siteID)
@@ -160,7 +160,7 @@ func (m *HuddleParticipantType) Delete(huddleID int64) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -183,7 +183,7 @@ DELETE FROM huddle_profiles
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing delete: %+v", err)
+			fmt.Errorf("error executing delete: %+v", err)
 	}
 
 	go UpdateUnreadHuddleCount(m.ID)
@@ -217,7 +217,7 @@ SELECT profile_id
 	)
 	if err != nil {
 		return HuddleParticipantType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -228,7 +228,7 @@ SELECT profile_id
 		)
 		if err != nil {
 			return HuddleParticipantType{}, http.StatusInternalServerError,
-				fmt.Errorf("Error fetching row: %v", err.Error())
+				fmt.Errorf("error fetching row: %v", err.Error())
 		}
 
 		// Make a request the profile summary
@@ -248,7 +248,7 @@ SELECT profile_id
 	err = rows.Err()
 	if err != nil {
 		return HuddleParticipantType{}, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -290,7 +290,7 @@ OFFSET $3`,
 	if err != nil {
 		return []HuddleParticipantType{}, 0, 0,
 			http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -306,7 +306,7 @@ OFFSET $3`,
 		if err != nil {
 			return []HuddleParticipantType{}, 0, 0,
 				http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		ids = append(ids, id)
@@ -315,7 +315,7 @@ OFFSET $3`,
 	if err != nil {
 		return []HuddleParticipantType{}, 0, 0,
 			http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

@@ -66,14 +66,14 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 	if err != nil {
 		if status == http.StatusNotFound {
 			c.RespondWithErrorMessage(
-				fmt.Sprintf("File does not have a metadata record"),
+				"file does not have a metadata record",
 				http.StatusBadRequest,
 			)
 			return
 		}
 
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("Could not retrieve metadata: %v", err.Error()),
+			fmt.Sprintf("could not retrieve metadata: %v", err.Error()),
 			http.StatusBadRequest,
 		)
 		return
@@ -161,7 +161,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 		}
 
 		if metadata.FileSize > models.MaxFileSize {
-			c.RespondWithErrorMessage(fmt.Sprintf("File size must be under 30 megabytes"), http.StatusBadRequest)
+			c.RespondWithErrorMessage("file size must be under 30 megabytes", http.StatusBadRequest)
 			return
 		}
 
@@ -178,8 +178,7 @@ func (ctl *AttachmentsController) Create(c *models.Context) {
 	}
 
 	// Check that this file hasn't already been attached to this item
-	oldattachment := models.AttachmentType{}
-	oldattachment, status, err = models.GetAttachment(
+	oldattachment, status, err := models.GetAttachment(
 		attachment.ItemTypeID,
 		attachment.ItemID,
 		attachment.FileHash,

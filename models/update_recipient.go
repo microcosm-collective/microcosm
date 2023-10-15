@@ -203,7 +203,7 @@ SELECT w.watcher_id
 	rows, err := db.Query(sql, siteID, itemTypeID, itemID, createdByID)
 	if err != nil {
 		return []UpdateRecipient{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -225,7 +225,7 @@ SELECT w.watcher_id
 		)
 		if err != nil {
 			return []UpdateRecipient{}, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		watcher, status, err := GetWatcher(watcherID, siteID)
@@ -249,7 +249,7 @@ SELECT w.watcher_id
 	err = rows.Err()
 	if err != nil {
 		return []UpdateRecipient{}, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

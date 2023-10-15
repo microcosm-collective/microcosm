@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -104,7 +104,7 @@ func (ctl *AuthController) Create(c *models.Context) {
 		return
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		glog.Errorf("Couldn't read Persona response: %s", err.Error())
 		c.RespondWithErrorMessage(
@@ -163,7 +163,7 @@ func (ctl *AuthController) Create(c *models.Context) {
 			return
 		}
 
-		user, status, err = models.CreateUserByEmailAddress(personaResponse.Email)
+		user, _, err = models.CreateUserByEmailAddress(personaResponse.Email)
 		if err != nil {
 			c.RespondWithErrorMessage(
 				fmt.Sprintf("Couldn't create user: %v", err.Error()),

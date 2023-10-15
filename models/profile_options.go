@@ -48,7 +48,7 @@ INSERT INTO profile_options (
 	if err != nil {
 		tx.Rollback()
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data: %v", err.Error())
+			fmt.Errorf("error inserting data: %v", err.Error())
 	}
 
 	go PurgeCacheByScope(c.CacheOptions, h.ItemTypes[h.ItemTypeProfile], m.ProfileID)
@@ -62,7 +62,7 @@ func (m *ProfileOptionType) Update() (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 
 	defer tx.Rollback()
@@ -85,13 +85,13 @@ WHERE profile_id = $1`,
 	if err != nil {
 		tx.Rollback()
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data: %v", err.Error())
+			fmt.Errorf("error inserting data: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	go PurgeCacheByScope(c.CacheOptions, h.ItemTypes[h.ItemTypeProfile], m.ProfileID)
@@ -135,11 +135,11 @@ SELECT profile_id
 	)
 	if err == sql.ErrNoRows {
 		return ProfileOptionType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with profile ID %d not found", profileID)
+			fmt.Errorf("resource with profile ID %d not found", profileID)
 
 	} else if err != nil {
 		return ProfileOptionType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	// Update cache
@@ -170,7 +170,7 @@ SELECT COALESCE(s.send_email, p.send_email) AS send_email
 	)
 	if err != nil {
 		return ProfileOptionType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -184,13 +184,13 @@ SELECT COALESCE(s.send_email, p.send_email) AS send_email
 		)
 		if err != nil {
 			return ProfileOptionType{}, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 	}
 	err = rows.Err()
 	if err != nil {
 		return ProfileOptionType{}, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

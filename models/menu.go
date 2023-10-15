@@ -26,32 +26,32 @@ func (m *MenuType) Validate() (int, error) {
 
 	// SiteID
 	if m.SiteID == 0 {
-		return http.StatusBadRequest, fmt.Errorf("SiteID is a required field")
+		return http.StatusBadRequest, fmt.Errorf("siteID is a required field")
 	}
 
 	// Href
 	m.Href = strings.Trim(m.Href, " ")
 	if m.Href == "" {
-		return http.StatusBadRequest, fmt.Errorf("Href is a required field")
+		return http.StatusBadRequest, fmt.Errorf("href is a required field")
 	}
 
 	u, err := url.Parse(m.Href)
 	if err != nil {
-		return http.StatusBadRequest, fmt.Errorf("Href is not a valid URL")
+		return http.StatusBadRequest, fmt.Errorf("href is not a valid URL")
 	}
 	m.Href = u.String()
 
 	// Text
 	m.Text = strings.Trim(m.Text, " ")
 	if m.Href == "" {
-		return http.StatusBadRequest, fmt.Errorf("Text is a required field")
+		return http.StatusBadRequest, fmt.Errorf("text is a required field")
 	}
 
 	preventShouting := false
 	m.Text = CleanSentence(m.Text, preventShouting)
 	m.Text = strings.Trim(m.Text, " ")
 	if m.Href == "" {
-		return http.StatusBadRequest, fmt.Errorf("Text is a required field")
+		return http.StatusBadRequest, fmt.Errorf("text is a required field")
 	}
 
 	// Title
@@ -65,7 +65,7 @@ func (m *MenuType) Validate() (int, error) {
 
 	if m.Sequence > 10 {
 		return http.StatusBadRequest,
-			fmt.Errorf("Menus are limited to 10 links")
+			fmt.Errorf("menus are limited to 10 links")
 	}
 
 	return http.StatusOK, nil
@@ -75,7 +75,7 @@ func (m *MenuType) Validate() (int, error) {
 func UpdateMenu(siteID int64, ems []h.LinkType) (int, error) {
 	if len(ems) == 0 {
 		return http.StatusBadRequest,
-			fmt.Errorf("A menu without links is not a menu that is of any use." +
+			fmt.Errorf("a menu without links is not a menu that is of any use." +
 				" Have you tried DELETE?")
 	}
 
@@ -104,7 +104,7 @@ func UpdateMenu(siteID int64, ems []h.LinkType) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		glog.Errorf("h.GetTransaction() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Could not get transaction")
+		return http.StatusInternalServerError, fmt.Errorf("could not get transaction")
 	}
 	defer tx.Rollback()
 
@@ -115,7 +115,7 @@ DELETE FROM menus
 	)
 	if err != nil {
 		glog.Errorf("stmt1.Exec(%d) %+v", siteID, err)
-		return http.StatusInternalServerError, fmt.Errorf("Failed to delete existing menu")
+		return http.StatusInternalServerError, fmt.Errorf("failed to delete existing menu")
 	}
 
 	for _, m := range menu {
@@ -151,14 +151,14 @@ INSERT INTO menus (
 				err,
 			)
 			return http.StatusInternalServerError,
-				fmt.Errorf("Failed to delete existing menu")
+				fmt.Errorf("failed to delete existing menu")
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("transaction failed")
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeSite], siteID)
@@ -183,14 +183,14 @@ DELETE FROM menus
 	if err != nil {
 		glog.Errorf("stmt1.Exec(%d) %+v", siteID, err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Failed to delete existing menu")
+			fmt.Errorf("failed to delete existing menu")
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed")
+			fmt.Errorf("transaction failed")
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeSite], siteID)
@@ -217,7 +217,7 @@ SELECT href
 	if err != nil {
 		glog.Errorf("tx.Query(%d) %+v", siteID, err)
 		return []h.LinkType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 	defer rows.Close()
 
@@ -233,7 +233,7 @@ SELECT href
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return []h.LinkType{}, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 
 		if s.Valid {
@@ -246,7 +246,7 @@ SELECT href
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return []h.LinkType{}, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 

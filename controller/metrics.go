@@ -57,7 +57,6 @@ func (ctl *MetricsController) Update(c *models.Context) {
 	}
 
 	c.RespondWithOK()
-	return
 }
 
 // Read handles GET
@@ -66,7 +65,7 @@ func (ctl *MetricsController) Read(c *models.Context) {
 	// Hard coded to only work for founders.
 	if c.Auth.UserID != 1 && c.Auth.UserID != 2 {
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("Only founders can see metrics"),
+			"only founders can see metrics",
 			http.StatusForbidden,
 		)
 		return
@@ -337,5 +336,4 @@ chart.draw(` + idPrefix + `data, ` + idPrefix + `options);
 
 	c.ResponseWriter.Header().Set("Content-Encoding", "text/html")
 	c.WriteResponse([]byte(html), http.StatusOK)
-	return
 }

@@ -59,7 +59,7 @@ func (ctl *SiteCheckController) Read(c *models.Context) {
 
 	if owner.UserID != c.Auth.UserID {
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("You must be the owner of the site to view its status"),
+			"you must be the owner of the site to view its status",
 			http.StatusForbidden,
 		)
 		return

@@ -31,43 +31,43 @@ type PatchType struct {
 // { "op": "move", "from": "/a/b/c", "path": "/a/b/d" },
 // { "op": "copy", "from": "/a/b/d", "path": "/a/b/e" }
 func TestPatch(patches []PatchType) (int, error) {
-	if 0 == len(patches) {
-		return http.StatusBadRequest, fmt.Errorf("Patch: no patches were provided")
+	if len(patches) == 0 {
+		return http.StatusBadRequest, fmt.Errorf("patch: no patches were provided")
 	}
 
 	for _, v := range patches {
 		switch v.Operation {
 		case "add":
 			if strings.Trim(v.Path, " ") == "" || v.RawValue == nil {
-				return http.StatusBadRequest, fmt.Errorf("Patch: add operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("patch: add operation incorrectly specified")
 			}
-			return http.StatusNotImplemented, fmt.Errorf("Patch: json-patch 'add' operation not implemented")
+			return http.StatusNotImplemented, fmt.Errorf("patch: json-patch 'add' operation not implemented")
 		case "copy":
 			if strings.Trim(v.Path, " ") == "" || strings.Trim(v.From, " ") == "" {
-				return http.StatusBadRequest, fmt.Errorf("Patch: copy operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("patch: copy operation incorrectly specified")
 			}
-			return http.StatusNotImplemented, fmt.Errorf("Patch: json-patch 'copy' operation not implemented")
+			return http.StatusNotImplemented, fmt.Errorf("patch: json-patch 'copy' operation not implemented")
 		case "move":
 			if strings.Trim(v.Path, " ") == "" || strings.Trim(v.From, " ") == "" {
-				return http.StatusBadRequest, fmt.Errorf("Patch: move operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("patch: move operation incorrectly specified")
 			}
-			return http.StatusNotImplemented, fmt.Errorf("Patch: json-patch 'move' operation not implemented")
+			return http.StatusNotImplemented, fmt.Errorf("patch: json-patch 'move' operation not implemented")
 		case "remove":
 			if strings.Trim(v.Path, " ") == "" {
-				return http.StatusBadRequest, fmt.Errorf("Patch: remove operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("patch: remove operation incorrectly specified")
 			}
-			return http.StatusNotImplemented, fmt.Errorf("Patch: json-patch 'remove' operation not implemented")
+			return http.StatusNotImplemented, fmt.Errorf("patch: json-patch 'remove' operation not implemented")
 		case "replace":
 			if strings.Trim(v.Path, " ") == "" || v.RawValue == nil {
-				return http.StatusBadRequest, fmt.Errorf("Patch: replace operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("patch: replace operation incorrectly specified")
 			}
 		case "test":
 			if strings.Trim(v.Path, " ") == "" || v.RawValue == nil {
-				return http.StatusBadRequest, fmt.Errorf("Patch: test operation incorrectly specified")
+				return http.StatusBadRequest, fmt.Errorf("patch: test operation incorrectly specified")
 			}
-			return http.StatusNotImplemented, fmt.Errorf("Patch: json-patch 'test' operation not implemented")
+			return http.StatusNotImplemented, fmt.Errorf("patch: json-patch 'test' operation not implemented")
 		default:
-			return http.StatusBadRequest, fmt.Errorf("Patch: unsupported operation in patch")
+			return http.StatusBadRequest, fmt.Errorf("patch: unsupported operation in patch")
 		}
 	}
 
@@ -83,7 +83,7 @@ func (p *PatchType) ScanRawValue() (int, error) {
 	case string:
 		p.String = sql.NullString{String: p.RawValue.(string), Valid: true}
 	default:
-		return http.StatusNotImplemented, fmt.Errorf("Patch: Currently only values of type boolean and string patchable")
+		return http.StatusNotImplemented, fmt.Errorf("patch: Currently only values of type boolean and string patchable")
 	}
 
 	return http.StatusOK, nil

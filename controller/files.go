@@ -2,7 +2,7 @@ package controller
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"mime"
 	"net/http"
 	"strconv"
@@ -92,7 +92,7 @@ func (ctl *FilesController) Create(c *models.Context) {
 				md.Created = time.Now()
 				md.MimeType = part.Header.Get("Content-Type")
 
-				md.Content, err = ioutil.ReadAll(part)
+				md.Content, err = io.ReadAll(part)
 				if err != nil {
 					glog.Errorf("+%v", err)
 					c.RespondWithErrorMessage(
@@ -203,5 +203,4 @@ func (ctl *FileController) Read(c *models.Context) {
 	}
 
 	c.WriteResponse(fileBytes, http.StatusOK)
-	return
 }

@@ -81,14 +81,14 @@ SELECT job_timestamp
 		)
 		if err != nil {
 			return []MetricType{}, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 		ems = append(ems, metric)
 	}
 	err = rows.Err()
 	if err != nil {
 		return []MetricType{}, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

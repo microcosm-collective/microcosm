@@ -112,7 +112,7 @@ func (ctl *WatchersController) Create(c *models.Context) {
 	if itemType != "" {
 		if _, exists := h.ItemTypes[itemType]; !exists {
 			c.RespondWithErrorMessage(
-				fmt.Sprintf("Watcher could not be saved: Item type not found"),
+				"watcher could not be saved: Item type not found",
 				http.StatusBadRequest,
 			)
 			return
@@ -121,7 +121,7 @@ func (ctl *WatchersController) Create(c *models.Context) {
 		m.ItemTypeID = h.ItemTypes[itemType]
 	} else {
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("No itemType supplied, cannot create a watcher"),
+			"no itemType supplied, cannot create a watcher",
 			http.StatusBadRequest,
 		)
 		return

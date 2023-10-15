@@ -114,7 +114,7 @@ func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
 			len(m.Meta.EditReason) == 0 {
 
 			return http.StatusBadRequest,
-				fmt.Errorf("You must provide a reason for the update")
+				fmt.Errorf("you must provide a reason for the update")
 		}
 	}
 
@@ -126,12 +126,12 @@ func (m *MicrocosmType) Validate(exists bool, isImport bool) (int, error) {
 	}
 
 	if strings.Trim(m.Title, " ") == "" {
-		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
+		return http.StatusBadRequest, fmt.Errorf("title is a required field")
 	}
 
 	if strings.Trim(m.Description, " ") == "" {
 		return http.StatusBadRequest,
-			fmt.Errorf("Description is a required field")
+			fmt.Errorf("description is a required field")
 	}
 
 	if m.ParentID > 0 {
@@ -316,7 +316,7 @@ INSERT INTO microcosms (
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %+v", err)
+			fmt.Errorf("error inserting data and returning ID: %+v", err)
 	}
 	m.ID = insertID
 
@@ -329,7 +329,7 @@ INSERT INTO microcosms (
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.ID)
@@ -378,7 +378,7 @@ UPDATE microcosms
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update failed: %v", err.Error())
+			fmt.Errorf("update failed: %v", err.Error())
 	}
 
 	purgeCache := true
@@ -387,7 +387,7 @@ UPDATE microcosms
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.ID)
@@ -440,7 +440,7 @@ func (m *MicrocosmType) Patch(
 				fmt.Sprintf("Set moderated to %t", m.Meta.Flags.Moderated)
 		default:
 			return http.StatusBadRequest,
-				fmt.Errorf("Unsupported path in patch replace operation")
+				fmt.Errorf("unsupported path in patch replace operation")
 		}
 
 		m.Meta.Flags.SetVisible()
@@ -462,14 +462,14 @@ UPDATE microcosms
 		)
 		if err != nil {
 			return http.StatusInternalServerError,
-				fmt.Errorf("Update failed: %v", err.Error())
+				fmt.Errorf("update failed: %v", err.Error())
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.ID)
@@ -495,13 +495,13 @@ UPDATE microcosms
 	if err != nil {
 		tx.Rollback()
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %v", err.Error())
+			fmt.Errorf("delete failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeMicrocosm], m.ID)
@@ -521,7 +521,7 @@ func GetMicrocosm(
 ) {
 	if id == 0 {
 		return MicrocosmType{}, http.StatusNotFound,
-			fmt.Errorf("Microcosm not found")
+			fmt.Errorf("microcosm not found")
 	}
 
 	// Get from cache if it's available
@@ -530,7 +530,7 @@ func GetMicrocosm(
 
 		m := val.(MicrocosmType)
 		if m.SiteID != siteID {
-			return MicrocosmType{}, http.StatusNotFound, fmt.Errorf("Not found")
+			return MicrocosmType{}, http.StatusNotFound, fmt.Errorf("not found")
 		}
 
 		m.Hydrate(siteID, profileID)
@@ -598,11 +598,11 @@ SELECT microcosm_id,
 	)
 	if err == sql.ErrNoRows {
 		return MicrocosmType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with ID %d not found", id)
+			fmt.Errorf("resource with ID %d not found", id)
 
 	} else if err != nil {
 		return MicrocosmType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	m.ItemTypes = psqlArrayToItemTypes(itemTypes)
@@ -666,7 +666,7 @@ func GetMicrocosmSummary(
 ) {
 	if id == 0 {
 		return MicrocosmSummaryType{}, http.StatusNotFound,
-			fmt.Errorf("Microcosm not found")
+			fmt.Errorf("microcosm not found")
 	}
 
 	// Get from cache if it's available
@@ -677,7 +677,7 @@ func GetMicrocosmSummary(
 
 		if m.SiteID != siteID {
 			return MicrocosmSummaryType{}, http.StatusNotFound,
-				fmt.Errorf("Not found")
+				fmt.Errorf("not found")
 		}
 
 		m.Hydrate(siteID, profileID)
@@ -754,13 +754,13 @@ SELECT m.microcosm_id
 		glog.Warning(err)
 		return MicrocosmSummaryType{},
 			http.StatusNotFound,
-			fmt.Errorf("Microcosm with ID %d not found", id)
+			fmt.Errorf("microcosm with ID %d not found", id)
 
 	} else if err != nil {
 		glog.Error(err)
 		return MicrocosmSummaryType{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 
 	m.ItemTypes = psqlArrayToItemTypes(itemTypes)
@@ -776,7 +776,7 @@ SELECT m.microcosm_id
 	mru, status, err := GetMostRecentItem(siteID, m.ID, profileID)
 	if err != nil {
 		glog.Error(err)
-		return MicrocosmSummaryType{}, status, fmt.Errorf("Row parsing error")
+		return MicrocosmSummaryType{}, status, fmt.Errorf("row parsing error")
 	}
 	if mru.Valid {
 		m.MRU = mru
@@ -953,7 +953,7 @@ func GetRootMicrocosm(
 	rootMicrocosmID := GetRootMicrocosmID(siteID)
 	if rootMicrocosmID == 0 {
 		return []SummaryContainer{}, 0, 0,
-			http.StatusInternalServerError, fmt.Errorf("Root microcosm must exist")
+			http.StatusInternalServerError, fmt.Errorf("root microcosm must exist")
 	}
 
 	return GetAllItems(siteID, rootMicrocosmID, profileID, limit, offset)
@@ -1095,7 +1095,7 @@ SELECT microcosm_id
 		glog.Error(err)
 		return []MicrocosmLinkType{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -1110,7 +1110,7 @@ SELECT microcosm_id
 		if err != nil {
 			return []MicrocosmLinkType{},
 				http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		link.Rel = "microcosm ancestor"
@@ -1127,7 +1127,7 @@ SELECT microcosm_id
 	if err != nil {
 		return []MicrocosmLinkType{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -1162,7 +1162,7 @@ SELECT microcosm_id
 		glog.Error(err)
 		return []MicrocosmLinkType{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -1178,7 +1178,7 @@ SELECT microcosm_id
 		if err != nil {
 			return []MicrocosmLinkType{},
 				http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		link.Rel = "microcosm child"
@@ -1194,7 +1194,7 @@ SELECT microcosm_id
 	if err != nil {
 		return []MicrocosmLinkType{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -1247,7 +1247,7 @@ SELECT microcosm_id
 		glog.Error(err)
 		return []MicrocosmLinkType{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -1263,7 +1263,7 @@ SELECT microcosm_id
 		if err != nil {
 			return []MicrocosmLinkType{},
 				http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		if link.parentIDNullable.Valid {
@@ -1284,7 +1284,7 @@ SELECT microcosm_id
 	if err != nil {
 		return []MicrocosmLinkType{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

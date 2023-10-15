@@ -203,5 +203,5 @@ func GetMapStringFromInt(theMap map[string]int64, value int64) (string, error) {
 			return k, nil
 		}
 	}
-	return "", fmt.Errorf("Item does not exist")
+	return "", fmt.Errorf("item does not exist")
 }

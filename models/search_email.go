@@ -80,7 +80,7 @@ OFFSET $4`,
 			err,
 		)
 		return m, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 	defer rows.Close()
 
@@ -99,7 +99,7 @@ OFFSET $4`,
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return m, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 
 		r.ItemType = "profile"
@@ -110,7 +110,7 @@ OFFSET $4`,
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return m, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 
@@ -121,7 +121,7 @@ OFFSET $4`,
 		glog.Infoln("offset > maxOffset")
 		return m, http.StatusBadRequest,
 			fmt.Errorf("not enough records, "+
-				"offset (%d) would return an empty page.", offset)
+				"offset (%d) would return an empty page", offset)
 	}
 
 	// Extract the summaries
@@ -195,7 +195,7 @@ OFFSET $4`,
 	)
 
 	// return milliseconds
-	m.TimeTaken = time.Now().Sub(start).Nanoseconds() / 1000000
+	m.TimeTaken = time.Since(start).Nanoseconds() / 1000000
 
 	return m, http.StatusOK, nil
 

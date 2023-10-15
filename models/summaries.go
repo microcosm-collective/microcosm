@@ -126,7 +126,7 @@ func GetSummary(
 			itemID,
 			profileID,
 		)
-		return nil, http.StatusNotFound, fmt.Errorf("Item not found")
+		return nil, http.StatusNotFound, fmt.Errorf("item not found")
 	}
 
 	switch itemTypeID {
@@ -260,7 +260,7 @@ func GetSummary(
 	}
 
 	return nil, http.StatusInternalServerError,
-		fmt.Errorf("GetSummary() not yet implemented")
+		fmt.Errorf("getSummary() not yet implemented")
 }
 
 // GetTitle fetches a title of a thing, or something that can be used as a
@@ -298,25 +298,25 @@ func GetTitle(
 		return "", status, err
 	}
 
-	switch summary.(type) {
+	switch summary := summary.(type) {
 	case ConversationSummaryType:
-		return summary.(ConversationSummaryType).Title, http.StatusOK, nil
+		return summary.Title, http.StatusOK, nil
 
 	case EventSummaryType:
-		return summary.(EventSummaryType).Title, http.StatusOK, nil
+		return summary.Title, http.StatusOK, nil
 
 	case PollSummaryType:
-		return summary.(PollSummaryType).Title, http.StatusOK, nil
+		return summary.Title, http.StatusOK, nil
 
 	case ProfileSummaryType:
-		return summary.(ProfileSummaryType).ProfileName, http.StatusOK, nil
+		return summary.ProfileName, http.StatusOK, nil
 
 	case SiteType:
-		return summary.(SiteType).Title, http.StatusOK, nil
+		return summary.Title, http.StatusOK, nil
 
 	default:
 	}
 
 	return "", http.StatusNotImplemented,
-		fmt.Errorf("GetTitle is not implemented for this item")
+		fmt.Errorf("getTitle is not implemented for this item")
 }

@@ -92,5 +92,4 @@ func (ctl *LegalController) Read(c *models.Context) {
 	}
 
 	c.RespondWithData(m)
-	return
 }

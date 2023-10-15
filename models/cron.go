@@ -460,8 +460,6 @@ UPDATE polls p
 	for _, view := range views {
 		PurgeCacheByScope(c.CacheItem, view.ItemTypeID, view.ItemID)
 	}
-
-	return
 }
 
 // UpdateWhosOnline updates the site_stats with the current number of people

@@ -414,7 +414,7 @@ SELECT COUNT(*) AS total`+sqlFromWhere,
 	if err != nil {
 		glog.Error(err)
 		return []SummaryContainer{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	rows, err := db.Query(sqlChildMicrocosms+`
@@ -443,7 +443,7 @@ SELECT item_type_id
 	if err != nil {
 		glog.Error(err)
 		return []SummaryContainer{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -472,7 +472,7 @@ SELECT item_type_id
 		)
 		if err != nil {
 			return []SummaryContainer{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		unread[strconv.FormatInt(itemTypeID, 10)+`_`+
@@ -496,7 +496,7 @@ SELECT item_type_id
 	err = rows.Err()
 	if err != nil {
 		return []SummaryContainer{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -565,7 +565,7 @@ SELECT item_type_id
 
 	if offset > maxOffset {
 		return []SummaryContainer{}, 0, 0, http.StatusBadRequest,
-			fmt.Errorf("Not enough records, "+
+			fmt.Errorf("not enough records, "+
 				"offset (%d) would return an empty page",
 				offset,
 			)
@@ -635,7 +635,7 @@ SELECT item_type_id
 		glog.Errorf("db.Query(%d) %+v", microcosmID, err)
 		return SummaryContainer{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 	defer rows.Close()
 
@@ -654,7 +654,7 @@ SELECT item_type_id
 			glog.Errorf("rows.Scan() %+v", err)
 			return SummaryContainer{},
 				http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 
 		m, status, err =
@@ -676,7 +676,7 @@ SELECT item_type_id
 		glog.Errorf("rows.Err() %+v", err)
 		return SummaryContainer{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 

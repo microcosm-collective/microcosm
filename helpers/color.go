@@ -156,9 +156,5 @@ func IsValidColor(color string) bool {
 		"yellowgreen":          true,
 	}
 
-	if validStringColor[strings.ToLower(color)] {
-		return true
-	}
-
-	return false
+	return validStringColor[strings.ToLower(color)]
 }

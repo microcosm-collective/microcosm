@@ -53,7 +53,7 @@ func (ctl *SitesController) ReadMany(c *models.Context) {
 	if c.Request.FormValue("filter") == "owned" {
 		if c.Auth.UserID == 0 {
 			c.RespondWithErrorMessage(
-				fmt.Sprintf("You must be logged in to list your own sites"),
+				"you must be logged in to list your own sites",
 				http.StatusForbidden,
 			)
 			return
@@ -93,7 +93,7 @@ func (ctl *SitesController) ReadMany(c *models.Context) {
 func (ctl *SitesController) Create(c *models.Context) {
 	if c.Auth.ProfileID < 1 {
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("You must be logged in to the root site create a site"),
+			"you must be logged in to the root site create a site",
 			http.StatusForbidden,
 		)
 		return
@@ -101,7 +101,7 @@ func (ctl *SitesController) Create(c *models.Context) {
 
 	if c.Site.ID != 1 {
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("Sites can only be created from the root site"),
+			"sites can only be created from the root site",
 			http.StatusBadRequest,
 		)
 		return
@@ -132,7 +132,7 @@ func (ctl *SitesController) Create(c *models.Context) {
 		return
 	}
 
-	site, _, status, err := models.CreateOwnedSite(m, user)
+	site, _, _, err := models.CreateOwnedSite(m, user)
 	if err != nil {
 		c.RespondWithErrorMessage(
 			fmt.Sprintf("Error creating site: %s", err.Error()),

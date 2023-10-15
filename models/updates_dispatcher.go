@@ -92,7 +92,7 @@ func SendUpdatesForNewCommentInItem(
 	if err != nil {
 		glog.Errorf("%s %+v", "h.GetTransaction()", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -125,7 +125,7 @@ func SendUpdatesForNewCommentInItem(
 	if err != nil {
 		glog.Errorf("%s %+v", "tx.Commit()", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 	//glog.Info("Updates sent")
 
@@ -166,7 +166,7 @@ func SendUpdatesForNewCommentInItem(
 		}
 		mergeData.ContextText = itemTitle
 
-		byProfile, status, err := GetProfileSummary(
+		byProfile, _, err := GetProfileSummary(
 			siteID,
 			comment.Meta.CreatedByID,
 		)
@@ -232,7 +232,7 @@ func SendUpdatesForNewCommentInItem(
 				}
 				mergeData.ForEmail = user.Email
 
-				status, err = MergeAndSendEmail(
+				_, err = MergeAndSendEmail(
 					siteID,
 					emailFrom,
 					mergeData.ForEmail,
@@ -247,16 +247,6 @@ func SendUpdatesForNewCommentInItem(
 
 				recipient.Watcher.UpdateLastNotified()
 			}
-		}
-	}
-
-	/////////////////
-	// SMS UPDATES //
-	/////////////////
-	for _, recipient := range recipients {
-		// Everyone who wants an SMS, except the author, gets an SMS
-		if recipient.SendSMS {
-			// Send SMS
 		}
 	}
 
@@ -288,7 +278,7 @@ func SendUpdatesForNewReplyToYourComment(
 	}
 	profileID := parentComment.Meta.CreatedByID
 
-	forProfile, status, err := GetProfileSummary(siteID, profileID)
+	forProfile, _, err := GetProfileSummary(siteID, profileID)
 	if err != nil {
 		glog.Errorf("%s %+v", "GetProfileSummary()", err)
 		return http.StatusInternalServerError, err
@@ -301,7 +291,7 @@ func SendUpdatesForNewReplyToYourComment(
 	if err != nil {
 		glog.Errorf("%s %+v", "h.GetTransaction()", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -325,7 +315,7 @@ func SendUpdatesForNewReplyToYourComment(
 	if err != nil {
 		glog.Errorf("%s %+v", "tx.Commit()", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	//glog.Info("Update sent")
@@ -376,7 +366,7 @@ func SendUpdatesForNewReplyToYourComment(
 		}
 		mergeData.ContextText = itemTitle
 
-		byProfile, status, err := GetProfileSummary(
+		byProfile, _, err := GetProfileSummary(
 			siteID,
 			comment.Meta.CreatedByID,
 		)
@@ -406,7 +396,7 @@ func SendUpdatesForNewReplyToYourComment(
 		}
 		mergeData.ForEmail = user.Email
 
-		status, err = MergeAndSendEmail(
+		_, err = MergeAndSendEmail(
 			siteID,
 			emailFrom,
 			mergeData.ForEmail,
@@ -418,12 +408,6 @@ func SendUpdatesForNewReplyToYourComment(
 		if err != nil {
 			glog.Errorf("%s %+v", "MergeAndSendEmail()", err)
 		}
-	}
-
-	/////////////////
-	// SMS UPDATES //
-	/////////////////
-	if updateOptions.SendSMS {
 	}
 
 	return http.StatusOK, nil
@@ -483,7 +467,7 @@ func SendUpdatesForNewMentionInComment(
 			return status, err
 		}
 
-		forProfile, status, err := GetProfileSummary(siteID, forProfileID)
+		forProfile, _, err := GetProfileSummary(siteID, forProfileID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetProfileSummary()", err)
 			return http.StatusInternalServerError, err
@@ -518,7 +502,7 @@ func SendUpdatesForNewMentionInComment(
 		}
 		mergeData.ContextText = itemTitle
 
-		byProfile, status, err := GetProfileSummary(
+		byProfile, _, err := GetProfileSummary(
 			siteID,
 			comment.Meta.CreatedByID,
 		)
@@ -548,7 +532,7 @@ func SendUpdatesForNewMentionInComment(
 		}
 		mergeData.ForEmail = user.Email
 
-		status, err = MergeAndSendEmail(
+		_, err = MergeAndSendEmail(
 			siteID,
 			emailFrom,
 			mergeData.ForEmail,
@@ -560,13 +544,6 @@ func SendUpdatesForNewMentionInComment(
 		if err != nil {
 			glog.Errorf("%s %+v", "MergeAndSendEmail()", err)
 		}
-
-	}
-
-	/////////////////
-	// SMS UPDATES //
-	/////////////////
-	if updateOptions.SendSMS {
 
 	}
 
@@ -630,7 +607,7 @@ func SendUpdatesForNewCommentInHuddle(
 	if err != nil {
 		glog.Errorf("%s %+v", "h.GetTransaction()", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -663,7 +640,7 @@ func SendUpdatesForNewCommentInHuddle(
 	if err != nil {
 		glog.Errorf("%s %+v", "tx.Commit()", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	//glog.Info("Updates sent")
@@ -705,7 +682,7 @@ func SendUpdatesForNewCommentInHuddle(
 		}
 		mergeData.ContextText = itemTitle
 
-		byProfile, status, err := GetProfileSummary(
+		byProfile, _, err := GetProfileSummary(
 			siteID,
 			comment.Meta.CreatedByID,
 		)
@@ -771,7 +748,7 @@ func SendUpdatesForNewCommentInHuddle(
 				}
 				mergeData.ForEmail = user.Email
 
-				status, err = MergeAndSendEmail(
+				_, err = MergeAndSendEmail(
 					siteID,
 					emailFrom,
 					mergeData.ForEmail,
@@ -786,16 +763,6 @@ func SendUpdatesForNewCommentInHuddle(
 
 				recipient.Watcher.UpdateLastNotified()
 			}
-		}
-	}
-
-	/////////////////
-	// SMS UPDATES //
-	/////////////////
-	for _, recipient := range recipients {
-		// Everyone who wants an SMS, except the author, gets an SMS
-		if recipient.SendSMS {
-			// Send SMS
 		}
 	}
 
@@ -855,7 +822,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 	if err != nil {
 		glog.Errorf("%s %+v", "h.GetTransaction()", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -888,7 +855,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 	if err != nil {
 		glog.Errorf("%s %+v", "tx.Commit()", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	//	glog.Info("Updates sent")
@@ -930,7 +897,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 		}
 		mergeData.ContextText = itemTitle
 
-		byProfile, status, err := GetProfileSummary(siteID, attendee.ProfileID)
+		byProfile, _, err := GetProfileSummary(siteID, attendee.ProfileID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetProfileSummary()", err)
 			return http.StatusInternalServerError, err
@@ -976,7 +943,7 @@ func SendUpdatesForNewAttendeeInAnEvent(
 				}
 				mergeData.ForEmail = user.Email
 
-				status, err = MergeAndSendEmail(
+				_, err = MergeAndSendEmail(
 					siteID,
 					emailFrom,
 					mergeData.ForEmail,
@@ -991,16 +958,6 @@ func SendUpdatesForNewAttendeeInAnEvent(
 
 				recipient.Watcher.UpdateLastNotified()
 			}
-		}
-	}
-
-	/////////////////
-	// SMS UPDATES //
-	/////////////////
-	for _, recipient := range recipients {
-		// Everyone who wants an SMS, except the author, gets an SMS
-		if recipient.SendSMS {
-			// Send SMS
 		}
 	}
 
@@ -1048,23 +1005,23 @@ func SendUpdatesForNewItemInAMicrocosm(
 		poll         PollType
 	)
 
-	switch item.(type) {
+	switch item := item.(type) {
 	case ConversationType:
-		conversation = item.(ConversationType)
+		conversation = item
 		itemTypeID = h.ItemTypes[h.ItemTypeConversation]
 		itemType = h.ItemTypeConversation
 		itemID = conversation.ID
 		createdByID = conversation.Meta.CreatedByID
 
 	case EventType:
-		event = item.(EventType)
+		event = item
 		itemTypeID = h.ItemTypes[h.ItemTypeEvent]
 		itemType = h.ItemTypeEvent
 		itemID = event.ID
 		createdByID = event.Meta.CreatedByID
 
 	case PollType:
-		poll = item.(PollType)
+		poll = item
 		itemTypeID = h.ItemTypes[h.ItemTypePoll]
 		itemType = h.ItemTypePoll
 		itemID = poll.ID
@@ -1073,7 +1030,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 	default:
 		glog.Errorf("%s %+v", "type not known", item)
 		return http.StatusExpectationFailed,
-			fmt.Errorf("Type of item is mysterious")
+			fmt.Errorf("type of item is mysterious")
 	}
 
 	// WHO GETS THE UPDATES?
@@ -1102,7 +1059,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 	if err != nil {
 		glog.Errorf("%s %+v", "h.GetTransaction()", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -1135,7 +1092,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 	if err != nil {
 		glog.Errorf("%s %+v", "tx.Commit()", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	//	glog.Info("Updates sent")
@@ -1173,7 +1130,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 		}
 		mergeData.ContextText = itemTitle
 
-		byProfile, status, err := GetProfileSummary(siteID, createdByID)
+		byProfile, _, err := GetProfileSummary(siteID, createdByID)
 		if err != nil {
 			glog.Errorf("%s %+v", "GetProfileSummary()", err)
 			return http.StatusInternalServerError, err
@@ -1204,7 +1161,7 @@ func SendUpdatesForNewItemInAMicrocosm(
 				}
 				mergeData.ForEmail = user.Email
 
-				status, err = MergeAndSendEmail(
+				_, err = MergeAndSendEmail(
 					siteID,
 					emailFrom,
 					mergeData.ForEmail,
@@ -1219,16 +1176,6 @@ func SendUpdatesForNewItemInAMicrocosm(
 
 				recipient.Watcher.UpdateLastNotified()
 			}
-		}
-	}
-
-	/////////////////
-	// SMS UPDATES //
-	/////////////////
-	for _, recipient := range recipients {
-		// Everyone who wants an SMS, except the author, gets an SMS
-		if recipient.SendSMS {
-			// Send SMS
 		}
 	}
 
@@ -1347,7 +1294,7 @@ func SendUpdatesForNewUserOnSite(
 				}
 				mergeData.ForEmail = recipientUser.Email
 
-				status, err = MergeAndSendEmail(
+				_, err = MergeAndSendEmail(
 					site.ID,
 					emailFrom,
 					mergeData.ForEmail,
@@ -1386,7 +1333,7 @@ func GetCommunicationOptions(
 	if err != nil {
 		glog.Errorf("GetProfileOptions(%d) %+v", profileID, err)
 		// Can't do anything here as the profile_id fkey constraint will fail
-		return UpdateOptionType{}, status, fmt.Errorf("Insert of update options failed")
+		return UpdateOptionType{}, status, fmt.Errorf("insert of update options failed")
 	}
 
 	db, err := h.GetConnection()
@@ -1419,7 +1366,7 @@ SELECT CASE WHEN (get_effective_permissions($1, 0, $3, $2, $4)).can_read IS TRUE
 		)
 		return UpdateOptionType{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 	defer rows.Close()
 
@@ -1436,7 +1383,7 @@ SELECT CASE WHEN (get_effective_permissions($1, 0, $3, $2, $4)).can_read IS TRUE
 			glog.Errorf("rows.Scan() %+v", err)
 			return UpdateOptionType{},
 				http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 	}
 	err = rows.Err()
@@ -1444,7 +1391,7 @@ SELECT CASE WHEN (get_effective_permissions($1, 0, $3, $2, $4)).can_read IS TRUE
 		glog.Errorf("rows.Err() %+v", err)
 		return UpdateOptionType{},
 			http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 

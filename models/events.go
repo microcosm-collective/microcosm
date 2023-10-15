@@ -123,19 +123,19 @@ func (m *EventType) Validate(
 		if m.Meta.EditReason == `` {
 			glog.Info(`No edit reason given`)
 			return http.StatusBadRequest,
-				fmt.Errorf("You must provide a reason for the update")
+				fmt.Errorf("you must provide a reason for the update")
 		}
 	}
 
 	if m.MicrocosmID <= 0 {
 		glog.Infof(`Microcosm ID (%d) <= zero`, m.MicrocosmID)
 		return http.StatusBadRequest,
-			fmt.Errorf("You must specify a Microcosm ID")
+			fmt.Errorf("you must specify a Microcosm ID")
 	}
 
 	if m.Title == `` {
 		glog.Info(`Title is a required field`)
-		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
+		return http.StatusBadRequest, fmt.Errorf("title is a required field")
 	}
 
 	// Default status is 'upcoming' if not specified
@@ -175,7 +175,7 @@ func (m *EventType) Validate(
 	if m.RSVPLimit < 0 {
 		glog.Infof(`RSVPLimit (%d) below zero`, m.RSVPLimit)
 		return http.StatusBadRequest,
-			fmt.Errorf("RSVPLimit must be 0 (unlimited) or greater")
+			fmt.Errorf("rSVPLimit must be 0 (unlimited) or greater")
 	}
 
 	// If a limit is specified, there are initially the same number of
@@ -284,7 +284,7 @@ SELECT profile_id
 
 		for rows.Next() {
 			var attendeeID int64
-			err = rows.Scan(&attendeeID)
+			rows.Scan(&attendeeID)
 			attendeeIDs = append(attendeeIDs, attendeeID)
 		}
 
@@ -414,7 +414,7 @@ INSERT INTO events (
 	if err != nil {
 		glog.Errorf(`Could not create event: %+v`, err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %+v", err)
+			fmt.Errorf("error inserting data and returning ID: %+v", err)
 	}
 	m.ID = insertID
 
@@ -427,7 +427,7 @@ INSERT INTO events (
 	if err != nil {
 		glog.Errorf(`Could not commit event transaction: %+v`, err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	// 5 minute dupe check
@@ -499,7 +499,7 @@ UPDATE events
 	if err != nil {
 		tx.Rollback()
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update of event failed: %v", err.Error())
+			fmt.Errorf("update of event failed: %v", err.Error())
 	}
 
 	//Recalculate attendees
@@ -511,7 +511,7 @@ UPDATE events
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.ID)
@@ -546,7 +546,7 @@ UPDATE events
 	if err != nil {
 		tx.Rollback()
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update of event attendees failed: %v", err.Error())
+			fmt.Errorf("update of event attendees failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -590,7 +590,7 @@ func (m *EventType) Patch(ac AuthContext, patches []h.PatchType) (int, error) {
 				fmt.Sprintf("Set moderated to %t", m.Meta.Flags.Moderated)
 		default:
 			return http.StatusBadRequest,
-				fmt.Errorf("Unsupported path in patch replace operation")
+				fmt.Errorf("unsupported path in patch replace operation")
 		}
 
 		m.Meta.Flags.SetVisible()
@@ -611,14 +611,14 @@ UPDATE events
 		)
 		if err != nil {
 			return http.StatusInternalServerError,
-				fmt.Errorf("Update failed: %v", err.Error())
+				fmt.Errorf("update failed: %v", err.Error())
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.ID)
@@ -644,7 +644,7 @@ UPDATE events
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %v", err.Error())
+			fmt.Errorf("delete failed: %v", err.Error())
 	}
 
 	err = DecrementMicrocosmItemCount(tx, m.MicrocosmID)
@@ -655,7 +655,7 @@ UPDATE events
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeEvent], m.ID)
@@ -667,7 +667,7 @@ UPDATE events
 // GetEvent returns an event
 func GetEvent(siteID int64, id int64, profileID int64) (EventType, int, error) {
 	if id == 0 {
-		return EventType{}, http.StatusNotFound, fmt.Errorf("Event not found")
+		return EventType{}, http.StatusNotFound, fmt.Errorf("event not found")
 	}
 
 	// Get from cache if it's available
@@ -784,11 +784,11 @@ SELECT e.event_id
 	)
 	if err == sql.ErrNoRows {
 		return EventType{}, http.StatusNotFound,
-			fmt.Errorf("Event not found")
+			fmt.Errorf("event not found")
 	} else if err != nil {
 		glog.Errorf("db.QueryRow(%d) %+v", id, err)
 		return EventType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 
 	if m.Meta.EditReasonNullable.Valid {
@@ -859,7 +859,7 @@ func GetEventSummary(
 ) {
 	if id == 0 {
 		return EventSummaryType{}, http.StatusNotFound,
-			fmt.Errorf("Event not found")
+			fmt.Errorf("event not found")
 	}
 
 	// Get from cache if it's available
@@ -967,12 +967,12 @@ WHERE event_id = $1
 	)
 	if err == sql.ErrNoRows {
 		return EventSummaryType{}, http.StatusInternalServerError,
-			fmt.Errorf("Event with ID %d not found", id)
+			fmt.Errorf("event with ID %d not found", id)
 
 	} else if err != nil {
 		glog.Errorf("db.QueryRow(%d, %d) %+v", siteID, id, err)
 		return EventSummaryType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 
 	if m.WhenNullable.Valid {
@@ -990,7 +990,7 @@ WHERE event_id = $1
 		GetLastComment(h.ItemTypes[h.ItemTypeEvent], m.ID)
 	if err != nil {
 		return EventSummaryType{}, status,
-			fmt.Errorf("Error fetching last comment: %v", err.Error())
+			fmt.Errorf("error fetching last comment: %v", err.Error())
 	}
 
 	if lastComment.Valid {
@@ -1090,7 +1090,7 @@ OFFSET $5`,
 	)
 	if err != nil {
 		return []EventSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -1109,7 +1109,7 @@ OFFSET $5`,
 		)
 		if err != nil {
 			return []EventSummaryType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		m, status, err := GetEventSummary(siteID, id, profileID)
@@ -1124,7 +1124,7 @@ OFFSET $5`,
 	if err != nil {
 		return []EventSummaryType{}, 0, 0, http.StatusInternalServerError,
 			fmt.Errorf(
-				fmt.Sprintf("Error fetching rows: %v", err.Error()),
+				fmt.Sprintf("error fetching rows: %v", err.Error()),
 			)
 	}
 	rows.Close()

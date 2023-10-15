@@ -176,7 +176,6 @@ func getLinkToFirstPage(
 	limit int64,
 	total int64,
 ) LinkType {
-	offset = 0
 	q := requestURL.Query()
 	q.Del("offset")
 	requestURL.RawQuery = q.Encode()

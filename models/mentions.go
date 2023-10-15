@@ -22,7 +22,7 @@ const (
 
 var (
 	regPreMentions    = regexp.MustCompile(`(?:^|\W)([+@](\S+))`)
-	regMarkdownChars  = regexp.MustCompile("([\\\\*_{}[\\]()#-.!])")
+	regMarkdownChars  = regexp.MustCompile(`([\\*_{}[\]()#-.!])`)
 	replMarkdownChars = []byte(`\$1`)
 	regMentions       = regexp.MustCompile(`(^|\W)[+@](\S+)`)
 )
@@ -76,10 +76,8 @@ func ProcessMentions(
 	}
 
 	// Track mentions as we walk the tree
-	var mentions map[string]string
-	mentions = make(map[string]string)
-	var profileNames map[string]int64
-	profileNames = make(map[string]int64)
+	mentions := make(map[string]string)
+	profileNames := make(map[string]int64)
 
 	// Function used as we need recursion to treewalk the Html
 	var links func(*html.Node)
@@ -151,7 +149,7 @@ SELECT c.comment_id
 		var existingMentions []Mention
 		for rows.Next() {
 			mention := Mention{}
-			err = rows.Scan(
+			rows.Scan(
 				&mention.CommentID,
 				&mention.MentionedBy,
 				&mention.ProfileID,
@@ -166,7 +164,7 @@ SELECT c.comment_id
 		rows.Close()
 
 		if len(existingMentions) == 0 {
-			return []byte{}, errors.New("Data integrity failure, " +
+			return []byte{}, errors.New("data integrity failure, " +
 				"comment must exist for revision to be processed")
 		}
 
@@ -229,7 +227,7 @@ SELECT c.comment_id
 // ensure the profile exists on the same site as the revision
 func FetchProfileID(tx *sql.Tx, profileName string, revisionID int64) int64 {
 	var profileID int64
-	rows, err := tx.Query(`
+	rows, _ := tx.Query(`
 SELECT profile_id
   FROM profiles
  WHERE LOWER(profile_name) = $1
@@ -247,6 +245,7 @@ OFFSET 0`,
 	)
 	defer rows.Close()
 
+	var err error
 	for rows.Next() {
 		err = rows.Scan(&profileID)
 		if err != nil {

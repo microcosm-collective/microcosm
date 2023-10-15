@@ -69,7 +69,7 @@ func (m *HuddleType) Validate(siteID int64, exists bool) (int, error) {
 	if exists {
 		if m.ID < 1 {
 			return http.StatusBadRequest, fmt.Errorf(
-				"The supplied ID ('%d') cannot be zero or negative",
+				"the supplied ID ('%d') cannot be zero or negative",
 				m.ID,
 			)
 		}
@@ -83,7 +83,7 @@ func (m *HuddleType) Validate(siteID int64, exists bool) (int, error) {
 	}
 
 	if strings.Trim(m.Title, " ") == "" {
-		return http.StatusBadRequest, fmt.Errorf("Title is a required field")
+		return http.StatusBadRequest, fmt.Errorf("title is a required field")
 	}
 
 	return http.StatusOK, nil
@@ -196,7 +196,7 @@ INSERT INTO huddles (
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %+v", err)
+			fmt.Errorf("error inserting data and returning ID: %+v", err)
 	}
 	m.ID = insertID
 
@@ -213,7 +213,7 @@ INSERT INTO huddle_profiles (
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error creating huddle author")
+			fmt.Errorf("error creating huddle author")
 	}
 
 	// As are all of the explicitly added participants
@@ -232,7 +232,7 @@ INSERT INTO huddle_profiles (
 			if err != nil {
 				glog.Error(err)
 				return http.StatusInternalServerError,
-					fmt.Errorf("Error creating huddle participant")
+					fmt.Errorf("error creating huddle participant")
 			}
 		}
 	}
@@ -241,7 +241,7 @@ INSERT INTO huddle_profiles (
 	if err != nil {
 		glog.Error(err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeHuddle], m.ID)
@@ -268,13 +268,13 @@ DELETE FROM huddle_profiles
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %v", err.Error())
+			fmt.Errorf("delete failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeHuddle], m.ID)
@@ -322,14 +322,13 @@ SELECT h.huddle_id
 		id,
 	)
 	if err != nil {
-		return HuddleType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+		return HuddleType{},
+			http.StatusInternalServerError,
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
-	var m HuddleType
-
-	m = HuddleType{}
+	m := HuddleType{}
 	for rows.Next() {
 		var participantID int64
 		err = rows.Scan(
@@ -342,7 +341,7 @@ SELECT h.huddle_id
 		)
 		if err != nil {
 			return HuddleType{}, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		m.Participants = append(
@@ -353,13 +352,13 @@ SELECT h.huddle_id
 	err = rows.Err()
 	if err != nil {
 		return HuddleType{}, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
 	if m.ID == 0 {
 		return HuddleType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with ID %d not found", id)
+			fmt.Errorf("resource with ID %d not found", id)
 	}
 
 	m.Meta.Links =
@@ -491,13 +490,11 @@ SELECT h.huddle_id
 			siteID, id, profileID, err,
 		)
 		return HuddleSummaryType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 	defer rows.Close()
 
-	var m HuddleSummaryType
-
-	m = HuddleSummaryType{}
+	m := HuddleSummaryType{}
 	for rows.Next() {
 		var participantID int64
 		err = rows.Scan(
@@ -514,7 +511,7 @@ SELECT h.huddle_id
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return HuddleSummaryType{}, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 
 		m.Participants = append(
@@ -535,14 +532,14 @@ SELECT h.huddle_id
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return HuddleSummaryType{}, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 
 	if m.ID == 0 {
 		glog.Warningf("m.Id == 0")
 		return HuddleSummaryType{}, http.StatusNotFound,
-			fmt.Errorf("Resource not found")
+			fmt.Errorf("resource not found")
 	}
 
 	m.Meta.Links =
@@ -657,7 +654,7 @@ SELECT COUNT(*) AS total
 		if err != nil {
 			glog.Error(err)
 			return []HuddleSummaryType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Database query failed")
+				fmt.Errorf("database query failed")
 		}
 	}
 
@@ -672,7 +669,7 @@ SELECT COUNT(*) AS total
 			err,
 		)
 		return []HuddleSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 	defer rows.Close()
 
@@ -692,7 +689,7 @@ SELECT COUNT(*) AS total
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return []HuddleSummaryType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 
 		if filterUnread {
@@ -719,7 +716,7 @@ SELECT COUNT(*) AS total
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return []HuddleSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 
@@ -731,7 +728,7 @@ SELECT COUNT(*) AS total
 		return []HuddleSummaryType{}, 0, 0, http.StatusBadRequest,
 			fmt.Errorf(
 				fmt.Sprintf("not enough records, "+
-					"offset (%d) would return an empty page.",
+					"offset (%d) would return an empty page",
 					offset,
 				),
 			)

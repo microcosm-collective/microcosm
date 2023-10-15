@@ -109,7 +109,7 @@ func (ctl *HuddleParticipantController) Update(c *models.Context) {
 		return
 	}
 
-	if r.IsConfidential == false {
+	if !r.IsConfidential {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}

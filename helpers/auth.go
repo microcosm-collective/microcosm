@@ -22,7 +22,7 @@ func RandString(length int) (string, error) {
 	attempt:
 		numBytes, err := rand.Read(randomByte)
 		if numBytes != 1 {
-			return string(bytes), fmt.Errorf("Failed to read a random byte")
+			return string(bytes), fmt.Errorf("failed to read a random byte")
 		}
 
 		if err != nil {

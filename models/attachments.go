@@ -49,7 +49,7 @@ func (m *AttachmentType) Import() (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("transaction failed")
 	}
 
 	return http.StatusOK, nil
@@ -71,7 +71,7 @@ func (m *AttachmentType) Insert() (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("transaction failed")
 	}
 
 	return http.StatusOK, nil
@@ -120,7 +120,7 @@ INSERT INTO attachments (
 			err,
 		)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID")
+			fmt.Errorf("error inserting data and returning ID")
 	}
 	m.AttachmentID = insertID
 
@@ -148,13 +148,13 @@ UPDATE attachments
 	if err != nil {
 		glog.Errorf("tx.Exec(%v, %d) %+v", m.Created, m.AttachmentID, err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Attachment update failed")
+			fmt.Errorf("attachment update failed")
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("transaction failed")
 	}
 
 	return http.StatusOK, nil
@@ -218,14 +218,14 @@ SELECT attachment_id
 				err,
 			)
 			return AttachmentType{}, http.StatusInternalServerError,
-				fmt.Errorf("Database query failed")
+				fmt.Errorf("database query failed")
 		}
 	} else {
 		rows, err = db.Query(sqlQuery, itemTypeID, itemID)
 		if err != nil {
 			glog.Errorf("db.Query(%d, %d) %+v", itemTypeID, itemID, err)
 			return AttachmentType{}, http.StatusInternalServerError,
-				fmt.Errorf("Database query failed")
+				fmt.Errorf("database query failed")
 		}
 	}
 	defer rows.Close()
@@ -247,14 +247,14 @@ SELECT attachment_id
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return AttachmentType{}, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 	}
 	err = rows.Err()
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return AttachmentType{}, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 
@@ -262,7 +262,7 @@ SELECT attachment_id
 		glog.Infof("m.AttachmentId == 0 for hash %s", fileHash)
 		return AttachmentType{},
 			http.StatusNotFound,
-			fmt.Errorf("Resource not found")
+			fmt.Errorf("resource not found")
 	}
 
 	return m, http.StatusOK, nil
@@ -308,13 +308,13 @@ SELECT COUNT(*)
 				err,
 			)
 			return http.StatusInternalServerError,
-				fmt.Errorf("Error fetching row")
+				fmt.Errorf("error fetching row")
 		}
 
 		if total <= 1 {
 			glog.Infoln("total <= 1")
 			return http.StatusInternalServerError,
-				fmt.Errorf("Can not delete: only one avatar remaining")
+				fmt.Errorf("can not delete: only one avatar remaining")
 		}
 
 		//if active avatar, set to previous
@@ -331,7 +331,7 @@ SELECT avatar_url
 		if err != nil {
 			glog.Errorf("tx.QueryRow(%d).Scan() %+v", itemID, err)
 			return http.StatusInternalServerError,
-				fmt.Errorf("Error fetching row")
+				fmt.Errorf("error fetching row")
 		}
 
 		if strings.HasPrefix(
@@ -369,7 +369,7 @@ UPDATE profiles
 					err,
 				)
 				return http.StatusInternalServerError,
-					fmt.Errorf("Reassignment of avatar failed")
+					fmt.Errorf("reassignment of avatar failed")
 			}
 		}
 	}
@@ -391,13 +391,13 @@ DELETE FROM attachments
 			fileHash,
 			err,
 		)
-		return http.StatusInternalServerError, fmt.Errorf("Delete failed")
+		return http.StatusInternalServerError, fmt.Errorf("delete failed")
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("Transaction failed")
+		return http.StatusInternalServerError, fmt.Errorf("transaction failed")
 	}
 
 	go PurgeCache(itemTypeID, itemID)
@@ -457,7 +457,7 @@ OFFSET $4`,
 			err,
 		)
 		return []AttachmentType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 	defer rows.Close()
 
@@ -480,7 +480,7 @@ OFFSET $4`,
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return []AttachmentType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 
 		// TODO: add link to the file metadata and describe the
@@ -501,7 +501,7 @@ OFFSET $4`,
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return []AttachmentType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 

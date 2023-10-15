@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -38,11 +38,10 @@ func (ctl *GeoCodeController) Error(c *models.Context, message string, status in
 	contentLength := len(errorJSON)
 	c.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(contentLength))
 
-	dur := time.Now().Sub(c.StartTime)
+	dur := time.Since(c.StartTime)
 	go models.SendUsage(c, status, contentLength, dur, []string{"message"})
 
 	c.WriteResponse([]byte(errorJSON), status)
-	return
 }
 
 // Read handles GET
@@ -50,7 +49,7 @@ func (ctl *GeoCodeController) Read(c *models.Context) {
 	c.ResponseWriter.Header().Set("Content-Type", "application/json")
 
 	// Debugging info
-	dur := time.Now().Sub(c.StartTime)
+	dur := time.Since(c.StartTime)
 
 	place := strings.Trim(c.Request.URL.Query().Get("q"), " ")
 
@@ -81,7 +80,7 @@ func (ctl *GeoCodeController) Read(c *models.Context) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		ctl.Error(c, err.Error(), http.StatusInternalServerError)
 		return

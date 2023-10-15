@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -62,7 +62,7 @@ func (ctl *UsersBatchController) Manage(c *models.Context) {
 			return
 		}
 	case "text/csv":
-		dat, err := ioutil.ReadAll(c.Request.Body)
+		dat, err := io.ReadAll(c.Request.Body)
 		if err != nil {
 			c.RespondWithErrorMessage(
 				fmt.Sprintf("The CSV could not be read from the request: %s", err.Error()),

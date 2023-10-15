@@ -74,7 +74,7 @@ func (m *AttributeType) Validate() (int, error) {
 
 	if strings.Trim(m.Key, " ") == "" {
 		return http.StatusBadRequest,
-			fmt.Errorf("Attribute key cannot be null or empty")
+			fmt.Errorf("attribute key cannot be null or empty")
 	}
 
 	switch m.Value.(type) {
@@ -161,7 +161,7 @@ func UpdateManyAttributes(
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
@@ -187,7 +187,7 @@ func (m *AttributeType) Update(itemTypeID int64, itemID int64) (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
@@ -234,17 +234,17 @@ WHERE attribute_id IN (
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing update: %v", err.Error())
+			fmt.Errorf("error executing update: %v", err.Error())
 	}
 
 	// If update was successful, we are done
 	if rowsAffected, _ := res.RowsAffected(); rowsAffected > 0 {
 		if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
-			status, err = FlushRoleMembersCacheByProfileID(tx, itemID)
+			_, err = FlushRoleMembersCacheByProfileID(tx, itemID)
 			if err != nil {
 				return http.StatusInternalServerError,
 					fmt.Errorf(
-						"Error flushing role members cache: %+v",
+						"error flushing role members cache: %+v",
 						err,
 					)
 			}
@@ -267,10 +267,10 @@ INSERT INTO attribute_keys (
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %+v", err)
+			fmt.Errorf("error inserting data and returning ID: %+v", err)
 	}
 
-	res, err = tx.Exec(`
+	_, err = tx.Exec(`
 INSERT INTO attribute_values (
     attribute_id, value_type_id, string, date, "number",
     "boolean"
@@ -287,14 +287,14 @@ INSERT INTO attribute_values (
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing insert: %v", err.Error())
+			fmt.Errorf("error executing insert: %v", err.Error())
 	}
 
 	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
-		status, err = FlushRoleMembersCacheByProfileID(tx, itemID)
+		_, err = FlushRoleMembersCacheByProfileID(tx, itemID)
 		if err != nil {
 			return http.StatusInternalServerError,
-				fmt.Errorf("Error flushing role members cache: %+v", err)
+				fmt.Errorf("error flushing role members cache: %+v", err)
 		}
 	}
 
@@ -322,9 +322,7 @@ func DeleteManyAttributes(
 			status      int
 		)
 
-		if m.ID > 0 {
-			attributeID = m.ID
-		} else {
+		if m.ID <= 0 {
 			attributeID, status, err = GetAttributeID(itemTypeID, itemID, m.Key)
 			if err != nil {
 				return status, err
@@ -341,7 +339,7 @@ func DeleteManyAttributes(
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
@@ -383,7 +381,7 @@ SELECT item_type_id
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	if itemTypeID == h.ItemTypes[h.ItemTypeProfile] {
@@ -401,7 +399,7 @@ DELETE FROM attribute_values
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Failed to delete attribute value: %v", err)
+			fmt.Errorf("failed to delete attribute value: %v", err)
 	}
 
 	_, err = tx.Exec(`
@@ -411,7 +409,7 @@ DELETE FROM attribute_keys
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Failed to delete attribute key: %+v", err)
+			fmt.Errorf("failed to delete attribute key: %+v", err)
 	}
 
 	return http.StatusOK, nil
@@ -464,7 +462,7 @@ SELECT attribute_id
 
 	} else if err != nil {
 		return attrID, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	return attrID, http.StatusOK, nil
@@ -502,16 +500,16 @@ SELECT k.key
 	)
 	if err == sql.ErrNoRows {
 		return AttributeType{}, http.StatusNotFound,
-			fmt.Errorf("Attribute not found: %v", err.Error())
+			fmt.Errorf("attribute not found: %v", err.Error())
 	} else if err != nil {
 		return AttributeType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	typeStr, err := h.GetMapStringFromInt(AttributeTypes, typeID)
 	if err != nil {
 		return AttributeType{}, http.StatusInternalServerError,
-			fmt.Errorf("Type is not a valid attribute type: %v", err.Error())
+			fmt.Errorf("type is not a valid attribute type: %v", err.Error())
 	}
 	m.Type = typeStr
 
@@ -521,32 +519,32 @@ SELECT k.key
 			m.Value = m.String.String
 		} else {
 			return AttributeType{}, http.StatusInternalServerError,
-				fmt.Errorf("Type is string, but value is invalid")
+				fmt.Errorf("type is string, but value is invalid")
 		}
 	case tDate:
 		if m.Date.Valid {
 			m.Value = m.Date.Time.Format("2006-01-02")
 		} else {
 			return AttributeType{}, http.StatusInternalServerError,
-				fmt.Errorf("Type is date, but value is invalid")
+				fmt.Errorf("type is date, but value is invalid")
 		}
 	case tNumber:
 		if m.Number.Valid {
 			m.Value = m.Number.Float64
 		} else {
 			return AttributeType{}, http.StatusInternalServerError,
-				fmt.Errorf("Type is number, but value is invalid")
+				fmt.Errorf("type is number, but value is invalid")
 		}
 	case tBoolean:
 		if m.Boolean.Valid {
 			m.Value = m.Boolean.Bool
 		} else {
 			return AttributeType{}, http.StatusInternalServerError,
-				fmt.Errorf("Type is boolean, but value is invalid")
+				fmt.Errorf("type is boolean, but value is invalid")
 		}
 	default:
 		return AttributeType{}, http.StatusInternalServerError,
-			fmt.Errorf("Type was not one of string|date|number|boolean")
+			fmt.Errorf("type was not one of string|date|number|boolean")
 	}
 
 	return m, http.StatusOK, nil
@@ -599,7 +597,7 @@ OFFSET $4`,
 	)
 	if err != nil {
 		return []AttributeType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -614,7 +612,7 @@ OFFSET $4`,
 		)
 		if err != nil {
 			return []AttributeType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		ids = append(ids, id)
@@ -623,7 +621,7 @@ OFFSET $4`,
 	err = rows.Err()
 	if err != nil {
 		return []AttributeType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

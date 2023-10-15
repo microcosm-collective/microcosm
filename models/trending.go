@@ -113,7 +113,7 @@ SELECT item_id
 	)
 	if err != nil {
 		return []TrendingItem{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -132,7 +132,7 @@ SELECT item_id
 		if err != nil {
 			glog.Errorf("Trending rows.Scan(): %+v", err)
 			return []TrendingItem{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Trending: row parsing error")
+				fmt.Errorf("trending: row parsing error")
 		}
 
 		unread[strconv.FormatInt(t.ItemTypeID, 10)+`_`+
@@ -156,7 +156,7 @@ SELECT item_id
 	if err != nil {
 		glog.Errorf("Trending rows.Err(): %+v", err)
 		return []TrendingItem{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 
@@ -164,8 +164,8 @@ SELECT item_id
 	if offset > maxOffset {
 		glog.Infoln("offset > maxOffset")
 		return []TrendingItem{}, 0, 0, http.StatusBadRequest,
-			fmt.Errorf("Not enough records, "+
-				"offset (%d) would return an empty page.", offset)
+			fmt.Errorf("not enough records, "+
+				"offset (%d) would return an empty page", offset)
 	}
 
 	// Fetch summary for each item.

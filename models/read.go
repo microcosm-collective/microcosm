@@ -80,7 +80,7 @@ SELECT MAX(read)
 			err,
 		)
 		return lastRead, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 	defer rows.Close()
 
@@ -90,14 +90,14 @@ SELECT MAX(read)
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return lastRead, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 	}
 	err = rows.Err()
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return lastRead, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 
@@ -256,14 +256,14 @@ func MarkAsRead(
 		return http.StatusExpectationFailed,
 			fmt.Errorf("itemTypeId and/or itemId was null when MarkAsRead " +
 				"was called. This is illogical, you need to tell us what " +
-				"is being marked as read.")
+				"is being marked as read")
 	}
 
 	if updateTime.IsZero() {
 		glog.Errorln("updateTime.IsZero()")
 		return http.StatusExpectationFailed,
-			fmt.Errorf("MarkAsRead has been called but the time supplied " +
-				"is null. You need to tell us when the item was read.")
+			fmt.Errorf("markAsRead has been called but the time supplied " +
+				"is null. You need to tell us when the item was read")
 	}
 
 	// Do the deed
@@ -271,7 +271,7 @@ func MarkAsRead(
 	if err != nil {
 		glog.Errorf("h.GetTransaction() %+v", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction")
+			fmt.Errorf("could not start transaction")
 	}
 	defer tx.Rollback()
 
@@ -296,7 +296,7 @@ SELECT microcosm_id
 		if err != nil {
 			glog.Errorf("tx.Query(%d) %+v", initial.ItemID, err)
 			return http.StatusInternalServerError,
-				fmt.Errorf("Fetch of child microcosms failed")
+				fmt.Errorf("fetch of child microcosms failed")
 		}
 		defer rows.Close()
 
@@ -312,16 +312,16 @@ SELECT microcosm_id
 			if err != nil {
 				glog.Errorf("Scan failed %+v", err)
 				return http.StatusInternalServerError,
-					fmt.Errorf("Scan failed")
+					fmt.Errorf("scan failed")
 			}
 
 			reads = append(reads, read)
 		}
 		err = rows.Err()
 		if err != nil {
-			glog.Errorf("Error fetching rows %+v", err)
+			glog.Errorf("error fetching rows %+v", err)
 			return http.StatusInternalServerError,
-				fmt.Errorf("Error fetching rows")
+				fmt.Errorf("error fetching rows")
 		}
 		rows.Close()
 	}
@@ -349,7 +349,7 @@ DELETE FROM read
 		if err != nil {
 			glog.Errorf("tx.Exec(%d) %+v", initial.ProfileID, err)
 			return http.StatusInternalServerError,
-				fmt.Errorf("Deletion of read items failed")
+				fmt.Errorf("deletion of read items failed")
 		}
 	case h.ItemTypes[h.ItemTypeMicrocosm]:
 		it := []string{}
@@ -383,7 +383,7 @@ DELETE FROM read
 		if err != nil {
 			glog.Errorf("tx.Exec(%d, %d) %+v", initial.ItemID, initial.ProfileID, err)
 			return http.StatusInternalServerError,
-				fmt.Errorf("Deletion of read items failed")
+				fmt.Errorf("deletion of read items failed")
 		}
 	case h.ItemTypes[h.ItemTypeHuddle]:
 		if itemID == 0 {
@@ -400,7 +400,7 @@ DELETE FROM read
 			if err != nil {
 				glog.Errorf("tx.Exec(%d) %+v", initial.ProfileID, err)
 				return http.StatusInternalServerError,
-					fmt.Errorf("Deletion of read items failed")
+					fmt.Errorf("deletion of read items failed")
 			}
 
 			updateUnreadHuddleCount(tx, profileID)
@@ -411,7 +411,7 @@ DELETE FROM read
 	if err != nil {
 		glog.Errorf("tx.Commit() %+v", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed")
+			fmt.Errorf("transaction failed")
 	}
 
 	return http.StatusOK, nil
@@ -440,7 +440,7 @@ UPDATE read
 			err,
 		)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing update")
+			fmt.Errorf("error executing update")
 	}
 
 	// If update did not create any rows then we need to insert
@@ -448,7 +448,7 @@ UPDATE read
 		// Note that even though we just proved that it didn't exist, we could
 		// have multiple transactions doing this and we'are playing safe and
 		// defensively by doing a NOT EXISTS check, this shouldn't fail at all.
-		res, err = tx.Exec(`
+		_, err = tx.Exec(`
 INSERT INTO read
     (item_type_id, item_id, profile_id, read)
 SELECT $1, $2, $3, $4
@@ -475,7 +475,7 @@ SELECT $1, $2, $3, $4
 			)
 			tx.Rollback()
 			return http.StatusInternalServerError,
-				fmt.Errorf("Error inserting data")
+				fmt.Errorf("error inserting data")
 		}
 	}
 

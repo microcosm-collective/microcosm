@@ -55,7 +55,7 @@ func (m *AccessTokenType) Insert() (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -75,13 +75,13 @@ INSERT INTO access_tokens (
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %+v", err)
+			fmt.Errorf("error inserting data and returning ID: %+v", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	// Put access token into memcache
@@ -95,7 +95,8 @@ INSERT INTO access_tokens (
 
 	// Update cache
 	mcKey := fmt.Sprintf(mcAccessTokenKeys[c.CacheDetail], m.TokenValue)
-	c.Set(mcKey, m, int32(m.Expires.Sub(time.Now()).Seconds()))
+
+	c.Set(mcKey, m, int32(time.Until(m.Expires).Seconds()))
 
 	return http.StatusOK, nil
 }
@@ -111,7 +112,7 @@ func GetAccessToken(token string) (AccessTokenType, int, error) {
 	db, err := h.GetConnection()
 	if err != nil {
 		return AccessTokenType{}, http.StatusInternalServerError,
-			fmt.Errorf("Connection failed: %v", err.Error())
+			fmt.Errorf("connection failed: %v", err.Error())
 	}
 
 	var m AccessTokenType
@@ -136,11 +137,11 @@ SELECT access_token_id
 	)
 	if err == sql.ErrNoRows {
 		return AccessTokenType{}, http.StatusNotFound,
-			fmt.Errorf("Token not found")
+			fmt.Errorf("token not found")
 
 	} else if err != nil {
 		return AccessTokenType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	if m.UserID > 0 {
@@ -152,7 +153,7 @@ SELECT access_token_id
 	}
 
 	// Update cache
-	c.Set(mcKey, m, int32(m.Expires.Sub(time.Now()).Seconds()))
+	c.Set(mcKey, m, int32(time.Until(m.Expires).Seconds()))
 
 	return m, http.StatusOK, nil
 }
@@ -162,7 +163,7 @@ func (m *AccessTokenType) Delete() (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -173,13 +174,13 @@ DELETE FROM access_tokens
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not delete token: %v", err.Error())
+			fmt.Errorf("could not delete token: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not commit transaction: %v", err.Error())
+			fmt.Errorf("could not commit transaction: %v", err.Error())
 	}
 
 	// Clear the cache. We do this manually as the ID in this case isn't
@@ -196,7 +197,7 @@ func RetrieveClientBySecret(secret string) (OAuthClientType, error) {
 		return OAuthClientType{}, err
 	}
 
-	rows, err := db.Query(`--GetOAuthClientBySecret
+	rows, _ := db.Query(`--GetOAuthClientBySecret
 SELECT client_id
       ,name
       ,created
@@ -219,18 +220,18 @@ SELECT client_id
 		)
 		if err != nil {
 			return OAuthClientType{},
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 	}
 	err = rows.Err()
 	if err != nil {
 		return OAuthClientType{},
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
 	if m.ClientID == 0 {
-		return OAuthClientType{}, fmt.Errorf("Invalid client secret")
+		return OAuthClientType{}, fmt.Errorf("invalid client secret")
 	}
 
 	return m, nil

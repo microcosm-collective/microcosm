@@ -86,7 +86,5 @@ func (ctl *ProfileOptionsController) Update(c *models.Context) {
 	)
 
 	// Respond
-	c.RespondWithSeeOther(
-		fmt.Sprintf("/api/v1/profiles/options"),
-	)
+	c.RespondWithSeeOther("/api/v1/profiles/options")
 }

@@ -39,7 +39,7 @@ RETURNING
 	if err != nil {
 		glog.Errorf("db.Prepare(`%s`) %+v", sqlQuery, err)
 		return models.Link{}, http.StatusInternalServerError,
-			errors.New("Could not prepare statement")
+			errors.New("could not prepare statement")
 	}
 	defer stmt.Close()
 
@@ -47,7 +47,7 @@ RETURNING
 	if err != nil {
 		glog.Errorf("stmt.Query(%s) %+v", shortURL, err)
 		return models.Link{}, http.StatusInternalServerError,
-			errors.New("Database query failed")
+			errors.New("database query failed")
 	}
 	defer rows.Close()
 
@@ -68,20 +68,20 @@ RETURNING
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return models.Link{}, http.StatusInternalServerError,
-				errors.New("Row parsing error")
+				errors.New("row parsing error")
 		}
 	}
 	err = rows.Err()
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return models.Link{}, http.StatusInternalServerError,
-			errors.New("Error fetching rows")
+			errors.New("error fetching rows")
 	}
 
 	if m.ID == 0 {
 		glog.Errorf("m.Id == 0 for URL %s", shortURL)
 		return models.Link{}, http.StatusNotFound,
-			fmt.Errorf("URL %s%s not found", h.JumpURL, shortURL)
+			fmt.Errorf("uRL %s%s not found", h.JumpURL, shortURL)
 	}
 
 	if affiliateMayExist(m.Domain) {

@@ -41,7 +41,7 @@ type WatcherController struct{}
 // Delete handles DELETE
 func (ctl *WatcherController) Delete(c *models.Context) {
 
-	_, _, itemID, status, err := c.GetItemTypeAndItemID()
+	_, _, itemID, _, _ := c.GetItemTypeAndItemID()
 	if itemID != 0 {
 		m, status, err := models.GetWatcher(itemID, c.Site.ID)
 		if err != nil {
@@ -68,11 +68,11 @@ func (ctl *WatcherController) Delete(c *models.Context) {
 	// Fill from query string
 	m := models.WatcherType{}
 
-	itemID, itemType, status, err := h.GetItemAndItemType(c.Request.URL.Query())
+	itemID, itemType, _, _ := h.GetItemAndItemType(c.Request.URL.Query())
 
 	if _, exists := h.ItemTypes[itemType]; !exists {
 		c.RespondWithErrorMessage(
-			fmt.Sprintf("Watcher could not be deleted: Item type not found"),
+			"watcher could not be deleted: Item type not found",
 			http.StatusBadRequest,
 		)
 		return
@@ -80,6 +80,8 @@ func (ctl *WatcherController) Delete(c *models.Context) {
 
 	m.ItemTypeID = h.ItemTypes[itemType]
 
+	var status int
+	var err error
 	m.ID, _, _, _, status, err = models.GetWatcherAndIgnoreStatus(
 		m.ItemTypeID,
 		itemID,
@@ -126,7 +128,7 @@ func (ctl *WatcherController) Update(c *models.Context) {
 		if _, exists := h.ItemTypes[itemType]; !exists {
 			glog.Warning(err)
 			c.RespondWithErrorMessage(
-				fmt.Sprintf("Watcher could not be saved: Item type not found"),
+				"watcher could not be saved: Item type not found",
 				http.StatusBadRequest,
 			)
 			return
@@ -151,7 +153,7 @@ func (ctl *WatcherController) Update(c *models.Context) {
 	}
 
 	// To update we only need id, SendEmail and SendSMS
-	status, err = m.Update()
+	_, err = m.Update()
 	if err != nil {
 		glog.Error(err)
 		c.RespondWithErrorMessage(

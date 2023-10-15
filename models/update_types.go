@@ -59,10 +59,10 @@ SELECT update_type_id
 	)
 	if err == sql.ErrNoRows {
 		return UpdateTypesType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with update type ID %d not found", updateTypeID)
+			fmt.Errorf("resource with update type ID %d not found", updateTypeID)
 	} else if err != nil {
 		return UpdateTypesType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	c.Set(mcKey, m, mcTTL)

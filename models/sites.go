@@ -204,23 +204,23 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 
 	if exists {
 		if m.ID < 1 {
-			return http.StatusBadRequest, fmt.Errorf("Invalid site ID")
+			return http.StatusBadRequest, fmt.Errorf("invalid site ID")
 		}
 	}
 
 	if strings.Trim(m.Title, " ") == "" {
 		return http.StatusBadRequest,
-			fmt.Errorf("You must specify a site title")
+			fmt.Errorf("you must specify a site title")
 	}
 
 	if strings.Trim(m.Description, " ") == "" {
 		return http.StatusBadRequest,
-			fmt.Errorf("You must specify a site description")
+			fmt.Errorf("you must specify a site description")
 	}
 
 	if strings.Trim(m.SubdomainKey, " ") == "" {
 		return http.StatusBadRequest,
-			fmt.Errorf("You must specify a subdomain key")
+			fmt.Errorf("you must specify a subdomain key")
 	}
 
 	if m.SubdomainKey != "" {
@@ -228,14 +228,14 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 			if m.SubdomainKey == subdomain {
 				return http.StatusBadRequest,
 					fmt.Errorf(
-						"Subdomain '%s' is reserved and cannot be used",
+						"subdomain '%s' is reserved and cannot be used",
 						m.SubdomainKey,
 					)
 			}
 		}
 		if !regAlphaNum.MatchString(m.SubdomainKey) {
 			return http.StatusBadRequest,
-				fmt.Errorf("Subdomain key must be alphanumeric")
+				fmt.Errorf("subdomain key must be alphanumeric")
 		}
 	}
 
@@ -247,7 +247,7 @@ func (m *SiteType) Validate(exists bool) (int, error) {
 	if !h.IsValidColor(m.BackgroundColor) {
 		return http.StatusBadRequest,
 			fmt.Errorf(
-				"Background color is not a valid HTML color (hex or named)",
+				"background color is not a valid HTML color (hex or named)",
 			)
 	}
 
@@ -344,7 +344,7 @@ func IsReservedSubdomain(query string) (bool, error) {
 	}
 	if err != nil && status != http.StatusNotFound {
 		return false,
-			fmt.Errorf("Error fetching site by subdomain: %+v", err)
+			fmt.Errorf("error fetching site by subdomain: %+v", err)
 	}
 
 	return false, nil
@@ -376,7 +376,7 @@ func CreateOwnedSite(
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -408,7 +408,7 @@ SELECT new_ids.new_site_id,
 	)
 	if err != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			fmt.Errorf("Error executing query: %v", err.Error())
+			fmt.Errorf("error executing query: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -418,12 +418,12 @@ SELECT new_ids.new_site_id,
 		err = rows.Scan(&siteID, &profileID)
 		if err != nil {
 			return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-				fmt.Errorf("Error inserting data and returning IDs: %v", err.Error())
+				fmt.Errorf("error inserting data and returning IDs: %v", err.Error())
 		}
 	}
 	if rows.Err() != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning IDs: %v", rows.Err().Error())
+			fmt.Errorf("error inserting data and returning IDs: %v", rows.Err().Error())
 	}
 	rows.Close()
 
@@ -435,34 +435,34 @@ SELECT new_ids.new_site_id,
 	profileOptions, _, err := GetProfileOptionsDefaults(site.ID)
 	if err != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			fmt.Errorf("Could not load default profile options: %v", err.Error())
+			fmt.Errorf("could not load default profile options: %v", err.Error())
 	}
 	profileOptions.ProfileID = profile.ID
 
 	status, err = profileOptions.Insert(tx)
 	if err != nil {
 		return SiteType{}, ProfileType{}, status,
-			fmt.Errorf("Could not insert new profile options: %v", err.Error())
+			fmt.Errorf("could not insert new profile options: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	// Create attachment for avatar and attach it to profile
 	fm, _, err := StoreGravatar(MakeGravatarURL(profile.ProfileName))
 	if err != nil {
 		return SiteType{}, ProfileType{}, http.StatusInternalServerError,
-			fmt.Errorf("Could not store gravatar for profile: %+v", err)
+			fmt.Errorf("could not store gravatar for profile: %+v", err)
 	}
 
 	// Attach avatar to profile
 	attachment, status, err := AttachAvatar(profile.ID, fm)
 	if err != nil {
 		return SiteType{}, ProfileType{}, status,
-			fmt.Errorf("Could not attach avatar to profile: %v", err.Error())
+			fmt.Errorf("could not attach avatar to profile: %v", err.Error())
 	}
 
 	// Construct URL to avatar, update profile with Avatar ID and URL
@@ -481,7 +481,7 @@ SELECT new_ids.new_site_id,
 	status, err = profile.Update()
 	if err != nil {
 		return SiteType{}, ProfileType{}, status,
-			fmt.Errorf("Could not update profile with avatar: %v", err.Error())
+			fmt.Errorf("could not update profile with avatar: %v", err.Error())
 	}
 
 	email := EmailType{}
@@ -519,7 +519,7 @@ func (m *SiteType) Update() (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -560,13 +560,13 @@ UPDATE sites
 	if err != nil {
 		tx.Rollback()
 		return http.StatusInternalServerError,
-			fmt.Errorf("Update of site failed: %v", err.Error())
+			fmt.Errorf("update of site failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeSite], m.ID)
@@ -590,13 +590,13 @@ DELETE FROM sites
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Delete failed: %v", err.Error())
+			fmt.Errorf("delete failed: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeSite], m.ID)
@@ -732,10 +732,10 @@ SELECT s.site_id
 	)
 	if err == sql.ErrNoRows {
 		return SiteType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with site ID %d not found", id)
+			fmt.Errorf("resource with site ID %d not found", id)
 	} else if err != nil {
 		return SiteType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	if m.DomainNullable.Valid {
@@ -759,7 +759,7 @@ SELECT s.site_id
 	menu, status, err := GetMenu(m.ID)
 	if err != nil {
 		return SiteType{}, status,
-			fmt.Errorf("Error fetching menu: %v", err.Error())
+			fmt.Errorf("error fetching menu: %v", err.Error())
 	}
 	m.Menu = menu
 	if m.BackgroundURL == "" {
@@ -1008,7 +1008,7 @@ func GetSiteStats(siteID int64) ([]h.StatType, error) {
 		if err == sql.ErrNoRows {
 			// Not in database, calculate synchronously. Should only
 			// happen when site is newly created.
-			stats, err = CalcSiteStats(siteID)
+			stats, _ = CalcSiteStats(siteID)
 		} else {
 			return []h.StatType{}, err
 		}
@@ -1033,7 +1033,7 @@ func GetSiteBySubdomain(subdomain string) (SiteType, int, error) {
 
 	if strings.Trim(subdomain, " ") == "" {
 		return SiteType{}, http.StatusBadRequest,
-			fmt.Errorf("The domain key ('%s') cannot be empty", subdomain)
+			fmt.Errorf("the domain key ('%s') cannot be empty", subdomain)
 	}
 
 	mcKey := fmt.Sprintf(mcSiteKeys[c.CacheSubdomain], subdomain)
@@ -1061,11 +1061,11 @@ SELECT site_id
 	)
 	if err == sql.ErrNoRows {
 		return SiteType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with subdomain %s not found", subdomain)
+			fmt.Errorf("resource with subdomain %s not found", subdomain)
 
 	} else if err != nil {
 		return SiteType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	// Update cache
@@ -1111,10 +1111,10 @@ SELECT site_id
 	)
 	if err == sql.ErrNoRows {
 		return SiteType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with domain %s not found", domain)
+			fmt.Errorf("resource with domain %s not found", domain)
 	} else if err != nil {
 		return SiteType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 
 	// Update cache
@@ -1175,7 +1175,7 @@ OFFSET $2`
 	}
 	if err != nil {
 		return []SiteType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Could not query rows: %v", err.Error())
+			fmt.Errorf("could not query rows: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -1190,7 +1190,7 @@ OFFSET $2`
 		)
 		if err != nil {
 			return []SiteType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 		m, status, err := GetSite(id)
 		if err != nil {
@@ -1201,7 +1201,7 @@ OFFSET $2`
 	err = rows.Err()
 	if err != nil {
 		return []SiteType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -1210,7 +1210,7 @@ OFFSET $2`
 
 	if offset > maxOffset {
 		return []SiteType{}, 0, 0, http.StatusBadRequest,
-			fmt.Errorf("Offset (%d) would return an empty page", offset)
+			fmt.Errorf("offset (%d) would return an empty page", offset)
 	}
 
 	return sites, total, pages, http.StatusOK, nil
@@ -1223,7 +1223,7 @@ func CheckSiteHealth(site SiteType) (SiteHealthType, int, error) {
 	siteHealth := SiteHealthType{}
 	if site.ID == 1 {
 		return siteHealth, http.StatusBadRequest,
-			fmt.Errorf("Cannot fetch status of root site")
+			fmt.Errorf("cannot fetch status of root site")
 	}
 	siteHealth.Site = site
 

@@ -39,13 +39,13 @@ func (m *IgnoreType) Validate() (int, error) {
 
 	if _, inMap := h.ItemTypes[m.ItemType]; !inMap {
 		return http.StatusBadRequest,
-			fmt.Errorf("You must specify a valid item type")
+			fmt.Errorf("you must specify a valid item type")
 	}
 	m.ItemTypeID = h.ItemTypes[m.ItemType]
 
 	if m.ItemID <= 0 {
 		return http.StatusBadRequest,
-			fmt.Errorf("You must specify an Item ID this comment belongs to")
+			fmt.Errorf("you must specify an Item ID this comment belongs to")
 	}
 
 	return http.StatusOK, nil
@@ -195,7 +195,7 @@ OFFSET $4`
 			err,
 		)
 		return []IgnoreType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 	defer rows.Close()
 
@@ -212,7 +212,7 @@ OFFSET $4`
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return []IgnoreType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 
 		itemType, err := h.GetItemTypeFromInt(m.ItemTypeID)
@@ -228,7 +228,7 @@ OFFSET $4`
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return []IgnoreType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 

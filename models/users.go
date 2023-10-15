@@ -42,30 +42,28 @@ type UserMembership struct {
 	Email     string `json:"email"`
 	IsMember  bool   `json:"isMember"`
 	userID    int64
-	user      *UserType
 	profileID int64
-	profile   *ProfileType
 }
 
 // Validate checks that a given user has all the required information to be
 // created or updated successfully
 func (m *UserType) Validate(exists bool) (int, error) {
 
-	if exists == false {
+	if !exists {
 		if m.ID != 0 {
 			return http.StatusBadRequest,
-				fmt.Errorf("You cannot specify an ID")
+				fmt.Errorf("you cannot specify an ID")
 		}
 
 		if !m.Created.IsZero() {
 			return http.StatusBadRequest,
-				fmt.Errorf("You cannot specify creation time")
+				fmt.Errorf("you cannot specify creation time")
 		}
 	}
 
 	if strings.Trim(m.Email, " ") == "" {
 		return http.StatusBadRequest,
-			fmt.Errorf("An email address must be provided")
+			fmt.Errorf("an email address must be provided")
 	}
 
 	return http.StatusOK, nil
@@ -76,7 +74,7 @@ func (m *UserType) Insert() (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -87,7 +85,7 @@ func (m *UserType) Insert() (int, error) {
 
 	if err = tx.Commit(); err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -117,7 +115,7 @@ INSERT INTO users (
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %+v", err)
+			fmt.Errorf("error inserting data and returning ID: %+v", err)
 	}
 	m.ID = insertID
 
@@ -160,7 +158,7 @@ func GetUser(id int64) (UserType, int, error) {
 
 func getUser(q h.Er, id int64) (UserType, int, error) {
 	if id == 0 {
-		return UserType{}, http.StatusNotFound, fmt.Errorf("User not found")
+		return UserType{}, http.StatusNotFound, fmt.Errorf("user not found")
 	}
 
 	// Get from cache if it's available
@@ -204,10 +202,10 @@ SELECT user_id
 	)
 	if err == sql.ErrNoRows {
 		return UserType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with id %v not found", id)
+			fmt.Errorf("resource with id %v not found", id)
 	} else if err != nil {
 		return UserType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	m.Meta.Links =
 		[]h.LinkType{
@@ -223,7 +221,7 @@ SELECT user_id
 func (m *UserType) Update() (int, error) {
 
 	return http.StatusNotImplemented,
-		fmt.Errorf("Update User is not yet implemented")
+		fmt.Errorf("update User is not yet implemented")
 	/*
 	   	if m.Id < 1 {
 	   		return http.StatusBadRequest, fmt.Errorf(fmt.Sprintf(
@@ -234,7 +232,7 @@ func (m *UserType) Update() (int, error) {
 	   	tx, err := h.GetTransaction()
 	   	if err != nil {
 	   		return http.StatusInternalServerError, fmt.Errorf(
-	   			fmt.Sprintf("Could not start transaction: %v", err.Error()),
+	   			fmt.Sprintf("could not start transaction: %v", err.Error()),
 	   		)
 	   	}
 
@@ -296,7 +294,7 @@ func (m *UserType) Update() (int, error) {
 	   	err = tx.Commit()
 	   	if err != nil {
 	   		return http.StatusInternalServerError, fmt.Errorf(
-	   			fmt.Sprintf("Transaction failed: %v", err.Error()),
+	   			fmt.Sprintf("transaction failed: %v", err.Error()),
 	   		)
 	   	}
 
@@ -308,7 +306,7 @@ func (m *UserType) Update() (int, error) {
 func (m *UserType) Delete() (int, error) {
 
 	return http.StatusNotImplemented,
-		fmt.Errorf("Delete User is not yet implemented")
+		fmt.Errorf("delete User is not yet implemented")
 
 	/*
 	   	if m.Id < 1 {
@@ -343,7 +341,7 @@ func (m *UserType) Delete() (int, error) {
 	   	err = tx.Commit()
 	   	if err != nil {
 	   		return http.StatusInternalServerError, fmt.Errorf(
-	   			fmt.Sprintf("Transaction failed: %v", err.Error()),
+	   			fmt.Sprintf("transaction failed: %v", err.Error()),
 	   		)
 	   	}
 
@@ -356,7 +354,7 @@ func CreateUserByEmailAddress(email string) (UserType, int, error) {
 
 	if strings.Trim(email, " ") == "" {
 		return UserType{}, http.StatusBadRequest,
-			fmt.Errorf("You must specify an email address")
+			fmt.Errorf("you must specify an email address")
 	}
 
 	m := UserType{}
@@ -376,7 +374,7 @@ func CreateUserByEmailAddress(email string) (UserType, int, error) {
 func GetUserByEmailAddress(email string) (UserType, int, error) {
 	if strings.Trim(email, " ") == "" {
 		return UserType{}, http.StatusBadRequest,
-			fmt.Errorf("You must specify an email address")
+			fmt.Errorf("you must specify an email address")
 	}
 
 	db, err := h.GetConnection()
@@ -404,10 +402,10 @@ SELECT user_id
 	)
 	if err == sql.ErrNoRows {
 		return UserType{}, http.StatusNotFound,
-			fmt.Errorf("Resource with email %v not found", email)
+			fmt.Errorf("resource with email %v not found", email)
 	} else if err != nil {
 		return UserType{}, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %+v", err)
+			fmt.Errorf("database query failed: %+v", err)
 	}
 
 	return getUser(q, m.ID)
@@ -715,7 +713,7 @@ INSERT INTO profiles (
 			if err != nil {
 				glog.Errorf("profileOptions.Insert: %s", err.Error())
 				return status,
-					fmt.Errorf("Could not insert new profile options: %+v", err)
+					fmt.Errorf("could not insert new profile options: %+v", err)
 			}
 
 			gravatarURL := MakeGravatarURL(p.Email)
@@ -740,7 +738,7 @@ INSERT INTO profiles (
 				glog.Errorf("attachment.insert: %s", err.Error())
 				return http.StatusInternalServerError,
 					fmt.Errorf(
-						"Could not create avatar attachment to profile: %+v",
+						"could not create avatar attachment to profile: %+v",
 						err,
 					)
 			}
@@ -827,7 +825,7 @@ DELETE
 		if err != nil {
 			glog.Errorf("ManageUsers::Revoke: %s", err.Error())
 			return http.StatusInternalServerError,
-				fmt.Errorf("Revoke failed: %s", err.Error())
+				fmt.Errorf("revoke failed: %s", err.Error())
 		}
 	}
 
@@ -855,7 +853,7 @@ SELECT a.pid
 		if err != nil {
 			glog.Errorf("ManageUsers::CheckGrant: %s", err.Error())
 			return http.StatusInternalServerError,
-				fmt.Errorf("Check grant failed: %s", err.Error())
+				fmt.Errorf("check grant failed: %s", err.Error())
 		}
 		defer rows4.Close()
 
@@ -865,14 +863,14 @@ SELECT a.pid
 			if err := rows4.Scan(&pid); err != nil {
 				glog.Errorf("ManageUsers::CheckGrant::Scan: %s", err.Error())
 				return http.StatusInternalServerError,
-					fmt.Errorf("ManageUsers::CheckGrant::Scan: %s", err.Error())
+					fmt.Errorf("manageUsers::CheckGrant::Scan: %s", err.Error())
 			}
 			grant = append(grant, fmt.Sprintf("%d", pid))
 		}
 		if err := rows4.Err(); err != nil {
 			glog.Errorf("ManageUsers::CheckGrant::Rows: %s", err.Error())
 			return http.StatusInternalServerError,
-				fmt.Errorf("ManageUsers::CheckGrant::Rows: %s", err.Error())
+				fmt.Errorf("manageUsers::CheckGrant::Rows: %s", err.Error())
 		}
 
 		// Grant if we have any to grant
@@ -892,7 +890,7 @@ SELECT a.attribute_id, 4, TRUE
 			if err != nil {
 				glog.Errorf("ManageUsers::Grant: %s", err.Error())
 				return http.StatusInternalServerError,
-					fmt.Errorf("Grant failed: %s", err.Error())
+					fmt.Errorf("grant failed: %s", err.Error())
 			}
 		}
 	}
@@ -906,7 +904,7 @@ SELECT a.attribute_id, 4, TRUE
 		if err != nil {
 			glog.Errorf("ManageUsers::FlushPermissionsCache: %s", err.Error())
 			return http.StatusInternalServerError,
-				fmt.Errorf("FlushPermissionsCache failed: %s", err.Error())
+				fmt.Errorf("flushPermissionsCache failed: %s", err.Error())
 		}
 		_, err = tx.Exec(
 			`DELETE FROM role_members_cache WHERE profile_id IN (SELECT UNNEST($1::bigint[]))`,
@@ -915,14 +913,14 @@ SELECT a.attribute_id, 4, TRUE
 		if err != nil {
 			glog.Errorf("ManageUsers::FlushRoleMembersCache: %s", err.Error())
 			return http.StatusInternalServerError,
-				fmt.Errorf("FlushRoleMembersCache failed: %s", err.Error())
+				fmt.Errorf("flushRoleMembersCache failed: %s", err.Error())
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
 		glog.Errorf("Commit: %s", err.Error())
 		return http.StatusInternalServerError,
-			fmt.Errorf("Commit failed: %s", err.Error())
+			fmt.Errorf("commit failed: %s", err.Error())
 	}
 
 	return http.StatusOK, nil

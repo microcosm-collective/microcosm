@@ -84,7 +84,7 @@ func (c *Context) GetItemTypeAndItemID() (string, int64, int64, int, error) {
 			if err != nil {
 				return itemType, itemTypeID, itemID, http.StatusBadRequest,
 					fmt.Errorf(
-						"The supplied %s ('%s') is not a number",
+						"the supplied %s ('%s') is not a number",
 						key,
 						id,
 					)
@@ -194,14 +194,14 @@ func (c *Context) authenticate() (int, error) {
 		if len(authParts) != 2 {
 			// Should be two parts, return indicator for bad token
 			glog.Warningf(`AccessToken must have two parts: %s`, atHeader)
-			return http.StatusUnauthorized, fmt.Errorf("Invalid access token")
+			return http.StatusUnauthorized, fmt.Errorf("invalid access token")
 		}
 
 		if authParts[0] != "Bearer" {
 			// Should start with 'Bearer', return indicator for bad token
-			glog.Warningf(`AccessToken must have Bearer header: %s`, atHeader)
+			glog.Warningf(`accessToken must have Bearer header: %s`, atHeader)
 			return http.StatusUnauthorized,
-				fmt.Errorf("Authorization header must be " +
+				fmt.Errorf("authorization header must be " +
 					"in the format 'Bearer access_token'")
 		}
 
@@ -226,9 +226,9 @@ func (c *Context) authenticate() (int, error) {
 		storedToken, _, err := GetAccessToken(accessToken)
 		if err != nil {
 			c.Auth.UserID = -1
-			glog.Infof(`Invalid access token: %s  %+v`, accessToken, err)
+			glog.Infof(`invalid access token: %s  %+v`, accessToken, err)
 			return http.StatusUnauthorized,
-				fmt.Errorf("Invalid (bad or expired) access token")
+				fmt.Errorf("invalid (bad or expired) access token")
 		}
 
 		c.Auth.AccessToken = storedToken
@@ -337,16 +337,16 @@ func (c *Context) getSiteContext() error {
 		// root.microcosm.app and being accessed via microcosm.app was already handled
 		// above. We'll claim we don't exist.
 		if c.Site.ID == rootSiteID {
-			return fmt.Errorf("Unknown site requested")
+			return fmt.Errorf("unknown site requested")
 		}
 
 		// If the site has subsequently been deleted, we should pretend that we
 		// know nothing about it.
 		if c.Site.Meta.Flags.Deleted {
-			return fmt.Errorf("Unknown site requested")
+			return fmt.Errorf("unknown site requested")
 		}
 	} else {
-		return fmt.Errorf("Unknown site requested")
+		return fmt.Errorf("unknown site requested")
 	}
 
 	return nil
@@ -386,11 +386,7 @@ func (c *Context) GetHTTPMethod() string {
 
 // IsRootSite returns true if this is the root site
 func (c *Context) IsRootSite() bool {
-	if c.Site.SubdomainKey == "root" {
-		return true
-	}
-
-	return false
+	return c.Site.SubdomainKey == "root"
 }
 
 // Respond prepares a response
@@ -437,7 +433,7 @@ func (c *Context) Respond(
 	c.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(contentLength))
 
 	// Debugging info
-	dur := time.Now().Sub(c.StartTime)
+	dur := time.Since(c.StartTime)
 	go SendUsage(c, statusCode, contentLength, dur, errors)
 
 	return c.WriteResponse(output, statusCode)
@@ -446,7 +442,7 @@ func (c *Context) Respond(
 // WriteResponse this ultimately does the job of writing the response
 func (c *Context) WriteResponse(output []byte, statusCode int) error {
 	// Set status and write (finalise) all headers
-	if strings.Index(c.Request.URL.String(), "always200") > -1 ||
+	if strings.Contains(c.Request.URL.String(), "always200") ||
 		c.Request.Header.Get("X-Always-200") != "" {
 
 		c.ResponseWriter.WriteHeader(http.StatusOK)
@@ -574,7 +570,7 @@ func FormatAsJSON(c *Context, input interface{}) ([]byte, error) {
 	var output []byte
 	var err error
 
-	if strings.Index(c.Request.URL.String(), "disableBoiler") > -1 ||
+	if strings.Contains(c.Request.URL.String(), "disableBoiler") ||
 		c.Request.Header.Get("X-Disable-Boiler") != "" {
 		// If disableBoiler is set, then just render the value of the
 		// data field
@@ -671,8 +667,8 @@ func (c *Context) Fill(v interface{}) error {
 	ct = strings.Split(ct, ";")[0]
 	// get request decoder
 	decoder, ok := decoders[ct]
-	if ok != true {
-		return fmt.Errorf("Cannot decode request for %s data", ct)
+	if !ok {
+		return fmt.Errorf("cannot decode request for %s data", ct)
 	}
 	// decode
 	err := decoder.Unmarshal(c, v)

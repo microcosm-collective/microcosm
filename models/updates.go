@@ -120,7 +120,7 @@ func (m *UpdateType) Insert() (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not start transaction: %v", err.Error())
+			fmt.Errorf("could not start transaction: %v", err.Error())
 	}
 	defer tx.Rollback()
 
@@ -132,7 +132,7 @@ func (m *UpdateType) Insert() (int, error) {
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -145,7 +145,7 @@ func (m *UpdateType) insert(tx *sql.Tx) (int, error) {
 	status, err := m.Validate(false)
 	if err != nil {
 		return status,
-			fmt.Errorf("Insert did not validate: %v", err.Error())
+			fmt.Errorf("insert did not validate: %v", err.Error())
 	}
 
 	var insertID int64
@@ -175,63 +175,9 @@ INSERT INTO updates (
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %v", err.Error())
+			fmt.Errorf("error inserting data and returning ID: %v", err.Error())
 	}
 	m.ID = insertID
-
-	return http.StatusOK, nil
-}
-
-// Exists to allow multiple inserts from update_dispatcher.go to be made within
-// a single transaction.
-//
-// This upsert method is used when an existing update *may* already exist...
-// such as when a comment revision includes a mention.
-//
-// No update_id is returned
-func (m *UpdateType) upsert(tx *sql.Tx) (int, error) {
-
-	status, err := m.Validate(false)
-	if err != nil {
-		return status,
-			fmt.Errorf("Update did not validate: %v", err.Error())
-	}
-
-	_, err = tx.Exec(`
-INSERT INTO updates (
-    site_id
-   ,for_profile_id
-   ,update_type_id
-   ,item_type_id
-   ,item_id
-
-   ,created_by
-   ,created
-) VALUES (
-    $1, $2, $3, $4, $5,
-    $6, NOW()
-) WHERE NOT EXISTS (
-    SELECT *
-      FROM updates
-     WHERE site_id = $1
-       AND for_profile_id = $2
-       AND update_type_id = $3
-       AND item_type_id = $4
-       AND item_id = $5
-       AND created_by = $6
-)`,
-		m.SiteID,
-		m.ForProfileID,
-		m.UpdateTypeID,
-		m.ItemTypeID,
-		m.ItemID,
-
-		m.Meta.CreatedByID,
-	)
-	if err != nil {
-		return http.StatusInternalServerError,
-			fmt.Errorf("Error inserting data and returning ID: %+v", err)
-	}
 
 	return http.StatusOK, nil
 }
@@ -289,10 +235,10 @@ SELECT update_id
 	)
 	if err == sql.ErrNoRows {
 		return UpdateType{}, http.StatusNotFound,
-			fmt.Errorf("Update not found: %v", err.Error())
+			fmt.Errorf("update not found: %v", err.Error())
 	} else if err != nil {
 		return UpdateType{}, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching update: %v", err.Error())
+			fmt.Errorf("error fetching update: %v", err.Error())
 	}
 
 	itemType, err := h.GetItemTypeFromInt(m.ItemTypeID)
@@ -497,7 +443,7 @@ SELECT total
 			err,
 		)
 		return []UpdateType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed")
+			fmt.Errorf("database query failed")
 	}
 	defer rows.Close()
 
@@ -521,7 +467,7 @@ SELECT total
 		if err != nil {
 			glog.Errorf("rows.Scan() %+v", err)
 			return []UpdateType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error")
+				fmt.Errorf("row parsing error")
 		}
 
 		itemType, err := h.GetItemTypeFromInt(m.ItemTypeID)
@@ -539,7 +485,7 @@ SELECT total
 	if err != nil {
 		glog.Errorf("rows.Err() %+v", err)
 		return []UpdateType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows")
+			fmt.Errorf("error fetching rows")
 	}
 	rows.Close()
 
@@ -550,7 +496,7 @@ SELECT total
 		glog.Infoln("offset > maxOffset")
 		return []UpdateType{}, 0, 0, http.StatusBadRequest,
 			fmt.Errorf("not enough records, "+
-				"offset (%d) would return an empty page.", offset)
+				"offset (%d) would return an empty page", offset)
 	}
 
 	// Get the first round of summaries

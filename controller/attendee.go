@@ -199,7 +199,7 @@ func (ctl *AttendeeController) Delete(c *models.Context) {
 		return
 	}
 
-	attendeeID, status, err := models.GetAttendeeID(eventID, profileID)
+	attendeeID, _, err := models.GetAttendeeID(eventID, profileID)
 	if err != nil {
 		c.RespondWithOK()
 		return

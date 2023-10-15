@@ -24,7 +24,7 @@ func FlushRoleMembersCacheByProfileID(
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing statement: %v", err.Error())
+			fmt.Errorf("error executing statement: %v", err.Error())
 	}
 
 	_, err = tx.Exec(
@@ -33,7 +33,7 @@ func FlushRoleMembersCacheByProfileID(
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing statement: %v", err.Error())
+			fmt.Errorf("error executing statement: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -44,7 +44,7 @@ func FlushRoleMembersCacheByRoleID(tx *sql.Tx, roleID int64) (int, error) {
 	_, err := tx.Exec(`TRUNCATE permissions_cache`)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing statement: %v", err.Error())
+			fmt.Errorf("error executing statement: %v", err.Error())
 	}
 
 	_, err = tx.Exec(
@@ -53,7 +53,7 @@ func FlushRoleMembersCacheByRoleID(tx *sql.Tx, roleID int64) (int, error) {
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error executing statement: %v", err.Error())
+			fmt.Errorf("error executing statement: %v", err.Error())
 	}
 
 	return http.StatusOK, nil
@@ -93,7 +93,7 @@ OFFSET $4`,
 	)
 	if err != nil {
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Database query failed: %v", err.Error())
+			fmt.Errorf("database query failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -108,7 +108,7 @@ OFFSET $4`,
 		)
 		if err != nil {
 			return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		ids = append(ids, id)
@@ -116,7 +116,7 @@ OFFSET $4`,
 	err = rows.Err()
 	if err != nil {
 		return []ProfileSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 

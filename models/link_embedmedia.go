@@ -70,7 +70,7 @@ SELECT l.link_id
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Get links failed: %v", err.Error())
+			fmt.Errorf("get links failed: %v", err.Error())
 	}
 	defer rows.Close()
 
@@ -90,7 +90,7 @@ SELECT l.link_id
 		)
 		if err != nil {
 			return http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %v", err.Error())
+				fmt.Errorf("row parsing error: %v", err.Error())
 		}
 
 		links = append(links, link)
@@ -98,7 +98,7 @@ SELECT l.link_id
 	err = rows.Err()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %v", err.Error())
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
@@ -133,18 +133,6 @@ func embedMediaForLink(m Link, revisionID int64) (int, error) {
 	return http.StatusOK, nil
 }
 
-// Fetch the end point of the link, and make sense of the file... is it
-// something we can embed?
-func (m *Link) fetchDestination() (int, error) {
-
-	// 1. Update mimetypes
-	// 2. Populate link with the thing we fetched
-	// 3. Lookup whether there is open graph stuff
-	// 4. Save knowledge of whether this link destination is embeddable or not
-
-	return http.StatusOK, nil
-}
-
 func (m *Link) fetchRewriteRule() (RewriteRule, int, error) {
 	rewriteRule := RewriteRule{}
 
@@ -174,7 +162,7 @@ SELECT r.rule_id
 	)
 	if err != nil {
 		return rewriteRule, http.StatusInternalServerError,
-			fmt.Errorf("Get links failed: %+v", err)
+			fmt.Errorf("get links failed: %+v", err)
 	}
 	defer rows.Close()
 
@@ -191,7 +179,7 @@ SELECT r.rule_id
 		)
 		if err != nil {
 			return rewriteRule, http.StatusInternalServerError,
-				fmt.Errorf("Row parsing error: %+v", err)
+				fmt.Errorf("row parsing error: %+v", err)
 		}
 
 		rules = append(rules, rule)
@@ -199,7 +187,7 @@ SELECT r.rule_id
 	err = rows.Err()
 	if err != nil {
 		return rewriteRule, http.StatusInternalServerError,
-			fmt.Errorf("Error fetching rows: %+v", err)
+			fmt.Errorf("error fetching rows: %+v", err)
 	}
 	rows.Close()
 
@@ -256,7 +244,7 @@ func (m *Link) embedMediaUsingRule(
 	if err != nil {
 		glog.Errorf("%s %+v", "regexp.Compile(rule.RegexMatch)", err)
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not compile match URL: %+v", err)
+			fmt.Errorf("could not compile match URL: %+v", err)
 	}
 
 	embedHTML := matchURL.ReplaceAllString(m.URL, rule.RegexReplace)
@@ -297,7 +285,7 @@ SELECT comment_id
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Error fetching HTML for revision: %+v", err)
+			fmt.Errorf("error fetching HTML for revision: %+v", err)
 	}
 
 	// Use string manipulation to insert the embed
@@ -353,13 +341,13 @@ UPDATE revisions
 	)
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Could not save HTML: %v", err.Error())
+			fmt.Errorf("could not save HTML: %v", err.Error())
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf("Transaction failed: %v", err.Error())
+			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
 	PurgeCache(h.ItemTypes[h.ItemTypeComment], commentID)
