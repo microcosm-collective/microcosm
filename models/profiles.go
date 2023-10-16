@@ -3,7 +3,7 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"sort"
@@ -1423,7 +1423,7 @@ func storeGravatar(q h.Er, gravatarURL string) (FileMetadataType, int, error) {
 	}
 	defer resp.Body.Close()
 
-	fileContent, err := ioutil.ReadAll(resp.Body)
+	fileContent, err := io.ReadAll(resp.Body)
 	if err != nil {
 		glog.Errorf("ioutil.ReadAll(resp.Body) %+v", err)
 		return FileMetadataType{}, http.StatusInternalServerError,

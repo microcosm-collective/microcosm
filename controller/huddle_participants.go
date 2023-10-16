@@ -116,7 +116,7 @@ func (ctl *HuddleParticipantsController) UpdateMany(c *models.Context) {
 		return
 	}
 
-	if !r.IsConfidential {
+	if r.IsConfidential {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
