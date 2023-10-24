@@ -34,16 +34,16 @@ const (
 	S3AccessKeyID     = "s3_access_key_id"
 	S3SecretAccessKey = "s3_secret_access_key"
 
-	MailgunAPIURL = "mailgun_api_url"
-	MailgunAPIKey = "mailgun_api_key"
-
 	SendGridAPIKey = "sendgrid_api_key"
 
 	ErrorLogFilename = "error_log_filename"
 	WarnLogFilename  = "warn_log_filename"
 	DebugLogFilename = "debug_log_filename"
 
-	PersonaVerifierURL = "persona_verifier_url"
+	PyroscopeApp      = "pyroscope_app"
+	PyroscopeAddress  = "pyroscope_address"
+	PyroscopeUser     = "pyroscope_user"
+	PyroscopePassword = "pyroscope_password"
 )
 
 var configRequiredStrings = []string{
@@ -54,17 +54,18 @@ var configRequiredStrings = []string{
 	DebugLogFilename,
 	Environment,
 	ErrorLogFilename,
-	MailgunAPIKey,
-	MailgunAPIURL,
 	MemcachedHost,
 	MicrocosmDomain,
-	PersonaVerifierURL,
 	S3AccessKeyID,
 	S3BucketName,
 	S3Endpoint,
 	S3SecretAccessKey,
 	SendGridAPIKey,
 	WarnLogFilename,
+	PyroscopeApp,
+	PyroscopeAddress,
+	PyroscopeUser,
+	PyroscopePassword,
 }
 
 var configRequiredInt64s = []string{
