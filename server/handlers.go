@@ -38,10 +38,11 @@ var (
 		"/api/v1/whoami": controller.WhoAmIHandler,
 	}
 	siteHandlers = map[string]func(http.ResponseWriter, *http.Request){
-		"/":             controller.RootHandler,
-		"/api":          controller.APIHandler,
-		"/api/v1":       controller.V1Handler,
-		"/api/v1/auth":  controller.AuthHandler,
+		"/":            controller.RootHandler,
+		"/api":         controller.APIHandler,
+		"/api/v1":      controller.V1Handler,
+		"/api/v1/auth": controller.AuthHandler,
+		"/api/v1/auth/{access_token:[0-9A-Za-z]+}": controller.AuthAccessTokenHandler,
 		"/api/v1/auth0": controller.Auth0Handler,
 
 		"/api/v1/{type:comments}":                                 controller.CommentsHandler,
