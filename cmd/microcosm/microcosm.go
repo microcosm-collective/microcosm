@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"runtime"
 
 	"github.com/golang/glog"
 	"github.com/grafana/pyroscope-go"
@@ -30,12 +31,30 @@ func main() {
 			),
 		)
 	}
+	runtime.SetMutexProfileFraction(5)
+	runtime.SetBlockProfileRate(5)
 	_, err := pyroscope.Start(
 		pyroscope.Config{
 			ApplicationName:   conf.ConfigStrings[conf.PyroscopeApp],
 			ServerAddress:     conf.ConfigStrings[conf.PyroscopeAddress],
 			BasicAuthUser:     conf.ConfigStrings[conf.PyroscopeUser],
 			BasicAuthPassword: conf.ConfigStrings[conf.PyroscopePassword],
+
+			ProfileTypes: []pyroscope.ProfileType{
+				// these profile types are enabled by default:
+				pyroscope.ProfileCPU,
+				pyroscope.ProfileAllocObjects,
+				pyroscope.ProfileAllocSpace,
+				pyroscope.ProfileInuseObjects,
+				pyroscope.ProfileInuseSpace,
+
+				// these profile types are optional:
+				pyroscope.ProfileGoroutines,
+				pyroscope.ProfileMutexCount,
+				pyroscope.ProfileMutexDuration,
+				pyroscope.ProfileBlockCount,
+				pyroscope.ProfileBlockDuration,
+			},
 		},
 	)
 	if err != nil {
