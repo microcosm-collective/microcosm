@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/grafana/pyroscope-go"
 	"github.com/microcosm-cc/microcosm/audit"
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/models"
@@ -12,32 +14,48 @@ import (
 
 // ProfileHandler is a web handler
 func ProfileHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
+	path := "/profiles/{id}"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
 
-	ctl := ProfileController{}
+		ctl := ProfileController{}
 
-	switch c.GetHTTPMethod() {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "PATCH", "DELETE"})
-		return
-	case "HEAD":
-		ctl.Read(c)
-	case "GET":
-		ctl.Read(c)
-	case "PUT":
-		ctl.Update(c)
-	case "PATCH":
-		ctl.Patch(c)
-	case "DELETE":
-		ctl.Delete(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "PATCH", "DELETE"})
+			})
+			return
+		case "HEAD":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		case "GET":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		case "PUT":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Update(c)
+			})
+		case "PATCH":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Patch(c)
+			})
+		case "DELETE":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Delete(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // ProfileController is a web controller

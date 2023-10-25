@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/grafana/pyroscope-go"
 	"github.com/microcosm-cc/microcosm/audit"
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/models"
@@ -12,28 +14,40 @@ import (
 
 // ProfileOptionsHandler is a web handler
 func ProfileOptionsHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
+	path := "/profiles/options"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
 
-	ctl := ProfileOptionsController{}
+		ctl := ProfileOptionsController{}
 
-	switch c.GetHTTPMethod() {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT"})
-		return
-	case "HEAD":
-		ctl.Read(c)
-	case "GET":
-		ctl.Read(c)
-	case "PUT":
-		ctl.Update(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT"})
+			})
+			return
+		case "HEAD":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		case "GET":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		case "PUT":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Update(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // ProfileOptionsController is a web controller

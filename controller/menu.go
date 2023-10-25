@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/pyroscope-go"
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/models"
 )
@@ -14,47 +16,61 @@ type MenuController struct{}
 
 // MenuHandler is a web handler
 func MenuHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
-
-	var siteID int64
-
-	if id, exists := c.RouteVars["site_id"]; exists {
-		siteID, err = strconv.ParseInt(id, 10, 64)
+	path := "/site/menu"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
+		c, status, err := models.MakeContext(r, w)
 		if err != nil {
-			c.RespondWithErrorMessage(
-				fmt.Sprintf("The supplied site_id ('%s') is not a number.", id),
-				http.StatusBadRequest,
-			)
+			c.RespondWithErrorDetail(err, status)
 			return
 		}
-	}
 
-	if siteID == 0 {
-		siteID = c.Site.ID
-	}
+		var siteID int64
 
-	ctl := MenuController{}
+		if id, exists := c.RouteVars["site_id"]; exists {
+			siteID, err = strconv.ParseInt(id, 10, 64)
+			if err != nil {
+				c.RespondWithErrorMessage(
+					fmt.Sprintf("The supplied site_id ('%s') is not a number.", id),
+					http.StatusBadRequest,
+				)
+				return
+			}
+		}
 
-	switch c.GetHTTPMethod() {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE"})
-		return
-	case "GET":
-		ctl.Read(c, siteID)
-	case "HEAD":
-		ctl.Read(c, siteID)
-	case "PUT":
-		ctl.Update(c, siteID)
-	case "DELETE":
-		ctl.Delete(c, siteID)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		if siteID == 0 {
+			siteID = c.Site.ID
+		}
+
+		ctl := MenuController{}
+
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE"})
+			})
+			return
+		case "GET":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c, siteID)
+			})
+		case "HEAD":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c, siteID)
+			})
+		case "PUT":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Update(c, siteID)
+			})
+		case "DELETE":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Delete(c, siteID)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // Read handles GET

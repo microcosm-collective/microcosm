@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/pyroscope-go"
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/models"
 )
@@ -14,24 +16,32 @@ type LastCommentController struct{}
 
 // LastCommentHandler is a web handler
 func LastCommentHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
+	path := "/*/lastcomment"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
 
-	ctl := LastCommentController{}
+		ctl := LastCommentController{}
 
-	switch c.GetHTTPMethod() {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "GET"})
-		return
-	case "GET":
-		ctl.Read(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "GET"})
+			})
+			return
+		case "GET":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // Read handles GET

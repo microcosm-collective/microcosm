@@ -1,33 +1,45 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/grafana/pyroscope-go"
 	"github.com/microcosm-cc/microcosm/models"
 )
 
 // MicrocosmsTreeHandler is a web handler
 func MicrocosmsTreeHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
+	path := "/microcosms/tree"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
 
-	ctl := MicrocosmsTreeController{}
+		ctl := MicrocosmsTreeController{}
 
-	switch c.GetHTTPMethod() {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "POST", "HEAD", "GET"})
-		return
-	case "HEAD":
-		ctl.ReadMany(c)
-	case "GET":
-		ctl.ReadMany(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "POST", "HEAD", "GET"})
+			})
+			return
+		case "HEAD":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.ReadMany(c)
+			})
+		case "GET":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.ReadMany(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // MicrocosmsTreeController is a web controller

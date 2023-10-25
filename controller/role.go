@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/grafana/pyroscope-go"
 	"github.com/lib/pq"
 
 	"github.com/microcosm-cc/microcosm/audit"
@@ -19,32 +21,48 @@ type RoleController struct{}
 
 // RoleHandler is a web handler
 func RoleHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
+	path := "/roles/{id}"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
 
-	ctl := RoleController{}
+		ctl := RoleController{}
 
-	switch c.GetHTTPMethod() {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "PUT", "PATCH", "DELETE"})
-		return
-	case "GET":
-		ctl.Read(c)
-	case "HEAD":
-		ctl.Read(c)
-	case "PUT":
-		ctl.Update(c)
-	case "PATCH":
-		ctl.Patch(c)
-	case "DELETE":
-		ctl.Delete(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "PUT", "PATCH", "DELETE"})
+			})
+			return
+		case "GET":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		case "HEAD":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		case "PUT":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Update(c)
+			})
+		case "PATCH":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Patch(c)
+			})
+		case "DELETE":
+			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Delete(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // Read handles GET
