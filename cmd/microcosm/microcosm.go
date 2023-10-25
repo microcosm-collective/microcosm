@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"runtime"
@@ -12,6 +13,11 @@ import (
 	conf "github.com/microcosm-cc/microcosm/config"
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/server"
+)
+
+var (
+	version string
+	date    string
 )
 
 func main() {
@@ -62,45 +68,48 @@ func main() {
 		glog.Error(err.Error())
 	}
 
-	// We read the config file (by importing it) and it's our responsibility to
-	// set up the database connection and memcache before we start the server
-	if glog.V(2) {
-		glog.Info(
-			fmt.Sprintf(
-				`Initialising DB connection on %s:%d for database %s`,
-				conf.ConfigStrings[conf.DatabaseHost],
-				conf.ConfigInt64s[conf.DatabasePort],
-				conf.ConfigStrings[conf.DatabaseName],
-			),
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("build_version", version, "build_date", date), func(context.Context) {
+		// We read the config file (by importing it) and it's our responsibility to
+		// set up the database connection and memcache before we start the server
+		if glog.V(2) {
+			glog.Info(
+				fmt.Sprintf(
+					`Initialising DB connection on %s:%d for database %s`,
+					conf.ConfigStrings[conf.DatabaseHost],
+					conf.ConfigInt64s[conf.DatabasePort],
+					conf.ConfigStrings[conf.DatabaseName],
+				),
+			)
+		}
+		h.InitDBConnection(h.DBConfig{
+			Host:     conf.ConfigStrings[conf.DatabaseHost],
+			Port:     conf.ConfigInt64s[conf.DatabasePort],
+			Database: conf.ConfigStrings[conf.DatabaseName],
+			Username: conf.ConfigStrings[conf.DatabaseUsername],
+			Password: conf.ConfigStrings[conf.DatabasePassword],
+		})
+
+		if glog.V(2) {
+			glog.Info(
+				fmt.Sprintf(
+					`Initialising cache connection to %s:%d`,
+					conf.ConfigStrings[conf.MemcachedHost],
+					conf.ConfigInt64s[conf.MemcachedPort],
+				),
+			)
+		}
+		cache.InitCache(
+			conf.ConfigStrings[conf.MemcachedHost],
+			conf.ConfigInt64s[conf.MemcachedPort],
 		)
-	}
-	h.InitDBConnection(h.DBConfig{
-		Host:     conf.ConfigStrings[conf.DatabaseHost],
-		Port:     conf.ConfigInt64s[conf.DatabasePort],
-		Database: conf.ConfigStrings[conf.DatabaseName],
-		Username: conf.ConfigStrings[conf.DatabaseUsername],
-		Password: conf.ConfigStrings[conf.DatabasePassword],
+
+		if glog.V(2) {
+			glog.Infof(
+				"Starting server on port %d",
+				conf.ConfigInt64s[conf.ListenPort],
+			)
+		}
+
+		server.StartServer(conf.ConfigInt64s[conf.ListenPort])
 	})
-
-	if glog.V(2) {
-		glog.Info(
-			fmt.Sprintf(
-				`Initialising cache connection to %s:%d`,
-				conf.ConfigStrings[conf.MemcachedHost],
-				conf.ConfigInt64s[conf.MemcachedPort],
-			),
-		)
-	}
-	cache.InitCache(
-		conf.ConfigStrings[conf.MemcachedHost],
-		conf.ConfigInt64s[conf.MemcachedPort],
-	)
-
-	if glog.V(2) {
-		glog.Infof(
-			"Starting server on port %d",
-			conf.ConfigInt64s[conf.ListenPort],
-		)
-	}
-	server.StartServer(conf.ConfigInt64s[conf.ListenPort])
 }

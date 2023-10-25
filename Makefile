@@ -11,6 +11,8 @@
 #   dep_restore:  Ensures all dependent packages are at the correct version
 #   dep_update:   Ensures all dependent packages are at the latest version
 GOCMD := go
+date=$(shell date "+%Y-%m-%d")
+version=$(shell git log --format="%H" -n 1)
 
 .PHONY: all fmt build vet test clean
 
@@ -21,7 +23,7 @@ build: export GOOS=linux
 build: export GOARCH=amd64
 build: export CGO_ENABLED=0
 build: clean
-	@$(GOCMD) build cmd/microcosm/microcosm.go
+	@$(GOCMD) build -ldflags "-X 'main.version=$(version)' -X 'main.date=$(date)'" cmd/microcosm/microcosm.go
 
 vet:
 	@$(GOCMD) vet $$($(GOCMD) list ./... | grep -v /vendor/)
