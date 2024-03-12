@@ -39,11 +39,6 @@ const (
 	ErrorLogFilename = "error_log_filename"
 	WarnLogFilename  = "warn_log_filename"
 	DebugLogFilename = "debug_log_filename"
-
-	PyroscopeApp      = "pyroscope_app"
-	PyroscopeAddress  = "pyroscope_address"
-	PyroscopeUser     = "pyroscope_user"
-	PyroscopePassword = "pyroscope_password"
 )
 
 var configRequiredStrings = []string{
@@ -62,10 +57,6 @@ var configRequiredStrings = []string{
 	S3SecretAccessKey,
 	SendGridAPIKey,
 	WarnLogFilename,
-	PyroscopeApp,
-	PyroscopeAddress,
-	PyroscopeUser,
-	PyroscopePassword,
 }
 
 var configRequiredInt64s = []string{

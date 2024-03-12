@@ -1,11 +1,9 @@
 package controller
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/pyroscope-go"
 	"github.com/microcosm-cc/microcosm/models"
 )
 
@@ -14,35 +12,26 @@ type SiteReservedController struct{}
 
 // SiteReservedHandler is a web handler
 func SiteReservedHandler(w http.ResponseWriter, r *http.Request) {
-	path := "/reserved/{id}"
-	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
-		c, status, err := models.MakeContext(r, w)
-		if err != nil {
-			c.RespondWithErrorDetail(err, status)
-			return
-		}
-		ctl := SiteReservedController{}
+	c, status, err := models.MakeContext(r, w)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+	ctl := SiteReservedController{}
 
-		method := c.GetHTTPMethod()
-		switch method {
-		case "OPTIONS":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET"})
-			})
-			return
-		case "GET":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Read(c)
-			})
-		case "HEAD":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Read(c)
-			})
-		default:
-			c.RespondWithStatus(http.StatusMethodNotAllowed)
-			return
-		}
-	})
+	method := c.GetHTTPMethod()
+	switch method {
+	case "OPTIONS":
+		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET"})
+		return
+	case "GET":
+		ctl.Read(c)
+	case "HEAD":
+		ctl.Read(c)
+	default:
+		c.RespondWithStatus(http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 // Read handles GET

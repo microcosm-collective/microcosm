@@ -1,52 +1,38 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/grafana/pyroscope-go"
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/models"
 )
 
 // WatchersHandler is a web handler
 func WatchersHandler(w http.ResponseWriter, r *http.Request) {
-	path := "/watchers"
-	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
-		c, status, err := models.MakeContext(r, w)
-		if err != nil {
-			c.RespondWithErrorDetail(err, status)
-			return
-		}
+	c, status, err := models.MakeContext(r, w)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+	ctl := WatchersController{}
 
-		ctl := WatchersController{}
-
-		method := c.GetHTTPMethod()
-		switch method {
-		case "OPTIONS":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				c.RespondWithOptions([]string{"OPTIONS", "GET", "PUT", "POST"})
-			})
-			return
-		case "GET":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.ReadMany(c)
-			})
-		case "PUT":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Create(c)
-			})
-		case "POST":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Create(c)
-			})
-		default:
-			c.RespondWithStatus(http.StatusMethodNotAllowed)
-			return
-		}
-	})
+	method := c.GetHTTPMethod()
+	switch method {
+	case "OPTIONS":
+		c.RespondWithOptions([]string{"OPTIONS", "GET", "PUT", "POST"})
+		return
+	case "GET":
+		ctl.ReadMany(c)
+	case "PUT":
+		ctl.Create(c)
+	case "POST":
+		ctl.Create(c)
+	default:
+		c.RespondWithStatus(http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 // WatchersController is a web controller

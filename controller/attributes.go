@@ -1,13 +1,11 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/grafana/pyroscope-go"
 	"github.com/microcosm-cc/microcosm/audit"
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/models"
@@ -18,44 +16,30 @@ type AttributesController struct{}
 
 // AttributesHandler is a web handler
 func AttributesHandler(w http.ResponseWriter, r *http.Request) {
-	path := "/*/attributes"
-	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
-		c, status, err := models.MakeContext(r, w)
-		if err != nil {
-			c.RespondWithErrorDetail(err, status)
-			return
-		}
+	c, status, err := models.MakeContext(r, w)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+	ctl := AttributesController{}
 
-		ctl := AttributesController{}
-
-		method := c.GetHTTPMethod()
-		switch method {
-		case "OPTIONS":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE"})
-			})
-			return
-		case "GET":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.ReadMany(c)
-			})
-		case "HEAD":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.ReadMany(c)
-			})
-		case "PUT":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.UpdateMany(c)
-			})
-		case "DELETE":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.DeleteMany(c)
-			})
-		default:
-			c.RespondWithStatus(http.StatusMethodNotAllowed)
-			return
-		}
-	})
+	method := c.GetHTTPMethod()
+	switch method {
+	case "OPTIONS":
+		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE"})
+		return
+	case "GET":
+		ctl.ReadMany(c)
+	case "HEAD":
+		ctl.ReadMany(c)
+	case "PUT":
+		ctl.UpdateMany(c)
+	case "DELETE":
+		ctl.DeleteMany(c)
+	default:
+		c.RespondWithStatus(http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 // ReadMany handles GET for a collection

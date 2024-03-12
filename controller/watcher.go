@@ -1,13 +1,11 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/golang/glog"
-	"github.com/grafana/pyroscope-go"
 
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/models"
@@ -15,36 +13,26 @@ import (
 
 // WatcherHandler is a web handler
 func WatcherHandler(w http.ResponseWriter, r *http.Request) {
-	path := "/watchers/{id}"
-	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
-		c, status, err := models.MakeContext(r, w)
-		if err != nil {
-			c.RespondWithErrorDetail(err, status)
-			return
-		}
+	c, status, err := models.MakeContext(r, w)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+	ctl := WatcherController{}
 
-		ctl := WatcherController{}
-
-		method := c.GetHTTPMethod()
-		switch method {
-		case "PATCH":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Update(c)
-			})
-		case "OPTIONS":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				c.RespondWithOptions([]string{"OPTIONS", "DELETE", "PATCH"})
-			})
-			return
-		case "DELETE":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Delete(c)
-			})
-		default:
-			c.RespondWithStatus(http.StatusMethodNotAllowed)
-			return
-		}
-	})
+	method := c.GetHTTPMethod()
+	switch method {
+	case "PATCH":
+		ctl.Update(c)
+	case "OPTIONS":
+		c.RespondWithOptions([]string{"OPTIONS", "DELETE", "PATCH"})
+		return
+	case "DELETE":
+		ctl.Delete(c)
+	default:
+		c.RespondWithStatus(http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 // WatcherController is a web controller

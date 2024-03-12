@@ -1,14 +1,12 @@
 package controller
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/grafana/pyroscope-go"
 	"github.com/lib/pq"
 
 	"github.com/microcosm-cc/microcosm/audit"
@@ -21,44 +19,30 @@ type AttendeeController struct{}
 
 // AttendeeHandler is a web handler
 func AttendeeHandler(w http.ResponseWriter, r *http.Request) {
-	path := "/events/{id}/attendees/{id}"
-	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
-		c, status, err := models.MakeContext(r, w)
-		if err != nil {
-			c.RespondWithErrorDetail(err, status)
-			return
-		}
+	c, status, err := models.MakeContext(r, w)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+	ctl := AttendeeController{}
 
-		ctl := AttendeeController{}
-
-		method := c.GetHTTPMethod()
-		switch method {
-		case "OPTIONS":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "DELETE"})
-			})
-			return
-		case "HEAD":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Read(c)
-			})
-		case "GET":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Read(c)
-			})
-		case "PUT":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Update(c)
-			})
-		case "DELETE":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Delete(c)
-			})
-		default:
-			c.RespondWithStatus(http.StatusMethodNotAllowed)
-			return
-		}
-	})
+	method := c.GetHTTPMethod()
+	switch method {
+	case "OPTIONS":
+		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "DELETE"})
+		return
+	case "HEAD":
+		ctl.Read(c)
+	case "GET":
+		ctl.Read(c)
+	case "PUT":
+		ctl.Update(c)
+	case "DELETE":
+		ctl.Delete(c)
+	default:
+		c.RespondWithStatus(http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 // Read handles GET

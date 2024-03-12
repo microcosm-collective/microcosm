@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -9,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/pyroscope-go"
 	"github.com/microcosm-cc/microcosm/models"
 )
 
@@ -18,22 +16,19 @@ type GeoCodeController struct{}
 
 // GeoCodeHandler is a web handler
 func GeoCodeHandler(w http.ResponseWriter, r *http.Request) {
-	path := "/geocode"
-	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path, "method", "GET"), func(context.Context) {
-		c, status, err := models.MakeContext(r, w)
-		if err != nil {
-			c.RespondWithErrorDetail(err, status)
-			return
-		}
+	c, status, err := models.MakeContext(r, w)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
 
-		if c.Request.Method != "GET" {
-			c.RespondWithNotImplemented()
-			return
-		}
+	if c.Request.Method != "GET" {
+		c.RespondWithNotImplemented()
+		return
+	}
 
-		ctl := GeoCodeController{}
-		ctl.Read(c)
-	})
+	ctl := GeoCodeController{}
+	ctl.Read(c)
 }
 
 // Error is a generic error handler for the Geo controller

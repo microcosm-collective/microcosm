@@ -1,44 +1,34 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/pyroscope-go"
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/models"
 )
 
 // AttachmentHandler is a web handler
 func AttachmentHandler(w http.ResponseWriter, r *http.Request) {
-	path := "/*/attachments/{fileHash}"
-	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
-		c, status, err := models.MakeContext(r, w)
-		if err != nil {
-			c.RespondWithErrorDetail(err, status)
-			return
-		}
+	c, status, err := models.MakeContext(r, w)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+	ctl := AttachmentController{}
 
-		ctl := AttachmentController{}
-
-		method := c.GetHTTPMethod()
-		switch method {
-		case "OPTIONS":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				c.RespondWithOptions([]string{"OPTIONS", "DELETE"})
-			})
-			return
-		case "DELETE":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Delete(c)
-			})
-		default:
-			c.RespondWithStatus(http.StatusMethodNotAllowed)
-			return
-		}
-	})
+	method := c.GetHTTPMethod()
+	switch method {
+	case "OPTIONS":
+		c.RespondWithOptions([]string{"OPTIONS", "DELETE"})
+		return
+	case "DELETE":
+		ctl.Delete(c)
+	default:
+		c.RespondWithStatus(http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 // AttachmentController is a web controller

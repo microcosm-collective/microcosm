@@ -1,12 +1,10 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/pyroscope-go"
 	h "github.com/microcosm-cc/microcosm/helpers"
 	"github.com/microcosm-cc/microcosm/models"
 )
@@ -16,44 +14,30 @@ type RoleCriteriaController struct{}
 
 // RoleCriteriaHandler is a web handler
 func RoleCriteriaHandler(w http.ResponseWriter, r *http.Request) {
-	path := "/roles/{id}/criteria"
-	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
-		c, status, err := models.MakeContext(r, w)
-		if err != nil {
-			c.RespondWithErrorDetail(err, status)
-			return
-		}
+	c, status, err := models.MakeContext(r, w)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+	ctl := RoleCriteriaController{}
 
-		ctl := RoleCriteriaController{}
-
-		method := c.GetHTTPMethod()
-		switch method {
-		case "OPTIONS":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "DELETE"})
-			})
-			return
-		case "GET":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.ReadMany(c)
-			})
-		case "HEAD":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.ReadMany(c)
-			})
-		case "POST":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Create(c)
-			})
-		case "DELETE":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.DeleteMany(c)
-			})
-		default:
-			c.RespondWithStatus(http.StatusMethodNotAllowed)
-			return
-		}
-	})
+	method := c.GetHTTPMethod()
+	switch method {
+	case "OPTIONS":
+		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "DELETE"})
+		return
+	case "GET":
+		ctl.ReadMany(c)
+	case "HEAD":
+		ctl.ReadMany(c)
+	case "POST":
+		ctl.Create(c)
+	case "DELETE":
+		ctl.DeleteMany(c)
+	default:
+		c.RespondWithStatus(http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 // ReadMany handles GET for the collection

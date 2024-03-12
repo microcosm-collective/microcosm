@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -9,7 +8,6 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/grafana/pyroscope-go"
 	"github.com/lib/pq"
 
 	"github.com/microcosm-cc/microcosm/audit"
@@ -23,40 +21,28 @@ type AttendeesController struct{}
 
 // AttendeesHandler is a web handler
 func AttendeesHandler(w http.ResponseWriter, r *http.Request) {
-	path := "/events/{id}/attendees"
-	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
-		c, status, err := models.MakeContext(r, w)
-		if err != nil {
-			c.RespondWithErrorDetail(err, status)
-			return
-		}
+	c, status, err := models.MakeContext(r, w)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+	ctl := AttendeesController{}
 
-		ctl := AttendeesController{}
-
-		method := c.GetHTTPMethod()
-		switch method {
-		case "OPTIONS":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				c.RespondWithOptions([]string{"OPTIONS", "PUT", "HEAD", "GET"})
-			})
-			return
-		case "PUT":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.UpdateMany(c)
-			})
-		case "HEAD":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.ReadMany(c)
-			})
-		case "GET":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.ReadMany(c)
-			})
-		default:
-			c.RespondWithStatus(http.StatusMethodNotAllowed)
-			return
-		}
-	})
+	method := c.GetHTTPMethod()
+	switch method {
+	case "OPTIONS":
+		c.RespondWithOptions([]string{"OPTIONS", "PUT", "HEAD", "GET"})
+		return
+	case "PUT":
+		ctl.UpdateMany(c)
+	case "HEAD":
+		ctl.ReadMany(c)
+	case "GET":
+		ctl.ReadMany(c)
+	default:
+		c.RespondWithStatus(http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 // UpdateMany handles PUT on the collection

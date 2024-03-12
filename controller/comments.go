@@ -1,12 +1,10 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/grafana/pyroscope-go"
 	"github.com/microcosm-cc/microcosm/audit"
 	e "github.com/microcosm-cc/microcosm/errors"
 	h "github.com/microcosm-cc/microcosm/helpers"
@@ -18,32 +16,24 @@ type CommentsController struct{}
 
 // CommentsHandler is a web handler
 func CommentsHandler(w http.ResponseWriter, r *http.Request) {
-	path := "/comments"
-	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(context.Context) {
-		c, status, err := models.MakeContext(r, w)
-		if err != nil {
-			c.RespondWithErrorDetail(err, status)
-			return
-		}
+	c, status, err := models.MakeContext(r, w)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+	ctl := CommentsController{}
 
-		ctl := CommentsController{}
-
-		method := c.GetHTTPMethod()
-		switch method {
-		case "OPTIONS":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				c.RespondWithOptions([]string{"OPTIONS", "POST"})
-			})
-			return
-		case "POST":
-			pyroscope.TagWrapper(context.Background(), pyroscope.Labels("method", method), func(context.Context) {
-				ctl.Create(c)
-			})
-		default:
-			c.RespondWithStatus(http.StatusMethodNotAllowed)
-			return
-		}
-	})
+	method := c.GetHTTPMethod()
+	switch method {
+	case "OPTIONS":
+		c.RespondWithOptions([]string{"OPTIONS", "POST"})
+		return
+	case "POST":
+		ctl.Create(c)
+	default:
+		c.RespondWithStatus(http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 // Create handles POST
