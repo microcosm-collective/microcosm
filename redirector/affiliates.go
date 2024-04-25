@@ -25,6 +25,8 @@ func affiliateMayExist(domain string) bool {
 
 func getAffiliateLink(link models.Link) string {
 
+	// We look for affiliate links to strip the tracking
+
 	// Ebay Partner Network
 	if !(len(ahocorasick.NewStringMatcher(ebayDomainParts).Match([]byte(strings.ToLower(link.Domain)))) == 0) {
 		m := ebayLink{Link: link}

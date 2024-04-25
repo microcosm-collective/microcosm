@@ -10,11 +10,6 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
-const (
-	ebayPublisherID string = "5574889051"
-	ebayCampaignID  string = "5336525415"
-)
-
 // https://developer.ebay.com/devzone/shopping/docs/callref/getsingleitem.html
 // Max length: 19 (Note: The eBay database specifies 38. Currently, Item IDs are usually 9 to 12 digits).
 var ebayItemIDRegexp = regexp.MustCompile("[0-9]{9,19}")
@@ -40,9 +35,7 @@ func (m *ebayLink) getDestination() (bool, string) {
 
 		q := u.Query()
 		q.Del("pub")
-		q.Add("pub", ebayPublisherID)
 		q.Del("campid")
-		q.Add("campid", ebayCampaignID)
 		u.RawQuery = q.Encode()
 
 		return true, u.String()
@@ -97,15 +90,10 @@ func (m *ebayLink) getDestination() (bool, string) {
 		u, _ := url.Parse(fmt.Sprintf(`https://www.ebay.co.uk/itm/%s`, itemID))
 		q := u.Query()
 		q.Del("mkevt")
-		q.Add("mkevt", "1")
 		q.Del("mkcid")
-		q.Add("mkcid", "1")
 		q.Del("mkrid")
-		q.Add("mkrid", "710-53481-19255-0")
 		q.Del("campid")
-		q.Add("campid", ebayCampaignID)
 		q.Del("toolid")
-		q.Add("toolid", "1001")
 		u.RawQuery = q.Encode()
 
 		return true, u.String()
@@ -119,15 +107,10 @@ func (m *ebayLink) getDestination() (bool, string) {
 
 	q := u.Query()
 	q.Del("mkevt")
-	q.Add("mkevt", "1")
 	q.Del("mkcid")
-	q.Add("mkcid", "1")
 	q.Del("mkrid")
-	q.Add("mkrid", "710-53481-19255-0")
 	q.Del("campid")
-	q.Add("campid", ebayCampaignID)
 	q.Del("toolid")
-	q.Add("toolid", "1001")
 	u.RawQuery = q.Encode()
 
 	return true, u.String()

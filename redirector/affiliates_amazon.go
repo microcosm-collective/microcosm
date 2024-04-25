@@ -8,12 +8,6 @@ import (
 	"github.com/microcosm-cc/microcosm/models"
 )
 
-const (
-	amazonCampaignID string = "1634"
-	amazonTagID      string = "buro9"
-	amazonCreativeID string = "6738"
-)
-
 var amazonDomainParts = []string{
 	".amazon.",
 }
@@ -46,11 +40,8 @@ func (m *amazonLink) getDestination() (bool, string) {
 	// Create our affiliate link
 	q := u.Query()
 	q.Del("camp")
-	q.Add("camp", amazonCampaignID)
 	q.Del("tag")
-	q.Add("tag", amazonTagID)
 	q.Del("creative")
-	q.Add("creative", amazonCreativeID)
 	q.Del("linkCode")
 	q.Del("linkId")
 	u.RawQuery = q.Encode()
