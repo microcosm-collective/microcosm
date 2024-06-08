@@ -1443,7 +1443,7 @@ func storeGravatar(q h.Er, gravatarURL string) (FileMetadataType, int, error) {
 	metadata.Created = time.Now()
 	metadata.AttachCount++
 
-	status, err := metadata.insert(q, AvatarMaxWidth, AvatarMaxHeight, false)
+	status, err := metadata.insert(q, AvatarMaxWidth, AvatarMaxHeight)
 	if err != nil {
 		glog.Errorf("metadata.Insert(%d, %d) %+v", AvatarMaxWidth, AvatarMaxHeight, err)
 		return FileMetadataType{}, status,

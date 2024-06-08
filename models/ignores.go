@@ -66,7 +66,7 @@ func (m *IgnoreType) Update() (int, error) {
 
 	// Lack of error checking, it can only fail if it has been inserted already
 	// and our answer "OK" remains the same if it exists after this action.
-	tx.Exec(`--Create Ignore
+	_, err = tx.Exec(`--Create Ignore
 INSERT INTO ignores (
     profile_id, item_type_id, item_id
 ) VALUES (
@@ -98,7 +98,7 @@ func (m *IgnoreType) Delete() (int, error) {
 
 	// Lack of error checking, it can only fail if it has been deleted already
 	// and our answer "OK" remains the same if it exists after this action.
-	tx.Exec(`--Delete Ignore
+	_, err = tx.Exec(`--Delete Ignore
 DELETE
   FROM ignores
  WHERE profile_id = $1

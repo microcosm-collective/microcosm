@@ -138,35 +138,7 @@ func (f *FileMetadataType) Insert(
 	}
 	defer tx.Rollback()
 
-	status, err := f.insert(tx, maxWidth, maxHeight, false)
-	if err != nil {
-		return status, err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		glog.Errorf("tx.Commit() %+v", err)
-		return http.StatusInternalServerError, fmt.Errorf("transaction failed")
-	}
-
-	return http.StatusOK, nil
-}
-
-// Import saves a file metadata to the database without validating it
-func (f *FileMetadataType) Import(
-	maxWidth int64,
-	maxHeight int64,
-) (
-	int,
-	error,
-) {
-	tx, err := h.GetTransaction()
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
-	defer tx.Rollback()
-
-	status, err := f.insert(tx, maxWidth, maxHeight, true)
+	status, err := f.insert(tx, maxWidth, maxHeight)
 	if err != nil {
 		return status, err
 	}
@@ -185,7 +157,6 @@ func (f *FileMetadataType) insert(
 	q h.Er,
 	maxWidth int64,
 	maxHeight int64,
-	isImport bool,
 ) (
 	int,
 	error,

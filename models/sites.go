@@ -342,7 +342,7 @@ func IsReservedSubdomain(query string) (bool, error) {
 	if err == nil {
 		return true, nil
 	}
-	if err != nil && status != http.StatusNotFound {
+	if status != http.StatusNotFound {
 		return false,
 			fmt.Errorf("error fetching site by subdomain: %+v", err)
 	}

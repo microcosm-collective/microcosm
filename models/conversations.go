@@ -168,7 +168,7 @@ func (m *ConversationType) Insert(siteID int64, profileID int64) (int, error) {
 		return http.StatusOK, nil
 	}
 
-	status, err = m.insert(siteID, profileID)
+	status, err = m.insert()
 	if status == http.StatusOK {
 		// 5 minute dupe check
 		c.SetInt64(dupeKey, m.ID, 60*5)
@@ -177,17 +177,17 @@ func (m *ConversationType) Insert(siteID int64, profileID int64) (int, error) {
 	return status, err
 }
 
-// Import saves a conversation with duplicate checking
+// Import saves a conversation without duplicate checking
 func (m *ConversationType) Import(siteID int64, profileID int64) (int, error) {
 	status, err := m.Validate(siteID, profileID, true, true)
 	if err != nil {
 		return status, err
 	}
 
-	return m.insert(siteID, profileID)
+	return m.insert()
 }
 
-func (m *ConversationType) insert(siteID int64, profileID int64) (int, error) {
+func (m *ConversationType) insert() (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, err
