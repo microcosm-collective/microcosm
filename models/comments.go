@@ -301,7 +301,7 @@ INSERT INTO comments (
 	}
 	m.ID = insertID
 
-	revisionID, status, err := m.CreateCommentRevision(
+	_, status, err := m.CreateCommentRevision(
 		tx,
 		true,
 		siteID,
@@ -320,8 +320,6 @@ INSERT INTO comments (
 		return http.StatusInternalServerError,
 			fmt.Errorf("transaction failed: %v", err.Error())
 	}
-
-	EmbedAllMedia(revisionID)
 
 	PurgeCache(h.ItemTypes[h.ItemTypeComment], m.ID)
 	PurgeCache(m.ItemTypeID, m.ItemID)
@@ -468,7 +466,7 @@ func (m *CommentSummaryType) Update(siteID int64) (int, error) {
 	}
 	defer tx.Rollback()
 
-	revisionID, status, err := m.CreateCommentRevision(
+	_, status, err = m.CreateCommentRevision(
 		tx,
 		false,
 		siteID,
@@ -485,8 +483,6 @@ func (m *CommentSummaryType) Update(siteID int64) (int, error) {
 		return http.StatusInternalServerError,
 			fmt.Errorf("transaction failed: %+v", err)
 	}
-
-	EmbedAllMedia(revisionID)
 
 	PurgeCache(h.ItemTypes[h.ItemTypeComment], m.ID)
 	PurgeCache(h.ItemTypes[m.ItemType], m.ItemID)
@@ -1057,8 +1053,6 @@ UPDATE revisions
 				return CommentSummaryType{}, http.StatusInternalServerError,
 					fmt.Errorf("transaction failed")
 			}
-
-			EmbedAllMedia(revisionID)
 
 		} else {
 

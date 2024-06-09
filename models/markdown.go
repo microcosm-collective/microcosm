@@ -84,8 +84,12 @@ func ProcessCommentMarkdown(
 
 	// Scrub the generated HTML of anything nasty
 	// NOTE: This *MUST* always be the last thing to avoid introducing a
-	// security vulnerability
+	// security vulnerability, any step beyond this must be known and trusted
 	src = SanitiseHTML(src)
+
+	// Now we have trusted input, add embeds that we trust (they're hard-coded
+	// into this codebase)
+	src = Embedly(src)
 
 	return string(src), nil
 }

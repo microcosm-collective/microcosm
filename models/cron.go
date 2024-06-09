@@ -238,7 +238,7 @@ func UpdateMicrocosmItemCounts() {
 		return
 	}
 
-	db.Exec(`--updateMicrocosmSequence
+	_, err = db.Exec(`--updateMicrocosmSequence
 UPDATE microcosms m
    SET sequence = ms.sequence
   FROM (
