@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -631,6 +632,7 @@ type JSONRequestDecoder struct{}
 func (d *JSONRequestDecoder) Unmarshal(cx *Context, v interface{}) error {
 	// read body
 	err := json.NewDecoder(cx.Request.Body).Decode(&v)
+	io.Copy(io.Discard, cx.Request.Body)
 	cx.Request.Body.Close()
 	return err
 }

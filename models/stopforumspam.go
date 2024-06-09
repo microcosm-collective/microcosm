@@ -54,6 +54,7 @@ func IsSpammer(email string) bool {
 		glog.Errorf(`%+v`, err)
 		return false
 	}
+	io.Copy(io.Discard, resp.Body)
 
 	// If a successful API query, and the email has been seen in the last year
 	// and confidence is now above 0... then we have a spammer.
