@@ -9,8 +9,6 @@ import (
 
 	conf "github.com/microcosm-cc/microcosm/config"
 	h "github.com/microcosm-cc/microcosm/helpers"
-
-	"github.com/mccutchen/urlresolver"
 )
 
 // ProcessLinks will fetch the HTML for a revision and extract and shorten all
@@ -221,5 +219,56 @@ func ProcessLink(
 
 	// Now we can actually process the URL, as we believe this is now an
 	// external URL
-	return urlresolver.Canonicalize(u), text, nil
+	//
+	// We will strip out any tracking parameters from the URL using these rules:
+	// https://github.com/newhouse/url-tracking-stripper/blob/dea6c144/README.md#documentation
+	q := u.Query()
+
+	// Google's Urchin Tracking Module & Google Adwords
+	q.Del("utm_source")
+	q.Del("utm_medium")
+	q.Del("utm_term")
+	q.Del("utm_campaign")
+	q.Del("utm_content")
+	q.Del("utm_name")
+	q.Del("utm_cid")
+	q.Del("utm_reader")
+	q.Del("utm_viz_id")
+	q.Del("utm_pubreferrer")
+	q.Del("utm_swu")
+	q.Del("gclid")
+
+	// Adobe Omniture SiteCatalyst
+	q.Del("ICID")
+	q.Del("icid")
+
+	// Facebook
+	q.Del("fbclid")
+
+	// Hubspot
+	q.Del("_hsenc")
+	q.Del("_hsmi")
+
+	// Marketo
+	q.Del("mkt_tok")
+
+	// MailChimp
+	q.Del("mc_cid")
+	q.Del("mc_eid")
+
+	// Simple Reach
+	q.Del("sr_share")
+
+	// Vero
+	q.Del("vero_conv")
+	q.Del("vero_id")
+
+	// Unknown
+	q.Del("nr_email_referer")
+	q.Del("ncid")
+	q.Del("ref")
+
+	u.RawQuery = q.Encode()
+
+	return u.String(), text, nil
 }
