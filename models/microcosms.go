@@ -1145,14 +1145,18 @@ func getMicrocosmChildren(microcosmID int64, profileID int64) ([]MicrocosmLinkTy
 			err
 	}
 
-	rows, err := db.Query(`--GetMicrocosmParents
+	rows, err := db.Query(`--GetMicrocosmChildren
 SELECT microcosm_id
       ,title
       ,logo_url
   FROM microcosms m
+  LEFT JOIN ignores_expanded i ON i.profile_id = $2
+                              AND i.item_type_id = 2
+                              AND i.item_id = m.microcosm_id
  WHERE parent_id = $1
    AND is_deleted IS NOT TRUE
    AND is_moderated IS NOT TRUE
+   AND i.profile_id IS NULL
    AND (get_effective_permissions(site_id,microcosm_id,2,microcosm_id,$2)).can_read IS TRUE
  ORDER BY is_sticky DESC, comment_count DESC, title ASC`,
 		microcosmID,
