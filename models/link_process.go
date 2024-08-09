@@ -234,9 +234,31 @@ func ProcessLink(
 	q.Del("utm_cid")
 	q.Del("utm_reader")
 	q.Del("utm_viz_id")
+	q.Del("utm_referrer")
 	q.Del("utm_pubreferrer")
 	q.Del("utm_swu")
+	q.Del("stm_source")
+	q.Del("stm_medium")
+	q.Del("stm_term")
+	q.Del("stm_campaign")
+	q.Del("stm_content")
+	q.Del("stm_name")
+	q.Del("stm_cid")
+	q.Del("stm_reader")
+	q.Del("stm_viz_id")
+	q.Del("stm_referrer")
+	q.Del("stm_pubreferrer")
+	q.Del("stm_swu")
 	q.Del("gclid")
+
+	// Amazon
+	if strings.Contains(u.Host, "amazon.") {
+		q.Del("dib")
+		q.Del("dib_tag")
+		q.Del("psc")
+		q.Del("smid")
+		q.Del("tag")
+	}
 
 	// Adobe Omniture SiteCatalyst
 	q.Del("ICID")
@@ -249,12 +271,28 @@ func ProcessLink(
 	q.Del("_hsenc")
 	q.Del("_hsmi")
 
+	// Instagram
+	q.Del("igshid")
+
+	// Klaviyo
+	q.Del("igshid")
+
 	// Marketo
 	q.Del("mkt_tok")
+	q.Del("mkt_uniq")
 
 	// MailChimp
 	q.Del("mc_cid")
 	q.Del("mc_eid")
+
+	// Microsoft
+	q.Del("cvid")
+	q.Del("oicd")
+
+	// Olytics
+	q.Del("oly_anon_id")
+	q.Del("oly_enc_id")
+	q.Del("otc")
 
 	// Simple Reach
 	q.Del("sr_share")
@@ -262,6 +300,17 @@ func ProcessLink(
 	// Vero
 	q.Del("vero_conv")
 	q.Del("vero_id")
+
+	// Wicked
+	q.Del("wickedid")
+
+	// Yahoo
+	q.Del("soc_src")
+	q.Del("soc_trk")
+
+	// Yankdex
+	q.Del("_openstat")
+	q.Del("yclid")
 
 	// Unknown
 	q.Del("nr_email_referer")
