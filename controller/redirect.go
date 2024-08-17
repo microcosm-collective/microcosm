@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/microcosm-cc/microcosm/models"
-	"github.com/microcosm-cc/microcosm/redirector"
+	"git.dee.kitchen/buro9/microcosm/models"
+	"git.dee.kitchen/buro9/microcosm/redirector"
 )
 
 // RedirectHandler is a web handler

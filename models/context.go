@@ -16,10 +16,10 @@ import (
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 
-	"github.com/microcosm-cc/microcosm/cache"
-	conf "github.com/microcosm-cc/microcosm/config"
-	e "github.com/microcosm-cc/microcosm/errors"
-	h "github.com/microcosm-cc/microcosm/helpers"
+	"git.dee.kitchen/buro9/microcosm/cache"
+	conf "git.dee.kitchen/buro9/microcosm/config"
+	e "git.dee.kitchen/buro9/microcosm/errors"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
 )
 
 const rootSiteID int64 = 1

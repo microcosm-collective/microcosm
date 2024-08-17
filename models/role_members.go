@@ -7,7 +7,7 @@ import (
 	"sort"
 	"sync"
 
-	h "github.com/microcosm-cc/microcosm/helpers"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
 )
 
 // FlushRoleMembersCacheByProfileID clears the database caches

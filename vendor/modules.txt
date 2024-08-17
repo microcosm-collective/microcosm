@@ -1,3 +1,6 @@
+# git.dee.kitchen/buro9/exifutil v0.0.0-20140910154058-36de169162e2
+## explicit
+git.dee.kitchen/buro9/exifutil
 # github.com/aymerick/douceur v0.2.0
 ## explicit
 github.com/aymerick/douceur/css
@@ -60,9 +63,6 @@ github.com/lib/pq/scram
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
-# github.com/microcosm-cc/exifutil v0.0.0-20140910154058-36de169162e2
-## explicit
-github.com/microcosm-cc/exifutil
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
 github.com/minio/md5-simd

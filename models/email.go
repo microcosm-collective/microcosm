@@ -13,7 +13,7 @@ import (
 	sendgrid "github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
-	conf "github.com/microcosm-cc/microcosm/config"
+	conf "git.dee.kitchen/buro9/microcosm/config"
 )
 
 const (

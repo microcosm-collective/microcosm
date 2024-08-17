@@ -1,3 +1,5 @@
+git.dee.kitchen/buro9/exifutil v0.0.0-20140910154058-36de169162e2 h1:lRV8y137Y5JZe2IdMsyYvxPQY2Nb/QKEqTxqL2NM670=
+git.dee.kitchen/buro9/exifutil v0.0.0-20140910154058-36de169162e2/go.mod h1:HNAwhrK9pmg2TeILEIpkEJGVLqxLs/dNwTHnn1thqHs=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
 github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874 h1:N7oVaKyGp8bttX0bfZGmcGkjz7DLQXhAn3DNd3T0ous=
@@ -33,8 +35,6 @@ github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
 github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/microcosm-cc/bluemonday v1.0.27 h1:MpEUotklkwCSLeH+Qdx1VJgNqLlpY2KXwXFM08ygZfk=
 github.com/microcosm-cc/bluemonday v1.0.27/go.mod h1:jFi9vgW+H7c3V0lb6nR74Ib/DIB5OBs92Dimizgw2cA=
-github.com/microcosm-cc/exifutil v0.0.0-20140910154058-36de169162e2 h1:7vdAKwusZET1a/MuNG9T1FwQeQh409If/FT6f4R4Czc=
-github.com/microcosm-cc/exifutil v0.0.0-20140910154058-36de169162e2/go.mod h1:rw75SouXX/hywyTQcQevWQD35Mxs8nZcoU/lIXaROhU=
 github.com/minio/md5-simd v1.1.2 h1:Gdi1DZK69+ZVMoNHRXJyNcxrMA4dSxoYHZSQbirFg34=
 github.com/minio/md5-simd v1.1.2/go.mod h1:MzdKDxYpY2BT9XQFocsiZf/NKVtR7nkE4RoEpN+20RM=
 github.com/minio/minio-go/v7 v7.0.74 h1:fTo/XlPBTSpo3BAMshlwKL5RspXRv9us5UeHEGYCFe0=

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/microcosm-cc/microcosm/models"
+	"git.dee.kitchen/buro9/microcosm/models"
 )
 
 // SiteReservedController is a web controller

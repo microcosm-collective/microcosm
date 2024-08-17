@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang/glog"
 
-	h "github.com/microcosm-cc/microcosm/helpers"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
 )
 
 // MenuType describes a menu item

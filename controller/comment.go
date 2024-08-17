@@ -8,9 +8,9 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/microcosm-cc/microcosm/audit"
-	h "github.com/microcosm-cc/microcosm/helpers"
-	"github.com/microcosm-cc/microcosm/models"
+	"git.dee.kitchen/buro9/microcosm/audit"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
+	"git.dee.kitchen/buro9/microcosm/models"
 )
 
 // CommentController is a web controller

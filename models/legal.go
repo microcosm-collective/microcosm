@@ -119,7 +119,7 @@ func GetLegalDataForSite(site SiteType) (LegalData, int, error) {
 	data.LinkToCookiePolicy = data.CustomerURL + "/legal/cookies"
 	data.LinkToFees = "http://microcosm.app/compare"
 	data.LinkToOpenSourceLicenses =
-		"https://github.com/microcosm-cc/microweb/blob/master/OPENSOURCE.md"
+		"https://git.dee.kitchen/buro9/microweb/blob/master/OPENSOURCE.md"
 	data.LinkToPrivacyPolicy = data.CustomerURL + "/legal/privacy"
 
 	// Links in forum content

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	h "github.com/microcosm-cc/microcosm/helpers"
-	"github.com/microcosm-cc/microcosm/models"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
+	"git.dee.kitchen/buro9/microcosm/models"
 )
 
 // IgnoredHandler is a web handler

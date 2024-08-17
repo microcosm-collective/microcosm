@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/microcosm-cc/microcosm/models"
+	"git.dee.kitchen/buro9/microcosm/models"
 )
 
 // MetricsController is a web controller

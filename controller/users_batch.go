@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"git.dee.kitchen/buro9/microcosm/models"
 	"github.com/golang/glog"
-	"github.com/microcosm-cc/microcosm/models"
 )
 
 // UsersBatchController is a web controller

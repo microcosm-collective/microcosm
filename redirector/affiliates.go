@@ -5,7 +5,7 @@ import (
 
 	"github.com/cloudflare/ahocorasick"
 
-	"github.com/microcosm-cc/microcosm/models"
+	"git.dee.kitchen/buro9/microcosm/models"
 )
 
 var affDomainParts = append(

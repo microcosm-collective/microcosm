@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/microcosm-cc/microcosm/audit"
-	e "github.com/microcosm-cc/microcosm/errors"
-	h "github.com/microcosm-cc/microcosm/helpers"
-	"github.com/microcosm-cc/microcosm/models"
+	"git.dee.kitchen/buro9/microcosm/audit"
+	e "git.dee.kitchen/buro9/microcosm/errors"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
+	"git.dee.kitchen/buro9/microcosm/models"
 )
 
 // CommentsController is a web controller

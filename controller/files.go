@@ -11,8 +11,8 @@ import (
 
 	"github.com/golang/glog"
 
-	h "github.com/microcosm-cc/microcosm/helpers"
-	"github.com/microcosm-cc/microcosm/models"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
+	"git.dee.kitchen/buro9/microcosm/models"
 )
 
 // FilesHandler is a web handler

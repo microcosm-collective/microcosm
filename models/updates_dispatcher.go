@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang/glog"
 
-	h "github.com/microcosm-cc/microcosm/helpers"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
 )
 
 // EmailMergeData encapsulates the merge object that will be used by the

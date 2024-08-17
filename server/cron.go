@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/microcosm-cc/microcosm/models"
+	"git.dee.kitchen/buro9/microcosm/models"
 )
 
 // Field name   | Mandatory? | Allowed values  | Allowed special characters

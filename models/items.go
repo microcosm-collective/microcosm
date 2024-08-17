@@ -12,7 +12,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/lib/pq"
 
-	h "github.com/microcosm-cc/microcosm/helpers"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
 )
 
 // ItemParent describes the ancestor microcosms this item belongs to

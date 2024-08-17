@@ -16,13 +16,13 @@ import (
 
 	"github.com/disintegration/imaging"
 	"github.com/golang/glog"
-	"github.com/microcosm-cc/exifutil"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/rwcarlsen/goexif/exif"
 
-	conf "github.com/microcosm-cc/microcosm/config"
-	h "github.com/microcosm-cc/microcosm/helpers"
+	"git.dee.kitchen/buro9/exifutil"
+	conf "git.dee.kitchen/buro9/microcosm/config"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
 )
 
 const (

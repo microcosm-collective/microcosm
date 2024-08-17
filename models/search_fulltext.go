@@ -15,8 +15,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/lib/pq"
 
-	merrors "github.com/microcosm-cc/microcosm/errors"
-	h "github.com/microcosm-cc/microcosm/helpers"
+	merrors "git.dee.kitchen/buro9/microcosm/errors"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
 )
 
 // 2 queries are run, so a 5 second timeout would mean a worst case of 10

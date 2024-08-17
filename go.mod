@@ -1,10 +1,11 @@
-module github.com/microcosm-cc/microcosm
+module git.dee.kitchen/buro9/microcosm
 
 go 1.21
 
 toolchain go1.21.3
 
 require (
+	git.dee.kitchen/buro9/exifutil v0.0.0-20140910154058-36de169162e2
 	github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874
 	github.com/cloudflare/ahocorasick v0.0.0-20210425175752-730270c3e184
 	github.com/disintegration/imaging v1.6.2
@@ -12,7 +13,6 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/lib/pq v1.10.9
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/microcosm-cc/exifutil v0.0.0-20140910154058-36de169162e2
 	github.com/minio/minio-go/v7 v7.0.74
 	github.com/robfig/config v0.0.0-20141207224736-0f78529c8c7e
 	github.com/robfig/cron v1.2.0

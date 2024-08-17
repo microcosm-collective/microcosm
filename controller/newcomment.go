@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strconv"
 
-	h "github.com/microcosm-cc/microcosm/helpers"
-	"github.com/microcosm-cc/microcosm/models"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
+	"git.dee.kitchen/buro9/microcosm/models"
 )
 
 // NewCommentController is a web controller

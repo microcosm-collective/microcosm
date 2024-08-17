@@ -8,7 +8,7 @@ import (
 	"github.com/russross/blackfriday"
 	"golang.org/x/net/html"
 
-	h "github.com/microcosm-cc/microcosm/helpers"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
 )
 
 const htmlCruft = `<html><head></head><body>`

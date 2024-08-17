@@ -13,8 +13,8 @@ import (
 
 	"github.com/golang/glog"
 
-	c "github.com/microcosm-cc/microcosm/cache"
-	h "github.com/microcosm-cc/microcosm/helpers"
+	c "git.dee.kitchen/buro9/microcosm/cache"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
 )
 
 const (

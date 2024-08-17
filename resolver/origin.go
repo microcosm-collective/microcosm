@@ -6,8 +6,8 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/microcosm-cc/microcosm/cache"
-	h "github.com/microcosm-cc/microcosm/helpers"
+	"git.dee.kitchen/buro9/microcosm/cache"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
 )
 
 const ttl int32 = (60 * 60 * 24 * 365) / 12 // 1 Month

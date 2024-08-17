@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/microcosm-cc/microcosm/models"
+	"git.dee.kitchen/buro9/microcosm/models"
 )
 
 // GeoCodeController is a web handler

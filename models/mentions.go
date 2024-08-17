@@ -11,7 +11,7 @@ import (
 	"github.com/golang/glog"
 	"golang.org/x/net/html"
 
-	h "github.com/microcosm-cc/microcosm/helpers"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
 )
 
 const (

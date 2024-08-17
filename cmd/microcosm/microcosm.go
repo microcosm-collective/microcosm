@@ -6,10 +6,10 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/microcosm-cc/microcosm/cache"
-	conf "github.com/microcosm-cc/microcosm/config"
-	h "github.com/microcosm-cc/microcosm/helpers"
-	"github.com/microcosm-cc/microcosm/server"
+	"git.dee.kitchen/buro9/microcosm/cache"
+	conf "git.dee.kitchen/buro9/microcosm/config"
+	h "git.dee.kitchen/buro9/microcosm/helpers"
+	"git.dee.kitchen/buro9/microcosm/server"
 )
 
 func main() {
