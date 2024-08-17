@@ -111,7 +111,7 @@ func (m *PollType) Validate(
 			fmt.Errorf("you must supply a question that the poll will answer")
 	}
 
-	if m.Choices == nil || len(m.Choices) == 0 {
+	if len(m.Choices) == 0 {
 		return http.StatusBadRequest,
 			fmt.Errorf("you must supply choices for the poll")
 	}

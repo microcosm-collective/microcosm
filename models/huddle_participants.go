@@ -69,7 +69,7 @@ func UpdateManyHuddleParticipants(
 	err = tx.Commit()
 	if err != nil {
 		return http.StatusInternalServerError,
-			fmt.Errorf(fmt.Sprintf("transaction failed: %+v", err))
+			fmt.Errorf("transaction failed: %+v", err)
 	}
 
 	go PurgeCache(h.ItemTypes[h.ItemTypeHuddle], huddleID)

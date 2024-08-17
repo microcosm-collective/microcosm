@@ -35,3 +35,4 @@ _testmain.go
 *.prof
 
 /microcosm
+.vscode/settings.json

@@ -726,11 +726,9 @@ SELECT COUNT(*) AS total
 	if offset > maxOffset {
 		glog.Warningf("offset > maxOffset")
 		return []HuddleSummaryType{}, 0, 0, http.StatusBadRequest,
-			fmt.Errorf(
-				fmt.Sprintf("not enough records, "+
-					"offset (%d) would return an empty page",
-					offset,
-				),
+			fmt.Errorf("not enough records, "+
+				"offset (%d) would return an empty page",
+				offset,
 			)
 	}
 

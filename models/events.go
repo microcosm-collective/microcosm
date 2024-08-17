@@ -1123,9 +1123,7 @@ OFFSET $5`,
 	err = rows.Err()
 	if err != nil {
 		return []EventSummaryType{}, 0, 0, http.StatusInternalServerError,
-			fmt.Errorf(
-				fmt.Sprintf("error fetching rows: %v", err.Error()),
-			)
+			fmt.Errorf("error fetching rows: %v", err.Error())
 	}
 	rows.Close()
 
