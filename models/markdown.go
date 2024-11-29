@@ -33,7 +33,7 @@ func ProcessCommentMarkdown(
 	string,
 	error,
 ) {
-	markdown = stripChars(markdown, true, true, true, true)
+	// TODO: markdown = stripChars(markdown, true, true, true, true)
 
 	src := []byte(markdown)
 
