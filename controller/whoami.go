@@ -1,33 +1,43 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	h "git.dee.kitchen/buro9/microcosm/helpers"
 	"git.dee.kitchen/buro9/microcosm/models"
+	"github.com/grafana/pyroscope-go"
 )
 
 // WhoAmIHandler is the web handler
 func WhoAmIHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
-	ctl := WhoAmIController{}
+	path := "/whoami"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(ctx context.Context) {
 
-	method := c.GetHTTPMethod()
-	switch method {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "GET"})
-		return
-	case "GET":
-		ctl.Read(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
+		ctl := WhoAmIController{}
+
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "GET"})
+			})
+			return
+		case "GET":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // WhoAmIController is the web controller

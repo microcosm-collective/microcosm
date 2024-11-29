@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
 	h "git.dee.kitchen/buro9/microcosm/helpers"
 	"git.dee.kitchen/buro9/microcosm/models"
+	"github.com/grafana/pyroscope-go"
 )
 
 // RoleProfileController is a web controller
@@ -13,30 +15,44 @@ type RoleProfileController struct{}
 
 // RoleProfileHandler is a web handler
 func RoleProfileHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
-	ctl := RoleProfileController{}
+	path := "/roles/{id}/profiles/{id}"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(ctx context.Context) {
 
-	method := c.GetHTTPMethod()
-	switch method {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE"})
-		return
-	case "GET":
-		ctl.Read(c)
-	case "HEAD":
-		ctl.Read(c)
-	case "PUT":
-		ctl.Update(c)
-	case "DELETE":
-		ctl.Delete(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
+		ctl := RoleProfileController{}
+
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE"})
+			})
+			return
+		case "GET":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		case "HEAD":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		case "PUT":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Update(c)
+			})
+		case "DELETE":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Delete(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // Read handles GET

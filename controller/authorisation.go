@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 
 	h "git.dee.kitchen/buro9/microcosm/helpers"
 	"git.dee.kitchen/buro9/microcosm/models"
+	"github.com/grafana/pyroscope-go"
 )
 
 // PermissionController is a web controller
@@ -15,26 +17,36 @@ type PermissionController struct{}
 
 // PermissionHandler is a web handler
 func PermissionHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
-	ctl := PermissionController{}
+	path := "/permission"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(ctx context.Context) {
 
-	method := c.GetHTTPMethod()
-	switch method {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET"})
-		return
-	case "HEAD":
-		ctl.Read(c)
-	case "GET":
-		ctl.Read(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
+		ctl := PermissionController{}
+
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET"})
+			})
+			return
+		case "HEAD":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		case "GET":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // Read handles GET

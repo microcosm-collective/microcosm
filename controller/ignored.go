@@ -1,39 +1,54 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	h "git.dee.kitchen/buro9/microcosm/helpers"
 	"git.dee.kitchen/buro9/microcosm/models"
+	"github.com/grafana/pyroscope-go"
 )
 
 // IgnoredHandler is a web handler
 func IgnoredHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
-	ctl := IgnoredController{}
+	path := "/ignored"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(ctx context.Context) {
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
+		ctl := IgnoredController{}
 
-	method := c.GetHTTPMethod()
-	switch method {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "DELETE"})
-		return
-	case "HEAD":
-		ctl.ReadMany(c)
-	case "GET":
-		ctl.ReadMany(c)
-	case "PUT":
-		ctl.Update(c)
-	case "DELETE":
-		ctl.Delete(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "HEAD", "GET", "PUT", "DELETE"})
+			})
+			return
+		case "HEAD":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.ReadMany(c)
+			})
+		case "GET":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.ReadMany(c)
+			})
+		case "PUT":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Update(c)
+			})
+		case "DELETE":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Delete(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // IgnoredController is a web controller

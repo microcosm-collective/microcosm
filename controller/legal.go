@@ -1,71 +1,87 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	h "git.dee.kitchen/buro9/microcosm/helpers"
 	"git.dee.kitchen/buro9/microcosm/models"
+	"github.com/grafana/pyroscope-go"
 )
 
 // LegalsHandler is a web handler
 func LegalsHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
-
-	method := c.GetHTTPMethod()
-	switch method {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "GET"})
-		return
-	case "GET":
-		if c.IsRootSite() {
-			// Root site
-			c.RespondWithData(
-				h.LinkArrayType{Links: []h.LinkType{
-					{Rel: "api", Href: "/api/v1/legal/service"},
-				}},
-			)
+	path := "/legal"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(ctx context.Context) {
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
 			return
 		}
 
-		// A customer site
-		c.RespondWithData(
-			h.LinkArrayType{Links: []h.LinkType{
-				{Rel: "cookies", Href: "/api/v1/legal/cookies"},
-				{Rel: "privacy", Href: "/api/v1/legal/privacy"},
-				{Rel: "terms", Href: "/api/v1/legal/terms"},
-			}},
-		)
-		return
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "GET"})
+			})
+			return
+		case "GET":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				if c.IsRootSite() {
+					// Root site
+					c.RespondWithData(
+						h.LinkArrayType{Links: []h.LinkType{
+							{Rel: "api", Href: "/api/v1/legal/service"},
+						}},
+					)
+					return
+				}
+
+				// A customer site
+				c.RespondWithData(
+					h.LinkArrayType{Links: []h.LinkType{
+						{Rel: "cookies", Href: "/api/v1/legal/cookies"},
+						{Rel: "privacy", Href: "/api/v1/legal/privacy"},
+						{Rel: "terms", Href: "/api/v1/legal/terms"},
+					}},
+				)
+			})
+			return
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // LegalHandler is a web handler
 func LegalHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
-	ctl := LegalController{}
+	path := "/legal/{id}"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(ctx context.Context) {
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
+		ctl := LegalController{}
 
-	method := c.GetHTTPMethod()
-	switch method {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "GET"})
-	case "GET":
-		ctl.Read(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "GET"})
+			})
+		case "GET":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Read(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // LegalController is a web controller

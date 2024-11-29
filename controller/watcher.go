@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/golang/glog"
+	"github.com/grafana/pyroscope-go"
 
 	h "git.dee.kitchen/buro9/microcosm/helpers"
 	"git.dee.kitchen/buro9/microcosm/models"
@@ -13,26 +15,36 @@ import (
 
 // WatcherHandler is a web handler
 func WatcherHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorDetail(err, status)
-		return
-	}
-	ctl := WatcherController{}
+	path := "/watchers/{id}"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(ctx context.Context) {
 
-	method := c.GetHTTPMethod()
-	switch method {
-	case "PATCH":
-		ctl.Update(c)
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "DELETE", "PATCH"})
-		return
-	case "DELETE":
-		ctl.Delete(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
+		ctl := WatcherController{}
+
+		method := c.GetHTTPMethod()
+		switch method {
+		case "PATCH":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Update(c)
+			})
+		case "OPTIONS":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "DELETE", "PATCH"})
+			})
+			return
+		case "DELETE":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Delete(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // WatcherController is a web controller

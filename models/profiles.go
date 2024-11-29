@@ -271,7 +271,8 @@ func (m *ProfileType) insert(isImport bool) (int, error) {
 	tx, err := h.GetTransaction()
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf(
-			fmt.Sprintf("could not start transaction: %v", err.Error()),
+			"could not start transaction: %s",
+			err.Error(),
 		)
 	}
 

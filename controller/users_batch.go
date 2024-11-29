@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 
 	"git.dee.kitchen/buro9/microcosm/models"
 	"github.com/golang/glog"
+	"github.com/grafana/pyroscope-go"
 )
 
 // UsersBatchController is a web controller
@@ -19,24 +21,31 @@ type UsersBatchController struct{}
 
 // UsersBatchHandler is a web handler
 func UsersBatchHandler(w http.ResponseWriter, r *http.Request) {
-	c, status, err := models.MakeContext(r, w)
-	if err != nil {
-		c.RespondWithErrorMessage(err.Error(), status)
-		return
-	}
-	ctl := UsersBatchController{}
+	path := "/users/batch"
+	pyroscope.TagWrapper(context.Background(), pyroscope.Labels("path", path), func(ctx context.Context) {
+		c, status, err := models.MakeContext(r, w)
+		if err != nil {
+			c.RespondWithErrorMessage(err.Error(), status)
+			return
+		}
+		ctl := UsersBatchController{}
 
-	method := c.GetHTTPMethod()
-	switch method {
-	case "OPTIONS":
-		c.RespondWithOptions([]string{"OPTIONS", "POST"})
-		return
-	case "POST":
-		ctl.Manage(c)
-	default:
-		c.RespondWithStatus(http.StatusMethodNotAllowed)
-		return
-	}
+		method := c.GetHTTPMethod()
+		switch method {
+		case "OPTIONS":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				c.RespondWithOptions([]string{"OPTIONS", "POST"})
+			})
+			return
+		case "POST":
+			pyroscope.TagWrapper(ctx, pyroscope.Labels("method", method), func(context.Context) {
+				ctl.Manage(c)
+			})
+		default:
+			c.RespondWithStatus(http.StatusMethodNotAllowed)
+			return
+		}
+	})
 }
 
 // Manage allows the management of users by a site admin
