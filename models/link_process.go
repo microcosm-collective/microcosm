@@ -312,6 +312,11 @@ func ProcessLink(
 	q.Del("_openstat")
 	q.Del("yclid")
 
+	// YouTube
+	if strings.Contains(u.Host, "youtu.be") || strings.Contains(u.Host, "youtube.com") {
+		q.Del("si")
+	}
+
 	// Unknown
 	q.Del("nr_email_referer")
 	q.Del("ncid")
