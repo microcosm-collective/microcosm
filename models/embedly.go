@@ -178,7 +178,7 @@ var EmbedRules = []EmbedRule{
 	},
 	{
 		Name:    `YouTube`,
-		Match:   regexp.MustCompile(`^(?:https?:|)(?:\/\/)(?:www.|)(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/ytscreeningroom\?v=|\/feeds\/api\/videos\/|\/user\S*[^\w\-\s]))([\w\-]{11})(?:\W.*)?$`),
+		Match:   regexp.MustCompile(`^(?:https?:|)(?:\/\/)(?:www.|)(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?(?:.*)v=|\/ytscreeningroom\?(?:.*)v=|\/feeds\/api\/videos\/|\/user\S*[^\w\-\s]))([\w\-]{11})(?:\W.*)?$`),
 		Replace: `<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/$1" frameborder="0" allowfullscreen></iframe>`,
 		Enabled: true,
 	},
