@@ -25,10 +25,10 @@ Layout was loosely inspired by Django and Rails with the aim of providing a vagu
 
 ## Dependencies
 
-For the database migrations you will need [goose](https://bitbucket.org/liamstask/goose) installed:
+For the database migrations you will need [goose](https://github.com/pressly/goose) installed:
 
 ```bash
-go get bitbucket.org/liamstask/goose/cmd/goose
+go install github.com/pressly/goose/v3/cmd/goose@latest
 ```
 
 ### Config File

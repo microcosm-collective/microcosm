@@ -34,5 +34,6 @@ _testmain.go
 # Profiling output
 *.prof
 
+/config/api.conf
 /microcosm
 .vscode/settings.json
