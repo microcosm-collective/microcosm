@@ -15,6 +15,7 @@ CREATE SCHEMA development;
 ALTER SCHEMA development OWNER TO microcosm;
 
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+CREATE EXTENSION IF NOT EXISTS ltree WITH SCHEMA pg_catalog;
 
 SET search_path = development, public, pg_catalog;
 

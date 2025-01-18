@@ -57,7 +57,7 @@ PERFORM create_owned_site(
            'Frodo', -- profile name
            NULL, -- avatar id
            '/api/v1/files/66cca61feb8001cb71a9fb7062ff94c9d2543340', -- avatar url
-           NULL, -- custom domain
+           'root.localhost', -- custom domain
            'Root site for creating and managing sites', -- site description
            NULL, -- logo url
            NULL, -- background url
@@ -77,7 +77,7 @@ PERFORM create_owned_site(
            'Frodo', -- profile name
            NULL, -- avatar id
            '/api/v1/files/66cca61feb8001cb71a9fb7062ff94c9d2543340', -- avatar url
-           NULL, -- custom domain
+           'localhost', -- custom domain
            'localhost', -- site description
            NULL, -- logo url
            NULL, -- background url
@@ -97,7 +97,7 @@ PERFORM create_owned_site(
            'Frodo', -- profile name
            NULL, -- avatar id
            '/api/v1/files/66cca61feb8001cb71a9fb7062ff94c9d2543340', -- avatar url
-           NULL, -- custom domain
+           'dev1.localhost', -- custom domain
            'dev1', -- site description
            NULL, -- logo url
            NULL, -- background url
@@ -117,7 +117,7 @@ PERFORM create_owned_site(
            'Frodo', -- profile name
            NULL, -- avatar id
            '/api/v1/files/66cca61feb8001cb71a9fb7062ff94c9d2543340', -- avatar url
-           NULL, -- custom domain
+           'dev2.localhost', -- custom domain
            'dev2', -- site description
            NULL, -- logo url
            NULL, -- background url
