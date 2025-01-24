@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
-	"git.dee.kitchen/buro9/microcosm/models"
 	"github.com/grafana/pyroscope-go"
+	h "github.com/microcosm-collective/microcosm/helpers"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // TrendingController is a web controller

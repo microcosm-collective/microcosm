@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/pyroscope-go"
 	"github.com/lib/pq"
 
-	"git.dee.kitchen/buro9/microcosm/audit"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
-	"git.dee.kitchen/buro9/microcosm/models"
+	"github.com/microcosm-collective/microcosm/audit"
+	h "github.com/microcosm-collective/microcosm/helpers"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // PollHandler is a web handler

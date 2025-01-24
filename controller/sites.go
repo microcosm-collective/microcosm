@@ -10,9 +10,9 @@ import (
 	"github.com/golang/glog"
 	"github.com/grafana/pyroscope-go"
 
-	"git.dee.kitchen/buro9/microcosm/audit"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
-	"git.dee.kitchen/buro9/microcosm/models"
+	"github.com/microcosm-collective/microcosm/audit"
+	h "github.com/microcosm-collective/microcosm/helpers"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // SitesController is a web controller

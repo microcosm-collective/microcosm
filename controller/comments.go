@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"git.dee.kitchen/buro9/microcosm/audit"
-	e "git.dee.kitchen/buro9/microcosm/errors"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
-	"git.dee.kitchen/buro9/microcosm/models"
 	"github.com/grafana/pyroscope-go"
+	"github.com/microcosm-collective/microcosm/audit"
+	e "github.com/microcosm-collective/microcosm/errors"
+	h "github.com/microcosm-collective/microcosm/helpers"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // CommentsController is a web controller

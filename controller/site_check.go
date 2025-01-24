@@ -8,7 +8,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/grafana/pyroscope-go"
 
-	"git.dee.kitchen/buro9/microcosm/models"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // SiteCheckController is a web controller

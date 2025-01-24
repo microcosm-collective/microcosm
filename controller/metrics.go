@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"git.dee.kitchen/buro9/microcosm/models"
 	"github.com/grafana/pyroscope-go"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // MetricsController is a web controller

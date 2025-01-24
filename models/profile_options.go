@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	c "git.dee.kitchen/buro9/microcosm/cache"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	c "github.com/microcosm-collective/microcosm/cache"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // ProfileOptionType describes the options for a profile

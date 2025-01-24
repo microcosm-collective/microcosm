@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	c "git.dee.kitchen/buro9/microcosm/cache"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	c "github.com/microcosm-collective/microcosm/cache"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // AccessTokenType describes an access token

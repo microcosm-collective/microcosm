@@ -3,7 +3,7 @@ package models
 import (
 	"github.com/golang/glog"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // AuthContext describes the context for which authorisation is sought

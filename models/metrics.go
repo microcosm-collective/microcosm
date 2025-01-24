@@ -7,8 +7,8 @@ import (
 
 	"github.com/golang/glog"
 
-	conf "git.dee.kitchen/buro9/microcosm/config"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	conf "github.com/microcosm-collective/microcosm/config"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 var defaultLogoURL = "https://meta.microcosm.app/static/themes/1/logo.png"

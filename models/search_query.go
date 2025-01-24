@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
 	"github.com/golang/glog"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // SearchQuery encapsulates all of the meta parts of a search over the

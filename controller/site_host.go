@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"git.dee.kitchen/buro9/microcosm/models"
 	"github.com/grafana/pyroscope-go"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // SiteHostController is a web controller

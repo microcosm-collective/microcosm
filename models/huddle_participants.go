@@ -7,7 +7,7 @@ import (
 	"sort"
 	"sync"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // HuddleParticipantsType is a collection of huddle participants

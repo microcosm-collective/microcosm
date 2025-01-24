@@ -16,10 +16,10 @@ import (
 	"github.com/golang/glog"
 	"github.com/grafana/pyroscope-go"
 
-	"git.dee.kitchen/buro9/microcosm/audit"
-	conf "git.dee.kitchen/buro9/microcosm/config"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
-	"git.dee.kitchen/buro9/microcosm/models"
+	"github.com/microcosm-collective/microcosm/audit"
+	conf "github.com/microcosm-collective/microcosm/config"
+	h "github.com/microcosm-collective/microcosm/helpers"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // Auth0Controller is a web controller

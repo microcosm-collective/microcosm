@@ -7,8 +7,8 @@ import (
 
 	"golang.org/x/net/html"
 
-	conf "git.dee.kitchen/buro9/microcosm/config"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	conf "github.com/microcosm-collective/microcosm/config"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // ProcessLinks will fetch the HTML for a revision and extract and shorten all

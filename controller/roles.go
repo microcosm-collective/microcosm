@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"git.dee.kitchen/buro9/microcosm/audit"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
-	"git.dee.kitchen/buro9/microcosm/models"
 	"github.com/grafana/pyroscope-go"
+	"github.com/microcosm-collective/microcosm/audit"
+	h "github.com/microcosm-collective/microcosm/helpers"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // RolesController is a web controller

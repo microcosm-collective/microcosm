@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang/glog"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // IgnoredType is a collection of ignored items

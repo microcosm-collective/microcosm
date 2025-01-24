@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"git.dee.kitchen/buro9/microcosm/models"
-	"git.dee.kitchen/buro9/microcosm/redirector"
 	"github.com/grafana/pyroscope-go"
+	"github.com/microcosm-collective/microcosm/models"
+	"github.com/microcosm-collective/microcosm/redirector"
 )
 
 // RedirectHandler is a web handler

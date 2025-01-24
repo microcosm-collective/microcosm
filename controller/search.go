@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"git.dee.kitchen/buro9/microcosm/models"
 	"github.com/grafana/pyroscope-go"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // SearchController is a web controller

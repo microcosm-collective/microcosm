@@ -7,7 +7,7 @@ import (
 
 	"github.com/lib/pq"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // UpdateRecipient distills watchers and communications options into a single

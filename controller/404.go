@@ -3,8 +3,8 @@ package controller
 import (
 	"net/http"
 
-	"git.dee.kitchen/buro9/microcosm/models"
-	"git.dee.kitchen/buro9/microcosm/resolver"
+	"github.com/microcosm-collective/microcosm/models"
+	"github.com/microcosm-collective/microcosm/resolver"
 )
 
 // Redirect404Controller is a web controller

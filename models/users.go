@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	c "git.dee.kitchen/buro9/microcosm/cache"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
 	"github.com/golang/glog"
+	c "github.com/microcosm-collective/microcosm/cache"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // UsersType offers an array of users

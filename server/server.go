@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/robfig/cron"
 
-	conf "git.dee.kitchen/buro9/microcosm/config"
+	conf "github.com/microcosm-collective/microcosm/config"
 )
 
 // StartServer owns the http process and cron jobs

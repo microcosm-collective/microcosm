@@ -21,8 +21,8 @@ import (
 	"github.com/rwcarlsen/goexif/exif"
 
 	"git.dee.kitchen/buro9/exifutil"
-	conf "git.dee.kitchen/buro9/microcosm/config"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	conf "github.com/microcosm-collective/microcosm/config"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 const (

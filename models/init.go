@@ -3,7 +3,7 @@ package models
 import (
 	"encoding/gob"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 func init() {

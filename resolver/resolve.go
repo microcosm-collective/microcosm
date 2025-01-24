@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // Redirect encapsulates both the old URL and it's new destination

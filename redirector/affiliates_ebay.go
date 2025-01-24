@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang/glog"
 
-	"git.dee.kitchen/buro9/microcosm/models"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // https://developer.ebay.com/devzone/shopping/docs/callref/getsingleitem.html

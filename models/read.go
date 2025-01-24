@@ -11,7 +11,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/lib/pq"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // ReadType describes when an item was last read by a profile

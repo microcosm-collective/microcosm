@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/glog"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // Internal single-char indication of the auditable actions

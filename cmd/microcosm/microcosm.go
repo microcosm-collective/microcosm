@@ -9,10 +9,10 @@ import (
 	"github.com/golang/glog"
 	"github.com/grafana/pyroscope-go"
 
-	"git.dee.kitchen/buro9/microcosm/cache"
-	conf "git.dee.kitchen/buro9/microcosm/config"
-	h "git.dee.kitchen/buro9/microcosm/helpers"
-	"git.dee.kitchen/buro9/microcosm/server"
+	"github.com/microcosm-collective/microcosm/cache"
+	conf "github.com/microcosm-collective/microcosm/config"
+	h "github.com/microcosm-collective/microcosm/helpers"
+	"github.com/microcosm-collective/microcosm/server"
 )
 
 var (

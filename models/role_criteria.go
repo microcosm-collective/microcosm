@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 const (

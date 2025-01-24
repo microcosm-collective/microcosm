@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	h "git.dee.kitchen/buro9/microcosm/helpers"
+	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 // UpdateDefaultOptionType contains the default communication options

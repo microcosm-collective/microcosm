@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"git.dee.kitchen/buro9/microcosm/models"
 	"github.com/grafana/pyroscope-go"
+	"github.com/microcosm-collective/microcosm/models"
 )
 
 // GeoCodeController is a web handler

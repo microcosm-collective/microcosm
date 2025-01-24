@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"git.dee.kitchen/buro9/microcosm/controller"
+	"github.com/microcosm-collective/microcosm/controller"
 )
 
 var (
