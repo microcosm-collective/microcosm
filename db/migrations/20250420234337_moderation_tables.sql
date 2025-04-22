@@ -21,22 +21,24 @@ VALUES
 
 CREATE TABLE reports (
     report_id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    comment_id bigint NOT NULL,
     reported_by_profile_id bigint NOT NULL,
     report_reason_id bigint NOT NULL,
     report_reason_extra text DEFAULT '' NOT NULL,
     created timestamp without time zone NOT NULL
 );
 
+ALTER TABLE reports ADD CONSTRAINT reports_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES comments(comment_id) ON DELETE CASCADE;
 ALTER TABLE reports ADD CONSTRAINT reports_report_reason_id_fkey FOREIGN KEY (report_reason_id) REFERENCES report_reasons(report_reason_id);
-ALTER TABLE reports ADD CONSTRAINT reports_reported_by_profile_id_fkey FOREIGN KEY (reported_by_profile_id) REFERENCES profiles(profile_id);
+ALTER TABLE reports ADD CONSTRAINT reports_reported_by_profile_id_fkey FOREIGN KEY (reported_by_profile_id) REFERENCES profiles(profile_id) ON DELETE CASCADE;
 
-CREATE TABLE actions (
-	action_id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+CREATE TABLE moderator_action_types (
+	moderator_action_type_id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	title text NOT NULL UNIQUE,
 	description text DEFAULT '' NOT NULL
 );
 
-INSERT INTO actions (title, description)
+INSERT INTO moderator_action_types (title, description)
 VALUES
     ('Warning', 'Issue a formal warning to the user without other penalties'),
     ('Hide Content', 'Hide the content from public view, but keep it in the database'),
@@ -52,7 +54,7 @@ VALUES
 
 CREATE TABLE moderator_actions (
 	moderator_action_id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-	action_id bigint NOT NULL,
+	moderator_action_type_id bigint NOT NULL,
 	moderator_profile_id bigint NOT NULL,
 	comment_id bigint,
 	created timestamp without time zone NOT NULL,
@@ -60,7 +62,7 @@ CREATE TABLE moderator_actions (
 	expires timestamp without time zone
 );
 
-ALTER TABLE moderator_actions ADD CONSTRAINT moderator_actions_action_id_fkey FOREIGN KEY (action_id) REFERENCES actions(action_id);
+ALTER TABLE moderator_actions ADD CONSTRAINT moderator_actions_moderator_action_type_id_fkey FOREIGN KEY (moderator_action_type_id) REFERENCES moderator_action_types(moderator_action_type_id);
 ALTER TABLE moderator_actions ADD CONSTRAINT moderator_actions_moderator_profile_id_fkey FOREIGN KEY (moderator_profile_id) REFERENCES profiles(profile_id);
 
 -- +goose StatementEnd
@@ -69,9 +71,9 @@ ALTER TABLE moderator_actions ADD CONSTRAINT moderator_actions_moderator_profile
 -- +goose Down
 -- +goose StatementBegin
 
-DROP TABLE report_reasons;
-DROP TABLE reports;
-DROP TABLE actions;
-DROP TABLE moderator_actions;
+DROP TABLE report_reasons CASCADE;
+DROP TABLE reports CASCADE;
+DROP TABLE moderator_action_types CASCADE;
+DROP TABLE moderator_actions CASCADE;
 
 -- +goose StatementEnd
