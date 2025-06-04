@@ -54,6 +54,15 @@ var (
 		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attributes":                                              controller.AttributesHandler,
 		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attributes/{key:[0-9a-zA-Z_-]+}":                         controller.AttributeHandler,
 
+		"/api/v1/moderator-actions":                      controller.ModeratorActionsHandler,
+		"/api/v1/moderator-actions/{action_id:[0-9]+}":   controller.ModeratorActionHandler,
+		"/api/v1/moderator-action-types":                 controller.ModeratorActionTypesHandler,
+		"/api/v1/moderator-action-types/{type_id:[0-9]+}": controller.ModeratorActionTypeHandler,
+		"/api/v1/report-reasons":                         controller.ReportReasonsHandler,
+		"/api/v1/report-reasons/{reason_id:[0-9]+}":      controller.ReportReasonHandler,
+		"/api/v1/reports":                                controller.ReportsHandler,
+		"/api/v1/reports/{report_id:[0-9]+}":            controller.ReportHandler,
+
 		"/api/v1/{type:conversations}":                                                          controller.ConversationsHandler,
 		"/api/v1/{type:conversations}/{conversation_id:[0-9]+}":                                 controller.ConversationHandler,
 		"/api/v1/{type:conversations}/{conversation_id:[0-9]+}/attributes":                      controller.AttributesHandler,
