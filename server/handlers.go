@@ -18,6 +18,8 @@ var (
 
 		"/api/v1/metrics": controller.MetricsHandler,
 
+		"/api/v1/version": controller.VersionHandler,
+
 		"/api/v1/site":                          controller.SiteHandler,
 		"/api/v1/sites/{site_id:[0-9]+}":        controller.SiteHandler,
 		"/api/v1/sites":                         controller.SitesHandler,
@@ -143,6 +145,8 @@ var (
 		"/api/v1/{type:site}/{site_id:[0-9]+}/attributes/{key:[0-9a-zA-Z_-]+}": controller.AttributeHandler,
 
 		"/api/v1/trending": controller.TrendingHandler,
+
+		"/api/v1/version": controller.VersionHandler,
 
 		"/api/v1/updates":                                     controller.UpdatesHandler,
 		"/api/v1/updates/preferences":                         controller.UpdateOptionsHandler,
