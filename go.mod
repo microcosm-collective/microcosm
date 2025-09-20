@@ -19,7 +19,7 @@ require (
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
 	golang.org/x/net v0.38.0
-	golang.org/x/oauth2 v0.25.0
+	golang.org/x/oauth2 v0.27.0
 )
 
 require (
