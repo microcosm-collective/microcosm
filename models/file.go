@@ -625,7 +625,7 @@ func filePut(fileHash string, content []byte, mimeType string) error {
 
 	client, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
-		Secure: true, // of course
+		Secure: false, // of course
 	})
 	if err != nil {
 		return err
