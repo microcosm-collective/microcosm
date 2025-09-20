@@ -25,8 +25,12 @@ func VersionHandler(w http.ResponseWriter, r *http.Request) {
 		c.RespondWithOptions([]string{"OPTIONS", "GET"})
 		return
 	case "GET":
+		shortVersion := BuildVersion
+		if len(BuildVersion) > 8 {
+			shortVersion = BuildVersion[:8]
+		}
 		version := map[string]string{
-			"version": BuildVersion,
+			"version": shortVersion,
 			"date":    BuildDate,
 		}
 		c.RespondWithData(version)
