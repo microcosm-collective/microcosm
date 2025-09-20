@@ -11,6 +11,7 @@ import (
 
 	"github.com/microcosm-collective/microcosm/cache"
 	conf "github.com/microcosm-collective/microcosm/config"
+	"github.com/microcosm-collective/microcosm/controller"
 	h "github.com/microcosm-collective/microcosm/helpers"
 	"github.com/microcosm-collective/microcosm/server"
 )
@@ -24,6 +25,10 @@ func main() {
 	// Parse flags and start memory profiling
 	// Also used to init glog
 	flag.Parse()
+
+	// Set build information for the version endpoint
+	controller.BuildVersion = version
+	controller.BuildDate = date
 
 	// 100 megabytes max before rolling the config files
 	glog.MaxSize = 1024 * 1024 * 100
