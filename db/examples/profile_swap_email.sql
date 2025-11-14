@@ -2,6 +2,8 @@
 -- address, and then has signed up with a new email and actually wants to use that
 -- to access their original account
 
+-- WARNING: Don't mix up user IDs and profile IDs
+
 SELECT s.subdomain_key
       ,p.profile_id
       ,p.profile_name
@@ -10,6 +12,8 @@ SELECT s.subdomain_key
       ,u.canonical_email
       ,p.comment_count
       ,p.last_active
+      ,p.created profile_created
+      ,(SELECT COUNT(*) FROM comments c WHERE c.profile_id = p.profile_id) comment_count
       ,CASE WHEN ak.attribute_id IS NULL THEN NULL ELSE 'member' END AS member
   FROM profiles p
   JOIN users u ON p.user_id = u.user_id
@@ -27,11 +31,11 @@ BEGIN;
 UPDATE users
    SET email = 'profile1@gmail.com'
       ,canonical_email = canonical_email('profile1@gmail.com')
- WHERE user_id = 27006; -- user ID of user12345
+ WHERE user_id = 11111; -- user ID of user12345
 
 UPDATE users
    SET email = 'user12345@gmail.com'
       ,canonical_email = canonical_email('user12345@gmail.com')
- WHERE user_id = 61709; -- user ID of profile1
+ WHERE user_id = 99999; -- user ID of profile1
 
 ROLLBACK;
