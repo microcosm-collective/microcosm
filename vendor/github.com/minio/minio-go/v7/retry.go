@@ -21,9 +21,13 @@ import (
 	"context"
 	"crypto/x509"
 	"errors"
+	"iter"
+	"math"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/minio/minio-go/v7/pkg/set"
 )
 
 // MaxRetry is the maximum number of retries before stopping.
@@ -45,9 +49,7 @@ var DefaultRetryCap = time.Second
 
 // newRetryTimer creates a timer with exponentially increasing
 // delays until the maximum retry attempts are reached.
-func (c *Client) newRetryTimer(ctx context.Context, maxRetry int, baseSleep, maxSleep time.Duration, jitter float64) <-chan int {
-	attemptCh := make(chan int)
-
+func (c *Client) newRetryTimer(ctx context.Context, maxRetry int, baseSleep, maxSleep time.Duration, jitter float64) iter.Seq[int] {
 	// computes the exponential backoff duration according to
 	// https://www.awsarchitectureblog.com/2015/03/backoff.html
 	exponentialBackoffWait := func(attempt int) time.Duration {
@@ -64,18 +66,22 @@ func (c *Client) newRetryTimer(ctx context.Context, maxRetry int, baseSleep, max
 		if sleep > maxSleep {
 			sleep = maxSleep
 		}
-		if jitter != NoJitter {
+		if math.Abs(jitter-NoJitter) > 1e-9 {
 			sleep -= time.Duration(c.random.Float64() * float64(sleep) * jitter)
 		}
 		return sleep
 	}
 
-	go func() {
-		defer close(attemptCh)
-		for i := 0; i < maxRetry; i++ {
-			select {
-			case attemptCh <- i + 1:
-			case <-ctx.Done():
+	return func(yield func(int) bool) {
+		// if context is already canceled, skip yield
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		for i := range maxRetry {
+			if !yield(i) {
 				return
 			}
 
@@ -85,48 +91,47 @@ func (c *Client) newRetryTimer(ctx context.Context, maxRetry int, baseSleep, max
 				return
 			}
 		}
-	}()
-	return attemptCh
+	}
 }
 
 // List of AWS S3 error codes which are retryable.
-var retryableS3Codes = map[string]struct{}{
-	"RequestError":          {},
-	"RequestTimeout":        {},
-	"Throttling":            {},
-	"ThrottlingException":   {},
-	"RequestLimitExceeded":  {},
-	"RequestThrottled":      {},
-	"InternalError":         {},
-	"ExpiredToken":          {},
-	"ExpiredTokenException": {},
-	"SlowDown":              {},
+var retryableS3Codes = set.CreateStringSet(
+	"RequestError",
+	"RequestTimeout",
+	"Throttling",
+	"ThrottlingException",
+	"RequestLimitExceeded",
+	"RequestThrottled",
+	"InternalError",
+	"ExpiredToken",
+	"ExpiredTokenException",
+	"SlowDown",
+	"SlowDownWrite",
+	"SlowDownRead",
 	// Add more AWS S3 codes here.
-}
+)
 
 // isS3CodeRetryable - is s3 error code retryable.
-func isS3CodeRetryable(s3Code string) (ok bool) {
-	_, ok = retryableS3Codes[s3Code]
-	return ok
+func isS3CodeRetryable(s3Code string) bool {
+	return retryableS3Codes.Contains(s3Code)
 }
 
 // List of HTTP status codes which are retryable.
-var retryableHTTPStatusCodes = map[int]struct{}{
-	http.StatusRequestTimeout:      {},
-	429:                            {}, // http.StatusTooManyRequests is not part of the Go 1.5 library, yet
-	499:                            {}, // client closed request, retry. A non-standard status code introduced by nginx.
-	http.StatusInternalServerError: {},
-	http.StatusBadGateway:          {},
-	http.StatusServiceUnavailable:  {},
-	http.StatusGatewayTimeout:      {},
-	520:                            {}, // It is used by Cloudflare as a catch-all response for when the origin server sends something unexpected.
+var retryableHTTPStatusCodes = set.CreateIntSet(
+	http.StatusRequestTimeout,
+	429, // http.StatusTooManyRequests is not part of the Go 1.5 library, yet
+	499, // client closed request, retry. A non-standard status code introduced by nginx.
+	http.StatusInternalServerError,
+	http.StatusBadGateway,
+	http.StatusServiceUnavailable,
+	http.StatusGatewayTimeout,
+	520, // It is used by Cloudflare as a catch-all response for when the origin server sends something unexpected.
 	// Add more HTTP status codes here.
-}
+)
 
 // isHTTPStatusRetryable - is HTTP error code retryable.
-func isHTTPStatusRetryable(httpStatusCode int) (ok bool) {
-	_, ok = retryableHTTPStatusCodes[httpStatusCode]
-	return ok
+func isHTTPStatusRetryable(httpStatusCode int) bool {
+	return retryableHTTPStatusCodes.Contains(httpStatusCode)
 }
 
 // For now, all http Do() requests are retriable except some well defined errors
