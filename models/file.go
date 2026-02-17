@@ -20,7 +20,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/rwcarlsen/goexif/exif"
 
-	"git.dee.kitchen/buro9/exifutil"
+	"github.com/microcosm-collective/exifutil"
 	conf "github.com/microcosm-collective/microcosm/config"
 	h "github.com/microcosm-collective/microcosm/helpers"
 )
