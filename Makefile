@@ -23,7 +23,7 @@ build: export GOOS=linux
 build: export GOARCH=amd64
 build: export CGO_ENABLED=0
 build: clean
-	@$(GOCMD) build -ldflags "-X 'main.version=$(version)' -X 'main.date=$(date)'" cmd/microcosm/microcosm.go
+	@$(GOCMD) build -ldflags "-w -X 'main.version=$(version)' -X 'main.date=$(date)'" cmd/microcosm/microcosm.go
 
 vet:
 	@$(GOCMD) vet $$($(GOCMD) list ./... | grep -v /vendor/)
