@@ -1,4 +1,4 @@
-FROM golang:1.24
+FROM golang:1.25
 
 RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
@@ -9,6 +9,9 @@ COPY go.sum .
 RUN go mod download
 
 COPY . .
+
+RUN git config --global --add safe.directory /srv
+
 RUN make build
 
 RUN mkdir /etc/microcosm
