@@ -1,0 +1,82 @@
+name: CI Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run smoke tests
+        run: go test -mod=vendor ./helpers ./cache
+
+  integration-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: microcosm
+          POSTGRES_PASSWORD: microcosm
+          POSTGRES_DB: microcosm_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U microcosm -d microcosm_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Create app config for tests
+        run: |
+          sudo mkdir -p /etc/microcosm
+          sudo tee /etc/microcosm/api.conf > /dev/null <<'CONF'
+          [api]
+          environment = test
+          database_host = 127.0.0.1
+          database_port = 5432
+          database_database = microcosm_test
+          database_username = microcosm
+          database_password = microcosm
+          microcosm_domain = microcosm.test
+          listen_port = 8080
+          memcached_host = 127.0.0.1
+          memcached_port = 11211
+          s3_endpoint = localhost:9000
+          s3_bucket_name = test-bucket
+          s3_access_key_id = test-access-key
+          s3_secret_access_key = test-secret-key
+          sendgrid_api_key = test-sendgrid-key
+          error_log_filename = /tmp/microcosm-error.log
+          warn_log_filename = /tmp/microcosm-warn.log
+          debug_log_filename = /tmp/microcosm-debug.log
+          pyroscope_app = microcosm-test
+          pyroscope_address = http://127.0.0.1:4040
+          pyroscope_user = test-user
+          pyroscope_password = test-password
+          CONF
+
+      - name: Run SQL integration test
+        run: go test -mod=vendor -tags=integration ./models -run TestIntegrationGetMetricsReturnsLatestPerDay -count=1
