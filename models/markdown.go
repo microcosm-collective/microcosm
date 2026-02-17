@@ -6,7 +6,6 @@ import (
 	"regexp"
 
 	"github.com/russross/blackfriday"
-	"golang.org/x/net/html"
 
 	h "github.com/microcosm-collective/microcosm/helpers"
 )
@@ -14,10 +13,8 @@ import (
 const htmlCruft = `<html><head></head><body>`
 
 var (
-	longWords      = regexp.MustCompile(`([^\s]{40})`)
-	breakLongWords = "${1}\u00AD"
-	unlinkedURLs   = regexp.MustCompile(`(?i)(^|[^\/>\]\w])(www\.[^\s<\[]+)`)
-	linkURLs       = []byte(`${1}http://${2}`)
+	unlinkedURLs = regexp.MustCompile(`(?i)(^|[^\/>\]\w])(www\.[^\s<\[]+)`)
+	linkURLs     = []byte(`${1}http://${2}`)
 )
 
 // ProcessCommentMarkdown will turn the latest revision markdown into HTML
@@ -178,37 +175,5 @@ func MarkdownToHTML(src []byte) []byte {
 	renderer := blackfriday.HtmlRenderer(htmlFlags, "", "")
 
 	htmlBytes := blackfriday.Markdown(src, renderer, extensions)
-
-	// Final task is to insert \u00AD (HTML &shy;) every 40 chars within any
-	// long words.
-	//
-	// 40 chars was chosen as ~42 chars is our smallest supported screen
-	// (iPhone 3) and most browsers will show 90 chars, meaning that 80 chars
-	// would be shown before wrapping there.
-	htmlRoot, err := html.Parse(bytes.NewReader(htmlBytes))
-	if err != nil {
-		return []byte{}
-	}
-
-	var replaceLongStrings func(*html.Node)
-	replaceLongStrings = func(n *html.Node) {
-
-		if n.Type == html.TextNode {
-			n.Data = longWords.ReplaceAllString(n.Data, breakLongWords)
-		}
-
-		// Walk the tree
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			replaceLongStrings(c)
-		}
-	}
-	// Start the tree walk
-	replaceLongStrings(htmlRoot)
-
-	// Render the modified HTML tree
-	b := new(bytes.Buffer)
-	if html.Render(b, htmlRoot) != nil {
-		return []byte{}
-	}
-	return b.Bytes()
+	return htmlBytes
 }
