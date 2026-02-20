@@ -488,7 +488,7 @@ func GetRawTermsOfUseText() string {
 
 <h3>Welcome to our forum!</h3>
 
-<p>The forum <a href="{{.CustomerURL}}">{{.CustomerURL}}</a> (together with all sub-domains, the "<strong>forum</strong>") is operated by The Microcosm Collective CIC, a community interest company incorporated under the laws of England and Wales with company number 16265268 ("<strong>we</strong>" or "<strong>us</strong>").</p>
+<p>The forum <a href="{{.CustomerURL}}">{{.CustomerURL}}</a> (together with all sub-domains on {{.CustomerURL}}, the "<strong>forum</strong>") is operated by The Microcosm Collective CIC, a community interest company incorporated under the laws of England and Wales with company number 16265268 ("<strong>we</strong>" or "<strong>us</strong>").</p>
 
 <p>If you need to contact us, please use our contact details set out at the end of this document.</p>
 
