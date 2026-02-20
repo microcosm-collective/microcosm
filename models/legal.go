@@ -104,11 +104,10 @@ func GetLegalDataForSite(site SiteType) (LegalData, int, error) {
 	data.CustomerEmail = user.Email
 
 	// Modified dates
-	data.CookiePolicyLastModified = legalCookiePolicyLastModified.String()
-	data.PrivacyPolicyLastModified = legalPrivacyPolicyLastModified.String()
-	data.ServiceAgreementLastModified =
-		legalServiceAgreementLastModified.String()
-	data.TermsOfUseLastModified = legalTermsOfUseLastModified.String()
+	data.CookiePolicyLastModified = legalCookiePolicyLastModified.Format(time.DateOnly)
+	data.PrivacyPolicyLastModified = legalPrivacyPolicyLastModified.Format(time.DateOnly)
+	data.ServiceAgreementLastModified = legalServiceAgreementLastModified.Format(time.DateOnly)
+	data.TermsOfUseLastModified = legalTermsOfUseLastModified.Format(time.DateOnly)
 
 	// Microcosm
 	data.LegalEntity = "Microcosm"

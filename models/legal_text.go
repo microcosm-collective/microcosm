@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-const isoDateFormat string = "2006-01-02"
-
 var (
 	legalServiceAgreement = template.Must(template.New("serviceAgreement").Parse(GetRawTermsOfServiceText()))
 	legalTermsOfUse       = template.Must(template.New("termsOfUse").Parse(GetRawTermsOfUseText()))
@@ -14,7 +12,7 @@ var (
 	legalCookiePolicy     = template.Must(template.New("cookiePolicy").Parse(GetRawCookiePolicyText()))
 )
 
-var legalServiceAgreementLastModified, _ = time.Parse(isoDateFormat, "2014-03-06")
+var legalServiceAgreementLastModified, _ = time.Parse(time.DateOnly, "2014-03-06")
 
 // GetRawTermsOfServiceText returns the terms of service
 func GetRawTermsOfServiceText() string {
@@ -480,7 +478,7 @@ issuing of a warning to you;</li>
 	return doc
 }
 
-var legalTermsOfUseLastModified, _ = time.Parse(isoDateFormat, "2014-03-06")
+var legalTermsOfUseLastModified, _ = time.Parse(time.DateOnly, "2026-02-20")
 
 // GetRawTermsOfUseText returns the terms of use
 func GetRawTermsOfUseText() string {
@@ -490,15 +488,64 @@ func GetRawTermsOfUseText() string {
 
 <h3>Welcome to our forum!</h3>
 
-<p>The forum <a href="{{.CustomerURL}}">{{.CustomerURL}}</a> (the "<strong>forum</strong>") is operated by the person, company or organisation detailed in the forum administrator section of the forum ("<strong>we</strong>" or "<strong>us</strong>").</p>
+<p>The forum <a href="{{.CustomerURL}}">{{.CustomerURL}}</a> (together with all sub-domains, the "<strong>forum</strong>") is operated by The Microcosm Collective CIC, a community interest company incorporated under the laws of England and Wales with company number 16265268 ("<strong>we</strong>" or "<strong>us</strong>").</p>
 
 <p>If you need to contact us, please use our contact details set out at the end of this document.</p>
 
 <h3>Your relationship with us</h3>
 
-<p>This document and any documents referred to within it (collectively, the "Terms of Use") set out the terms that govern your use of the forum. It is important that you read and understand the Terms of Use before using the forum. If there is anything within them that you do not understand, then please contact us to discuss what this means for you.</p>
+<p>This document and any documents referred to within it (collectively, and as may be updated from time to time, the "<strong>Terms of Use</strong>") set out the terms that govern your use of the forum. It is important that you read and understand the Terms of Use before using the forum. If there is anything within them that you do not understand, then please contact us to discuss what this means for you.</p>
 
-<p>By setting up an account to use the forum or using and accessing the forum, you agree to these Terms of Use. If you do not agree to these Terms of Use, please do not browse or otherwise access or use the forum.</p>
+<p>By setting up an account to use the forum, or using and accessing the forum, you agree to these Terms of Use, the most updated version of which can be located at <a href="https://www.lfgss.com/about/terms/">https://www.lfgss.com/about/terms/</a>. If you do not agree to these Terms of Use, please do not browse or otherwise access or use the forum.</p>
+
+<h3>Online safety act</h3>
+
+<p>In order to comply with the Online Safety Act 2023 (UK), you are expected to report any Illegal Content which you may come across on the forum to moderators. Illegal Content is defined in section 59 of the Online Safety Act 2023, but by way of high level summary, it includes content which relates to 17 types of priority offences and 5 types of non-priority offences which are listed below.</p>
+
+<p><strong>Priority</strong>: Content relating to</p>
+
+<ul>
+	<li>Terrorism offences</li>
+	<li>Child sexual exploitation and abuse, and child sexual abuse material</li>
+	<li>Grooming</li>
+	<li>Hate offences under the law</li>
+	<li>Harassment, stalking threats and abuse which is likely to:
+		<ul>
+			<li>cause fear or alarm,</li>
+			<li>stir up racial hatred,</li>
+			<li>stir up hatred on the basis of religion or sexual orientation, or</li>
+			<li>may provoke violence;</li>
+		</ul>
+		or threatening behaviour which is likely to cause harassment or distress
+	</li>
+	<li>Controlling or coercive behaviour</li>
+	<li>Intimate image abuse</li>
+	<li>Extreme pornography</li>
+	<li>Sexual exploitation of adults</li>
+	<li>Human trafficking</li>
+	<li>Unlawful immigration</li>
+	<li>Fraud and financial services</li>
+	<li>Proceeds of crime, including in particular the re-sale of stolen bicycles or parts</li>
+	<li>The unlawful supplying of drugs and psychoactive substances</li>
+	<li>Offences in relation to firearms and other weapons</li>
+	<li>Encouraging suicide or assisting suicide</li>
+	<li>Foreign Interference (under s13 of the National Security Act 2023)</li>
+	<li>Animal welfare offences</li>
+</ul>
+
+<p><strong>Non-priority</strong>: Content relating to</p>
+
+<ul>
+	<li>Epilepsy trolling</li>
+	<li>Cyberflashing with the intent of causing alarm, distress or humiliation in the receiver, or for the purpose of sexual gratification on the behalf of the sender</li>
+	<li>Encouraging self-harm</li>
+	<li>False communications with the intent of causing non-trivial psychological or physical harm to the likely audience</li>
+	<li>Obscene content relating to torture or extreme cruelty</li>
+</ul>
+
+<p></p>
+
+<p>Please refer to section 59 of the Online Safety Act 2023 and associated guidance issued by Ofcom if you are unclear as to whether content may be illegal content and should be reported, but we would encourage you to err on the side of caution when reporting posts for illegal content. A slightly more detailed description can also be found in the Appendix to these Terms of Use. Please note that content which is not Illegal Content may still violate these Terms of Use, and all users should comply with the requirements of the Online Safety Act 2023 as well as the rest of these Terms of Use.</p>
 
 <h3>Information about you</h3>
 
@@ -506,15 +553,15 @@ func GetRawTermsOfUseText() string {
 
 <h3>Setting up an account</h3>
 
-<p>You can view some areas of the forum without creating an account. However, to leave comments or access certain restricted areas of the forum you must register with us and set up an account with an ID (which may include an email address) and password. We encourage you to use strong passwords (passwords that use a combination of upper and lower case letters, numbers and symbols) with your account.</p>
+<p>You can view some areas of the forum without creating an account. However, to leave comments or access certain restricted areas of the forum you must register with us and set up an account with an email address.</p>
 
-<p>You must be 13 years or older and capable in your country of residence of entering into a legal binding agreement to use our forum.</p>
-
-<p>You are responsible for maintaining the confidentiality of your login details and any activities that occur under your account. If you have any concerns that your account may have been misused, you should contact us at <a href="mailto:{{.CustomerEmail}}">{{.CustomerEmail}}</a> straight away to let us know.</p>
+<p>You are responsible for maintaining the confidentiality of your login details and any activities that occur under your account. If you have any concerns that your account may have been misused, you should contact us at <a href="mailto:support@microcosm.cc">support@microcosm.cc</a> straight away to let us know.</p>
 
 <h3>Your right to use the forum</h3>
 
 <p>We give you permission to use the forum provided your use complies with these Terms of Use.</p>
+
+<p>You must be 18 years or older and capable in your country of residence of entering into a legal binding agreement to use our forum. Please inform a moderator immediately if you are aware of any person using the forum who may be under the age of 18.</p>
 
 <p>Your right to use the forum is personal to you and you are not allowed to give this right to another person or to sell, gift or transfer your account to another person. You may imprint, copy, download or temporarily store extracts from the forum onto your computer or other device for the purpose of using the forum. Your right to use the forum does not stop us from giving other people the right to use the forum.</p>
 
@@ -528,86 +575,68 @@ func GetRawTermsOfUseText() string {
 
 <h3>Your content</h3>
 
-<p>You confirm that images, sounds, text or information that you submit or create ("<strong>User Content</strong>") whilst using the forum will meet the Rules of Acceptable Use.</p>
+<p>You confirm that images, sounds, text or information that you submit or create ("<strong>User Content</strong>") whilst using the forum will meet the Rules of Acceptable Use (defined in the section below).</p>
 
-<p>You give us unlimited permission to use your User Content and allow others to do the same for no fee. In legal terms this means that you grant us a worldwide, non-exclusive, royalty-free and perpetual licence to use, copy, reproduce, distribute, adapt, re-format, modify, publish, translate, licence, sub-licence, assign, transfer and sell the User Content anywhere and in any form.</p>
+<p>You give us unlimited and irrevocable permission to use your User Content within the forum or for personal purposes, as long as such use is not in a commercial context, and allow other users of the forum to do the same for no fee. In legal terms this means that you grant us an irrevocable worldwide, non-exclusive, royalty-free and perpetual licence to use, copy, reproduce, distribute, adapt, re-format, modify, publish and translate the User Content in any form within the forum or for personal purposes, as long as such use is not in a commercial context.</p>
 
-<p>Our right to use your User Content does not in any way affect your privacy rights and we will only use information that identifies you as set out in the forum privacy policy <a href="{{.LinkToPrivacyPolicy}}">{{.LinkToPrivacyPolicy}}</a>.</p>
+<p>Our right to use your User Content does not in any way affect your privacy rights or your right to use (including, for the avoidance of doubt, monetising) your User Content and we will only use information that identifies you as set out in the forum privacy policy <a href="{{.LinkToPrivacyPolicy}}">{{.LinkToPrivacyPolicy}}</a>.</p>
 
-<p>We do not check or moderate any User Content before it is added to the forum by users. We may later check, moderate, reject, refuse or delete any User Content if anybody "reports" it to us and we believe that it breaks any of the Rules of Acceptable Use.</p>
+<p>We do not check or moderate any User Content before it is added to the forum by users. We may later check, moderate, reject, refuse or delete any User Content if anybody reports it to us and we believe that it breaks any of the Rules of Acceptable Use.</p>
 
 <h3>Rules of Acceptable Use</h3>
 
-<p>In addition to the other requirements within these Terms of Use, this section describes specific rules that apply to your use of the forum (the "Rules of Acceptable Use").</p>
+<p>In addition to the other requirements within these Terms of Use, this section describes specific rules that apply to your use of the forum (the "<strong>Rules of Acceptable Use</strong>").</p>
 
-<p>When using the forum you <strong>must not</strong>:</p>
+<p>When using the forum you must not:</p>
 
-<dl>
-<dd>circumvent, disable or otherwise interfere with any security related features of the forum or features that prevent or restrict use or copying of the content accessible via the forum;</dd>
-
-<dd>give any false information in your account details;</dd>
-
-<dd>take another person's identity without that person's permission or misrepresent you are acting on behalf of a person, entity or organisation;</dd>
-
-<dd>use the forum if we have suspended or banned you from using it;</dd>
-
-<dd>send junk, spam or repetitive messages;</dd>
-
-<dd>engage in any illegal or unlawful conduct;</dd>
-
-<dd>modify, interfere, intercept, disrupt or hack the forum;</dd>
-
-<dd>misuse the forum by knowingly introducing viruses, Trojans, worms, logic bombs or other similar material or by undertaking any other action which would harm the forum, any forum user's equipment or have a detrimental impact on any forum user's experience of using the forum;</dd>
-
-<dd>collect any data from the forum other than in accordance with these Terms of Use;</dd> 
-
-<dd>submit or contribute any content that is abusive, threatening, obscene, untrue, shocking or offensive;</dd>
-
-<dd>abuse, harm or bully another forum user, member of our staff or person;</dd>
-
-<dd>submit or contribute any User Content without the permission of the content owner or otherwise infringe the copyright, trademark or other rights of third parties; or</dd>
-
-<dd>submit or contribute any information or commentary about another person which is untrue, private, confidential or defamatory (including personally accusing another person of unproven criminality or serious wrongdoing which could damage their reputation in the eyes of anyone reading your comment).</dd>
-
-</dl>
+<ul>
+	<li>post, send or otherwise create any content on the forum which is Illegal Content (as defined in section 59 of the Online Safety Act 2023 and summarised above), or otherwise engage in any illegal or unlawful conduct</li>
+	<li>sell or attempt to sell any property which you are aware has been, or suspect may have been, stolen</li>
+	<li>circumvent, disable or otherwise interfere with any security related features of the forum or features that prevent or restrict use or copying of the content accessible via the forum;</li>
+	<li>give any false information in your account details;</li>
+	<li>take another person's identity without that person's permission or misrepresent you are acting on behalf of a person, entity or organisation;</li>
+	<li>use the forum if we have suspended or banned you from using it;</li>
+	<li>send junk, spam or repetitive messages;</li>
+	<li>engage in any illegal or unlawful conduct,</li>
+	<li>modify, interfere, intercept, disrupt or hack the forum;</li>
+	<li>misuse the forum by knowingly introducing viruses, Trojans, worms, logic bombs or other similar material or by undertaking any other action which would harm the forum, any forum user's equipment or have a detrimental impact on any forum user's experience of using the forum;</li>
+	<li>collect any data from the forum other than in accordance with these Terms of Use;</li>
+	<li>submit or contribute any content that is abusive, threatening, obscene, untrue, shocking or offensive;</li>
+	<li>abuse, harm or bully another forum user, member of our staff or person;</li>
+	<li>submit or contribute any User Content without the permission of the content owner or otherwise infringe the copyright, trademark or other rights of third parties; or</li>
+	<li>submit or contribute any information or commentary about another person which is untrue, private, confidential or defamatory (including personally accusing another person of unproven criminality or serious wrongdoing which could damage their reputation in the eyes of anyone reading your comment).</li>
+</ul>
 
 <p>Failure to comply with the Rules of Acceptable Use constitutes a serious breach of these Terms of Use and may result in our taking all or any of the following actions (with or without notice):</p>
 
-<dl>
+<ul>
+	<li>immediate, temporary or permanent withdrawal of your right to use the forum;</li>
+	<li>immediate, temporary or permanent removal of any User Content;</li>
+	<li>issuing of a warning to you;</li>
+	<li>legal action against you including proceedings for reimbursement of all costs (including, but not limited to, reasonable administrative and legal costs) resulting from the breach; and/or</li>
+	<li>disclosure of such information to law enforcement authorities as we reasonably feel is necessary.</li>
+</ul>
 
-<dd>immediate, temporary or permanent withdrawal of your right to use the forum;</dd>
-
-<dd>immediate, temporary or permanent removal of any User Content;</dd>
-
-<dd>issuing of a warning to you;</dd>
-
-<dd>legal action against you including proceedings for reimbursement of all costs (including, but not limited to, reasonable administrative and legal costs) resulting from the breach; and/or</dd>
-
-<dd>disclosure of such information to law enforcement authorities as we reasonably feel is necessary.</dd>
-
-</dl>
-
-<p>The responses described in this clause are not limited and we may take any other action we reasonably deem appropriate.</p>
+<p>The responses described in this clause are not exhaustive or exclusive, and we may take any other action we reasonably deem appropriate.</p>
 
 <h3>Notice and takedown policy</h3>
 
 <p>If you believe that content available through the forum:</p>
 
-<dl>
+<ul>
+	<li>infringes your rights or any rights of a third party you represent;</li>
+	<li>may be Illegal Content; or</li>
+	<li>otherwise breaches the Rules of Acceptable Use,</li>
+</ul>
 
-<dd>infringes your rights or any rights of a third party you represent; or</dd>
-
-<dd>otherwise breaches the Rules of Acceptable Use,</dd>
-
-</dl>
-
-<p>please tell us immediately by using the reporting tool that appears next to each comment within the forum.</p>
+<p>please tell us immediately by contacting a moderator on <a href="https://www.lfgss.com/conversations/172777/">https://www.lfgss.com/conversations/172777/</a>, or alternatively, sending a private message to any of the following moderators whose user IDs are listed in this post from time to time: <a href="https://www.lfgss.com/comments/7432589/">https://www.lfgss.com/comments/7432589/</a>.</p>
 
 <p>When reporting content please provide the information described below in your notice to us:</p>
 
-<p>your name and contact details; and</p>
-
-<p>a statement explaining whether you believe that the content you are contacting us about: (i) infringes your rights; (ii) the rights of a third party who you represent; or (iii) you otherwise believe the content breaches the Rules of Acceptable Use.</p>
+<ul>
+	<li>your name and contact details; and</li>
+	<li>a statement explaining whether you believe that the content you are contacting us about: (i) infringes your rights; (ii) the rights of a third party who you represent; (iii) is Illegal Content, or (iv) you otherwise believe the content breaches the Rules of Acceptable Use.</li>
+</ul>
 
 <p>We will take the action that we believe is appropriate depending on the nature of the content you report. This may include taking no action where we believe the reported content does not infringe any rights or the Rules of Acceptable Use. We are not obliged to discuss or inform you about our chosen course of action following a report from you.</p>
 
@@ -619,19 +648,13 @@ func GetRawTermsOfUseText() string {
 
 <p>We may amend, re-format, modify or replace any website link you add to the forum. We may do this to improve the appearance of the link and/or to ensure the link used is that of one of our partners or affiliates. We may also direct users to an interstitial or warning page when we suspect the link is to content that may harm users or their devices such as links to malware or a shock site. We may also change how the link is displayed so that information from the link destination (such as content and media from the linked webpage) is displayed within the forum. For example, we may embed video or other media from a linked webpage into the forum.</p>
 
-<h3>Verification Service</h3>
-
-<p>We may provide a verification service to verify the identity of a forum user in accordance with our verification policy <a href="{{.LinkToVerificationPolicy}}">{{.LinkToVerificationPolicy}}</a>. You may use our verification service to verify your identity to other users of the forum.</p>
-
-<p>A forum user verification is not: (i) an endorsement by us of the forum user or the forum user's statements and representations; (ii) any guarantee or promise in relation to fitness, quality or description of any goods or services the forum user sells or promotes; or (iii) a representation by us that the forum user is trustworthy, reliable or honest.</p>
-
 <h3>Fees</h3>
 
-<p>The forum is free but some features, services or goods we sell through the forum may require you to make a payment in order for you to receive or use them. You will be provided with information about any fees associated with the features, services or goods we provide before you purchase them and will be asked to approve any payment before it is taken from you.</p>
+<p>The forum is free but some features, services or goods we may sell through the forum may require you to make a payment in order for you to receive or use them. You will be provided with information about any fees associated with the features, services or goods we provide before you purchase them and will be asked to approve any payment before it is taken from you.</p>
 
 <p>Where you follow a link to other sites or resources and make a purchase from that site or resource the purchase is solely between you and the seller. Complaints, questions and claims related to the sale of the product or service should be directed to the seller.</p>
 
-<p>We are not the seller of any product or service you purchase from third parties, we have no control and do not give any commitment relating to the existence, quality, genuineness of the product or service, the truth or accuracy of the picture or description of the product or service or any other content made available by the third party.</p>
+<p>We are not the seller of any product or service you purchase from third parties, including other users of this forum, we have no control and do not give any commitment relating to the existence, quality, genuineness of the product or service, the truth or accuracy of the picture or description of the product or service or any other content made available by the third party. Your use of the classifieds section of this forum and any other transactions you may carry out with users of this forum is entirely at your own risk.</p>
 
 <p>You will be responsible for any fees that you incur by connecting to the forum such as Internet access costs or mobile phone data charges. If you are unsure whether you will incur such fees, we suggest that you log off the Internet and speak with your Internet service provider or mobile network operator.</p>
 
@@ -639,7 +662,7 @@ func GetRawTermsOfUseText() string {
 
 <p>If at any time you do not feel that you can agree to these Terms of Use or any changes made to the Terms of Use or the forum, you must immediately stop using the forum.</p>
 
-<p>If you wish to end your use of the forum, please follow these instructions for deactivating your account <a href="{{.LinkToAccountDeactivation}}">{{.LinkToAccountDeactivation}}</a>.</p>
+<p>If you wish to end your use of the forum, please contact us at <a href="mailto:support@microcosm.cc">support@microcosm.cc</a> for deactivating your account.</p>
 
 <p>We may immediately end your use of the forum if you break the Rules of Acceptable Use, any other important rule(s), or terms and conditions we set for accessing and using the forum including these Terms of Use.</p>
 
@@ -659,13 +682,13 @@ func GetRawTermsOfUseText() string {
 
 <p>Unfortunately, due to the nature of the Internet and technology, the forum is provided on an "as available" and "as is" basis. This means that we are unable to promise that your use of the forum will be uninterrupted, without delays, error-free or meet your expectations and we do not give any commitment relating to the performance or availability of the forum in these Terms of Use and, to the extent we are able to do so, we exclude any commitments that may be implied by law.</p>
 
-<p>To the extent permitted by the law our total responsibility for any claims under these Terms of Use or related to the use of the forum is limited to the amount you have paid us to provide the forum to you. In every case, we will never be responsible for any loss or damage that is not reasonably foreseeable.</p>
+<p>To the extent permitted by the law our total responsibility for any claims under these Terms of Use, related to the use of the forum or related to any other services or goods we may sell to you is limited to the amount you have paid us to provide the forum, services or goods (as the case may be) to you. For the avoidance of doubt, this does not include any funds which you have donated to or in support of us on a voluntary basis or otherwise for no consideration. In every case, you agree that we will not be liable for any loss or damage that is not reasonably foreseeable.</p>
 
-<p>You acknowledge that the forum is hosted by our service provider {{.LegalEntity}}. You agree that this agreement is between you and us and you will not hold {{.LegalEntity}} responsible in any way for the features, services or goods you purchase from us. You will also not hold {{.LegalEntity}} responsible for any products or services you purchase from any other third party through the forum.</p>
+<p>You will also not hold us responsible for any products or services you purchase from any other third party through the forum.</p>
 
 <h3>Resolving disputes</h3>
 
-<p>If you have a dispute with us relating to the forum, in the first instance please contact us at <a href="mailto:{{.CustomerEmail}}">{{.CustomerEmail}}</a> and attempt to resolve the dispute with us informally.</p>
+<p>If you have a dispute with us relating to the forum, in the first instance please contact us at <a href="mailto:support@microcosm.cc">support@microcosm.cc</a> and attempt to resolve the dispute with us informally.</p>
 
 <p>In the unlikely event that we are not able to resolve the dispute informally, we will discuss and agree with you the most effective way of resolving the dispute using mediation or arbitration based on the nature of our dispute.</p>
 
@@ -673,7 +696,7 @@ func GetRawTermsOfUseText() string {
 
 <p>We are constantly updating and improving the forum to try and find ways to provide you with new and innovative features and services. Improvements and updates are also made to reflect changing technologies, tastes, behaviours and the way people use the Internet and our forum. In order to do this, we may need to update, reset, stop offering and/or supporting a particular part of the forum or feature relating to the forum ("<strong>changes to the forum</strong>"). These changes to the forum may affect your past activities on the forum, features that you use and your User Content. Any changes to the forum could involve your User Content being deleted or reset.</p>
 
-<p>You agree that a key characteristic of our forum is that changes to the forum will take place over time and this is an important basis on which we grant you access to the forum. Once we have made changes to the forum, your continued use of the forum will show that you have accepted any changes to the forum. You are always free to stop using the forum or deactivate your account by following these instructions <a href="{{.LinkToAccountDeactivation}}">{{.LinkToAccountDeactivation}}</a>.</p>
+<p>You agree that a key characteristic of our forum is that changes to the forum will take place over time and this is an important basis on which we grant you access to the forum. Once we have made changes to the forum, your continued use of the forum will show that you have accepted any changes to the forum. You are always free to stop using the forum or deactivate your account by contacting us at <a href="mailto:support@microcosm.cc">support@microcosm.cc</a>.</p>
 
 <p>We will try, where possible and reasonable, to contact you to let you know about any significant changes to the forum.</p>
 
@@ -703,16 +726,225 @@ func GetRawTermsOfUseText() string {
 
 <h3>Contact, feedback and complaints</h3>
 
-<p>If you need to contact us in relation to these Terms of Use or any other document mentioned in them, please email us at <a href="mailto:{{.CustomerEmail}}">{{.CustomerEmail}}</a>.</p>
+<p>If you need to contact us in relation to these Terms of Use or any other document mentioned in them, please email us at <a href="mailto:support@microcosm.cc">support@microcosm.cc</a>.</p>
 
 <p>We value hearing from our users and are always interested in learning about ways we can improve the forum. By providing your feedback you agree that you are giving up any rights you have in your feedback so that we may use and allow others to use it without any restriction and without any payment to you.</p>
 
 <p>Last modified {{.TermsOfUseLastModified}}</p>
+
+<h3>Appendix 1: Illegal content under the Online Safety Act 2023</h3>
+
+<p>Priority illegal content</p>
+
+<table>
+	<tr>
+		<th>No.</th>
+		<th>Kind of illegal content</th>
+		<th>Offences</th>
+	</tr>
+	<tr>
+		<td>1.</td>
+		<td>Terrorism</td>
+		<td><ol type="a">
+			<li>Offences related to information likely to be of use to a terrorist;</li>
+			<li>Offences relating to training for terrorism;</li>
+			<li>A series of offences relating to 'proscribed organisations';</li>
+			<li>Other offences involving encouraging terrorism or disseminating terrorist materials;</li>
+			<li>Miscellaneous, more specific terrorism offences; and</li>
+			<li>Offences relating to financing terrorism.</li>
+		</ol></td>
+	</tr>
+	<tr>
+		<td>2.</td>
+		<td>Child sexual exploitation and abuse</td>
+		<td>Schedule 6 of the Online Safety Act 2023</td>
+	</tr>
+	<tr>
+		<td>2A</td>
+		<td>Grooming</td>
+		<td>Schedule 6 of the Online Safety Act 2023</td>
+	</tr>
+	<tr>
+		<td>2B</td>
+		<td>CSAM</td>
+		<td>Material relating to child sexual abuse (including images and URLs)</td>
+	</tr>
+	<tr>
+		<td>3</td>
+		<td>Hate</td>
+		<td>
+			Public Order Act 1986-
+			<ol type="a">
+				<li>section 18 (use of words or behaviour or display of written material);</li>
+				<li>section 19 (publishing or distributing written material);</li>
+				<li>section 21 (distributing, showing or playing a recording);</li>
+				<li>section 29B (use of words or behaviour or display of written material);</li>
+				<li>section 29C (publishing or distributing written material);</li>
+				<li>section 29E (distributing, showing or playing a recording).</li>
+			</ol>
+			Crime and Disorder Act 1998-
+			<ol type="a">
+				<li>section 31 (racially or religiously aggravated public order offences);</li>
+				<li>section 32 (racially or religiously aggravated harassment etc).</li>
+			</ol>
+		</td>
+	</tr>
+	<tr>
+		<td>4.</td>
+		<td>Harassment, stalking threats and abuse</td>
+		<td><ol type="a">
+			<li>Threats (including hate), encompassing:
+				<ol type="i">
+					<li>threatening behaviour which is likely to cause fear or alarm</li>
+					<li>threatening behaviour which is likely to cause harassment or distress</li>
+					<li>threats which are likely to stir up racial hatred</li>
+					<li>threats which are likely to stir up hatred on the basis of religion or sexual orientation</li>
+					<li>threats which may provoke violence</li>
+				</ol>
+			</li>
+			<li>Abuse and insults (including hate), encompassing:
+				<ol type="i">
+					<li>abusive behaviour which is likely to cause fear or alarm</li>
+					<li>abusive behaviour which is likely to cause harassment or distress</li>
+					<li>abuse which is likely to stir up racial hatred</li>
+					<li>abuse which may provoke violence</li>
+				</ol>
+			</li>
+			<li>Other content likely to amount to harrassment </li>
+		</ol></td>
+	</tr>
+	<tr>
+		<td>5.</td>
+		<td>Controlling or coercive behaviour</td>
+		<td>Controlling or coercive behaviour in an intimate or family relationship (overlap with harassment).</td>
+	</tr>
+	<tr>
+		<td>6.</td>
+		<td>Intimate image abuse</td>
+		<td>Offences related to non-consensual disclosure of intimate images</td>
+	</tr>
+	<tr>
+		<td>7.</td>
+		<td>Extreme pornography</td>
+		<td>Possession of extreme pornographic images</td>
+	</tr>
+	<tr>
+		<td>8.</td>
+		<td>Sexual exploitation of adults</td>
+		<td><ol type="a">
+			<li>Causing or inciting prostitution for gain; and</li>
+			<li>Controlling a prostitute for gain</li>
+		</ol></td>
+	</tr>
+	<tr>
+		<td>9.</td>
+		<td>Human trafficking</td>
+		<td><ol type="a">
+			<li>the recruitment of another person,</li>
+			<li>the transportation or transfer of another person,</li>
+			<li>the harbouring or receiving of another person,</li>
+			<li>the exchange or transfer of control over another person, or</li>
+			<li>the arrangement or facilitation of any of these actions</li>
+		</ol></td>
+	</tr>
+	<tr>
+		<td>10.</td>
+		<td>Unlawful immigration</td>
+		<td><ol type="a">
+			<li>Offences relating to illegal entry into the UK; and</li>
+			<li>Assisting unlawful immigration.</li>
+		</td>
+	</tr>
+	<tr>
+		<td>11.</td>
+		<td>Fraud and financial services</td>
+		<td><ol type="a">
+			<li>False claims to be authorised or exempt for the purposes of carrying on regulated activity (the first of the financial services offences);</li>
+			<li>Fraud by false representation;</li>
+			<li>Fraud by abuse of position and participating in fraudulent business carried on by sole trader etc.;</li>
+			<li>Other financial services offences;</li>
+			<li>Fraud related to misleading statements or impressions about investments;</li>
+			<li>Offences related to articles for use in fraud; and</li>
+			<li>Offences related to criminal property.</li>
+		</ol></td>
+	</tr>
+	<tr>
+		<td>12.</td>
+		<td>Proceeds of crime</td>
+		<td>Concealing etc criminal property); arrangements facilitating acquisition etc of criminal property; acquisition, use and possession of criminal property (overlap with fraud).</td>
+	</tr>
+	<tr>
+		<td>13.</td>
+		<td>Drugs and psychoactive substances</td>
+		<td>Relating to relating to unlawful supplying, or offering to supply of controlled drugs, articles used for the administration or preparation of controlled drugs ('drugs articles'), and psychoactive substances.</td>
+	</tr>
+	<tr>
+		<td>14</td>
+		<td>Firearms and other weapons</td>
+		<td><ol type="a">
+			<li>Firearms, their parts, ammunition, including air weapons and shotguns;</li>
+			<li>3D printing instructions for guns and gun parts;</li>
+			<li>Knives;</li>
+			<li>'Offensive' weapons, including axes and crossbows, knuckledusters, corrosive substances, blowpipes and truncheons; and</li>
+			<li>Imitation firearms.</li>
+		</ol></td>
+	</tr>
+	<tr>
+		<td>15.</td>
+		<td>Encouraging suicide or assisting suicide</td>
+		<td>Encouraging or assisting suicide.</td>
+	</tr>
+	<tr>
+		<td>16</td>
+		<td>Foreign Interference</td>
+		<td>S13 off National Security Act 2023 offence</td>
+	</tr>
+	<tr>
+		<td>17</td>
+		<td>Animal Welfare</td>
+		<td>Animal Welfare Act 2006: unnecessary suffering of an animal</td>
+	</tr>
+</table>
+
+<p>Non-priority illegal content</p>
+
+<table>
+	<tr>
+		<th>No.</th>
+		<th>Kind of illegal content</th>
+		<th>Offences</th>
+	</tr>
+	<tr>
+		<td>1.</td>
+		<td>Epilepsy trolling</td>
+		<td>Sending a flashing image with intention that it would be seen by a person with epilepsy or where it was reasonably foreseeable that this would be the case.</td>
+	</tr>
+	<tr>
+		<td>2.</td>
+		<td>Cyberflashing</td>
+		<td>the offence of sending or giving a photograph or video of the genitals with the intent of causing alarm, distress or humiliation, or for the purpose of sexual gratification on the behalf of the sender.</td>
+	</tr>
+	<tr>
+		<td>3.</td>
+		<td>Self-harm</td>
+		<td>Assisting or encouraging 'serious' acts of self-harm.</td>
+	</tr>
+	<tr>
+		<td>4.</td>
+		<td>False communications</td>
+		<td>Sending a message which conveys knowingly false information with the intent of causing non-trivial psychological or physical harm to the likely audience</td>
+	</tr>
+	<tr>
+		<td>5.</td>
+		<td>Obscene content</td>
+		<td>Sending or causing to be sent, online, a message that is of an obscene character (where the obscenity relates to torture or extreme cruelty).</td>
+	</tr>
+</table>
 `
 	return doc
 }
 
-var legalPrivacyPolicyLastModified, _ = time.Parse(isoDateFormat, "2014-03-06")
+var legalPrivacyPolicyLastModified, _ = time.Parse(time.DateOnly, "2014-03-06")
 
 // GetRawPrivacyPolicyText returns the privacy policy
 func GetRawPrivacyPolicyText() string {
@@ -873,7 +1105,7 @@ func GetRawPrivacyPolicyText() string {
 	return doc
 }
 
-var legalCookiePolicyLastModified, _ = time.Parse(isoDateFormat, "2014-03-06")
+var legalCookiePolicyLastModified, _ = time.Parse(time.DateOnly, "2014-03-06")
 
 // GetRawCookiePolicyText returns the cookie policy
 func GetRawCookiePolicyText() string {
