@@ -141,7 +141,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		ClientID:     c.Site.Auth0ClientID,
 		ClientSecret: c.Site.Auth0ClientSecret,
 		RedirectURL:  callbackURL,
-		Scopes:       []string{"openid", "name", "email", "nickname", "picture"},
+		Scopes:       []string{"openid", "profile", "name", "email", "nickname", "picture"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://" + c.Site.Auth0Domain + "/authorize",
 			TokenURL: "https://" + c.Site.Auth0Domain + "/oauth/token",
@@ -187,6 +187,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 
 	// Reading the body
 	raw, err := io.ReadAll(resp.Body)
+	glog.Errorf("Raw json: %s", string(raw))
 	if err != nil {
 		glog.Errorf(err.Error())
 		c.RespondWithErrorMessage(
