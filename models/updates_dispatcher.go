@@ -1343,8 +1343,16 @@ func GetCommunicationOptions(
 	}
 
 	rows, err := db.Query(`
-SELECT CASE WHEN (get_effective_permissions($1, 0, $3, $2, $4)).can_read IS TRUE THEN send_email ELSE FALSE END AS send_email
-      ,CASE WHEN (get_effective_permissions($1, 0, $3, $2, $4)).can_read IS TRUE THEN send_sms ELSE FALSE END AS send_sms
+SELECT CASE
+           WHEN $2 < 1 OR $3 < 1 THEN send_email
+           WHEN (get_effective_permissions($1, 0, $3, $2, $4)).can_read IS TRUE THEN send_email
+           ELSE FALSE
+       END AS send_email
+      ,CASE
+           WHEN $2 < 1 OR $3 < 1 THEN send_sms
+           WHEN (get_effective_permissions($1, 0, $3, $2, $4)).can_read IS TRUE THEN send_sms
+           ELSE FALSE
+       END AS send_sms
       ,description
   FROM get_communication_options($1, $2, $3, $4, $5)
        LEFT JOIN update_types a ON update_type_id = $5`,
