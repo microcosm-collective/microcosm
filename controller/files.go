@@ -218,5 +218,6 @@ func (ctl *FileController) Read(c *models.Context) {
 		c.ResponseWriter.Header().Set(h, v)
 	}
 
+	c.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(len(fileBytes)))
 	c.WriteResponse(fileBytes, http.StatusOK)
 }
