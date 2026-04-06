@@ -72,6 +72,11 @@ func UpdateManyHuddleParticipants(
 			fmt.Errorf("transaction failed: %+v", err)
 	}
 
+	for _, m := range ems {
+		go RegisterWatcher(m.ID, 4, huddleID, h.ItemTypes[h.ItemTypeHuddle], siteID)
+		go UpdateUnreadHuddleCount(m.ID)
+	}
+
 	go PurgeCache(h.ItemTypes[h.ItemTypeHuddle], huddleID)
 
 	return http.StatusOK, nil
@@ -101,6 +106,9 @@ func (m *HuddleParticipantType) Update(
 		return http.StatusInternalServerError,
 			fmt.Errorf("transaction failed: %v", err.Error())
 	}
+
+	go RegisterWatcher(m.ID, 4, huddleID, h.ItemTypes[h.ItemTypeHuddle], siteID)
+	go UpdateUnreadHuddleCount(m.ID)
 
 	return http.StatusOK, nil
 }
@@ -138,9 +146,6 @@ SELECT $1, $2
 			fmt.Errorf("error executing upsert: %v", err.Error())
 	}
 
-	go RegisterWatcher(m.ID, 4, huddleID, h.ItemTypes[h.ItemTypeHuddle], siteID)
-	go UpdateUnreadHuddleCount(m.ID)
-
 	return http.StatusOK, nil
 }
 
@@ -162,6 +167,8 @@ func (m *HuddleParticipantType) Delete(huddleID int64) (int, error) {
 		return http.StatusInternalServerError,
 			fmt.Errorf("transaction failed: %v", err.Error())
 	}
+
+	go UpdateUnreadHuddleCount(m.ID)
 
 	return http.StatusOK, nil
 }
@@ -185,8 +192,6 @@ DELETE FROM huddle_profiles
 		return http.StatusInternalServerError,
 			fmt.Errorf("error executing delete: %+v", err)
 	}
-
-	go UpdateUnreadHuddleCount(m.ID)
 
 	return http.StatusOK, nil
 }

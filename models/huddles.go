@@ -244,6 +244,14 @@ INSERT INTO huddle_profiles (
 			fmt.Errorf("transaction failed: %v", err.Error())
 	}
 
+	for _, p := range m.Participants {
+		if p.ID == m.Meta.CreatedByID {
+			continue
+		}
+		go RegisterWatcher(p.ID, 4, m.ID, h.ItemTypes[h.ItemTypeHuddle], siteID)
+		go UpdateUnreadHuddleCount(p.ID)
+	}
+
 	PurgeCache(h.ItemTypes[h.ItemTypeHuddle], m.ID)
 
 	return http.StatusOK, nil
