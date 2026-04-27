@@ -51,7 +51,7 @@ func (ctl *AttachmentController) Delete(c *models.Context) {
 		return
 	}
 
-	if !perms.IsSiteOwner && !perms.IsModerator && perms.IsOwner {
+	if !(perms.IsSiteOwner || perms.IsModerator || perms.IsOwner) {
 		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
 		return
 	}
