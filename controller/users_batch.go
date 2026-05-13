@@ -114,7 +114,7 @@ func (ctl *UsersBatchController) Manage(c *models.Context) {
 
 			email, err := mail.ParseAddress(strings.TrimSpace(row[0]))
 			if err != nil {
-				glog.Errorf("Not an email: %s %s", row[0], err.Error())
+				glog.Errorf("Not an email: %s", err.Error())
 				c.RespondWithErrorMessage(err.Error(), http.StatusBadRequest)
 				return
 			}

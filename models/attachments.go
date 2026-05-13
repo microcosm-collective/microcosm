@@ -259,7 +259,6 @@ SELECT attachment_id
 	rows.Close()
 
 	if m.AttachmentID == 0 {
-		glog.Infof("m.AttachmentId == 0 for hash %s", fileHash)
 		return AttachmentType{},
 			http.StatusNotFound,
 			fmt.Errorf("resource not found")

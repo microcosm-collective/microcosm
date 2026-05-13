@@ -137,7 +137,7 @@ func (m *EmailType) Send(siteID int64) (int, error) {
 			return http.StatusInternalServerError, err
 		}
 
-		glog.Infof("SendGrid: success %d %s %s", resp.StatusCode, m.To, resp.Body)
+		glog.Infof("SendGrid: success %d", resp.StatusCode)
 
 	} else {
 		glog.Warningf("No email provider configured")

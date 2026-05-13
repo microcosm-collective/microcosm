@@ -215,7 +215,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 	}
 
 	if userInfo.Email == "" {
-		glog.Errorf("auth0 error: no email address received. userinfo = %+v", userInfo)
+		glog.Errorf("auth0 error: no email address received")
 		c.RespondWithErrorMessage(
 			"auth0 error: no email address received",
 			http.StatusInternalServerError,

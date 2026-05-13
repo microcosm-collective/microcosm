@@ -460,11 +460,11 @@ func (c *Context) WriteResponse(output []byte, statusCode int) error {
 	_, err := c.ResponseWriter.Write(output)
 
 	// We only log at error severity when an error is not the result of the
-	// client disconnecting. "broken pipe" is a syscall.EPIPE error that
-	// indicates client disconnection.
+	// client disconnecting. "broken pipe" and "connection reset by peer"
+	// indicate the client closed the connection while we were writing.
 	if err != nil {
 		opErr, ok := err.(*net.OpError)
-		if !ok || opErr.Err != syscall.EPIPE {
+		if !ok || (opErr.Err != syscall.EPIPE && opErr.Err != syscall.ECONNRESET) {
 
 			// Totally unexpected, definitely error
 			glog.Errorf(
