@@ -13,11 +13,11 @@ listen_port=80
 memcached_host=memcached
 memcached_port=11211
 
-s3_bucket=1234
-s3_access_key_id=1234
-s3_bucket_name=1234
-s3_endpoint=https://aws/s3/1234
-s3_secret_access_key=1234
+s3_bucket=dev-object-store
+s3_access_key_id=xxxxxxxxxxxxxxxxxxxx
+s3_secret_access_key=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+s3_bucket_name=dev-object-store
+s3_endpoint=localstack:4566
 
 pyroscope_app=1234
 pyroscope_address=https://pyroscope/1234

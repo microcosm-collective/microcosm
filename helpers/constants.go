@@ -7,55 +7,63 @@ const JumpURL string = "http://microcosm.app/out/"
 
 // Constants for all of the itemTypes
 const (
-	ItemTypeActivity         string = "activity"
-	ItemTypeAlbum            string = "album"
-	ItemTypeArticle          string = "article"
-	ItemTypeAttendee         string = "attendee"
-	ItemTypeAttachment       string = "attachment"
-	ItemTypeAttribute        string = "attribute"
-	ItemTypeAuth             string = "auth"
-	ItemTypeClassified       string = "classified"
-	ItemTypeComment          string = "comment"
-	ItemTypeConversation     string = "conversation"
-	ItemTypeEvent            string = "event"
-	ItemTypeFile             string = "file"
-	ItemTypeHuddle           string = "huddle"
-	ItemTypeMicrocosm        string = "microcosm"
-	ItemTypePoll             string = "poll"
-	ItemTypeProfile          string = "profile"
-	ItemTypeQuestion         string = "question"
-	ItemTypeRole             string = "role"
-	ItemTypeSite             string = "site"
-	ItemTypeUpdate           string = "update"
-	ItemTypeUpdateOptionType string = "update_type"
-	ItemTypeUser             string = "user"
-	ItemTypeWatcher          string = "watcher"
-	ItemTypeWhoAmI           string = "whoami"
+	ItemTypeActivity           string = "activity"
+	ItemTypeAlbum              string = "album"
+	ItemTypeArticle            string = "article"
+	ItemTypeAttendee           string = "attendee"
+	ItemTypeAttachment         string = "attachment"
+	ItemTypeAttribute          string = "attribute"
+	ItemTypeAuth               string = "auth"
+	ItemTypeClassified         string = "classified"
+	ItemTypeComment            string = "comment"
+	ItemTypeConversation       string = "conversation"
+	ItemTypeEvent              string = "event"
+	ItemTypeFile               string = "file"
+	ItemTypeHuddle             string = "huddle"
+	ItemTypeMicrocosm          string = "microcosm"
+	ItemTypeModeratorAction    string = "moderator_action"
+	ItemTypeModeratorActionType string = "moderator_action_type"
+	ItemTypePoll               string = "poll"
+	ItemTypeProfile            string = "profile"
+	ItemTypeQuestion           string = "question"
+	ItemTypeReport             string = "report"
+	ItemTypeReportReason       string = "report_reason"
+	ItemTypeRole               string = "role"
+	ItemTypeSite               string = "site"
+	ItemTypeUpdate             string = "update"
+	ItemTypeUpdateOptionType   string = "update_type"
+	ItemTypeUser               string = "user"
+	ItemTypeWatcher            string = "watcher"
+	ItemTypeWhoAmI             string = "whoami"
 )
 
 // ItemTypes is a list of all itemTypes
 var ItemTypes = map[string]int64{
-	ItemTypeSite:             1,
-	ItemTypeMicrocosm:        2,
-	ItemTypeProfile:          3,
-	ItemTypeComment:          4,
-	ItemTypeHuddle:           5,
-	ItemTypeConversation:     6,
-	ItemTypePoll:             7,
-	ItemTypeArticle:          8,
-	ItemTypeEvent:            9,
-	ItemTypeQuestion:         10,
-	ItemTypeClassified:       11,
-	ItemTypeAlbum:            12,
-	ItemTypeAttendee:         13,
-	ItemTypeUser:             14,
-	ItemTypeAttribute:        15,
-	ItemTypeUpdate:           16,
-	ItemTypeRole:             17,
-	ItemTypeUpdateOptionType: 18,
-	ItemTypeWatcher:          19,
-	ItemTypeAuth:             20,
-	ItemTypeAttachment:       21,
+	ItemTypeSite:               1,
+	ItemTypeMicrocosm:          2,
+	ItemTypeProfile:            3,
+	ItemTypeComment:            4,
+	ItemTypeHuddle:             5,
+	ItemTypeConversation:       6,
+	ItemTypePoll:               7,
+	ItemTypeArticle:            8,
+	ItemTypeEvent:              9,
+	ItemTypeQuestion:           10,
+	ItemTypeClassified:         11,
+	ItemTypeAlbum:              12,
+	ItemTypeAttendee:           13,
+	ItemTypeUser:               14,
+	ItemTypeAttribute:          15,
+	ItemTypeUpdate:             16,
+	ItemTypeRole:               17,
+	ItemTypeUpdateOptionType:   18,
+	ItemTypeWatcher:            19,
+	ItemTypeAuth:               20,
+	ItemTypeAttachment:         21,
+	ItemTypeReportReason:       22,
+	ItemTypeReport:             23,
+	ItemTypeModeratorActionType: 24,
+	ItemTypeModeratorAction:     25,
 }
 
 // ItemTypesCommentable is a list of the itemTypes that can have comments on them
@@ -85,57 +93,65 @@ var ItemTypesScoreable = map[string]int64{
 
 // List of APITypes
 const (
-	APITypeActivity         string = "/api/v1/activity"
-	APITypeAlbum            string = "/api/v1/albums"
-	APITypeArticle          string = "/api/v1/articles"
-	APITypeAttendee         string = "/api/v1/events/%d/attendees"
-	APITypeAttachment       string = "attachments"
-	APITypeAttribute        string = "/api/v1/%s/%d/attributes"
-	APITypeAuth             string = "/api/v1/auth"
-	APITypeClassified       string = "/api/v1/classifieds"
-	APITypeComment          string = "/api/v1/comments"
-	APITypeConversation     string = "/api/v1/conversations"
-	APITypeEvent            string = "/api/v1/events"
-	APITypeFile             string = "/api/v1/files"
-	APITypeHuddle           string = "/api/v1/huddles"
-	APITypeMicrocosm        string = "/api/v1/microcosms"
-	APITypeQuestion         string = "/api/v1/questions"
-	APITypePoll             string = "/api/v1/polls"
-	APITypeProfile          string = "/api/v1/profiles"
-	APITypeRole             string = "/api/v1/roles"
-	APITypeSite             string = "/api/v1/sites"
-	APITypeUpdate           string = "/api/v1/updates"
-	APITypeUpdateOptionType string = "/api/v1/updates/preferences/%d"
-	APITypeUser             string = "/api/v1/users"
-	APITypeWatcher          string = "/api/v1/watchers"
-	APITypeWhoAmI           string = "/api/v1/whoami"
+	APITypeActivity           string = "/api/v1/activity"
+	APITypeAlbum              string = "/api/v1/albums"
+	APITypeArticle            string = "/api/v1/articles"
+	APITypeAttendee           string = "/api/v1/events/%d/attendees"
+	APITypeAttachment         string = "attachments"
+	APITypeAttribute          string = "/api/v1/%s/%d/attributes"
+	APITypeAuth               string = "/api/v1/auth"
+	APITypeClassified         string = "/api/v1/classifieds"
+	APITypeComment            string = "/api/v1/comments"
+	APITypeConversation       string = "/api/v1/conversations"
+	APITypeEvent              string = "/api/v1/events"
+	APITypeFile               string = "/api/v1/files"
+	APITypeHuddle             string = "/api/v1/huddles"
+	APITypeMicrocosm          string = "/api/v1/microcosms"
+	APITypeModeratorAction    string = "/api/v1/moderator-actions"
+	APITypeModeratorActionType string = "/api/v1/moderator-action-types"
+	APITypeQuestion           string = "/api/v1/questions"
+	APITypePoll               string = "/api/v1/polls"
+	APITypeProfile            string = "/api/v1/profiles"
+	APITypeReport             string = "/api/v1/reports"
+	APITypeReportReason       string = "/api/v1/report-reasons"
+	APITypeRole               string = "/api/v1/roles"
+	APITypeSite               string = "/api/v1/sites"
+	APITypeUpdate             string = "/api/v1/updates"
+	APITypeUpdateOptionType   string = "/api/v1/updates/preferences/%d"
+	APITypeUser               string = "/api/v1/users"
+	APITypeWatcher            string = "/api/v1/watchers"
+	APITypeWhoAmI             string = "/api/v1/whoami"
 )
 
 // ItemTypesToAPIItem maps from the itemType to the APIType
 var ItemTypesToAPIItem = map[string]string{
-	ItemTypeAttendee:         APITypeAttendee,
-	ItemTypeActivity:         APITypeActivity,
-	ItemTypeAlbum:            APITypeAlbum,
-	ItemTypeArticle:          APITypeArticle,
-	ItemTypeAttribute:        APITypeAttribute,
-	ItemTypeAuth:             APITypeAuth,
-	ItemTypeClassified:       APITypeClassified,
-	ItemTypeComment:          APITypeComment,
-	ItemTypeConversation:     APITypeConversation,
-	ItemTypeEvent:            APITypeEvent,
-	ItemTypeFile:             APITypeFile,
-	ItemTypeHuddle:           APITypeHuddle,
-	ItemTypeMicrocosm:        APITypeMicrocosm,
-	ItemTypePoll:             APITypePoll,
-	ItemTypeProfile:          APITypeProfile,
-	ItemTypeQuestion:         APITypeQuestion,
-	ItemTypeRole:             APITypeRole,
-	ItemTypeSite:             APITypeSite,
-	ItemTypeUpdate:           APITypeUpdate,
-	ItemTypeUpdateOptionType: APITypeUpdateOptionType,
-	ItemTypeUser:             APITypeUser,
-	ItemTypeWatcher:          APITypeWatcher,
-	ItemTypeWhoAmI:           APITypeWhoAmI,
+	ItemTypeAttendee:           APITypeAttendee,
+	ItemTypeActivity:           APITypeActivity,
+	ItemTypeAlbum:              APITypeAlbum,
+	ItemTypeArticle:            APITypeArticle,
+	ItemTypeAttribute:          APITypeAttribute,
+	ItemTypeAuth:               APITypeAuth,
+	ItemTypeClassified:         APITypeClassified,
+	ItemTypeComment:            APITypeComment,
+	ItemTypeConversation:       APITypeConversation,
+	ItemTypeEvent:              APITypeEvent,
+	ItemTypeFile:               APITypeFile,
+	ItemTypeHuddle:             APITypeHuddle,
+	ItemTypeMicrocosm:          APITypeMicrocosm,
+	ItemTypeModeratorAction:    APITypeModeratorAction,
+	ItemTypeModeratorActionType: APITypeModeratorActionType,
+	ItemTypePoll:               APITypePoll,
+	ItemTypeProfile:            APITypeProfile,
+	ItemTypeQuestion:           APITypeQuestion,
+	ItemTypeReport:             APITypeReport,
+	ItemTypeReportReason:       APITypeReportReason,
+	ItemTypeRole:               APITypeRole,
+	ItemTypeSite:               APITypeSite,
+	ItemTypeUpdate:             APITypeUpdate,
+	ItemTypeUpdateOptionType:   APITypeUpdateOptionType,
+	ItemTypeUser:               APITypeUser,
+	ItemTypeWatcher:            APITypeWatcher,
+	ItemTypeWhoAmI:             APITypeWhoAmI,
 }
 
 // List of update_types
