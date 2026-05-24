@@ -621,11 +621,12 @@ func filePut(fileHash string, content []byte, mimeType string) error {
 		bucketName      = conf.ConfigStrings[conf.S3BucketName]
 		accessKeyID     = conf.ConfigStrings[conf.S3AccessKeyID]
 		secretAccessKey = conf.ConfigStrings[conf.S3SecretAccessKey]
+		useSsl          = conf.ConfigBools[conf.S3UseSsl]
 	)
 
 	client, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
-		Secure: true, // of course
+		Secure: useSsl, // of course
 	})
 	if err != nil {
 		return err
@@ -667,11 +668,12 @@ func fileGet(fileHash string) ([]byte, map[string]string, error) {
 		bucketName      = conf.ConfigStrings[conf.S3BucketName]
 		accessKeyID     = conf.ConfigStrings[conf.S3AccessKeyID]
 		secretAccessKey = conf.ConfigStrings[conf.S3SecretAccessKey]
+		useSsl          = conf.ConfigBools[conf.S3UseSsl]
 	)
 
 	client, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
-		Secure: true, // of course
+		Secure: useSsl, // of course
 	})
 	if err != nil {
 		return content, headers, err
@@ -680,6 +682,29 @@ func fileGet(fileHash string) ([]byte, map[string]string, error) {
 	// get the file
 	reader, err := client.GetObject(context.Background(), bucketName, fileHash, minio.GetObjectOptions{})
 	if err != nil {
+		errResp := minio.ToErrorResponse(err)
+		if errResp.Code != "" || errResp.RequestID != "" || errResp.StatusCode != 0 {
+			glog.Errorf(
+				"client.GetObject(%q, %q) failed: endpoint=%q useSsl=%t statusCode=%d code=%q requestID=%q error=%+v",
+				bucketName,
+				fileHash,
+				endpoint,
+				useSsl,
+				errResp.StatusCode,
+				errResp.Code,
+				errResp.RequestID,
+				err,
+			)
+		} else {
+			glog.Errorf(
+				"client.GetObject(%q, %q) failed: endpoint=%q useSsl=%t error=%+v",
+				bucketName,
+				fileHash,
+				endpoint,
+				useSsl,
+				err,
+			)
+		}
 		return content, headers, err
 	}
 	defer reader.Close()

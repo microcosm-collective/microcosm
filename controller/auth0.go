@@ -141,7 +141,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		ClientID:     c.Site.Auth0ClientID,
 		ClientSecret: c.Site.Auth0ClientSecret,
 		RedirectURL:  callbackURL,
-		Scopes:       []string{"openid", "name", "email", "nickname", "picture"},
+		Scopes:       []string{"openid", "profile", "email"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://" + c.Site.Auth0Domain + "/authorize",
 			TokenURL: "https://" + c.Site.Auth0Domain + "/oauth/token",
@@ -160,7 +160,7 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		// Exchanging the code for a token
 		token, err = oauth2Config.Exchange(context.Background(), callback.Code)
 		if err != nil {
-			glog.Errorf(err.Error())
+			glog.Errorf("auth0 code exchange failed: redirectURL=%s error=%s", callbackURL, err.Error())
 			c.RespondWithErrorMessage(
 				err.Error(),
 				http.StatusInternalServerError,
@@ -195,9 +195,17 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 		)
 		return
 	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		glog.Errorf("auth0 userinfo error: status=%d body=%s", resp.StatusCode, string(raw))
+		c.RespondWithErrorMessage(
+			"auth0 error: could not retrieve user info",
+			http.StatusInternalServerError,
+		)
+		return
+	}
 
 	type Auth0UserInfo struct {
-		UserID   string `json:"user_id"`
+		UserID   string `json:"sub"`
 		Email    string `json:"email"`
 		Name     string `json:"name"`
 		Nickname string `json:"nickname"`
@@ -215,10 +223,10 @@ func (ctl *Auth0Controller) Create(c *models.Context) {
 	}
 
 	if userInfo.Email == "" {
-		glog.Errorf("auth0 error: no email address received. userinfo = %+v", userInfo)
+		glog.Errorf("auth0 error: no email address received. userinfo = %+v raw = %s", userInfo, string(raw))
 		c.RespondWithErrorMessage(
-			"auth0 error: no email address received",
-			http.StatusInternalServerError,
+			"auth0 error: no email address received; ensure the initial Auth0 authorize request includes scope 'openid profile email'",
+			http.StatusBadRequest,
 		)
 		return
 	}

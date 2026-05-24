@@ -29,6 +29,7 @@ const (
 	MemcachedPort = "memcached_port"
 
 	S3Endpoint        = "s3_endpoint"
+	S3UseSsl          = "s3_use_ssl"
 	S3BucketName      = "s3_bucket_name"
 	S3AccessKeyID     = "s3_access_key_id"
 	S3SecretAccessKey = "s3_secret_access_key"
@@ -73,14 +74,16 @@ var configRequiredInt64s = []string{
 	MemcachedPort,
 }
 
+var configRequiredBools = []string{}
+
 // ConfigStrings contains the string values for the given config keys
 var ConfigStrings = map[string]string{}
 
 // ConfigInt64s contains the int64 values for the given config keys
 var ConfigInt64s = map[string]int64{}
 
-// ConfigBool contains the bool values for the given config keys
-var ConfigBool = map[string]bool{}
+// ConfigBools contains the bool values for the given config keys
+var ConfigBools = map[string]bool{}
 
 func init() {
 	c, err := config.ReadDefault(ConfigFilePath)
@@ -102,5 +105,20 @@ func init() {
 			glog.Fatal(err)
 		}
 		ConfigInt64s[key] = int64(ii)
+	}
+
+	for _, key := range configRequiredBools {
+		bb, err := c.Bool(APISection, key)
+		if err != nil {
+			glog.Fatal(err)
+		}
+		ConfigBools[key] = bool(bb)
+	}
+
+	ConfigBools[S3UseSsl] = true
+	if bb, err := c.Bool(APISection, S3UseSsl); err == nil {
+		ConfigBools[S3UseSsl] = bool(bb)
+	} else {
+		glog.Warningf("%s missing or invalid, defaulting to true: %v", S3UseSsl, err)
 	}
 }
