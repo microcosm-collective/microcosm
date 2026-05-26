@@ -3,12 +3,14 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	c "github.com/microcosm-collective/microcosm/cache"
 	h "github.com/microcosm-collective/microcosm/helpers"
 )
 
 const banCacheKey = `ban_s%d_u%d`
+const banNotFoundCacheTTL int32 = 60
 
 // IsBanned returns true if the user is banned for the given site
 func IsBanned(siteID int64, userID int64) bool {
@@ -19,41 +21,59 @@ func IsBanned(siteID int64, userID int64) bool {
 
 	// Get from cache if it's available
 	//
-	// This map of siteID+userID = profileId is never expected to change, so
-	// this cache key is unique and does not conform to the cache flushing
-	// mechanism
+	// Active temporary bans are cached only until their expiry time.
 	mcKey := fmt.Sprintf(banCacheKey, siteID, userID)
 	if val, ok := c.GetBool(mcKey); ok {
 		return val
 	}
 
-	var isBanned bool
+	var expires sql.NullTime
 	db, err := h.GetConnection()
 	if err != nil {
 		return false
 	}
 
 	err = db.QueryRow(`--IsBanned
-SELECT EXISTS(
-SELECT 1
+SELECT expires
   FROM bans
  WHERE site_id = $1
    AND user_id = $2
-)`,
+   AND (expires IS NULL OR expires > NOW())
+ ORDER BY expires NULLS LAST
+ LIMIT 1`,
 		siteID,
 		userID,
 	).Scan(
-		&isBanned,
+		&expires,
 	)
 	if err == sql.ErrNoRows {
+		c.SetBool(mcKey, false, banNotFoundCacheTTL)
 		return false
 	} else if err != nil {
 		return false
 	}
 
-	c.SetBool(mcKey, isBanned, mcTTL)
+	c.SetBool(mcKey, true, activeBanCacheTTL(expires))
 
-	return isBanned
+	return true
 }
 
 // TODO: Add a BanUser() func
+
+func activeBanCacheTTL(expires sql.NullTime) int32 {
+	if !expires.Valid {
+		return mcTTL
+	}
+
+	until := time.Until(expires.Time)
+	if until < time.Second {
+		return 1
+	}
+
+	maxTTL := time.Duration(mcTTL) * time.Second
+	if until > maxTTL {
+		return mcTTL
+	}
+
+	return int32(until / time.Second)
+}
