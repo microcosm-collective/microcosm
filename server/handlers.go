@@ -47,6 +47,9 @@ var (
 		"/api/v1/auth/{access_token:[0-9A-Za-z]+}": controller.AuthAccessTokenHandler,
 		"/api/v1/auth0": controller.Auth0Handler,
 
+		"/api/v1/{type:bans}":                 controller.BansHandler,
+		"/api/v1/{type:bans}/{ban_id:[0-9]+}": controller.BanHandler,
+
 		"/api/v1/{type:comments}":                                 controller.CommentsHandler,
 		"/api/v1/{type:comments}/{comment_id:[0-9]+}":             controller.CommentHandler,
 		"/api/v1/{type:comments}/{comment_id:[0-9]+}/attachments": controller.AttachmentsHandler,

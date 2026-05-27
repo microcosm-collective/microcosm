@@ -74,6 +74,7 @@ func V1Handler(w http.ResponseWriter, r *http.Request) {
 			h.LinkArrayType{Links: []h.LinkType{
 				h.GetLink("activity", "", h.ItemTypeActivity, 0),
 				h.GetLink("auth", "", h.ItemTypeAuth, 0),
+				{Rel: "ban", Href: h.APITypeBan},
 				h.GetLink("comment", "", h.ItemTypeComment, 0),
 				h.GetLink("conversation", "", h.ItemTypeConversation, 0),
 				h.GetLink("event", "", h.ItemTypeEvent, 0),

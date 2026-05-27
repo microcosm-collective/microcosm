@@ -92,6 +92,7 @@ const (
 	APITypeAttachment       string = "attachments"
 	APITypeAttribute        string = "/api/v1/%s/%d/attributes"
 	APITypeAuth             string = "/api/v1/auth"
+	APITypeBan              string = "/api/v1/bans"
 	APITypeClassified       string = "/api/v1/classifieds"
 	APITypeComment          string = "/api/v1/comments"
 	APITypeConversation     string = "/api/v1/conversations"
