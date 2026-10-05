@@ -57,7 +57,7 @@ DELETE
        SELECT comment_id
          FROM comments
         WHERE item_type_id = 5
-          AND item_id = $1`)
+          AND item_id = $1)`)
 	if err != nil {
 		glog.Error(err)
 		return
