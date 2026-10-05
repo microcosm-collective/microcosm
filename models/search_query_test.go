@@ -1,6 +1,7 @@
 package models
 
 import (
+	"net/http"
 	"net/url"
 	"testing"
 	"time"
@@ -124,5 +125,20 @@ func TestSearchQueryParsing(t *testing.T) {
 
 	if sq.Query != "searchTerm" {
 		t.Errorf("Query does not match: %s", sq.Query)
+	}
+}
+
+func TestSearchRejectsInvalidDateParameter(t *testing.T) {
+	u, err := url.Parse("https://test.microcosm.app/api/v1/search/?eventBefore=0%27%20AND%20EXTRACTVALUE%282697%2CCONCAT%280x7e%2C%28%28SELECT%20%28ELT%282697%3D2697%2C1%29%29%29%29%2C0x7e%29%29--%20-&offset=25&sort=newest&type=event")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, status, err := Search(1, *u, 1)
+	if status != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, status)
+	}
+	if err == nil {
+		t.Fatal("expected invalid search parameter error")
 	}
 }
