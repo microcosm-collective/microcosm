@@ -132,6 +132,10 @@ var (
 
 		"/api/v1/resolve": controller.Redirect404Handler,
 
+		"/api/v1/reports":                    controller.ReportsHandler,
+		"/api/v1/reports/types":              controller.ReportTypesHandler,
+		"/api/v1/reports/{report_id:[0-9]+}": controller.ReportHandler,
+
 		"/api/v1/roles":                                                 controller.RolesHandler,
 		"/api/v1/roles/{role_id:[0-9]+}":                                controller.RoleHandler,
 		"/api/v1/roles/{role_id:[0-9]+}/profiles":                       controller.RoleProfilesHandler,
