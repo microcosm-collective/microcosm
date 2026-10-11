@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -49,6 +50,10 @@ func Search(
 		Query: GetSearchQueryFromURL(siteID, searchURL, profileID),
 	}
 
+	if len(m.Query.InvalidParams) > 0 {
+		return m, http.StatusBadRequest,
+			fmt.Errorf("invalid search parameter: %s", m.Query.InvalidParams[0])
+	}
 	if !m.Query.Valid {
 		return m, http.StatusOK, nil
 	}

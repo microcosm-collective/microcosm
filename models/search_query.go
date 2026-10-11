@@ -54,9 +54,10 @@ type SearchQuery struct {
 	West        float64 `json:"west,omitempty"`
 	ProfileName string  `json:"author,omitempty"`
 
-	Ignored    string   `json:"ignored,omitempty"`
-	IgnoredArr []string `json:"-"`
-	Searched   string   `json:"searched,omitempty"`
+	Ignored       string   `json:"ignored,omitempty"`
+	IgnoredArr    []string `json:"-"`
+	InvalidParams []string `json:"-"`
+	Searched      string   `json:"searched,omitempty"`
 
 	Valid bool `json:"-"`
 }
@@ -74,6 +75,9 @@ func GetSearchQueryFromURL(
 
 	sq.ParseFullQueryString()
 	sq.ParseSingleQueryValue()
+	if len(sq.InvalidParams) > 0 {
+		return sq
+	}
 	sq.Validate(siteID, profileID)
 
 	return sq
@@ -95,6 +99,7 @@ func (sq *SearchQuery) ParseFullQueryString() {
 			for _, t := range v {
 				i, err := strconv.ParseInt(t, 10, 64)
 				if err != nil {
+					sq.addInvalidParameter(k)
 					sq.IgnoredArr = append(
 						sq.IgnoredArr,
 						fmt.Sprintf("id=%s", t),
@@ -118,6 +123,7 @@ func (sq *SearchQuery) ParseFullQueryString() {
 			for _, t := range v {
 				i, err := strconv.ParseInt(t, 10, 64)
 				if err != nil {
+					sq.addInvalidParameter(k)
 					sq.IgnoredArr = append(
 						sq.IgnoredArr,
 						fmt.Sprintf("forumId=%s", t),
@@ -142,6 +148,7 @@ func (sq *SearchQuery) ParseFullQueryString() {
 				itemTypeID := h.ItemTypes[t]
 
 				if itemTypeID == 0 {
+					sq.addInvalidParameter(k)
 					sq.IgnoredArr = append(
 						sq.IgnoredArr,
 						fmt.Sprintf("type=%s", t),
@@ -180,6 +187,7 @@ func (sq *SearchQuery) ParseFullQueryString() {
 						sq.Has = append(sq.Has, "attachment")
 					}
 				default:
+					sq.addInvalidParameter(k)
 					sq.IgnoredArr = append(
 						sq.IgnoredArr,
 						fmt.Sprintf("has=%s", t),
@@ -258,6 +266,7 @@ func (sq *SearchQuery) ParseSingleQueryValue() {
 			case "id":
 				i, err := strconv.ParseInt(value, 10, 64)
 				if err != nil {
+					sq.addInvalidParameter(key)
 					sq.IgnoredArr = append(sq.IgnoredArr, frag)
 				} else {
 					var found bool
@@ -274,6 +283,7 @@ func (sq *SearchQuery) ParseSingleQueryValue() {
 			case "forumid":
 				i, err := strconv.ParseInt(value, 10, 64)
 				if err != nil {
+					sq.addInvalidParameter(key)
 					sq.IgnoredArr = append(sq.IgnoredArr, frag)
 				} else {
 					var found bool
@@ -293,6 +303,7 @@ func (sq *SearchQuery) ParseSingleQueryValue() {
 				itemTypeID := h.ItemTypes[itemType]
 
 				if itemTypeID == 0 {
+					sq.addInvalidParameter(key)
 					sq.IgnoredArr = append(sq.IgnoredArr, frag)
 				} else {
 					var found bool
@@ -322,6 +333,7 @@ func (sq *SearchQuery) ParseSingleQueryValue() {
 						sq.Has = append(sq.Has, "attachment")
 					}
 				default:
+					sq.addInvalidParameter(key)
 					sq.IgnoredArr = append(
 						sq.IgnoredArr,
 						fmt.Sprintf("has=%s", strings.ToLower(value)),
@@ -399,49 +411,35 @@ func (sq *SearchQuery) ParseDateTime(key string, value string, frag string) {
 		default:
 			sq.IgnoredArr = append(sq.IgnoredArr, frag)
 		}
-	} else {
-		k, err := time.Parse("2006-01-02", value)
-		if err == nil {
-			switch strings.ToLower(key) {
-			case "since":
-				sq.Since = value
-				sq.SinceTime = k
-			case "until":
-				sq.Until = value
-				sq.UntilTime = k
-			case "eventafter":
-				sq.EventAfter = value
-				sq.EventAfterTime = k
-			case "eventbefore":
-				sq.EventBefore = value
-				sq.EventBeforeTime = k
-			default:
-				sq.IgnoredArr = append(sq.IgnoredArr, frag)
-			}
-		} else {
-			k, err = time.Parse("2006-01-02T15:04", value)
-			if err == nil {
-				switch strings.ToLower(key) {
-				case "since":
-					sq.Since = value
-					sq.SinceTime = k
-				case "until":
-					sq.Until = value
-					sq.UntilTime = k
-				case "eventafter":
-					sq.EventAfter = value
-					sq.EventAfterTime = k
-				case "eventbefore":
-					sq.EventBefore = value
-					sq.EventBeforeTime = k
-				default:
-					sq.IgnoredArr = append(sq.IgnoredArr, frag)
-				}
-			} else {
-				sq.IgnoredArr = append(sq.IgnoredArr, frag)
-			}
-		}
+		return
 	}
+
+	k, err := time.Parse("2006-01-02", value)
+	if err != nil {
+		k, err = time.Parse("2006-01-02T15:04", value)
+	}
+	if err == nil {
+		switch strings.ToLower(key) {
+		case "since":
+			sq.Since = value
+			sq.SinceTime = k
+		case "until":
+			sq.Until = value
+			sq.UntilTime = k
+		case "eventafter":
+			sq.EventAfter = value
+			sq.EventAfterTime = k
+		case "eventbefore":
+			sq.EventBefore = value
+			sq.EventBeforeTime = k
+		default:
+			sq.IgnoredArr = append(sq.IgnoredArr, frag)
+		}
+		return
+	}
+
+	sq.addInvalidParameter(key)
+	sq.IgnoredArr = append(sq.IgnoredArr, frag)
 }
 
 // ParseFloat parses a float arg
@@ -456,6 +454,7 @@ func (sq *SearchQuery) ParseFloat(key string, value string, frag string) {
 
 	f, err := strconv.ParseFloat(value, 64)
 	if err != nil {
+		sq.addInvalidParameter(key)
 		sq.IgnoredArr = append(sq.IgnoredArr, frag)
 		return
 	}
@@ -490,6 +489,7 @@ func (sq *SearchQuery) ParseInt(key string, value string, frag string) {
 
 	i, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
+		sq.addInvalidParameter(key)
 		sq.IgnoredArr = append(sq.IgnoredArr, frag)
 		return
 	}
@@ -518,6 +518,7 @@ func (sq *SearchQuery) ParseBool(key string, value string, frag string) {
 
 	b, err := strconv.ParseBool(value)
 	if err != nil {
+		sq.addInvalidParameter(key)
 		sq.IgnoredArr = append(sq.IgnoredArr, frag)
 		return
 	}
@@ -532,6 +533,15 @@ func (sq *SearchQuery) ParseBool(key string, value string, frag string) {
 	default:
 		sq.IgnoredArr = append(sq.IgnoredArr, frag)
 	}
+}
+
+func (sq *SearchQuery) addInvalidParameter(key string) {
+	for _, parameter := range sq.InvalidParams {
+		if parameter == key {
+			return
+		}
+	}
+	sq.InvalidParams = append(sq.InvalidParams, key)
 }
 
 // Validate returns true if the query is valid
