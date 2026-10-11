@@ -44,8 +44,8 @@ type CommentType struct {
 	HTMLNullable      sql.NullString `json:"-"`
 	HTML              string         `json:"html"`
 
-	Files []AttachmentType     `json:"files,omitempty"`
-	Meta  CommentFlagsMetaType `json:"meta"`
+	AttachmentDetails []AttachmentType     `json:"attachmentDetails,omitempty"`
+	Meta              CommentFlagsMetaType `json:"meta"`
 }
 
 // CommentSummaryType is a summary of a comment
@@ -64,8 +64,8 @@ type CommentSummaryType struct {
 	HTMLNullable      sql.NullString `json:"-"`
 	HTML              string         `json:"html"`
 
-	Files []AttachmentType `json:"files,omitempty"`
-	Meta  CommentMetaType  `json:"meta"`
+	AttachmentDetails []AttachmentType `json:"attachmentDetails,omitempty"`
+	Meta              CommentMetaType  `json:"meta"`
 }
 
 // CommentMetaType is the meta struct of a comment
@@ -859,9 +859,10 @@ func HandleCommentRequest(
 	siteID int64,
 	commentID int64,
 	seq int,
+	includeAttachments bool,
 	out chan<- CommentSummaryRequest,
 ) {
-	item, status, err := GetCommentSummary(siteID, commentID)
+	item, status, err := getCommentSummary(siteID, commentID, includeAttachments)
 	response := CommentSummaryRequest{
 		Item:   item,
 		Status: status,
@@ -880,6 +881,18 @@ func GetCommentSummary(
 	int,
 	error,
 ) {
+	return getCommentSummary(siteID, commentID, true)
+}
+
+func getCommentSummary(
+	siteID int64,
+	commentID int64,
+	includeAttachments bool,
+) (
+	CommentSummaryType,
+	int,
+	error,
+) {
 	if commentID == 0 {
 		return CommentSummaryType{}, http.StatusNotFound,
 			fmt.Errorf("comment not found")
@@ -889,6 +902,14 @@ func GetCommentSummary(
 	mcKey := fmt.Sprintf(mcCommentKeys[c.CacheDetail], commentID)
 	if val, ok := c.Get(mcKey, CommentSummaryType{}); ok {
 		m := val.(CommentSummaryType)
+		if includeAttachments {
+			attachments, err := getCommentAttachments(commentID)
+			if err != nil {
+				return CommentSummaryType{}, http.StatusInternalServerError, err
+			}
+			m.AttachmentDetails = attachments
+			m.Attachments = int64(len(attachments))
+		}
 
 		m.Hydrate(siteID)
 
@@ -926,12 +947,6 @@ SELECT c.comment_id
       ,r.created AS edited
       ,r.profile_id AS editedby
       ,c.in_reply_to
-      ,(
-           SELECT COUNT(a.*)
-             FROM attachments a
-            WHERE a.item_type_id = 4
-              AND a.item_id = c.comment_id
-       ) AS attachment_count
       ,c.is_deleted
       ,c.is_moderated
       ,(c.is_deleted OR c.is_moderated) IS NOT TRUE AS is_visible
@@ -958,7 +973,6 @@ OFFSET 0`,
 		&m.Meta.EditedNullable,
 		&m.Meta.EditedByNullable,
 		&m.InReplyToNullable,
-		&m.Attachments,
 		&m.Meta.Flags.Deleted,
 		&m.Meta.Flags.Moderated,
 		&m.Meta.Flags.Visible,
@@ -1073,6 +1087,14 @@ UPDATE revisions
 			fmt.Errorf("resource with ID %d not found", commentID)
 	}
 
+	if includeAttachments {
+		m.AttachmentDetails, err = getCommentAttachments(commentID)
+		if err != nil {
+			return CommentSummaryType{}, http.StatusInternalServerError, err
+		}
+		m.Attachments = int64(len(m.AttachmentDetails))
+	}
+
 	itemTitle, _, err := GetTitle(siteID, h.ItemTypes[m.ItemType], m.ItemID, 0)
 	if err != nil {
 		glog.Warningf(
@@ -1097,6 +1119,82 @@ UPDATE revisions
 	m.Hydrate(siteID)
 
 	return m, http.StatusOK, nil
+}
+
+// getCommentAttachments returns attachment metadata for a comment.
+func getCommentAttachments(commentID int64) ([]AttachmentType, error) {
+	attachmentsByComment, err := getCommentAttachmentsForComments([]int64{commentID})
+	if err != nil {
+		return nil, err
+	}
+	return attachmentsByComment[commentID], nil
+}
+
+func getCommentAttachmentsForComments(commentIDs []int64) (map[int64][]AttachmentType, error) {
+	attachmentsByComment := map[int64][]AttachmentType{}
+	if len(commentIDs) == 0 {
+		return attachmentsByComment, nil
+	}
+
+	db, err := h.GetConnection()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := db.Query(`
+SELECT attachment_id
+      ,profile_id
+      ,attachment_meta_id
+      ,item_type_id
+      ,file_sha1
+      ,item_id
+      ,created
+      ,view_count
+      ,file_name
+      ,file_ext
+  FROM attachments
+ WHERE item_type_id = $1
+   AND item_id = ANY($2)
+ ORDER BY attachment_id`, h.ItemTypes[h.ItemTypeComment], pq.Array(commentIDs))
+	if err != nil {
+		return nil, fmt.Errorf("attachment query failed: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		attachment := AttachmentType{}
+		if err := rows.Scan(
+			&attachment.AttachmentID,
+			&attachment.ProfileID,
+			&attachment.AttachmentMetaID,
+			&attachment.ItemTypeID,
+			&attachment.FileHash,
+			&attachment.ItemID,
+			&attachment.Created,
+			&attachment.ViewCount,
+			&attachment.FileName,
+			&attachment.FileExt,
+		); err != nil {
+			return nil, fmt.Errorf("attachment row parsing failed: %v", err)
+		}
+
+		filePath := attachment.FileHash
+		if attachment.FileExt != "" {
+			filePath += "." + attachment.FileExt
+		}
+		attachment.Meta.Links = append(attachment.Meta.Links, h.LinkType{
+			Rel: "related", Href: fmt.Sprintf("%s/%s", h.APITypeFile, filePath),
+			Title: "File resource",
+		})
+		attachmentsByComment[attachment.ItemID] = append(
+			attachmentsByComment[attachment.ItemID], attachment,
+		)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("attachment rows fetch failed: %v", err)
+	}
+
+	return attachmentsByComment, nil
 }
 
 // GetComments returns a collection of comments
@@ -1315,7 +1413,7 @@ SELECT total
 	defer close(req)
 
 	for seq, id := range ids {
-		go HandleCommentRequest(siteID, id, seq, req)
+		go HandleCommentRequest(siteID, id, seq, false, req)
 		wg1.Add(1)
 	}
 
@@ -1337,64 +1435,9 @@ SELECT total
 	// Sort them
 	sort.Sort(CommentRequestBySeq(resps))
 
-	// Fetch attachment metadata for all comments on this page in one query.
-	attachmentsByComment := map[int64][]AttachmentType{}
-	if len(ids) > 0 {
-		attachmentRows, queryErr := db.Query(`
-SELECT attachment_id
-      ,profile_id
-      ,attachment_meta_id
-      ,item_type_id
-      ,file_sha1
-      ,item_id
-      ,created
-      ,view_count
-      ,file_name
-      ,file_ext
-  FROM attachments
- WHERE item_type_id = 4
-   AND item_id = ANY($1)
- ORDER BY attachment_id`, pq.Array(ids))
-		if queryErr != nil {
-			return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("database query failed: %v", queryErr.Error())
-		}
-		defer attachmentRows.Close()
-
-		for attachmentRows.Next() {
-			attachment := AttachmentType{}
-			if err = attachmentRows.Scan(
-				&attachment.AttachmentID,
-				&attachment.ProfileID,
-				&attachment.AttachmentMetaID,
-				&attachment.ItemTypeID,
-				&attachment.FileHash,
-				&attachment.ItemID,
-				&attachment.Created,
-				&attachment.ViewCount,
-				&attachment.FileName,
-				&attachment.FileExt,
-			); err != nil {
-				return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
-					fmt.Errorf("row parsing error: %v", err.Error())
-			}
-
-			filePath := attachment.FileHash
-			if attachment.FileExt != "" {
-				filePath += "." + attachment.FileExt
-			}
-			attachment.Meta.Links = append(attachment.Meta.Links, h.LinkType{
-				Rel: "related", Href: fmt.Sprintf("%s/%s", h.APITypeFile, filePath),
-				Title: "File resource",
-			})
-			attachmentsByComment[attachment.ItemID] = append(
-				attachmentsByComment[attachment.ItemID], attachment,
-			)
-		}
-		if err = attachmentRows.Err(); err != nil {
-			return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
-				fmt.Errorf("error fetching attachment rows: %v", err.Error())
-		}
+	attachmentsByComment, err := getCommentAttachmentsForComments(ids)
+	if err != nil {
+		return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError, err
 	}
 
 	// Extract the values
@@ -1402,7 +1445,8 @@ SELECT attachment_id
 	for _, resp := range resps {
 		m := resp.Item
 		m.Meta.Flags.Unread = unread[m.ID]
-		m.Files = attachmentsByComment[m.ID]
+		m.AttachmentDetails = attachmentsByComment[m.ID]
+		m.Attachments = int64(len(m.AttachmentDetails))
 		ems = append(ems, m)
 	}
 
@@ -1456,7 +1500,7 @@ func GetComment(
 	m.Markdown = commentsummary.Markdown
 	m.HTMLNullable = commentsummary.HTMLNullable
 	m.HTML = commentsummary.HTML
-	m.Files = commentsummary.Files
+	m.AttachmentDetails = commentsummary.AttachmentDetails
 	m.Meta.Created = commentsummary.Meta.Created
 	m.Meta.CreatedByID = commentsummary.Meta.CreatedByID
 	m.Meta.CreatedBy = commentsummary.Meta.CreatedBy
@@ -1536,7 +1580,7 @@ SELECT c.comment_id
 	defer close(req)
 
 	for seq, id := range ids {
-		go HandleCommentRequest(siteID, id, seq, req)
+		go HandleCommentRequest(siteID, id, seq, true, req)
 		wg1.Add(1)
 	}
 
