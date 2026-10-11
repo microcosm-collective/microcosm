@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/lib/pq"
 
 	c "github.com/microcosm-collective/microcosm/cache"
 	h "github.com/microcosm-collective/microcosm/helpers"
@@ -43,7 +44,7 @@ type CommentType struct {
 	HTMLNullable      sql.NullString `json:"-"`
 	HTML              string         `json:"html"`
 
-	Files []h.AttachmentType   `json:"files,omitempty"`
+	Files []AttachmentType     `json:"files,omitempty"`
 	Meta  CommentFlagsMetaType `json:"meta"`
 }
 
@@ -63,8 +64,8 @@ type CommentSummaryType struct {
 	HTMLNullable      sql.NullString `json:"-"`
 	HTML              string         `json:"html"`
 
-	Files []h.AttachmentType `json:"files,omitempty"`
-	Meta  CommentMetaType    `json:"meta"`
+	Files []AttachmentType `json:"files,omitempty"`
+	Meta  CommentMetaType  `json:"meta"`
 }
 
 // CommentMetaType is the meta struct of a comment
@@ -1336,11 +1337,72 @@ SELECT total
 	// Sort them
 	sort.Sort(CommentRequestBySeq(resps))
 
+	// Fetch attachment metadata for all comments on this page in one query.
+	attachmentsByComment := map[int64][]AttachmentType{}
+	if len(ids) > 0 {
+		attachmentRows, queryErr := db.Query(`
+SELECT attachment_id
+      ,profile_id
+      ,attachment_meta_id
+      ,item_type_id
+      ,file_sha1
+      ,item_id
+      ,created
+      ,view_count
+      ,file_name
+      ,file_ext
+  FROM attachments
+ WHERE item_type_id = 4
+   AND item_id = ANY($1)
+ ORDER BY attachment_id`, pq.Array(ids))
+		if queryErr != nil {
+			return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
+				fmt.Errorf("database query failed: %v", queryErr.Error())
+		}
+		defer attachmentRows.Close()
+
+		for attachmentRows.Next() {
+			attachment := AttachmentType{}
+			if err = attachmentRows.Scan(
+				&attachment.AttachmentID,
+				&attachment.ProfileID,
+				&attachment.AttachmentMetaID,
+				&attachment.ItemTypeID,
+				&attachment.FileHash,
+				&attachment.ItemID,
+				&attachment.Created,
+				&attachment.ViewCount,
+				&attachment.FileName,
+				&attachment.FileExt,
+			); err != nil {
+				return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
+					fmt.Errorf("row parsing error: %v", err.Error())
+			}
+
+			filePath := attachment.FileHash
+			if attachment.FileExt != "" {
+				filePath += "." + attachment.FileExt
+			}
+			attachment.Meta.Links = append(attachment.Meta.Links, h.LinkType{
+				Rel: "related", Href: fmt.Sprintf("%s/%s", h.APITypeFile, filePath),
+				Title: "File resource",
+			})
+			attachmentsByComment[attachment.ItemID] = append(
+				attachmentsByComment[attachment.ItemID], attachment,
+			)
+		}
+		if err = attachmentRows.Err(); err != nil {
+			return []CommentSummaryType{}, 0, 0, http.StatusInternalServerError,
+				fmt.Errorf("error fetching attachment rows: %v", err.Error())
+		}
+	}
+
 	// Extract the values
 	ems := []CommentSummaryType{}
 	for _, resp := range resps {
 		m := resp.Item
 		m.Meta.Flags.Unread = unread[m.ID]
+		m.Files = attachmentsByComment[m.ID]
 		ems = append(ems, m)
 	}
 
