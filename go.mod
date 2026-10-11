@@ -18,7 +18,7 @@ require (
 	github.com/russross/blackfriday v1.6.0
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
-	golang.org/x/net v0.54.0
+	golang.org/x/net v0.55.0
 	golang.org/x/oauth2 v0.35.0
 )
 
