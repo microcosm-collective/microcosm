@@ -106,6 +106,7 @@ func ReportCountHandler(w http.ResponseWriter, r *http.Request) {
 type reportSubmission struct {
 	CommentID int64  `json:"commentId"`
 	Type      string `json:"type"`
+	Note      string `json:"note"`
 }
 
 func submitReport(c *models.Context) {
@@ -118,7 +119,14 @@ func submitReport(c *models.Context) {
 		c.RespondWithErrorMessage(fmt.Sprintf("The post data is invalid: %v", err), http.StatusBadRequest)
 		return
 	}
-	report, status, err := models.SubmitReport(c.Site.ID, c.Auth.ProfileID, request.CommentID, request.Type)
+	perms := models.GetPermission(models.MakeAuthorisationContext(
+		c, 0, h.ItemTypes[h.ItemTypeComment], request.CommentID,
+	))
+	if !perms.CanRead {
+		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
+		return
+	}
+	report, status, err := models.SubmitReport(c.Site.ID, c.Auth.ProfileID, request.CommentID, request.Type, request.Note)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return

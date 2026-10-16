@@ -34,6 +34,7 @@ type ReporterType struct {
 	ProfileID   int64      `json:"profileId"`
 	ProfileName string     `json:"profileName"`
 	Type        ReportType `json:"type"`
+	Note        string     `json:"note,omitempty"`
 	CreatedAt   time.Time  `json:"createdAt"`
 }
 
@@ -100,7 +101,7 @@ func GetReportTypes() ([]ReportType, int, error) {
 
 // SubmitReport creates a report for a comment, or adds the reporter to the
 // existing case. The conflict path leaves an existing report's state intact.
-func SubmitReport(siteID, profileID, commentID int64, typeKey string) (Report, int, error) {
+func SubmitReport(siteID, profileID, commentID int64, typeKey, note string) (Report, int, error) {
 	if profileID < 1 || commentID < 1 || typeKey == "" {
 		return Report{}, http.StatusBadRequest, fmt.Errorf("commentId and type are required")
 	}
@@ -127,11 +128,9 @@ func SubmitReport(siteID, profileID, commentID int64, typeKey string) (Report, i
 	}
 	var reportID int64
 	var reportSiteID int64
-	created := true
 	err = tx.QueryRow(`INSERT INTO reports (site_id, comment_id) VALUES ($1, $2)
 ON CONFLICT (comment_id) DO NOTHING RETURNING report_id`, siteID, commentID).Scan(&reportID)
 	if err == sql.ErrNoRows {
-		created = false
 		err = tx.QueryRow(`SELECT report_id, site_id FROM reports WHERE comment_id=$1`, commentID).Scan(&reportID, &reportSiteID)
 	} else if err == nil {
 		reportSiteID = siteID
@@ -142,16 +141,10 @@ ON CONFLICT (comment_id) DO NOTHING RETURNING report_id`, siteID, commentID).Sca
 	if reportSiteID != siteID {
 		return Report{}, http.StatusNotFound, fmt.Errorf("comment not found on this site")
 	}
-	_, err = tx.Exec(`INSERT INTO reporters (report_id, profile_id, report_type_id) VALUES ($1, $2, $3)
-ON CONFLICT (report_id, profile_id) DO NOTHING`, reportID, profileID, typeID)
+	_, err = tx.Exec(`INSERT INTO reporters (report_id, profile_id, report_type_id, note) VALUES ($1, $2, $3, NULLIF($4,''))
+ON CONFLICT (report_id, profile_id) DO NOTHING`, reportID, profileID, typeID, note)
 	if err != nil {
 		return Report{}, http.StatusInternalServerError, err
-	}
-	if created {
-		_, err = tx.Exec(`INSERT INTO report_state_changes (report_id, changed_by_profile_id, from_state, to_state) VALUES ($1,$2,NULL,'open')`, reportID, profileID)
-		if err != nil {
-			return Report{}, http.StatusInternalServerError, err
-		}
 	}
 	var state string
 	var createdAt, updatedAt time.Time
@@ -161,11 +154,11 @@ ON CONFLICT (report_id, profile_id) DO NOTHING`, reportID, profileID, typeID)
 		return Report{}, http.StatusInternalServerError, err
 	}
 	var savedReporter ReporterType
-	err = tx.QueryRow(`SELECT rp.profile_id, p.profile_name, rt.report_type_id, rt.key, rt.title, rp.created_at
+	err = tx.QueryRow(`SELECT rp.profile_id, p.profile_name, rt.report_type_id, rt.key, rt.title, COALESCE(rp.note,''), rp.created_at
 FROM reporters rp JOIN profiles p ON p.profile_id=rp.profile_id JOIN report_types rt ON rt.report_type_id=rp.report_type_id
 WHERE rp.report_id=$1 AND rp.profile_id=$2`, reportID, profileID).Scan(
 		&savedReporter.ProfileID, &savedReporter.ProfileName, &savedReporter.Type.ID, &savedReporter.Type.Key,
-		&savedReporter.Type.Title, &savedReporter.CreatedAt,
+		&savedReporter.Type.Title, &savedReporter.Note, &savedReporter.CreatedAt,
 	)
 	if err != nil {
 		return Report{}, http.StatusInternalServerError, err
@@ -214,7 +207,7 @@ func GetReports(siteID int64, state string, limit, offset int64, singleID int64)
 		return nil, 0, 0, http.StatusInternalServerError, err
 	}
 	rows, err := db.Query(`SELECT r.report_id, r.comment_id, r.state, r.created_at, r.updated_at, r.closed_at,
- COALESCE((SELECT jsonb_agg(jsonb_build_object('profileId', p.profile_id, 'profileName', p.profile_name, 'type', jsonb_build_object('id', rt.report_type_id, 'key', rt.key, 'title', rt.title), 'createdAt', rp.created_at) ORDER BY rp.created_at)
+ COALESCE((SELECT jsonb_agg(jsonb_build_object('profileId', p.profile_id, 'profileName', p.profile_name, 'type', jsonb_build_object('id', rt.report_type_id, 'key', rt.key, 'title', rt.title), 'note', NULLIF(rp.note,''), 'createdAt', rp.created_at) ORDER BY rp.created_at)
  FROM reporters rp JOIN profiles p ON p.profile_id=rp.profile_id JOIN report_types rt ON rt.report_type_id=rp.report_type_id WHERE rp.report_id=r.report_id), '[]'::jsonb)
  FROM reports r WHERE r.site_id=$1 AND ($2='' OR r.state=$2) AND ($3=0 OR r.report_id=$3)
  ORDER BY r.created_at DESC, r.report_id DESC LIMIT $4 OFFSET $5`, siteID, state, singleID, limit, offset)
