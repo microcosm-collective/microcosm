@@ -76,9 +76,37 @@ func ReportTypesHandler(w http.ResponseWriter, r *http.Request) {
 	c.RespondWithData(map[string]interface{}{"reportTypes": types})
 }
 
+// ReportCountHandler returns the open queue count to report moderators and
+// site owners, and zero to other visitors.
+func ReportCountHandler(w http.ResponseWriter, r *http.Request) {
+	c, status, err := models.MakeContext(r, w)
+	if err != nil {
+		c.RespondWithErrorDetail(err, status)
+		return
+	}
+	if c.GetHTTPMethod() == "OPTIONS" {
+		c.RespondWithOptions([]string{"OPTIONS", "GET"})
+		return
+	}
+	if c.GetHTTPMethod() != "GET" {
+		c.RespondWithStatus(http.StatusMethodNotAllowed)
+		return
+	}
+	var count int64
+	if canManageReports(c) {
+		count, status, err = models.GetOpenReportCount(c.Site.ID)
+		if err != nil {
+			c.RespondWithErrorDetail(err, status)
+			return
+		}
+	}
+	c.RespondWithData(map[string]int64{"count": count})
+}
+
 type reportSubmission struct {
 	CommentID int64  `json:"commentId"`
 	Type      string `json:"type"`
+	Note      string `json:"note"`
 }
 
 func submitReport(c *models.Context) {
@@ -91,7 +119,14 @@ func submitReport(c *models.Context) {
 		c.RespondWithErrorMessage(fmt.Sprintf("The post data is invalid: %v", err), http.StatusBadRequest)
 		return
 	}
-	report, status, err := models.SubmitReport(c.Site.ID, c.Auth.ProfileID, request.CommentID, request.Type)
+	perms := models.GetPermission(models.MakeAuthorisationContext(
+		c, 0, h.ItemTypes[h.ItemTypeComment], request.CommentID,
+	))
+	if !perms.CanRead {
+		c.RespondWithErrorMessage(h.NoAuthMessage, http.StatusForbidden)
+		return
+	}
+	report, status, err := models.SubmitReport(c.Site.ID, c.Auth.ProfileID, request.CommentID, request.Type, request.Note)
 	if err != nil {
 		c.RespondWithErrorDetail(err, status)
 		return
