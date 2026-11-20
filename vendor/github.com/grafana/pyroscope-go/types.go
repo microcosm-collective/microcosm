@@ -17,11 +17,12 @@ const (
 	ProfileAllocObjects  ProfileType = "alloc_objects"
 	ProfileInuseSpace    ProfileType = "inuse_space"
 	ProfileAllocSpace    ProfileType = "alloc_space"
-	ProfileGoroutines    ProfileType = "goroutines"
+	ProfileGoroutines    ProfileType = "goroutine"
 	ProfileMutexCount    ProfileType = "mutex_count"
 	ProfileMutexDuration ProfileType = "mutex_duration"
 	ProfileBlockCount    ProfileType = "block_count"
 	ProfileBlockDuration ProfileType = "block_duration"
+	ProfileGoroutineLeak ProfileType = "goroutine_leak"
 	DefaultSampleRate                = 100
 )
 
